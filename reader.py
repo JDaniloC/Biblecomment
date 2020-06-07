@@ -1,6 +1,6 @@
-import json
+import json, os
 
-with open("Genesis.json", encoding="utf-8") as file:
+with open(os.path.join("chapters", "Genesis.json"), encoding="utf-8") as file:
     result = json.load(file)
 
 for key in result.keys():
