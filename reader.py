@@ -1,6 +1,7 @@
 import json, os
 
-with open(os.path.join("chapters", "Genesis.json"), encoding="utf-8") as file:
+name = input("Enter de filename: ")
+with open(os.path.join("chapters", f"{name}.json"), encoding="utf-8") as file:
     result = json.load(file)
 
 for key in result.keys():

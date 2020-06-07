@@ -4,7 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-token = "PUT THE TOKEN HERE"
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlN1biBKdW4gMDcgMjAyMCAwMjozMTowMiBHTVQrMDAwMC5qZHNjQGNpbi51ZnBlLmJyIiwiaWF0IjoxNTkxNDk3MDYyfQ.OqWQ4PCWmRvV0gL99A_nqwabEkk15Rq9dIuRUul_ZZQ"
 
 class PageLoaded(object):
     def __init__(self, oldId):
@@ -37,11 +37,10 @@ def versesTotal(abbrev, chapter, token):
     result = response.json()
     return result["chapter"]["verses"]
 
-fileName = input("File name: ")
+abbrev = input("Abbreviation: ")
 browser = Chrome()
 error = False
 
-abbrev = "gn" # Change here the book
 chapter = 1
 totalChapters = requests.get(
         f"https://bibleapi.co/api/books/{abbrev}/", 
@@ -86,7 +85,7 @@ browser.quit()
 
 if not error:
     print("Creating File")
-    with open(os.path.join("chapters", "{fileName}.json"), "w", encoding="utf-8") as file:
+    with open(os.path.join("chapters", f"{abbrev}.json"), "w", encoding="utf-8") as file:
         json.dump(book, file, ensure_ascii=False)
 
     # Add the chapters number in the books.json
