@@ -11,7 +11,8 @@
 body, input, button {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
   font-size: 14px;
-  background-color: #c0c0c033;
+  /* background-color: #c0c0c033; */
+  background-color: aqua;
 }
 
 .container {
@@ -20,13 +21,9 @@ body, input, button {
   align-items: center;
 
   margin: 80px auto 30px;
-  max-width: 750px;
 }
 
 .content {
-  background-color: white;
-  border-radius: 8px;
-
+  display: flex;
   margin: 20px auto 20px;
-  padding: 20px;
 }

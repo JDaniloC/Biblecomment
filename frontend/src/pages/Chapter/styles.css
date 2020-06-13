@@ -1,8 +1,22 @@
+div.main {
+    max-width: 750px;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+aside {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 0 20px;
+    min-width: 250px;
+}
+
 ul.verse-list li {
     line-height: 40px;
     font-size: 18px;
 }
-
 ul.verse-list li p {
     cursor: pointer;
 }

@@ -3,7 +3,9 @@ import "./styles.css";
 
 export default function Chapter() {
     const [verses, setVerses] = useState({});
+    const [allCommentaries, setAllCommentaries] = useState([]);
     const [commentaries, setCommentaries] = useState([]);
+    const [actual, setActual] = useState({linha: 0});
 
     useEffect(() => {
         async function loadVerses() {
@@ -16,40 +18,71 @@ export default function Chapter() {
     useEffect(() => {
         async function loadCommentaries() {
             const result = require("./gnc.json");
-            setCommentaries(result[1])
+            setAllCommentaries(result[1])
         }
         loadCommentaries();
     }, []);
 
-    function handleCommentaries(evt) {
-        evt.preventDefault();
+    function handleCommentaries(evt, verse) {
+        evt.preventDefault();        
         const linha = evt.target
         
-        if (linha.style.backgroundColor !== "yellow") {
-            linha.style.backgroundColor = "yellow"
+        if (actual.linha !== 0 && actual.verse === verse) {
+            linha.style.backgroundColor = "white";
+            setActual({"linha": 0})
+            setCommentaries([]);
         } else {
-            linha.style.backgroundColor = "white"
+            if (actual.linha !== 0) {
+                actual.linha.style.backgroundColor = "white";
+            } 
+    
+            linha.style.backgroundColor = "yellow"
+            
+            setActual({
+                verse,
+                linha
+            })
+    
+            if (allCommentaries.length >= verse) {
+                setCommentaries(allCommentaries[verse - 1])
+            } else {
+                setCommentaries([
+                    {
+                        "id": 0,
+                        "name": "Nenhum comentário",
+                        "text": "Seja o primeiro a comentar"
+                    }
+                ])
+            }
         }
     }
 
     return (
-        <>
-            <h1> Gênesis 01 </h1>
-            <ul className="verse-list">
-                {Object.keys(verses).map(verse => (
-                    <li key = {verse}>
-                        <sup> {verse} </sup>
-                        <p style={{ display: "inline" }} onClick = {handleCommentaries}>
-                            { verses[verse] }
-                        </p>
-                    </li>
-                ))}
-            </ul>
-            <ul className="commentaries">
-                {commentaries.map(commentary => (
-                    <p> Teste </p>
-                ))}
-            </ul>
+        <>  
+            <div className="main">
+                <h1> Gênesis 01 </h1>
+                <ul className="verse-list">
+                    {Object.keys(verses).map(verse => (
+                        <li key = {verse}>
+                            <sup> {verse} </sup>
+                            <p style={{ display: "inline" }} onClick = {(evt) => handleCommentaries(evt, verse)}>
+                                { verses[verse] }
+                            </p>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            
+            <aside>
+                <ul className="commentaries">
+                    {commentaries.map(commentary => (
+                        <li key = {commentary.id}>
+                            <h3> {commentary.name} </h3>
+                            <p> {commentary.text} </p>
+                        </li>
+                    ))}
+                </ul>
+            </aside>
         </>
     )
 }

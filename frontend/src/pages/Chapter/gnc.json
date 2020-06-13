@@ -1,28 +1,33 @@
 {"1" : [
     [
         {
+            "id": 0,
             "name": "JDaniloC",
-            "comment": "Vai ao contrário de tudo que havia na época"
+            "text": "Vai ao contrário de tudo que havia na época"
         },
         {
+            "id": 1,
             "name": "Daniel",
-            "comment": "Mostra o monoteísmo"
+            "text": "Mostra o monoteísmo"
         },
         {
+            "id": 2,
             "name": "Júnior",
-            "comment": "Céus e terra como opostos extremos"
+            "text": "Céus e terra como opostos extremos"
         }
     ],
     [
         {
+            "id": 3,
             "name": "JDaniloC",
-            "comment": "Esse é um comentário no verso 2"
+            "text": "Esse é um comentário no verso 2"
         }
     ],
     [
         {
+            "id": 4,
             "name": "Daniel",
-            "comment": "Esse é um comentário no verso 3"
+            "text": "Esse é um comentário no verso 3"
         }
     ]
 ]}
