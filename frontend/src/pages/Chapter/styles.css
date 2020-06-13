@@ -1,0 +1,8 @@
+ul.verse-list li {
+    line-height: 40px;
+    font-size: 18px;
+}
+
+ul.verse-list li p {
+    cursor: pointer;
+}
