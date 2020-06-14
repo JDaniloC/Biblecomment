@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import "./styles.css";
 
 export default function Chapter() {
-    const [verses, setVerses] = useState({});
+    const [classe, setClasse] = useState("aside-invisible");
+    const [verses, setVerses] = useState([]);
     const [allCommentaries, setAllCommentaries] = useState([]);
     const [commentaries, setCommentaries] = useState([]);
     const [actual, setActual] = useState({linha: 0});
@@ -31,7 +32,9 @@ export default function Chapter() {
             linha.style.backgroundColor = "white";
             setActual({"linha": 0})
             setCommentaries([]);
+            setClasse("aside-invisible")
         } else {
+            setClasse("aside-visible")
             if (actual.linha !== 0) {
                 actual.linha.style.backgroundColor = "white";
             } 
@@ -43,12 +46,13 @@ export default function Chapter() {
                 linha
             })
     
-            if (allCommentaries.length >= verse) {
-                setCommentaries(allCommentaries[verse - 1])
+            if (allCommentaries.length > verse) {
+                setCommentaries(allCommentaries[verse])
             } else {
+                console.log(verse)
                 setCommentaries([
                     {
-                        "id": 0,
+                        "id": -1,
                         "name": "Nenhum comentário",
                         "text": "Seja o primeiro a comentar"
                     }
@@ -62,18 +66,19 @@ export default function Chapter() {
             <div className="main">
                 <h1> Gênesis 01 </h1>
                 <ul className="verse-list">
-                    {Object.keys(verses).map(verse => (
-                        <li key = {verse}>
-                            <sup> {verse} </sup>
-                            <p style={{ display: "inline" }} onClick = {(evt) => handleCommentaries(evt, verse)}>
-                                { verses[verse] }
+                    {verses.map((verse, index) => (
+                        <li key = {index + 1}>
+                            <sup> {index + 1} </sup>
+                            <p style={{ display: "inline" }} onClick = {(evt) => handleCommentaries(evt, index)}>
+                                { verse }
                             </p>
                         </li>
                     ))}
                 </ul>
             </div>
             
-            <aside>
+            <aside className={classe}>
+                <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
                 <ul className="commentaries">
                     {commentaries.map(commentary => (
                         <li key = {commentary.id}>
@@ -82,6 +87,10 @@ export default function Chapter() {
                         </li>
                     ))}
                 </ul>
+                <div className="entry">
+                    <textarea name="novo" id="novo" cols="40" rows="4"></textarea>
+                    <button> Comentar </button>
+                </div>
             </aside>
         </>
     )

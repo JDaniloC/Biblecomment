@@ -11,8 +11,7 @@
 body, input, button {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
   font-size: 14px;
-  /* background-color: #c0c0c033; */
-  background-color: aqua;
+  background-color: #c0c0c033;
 }
 
 .container {

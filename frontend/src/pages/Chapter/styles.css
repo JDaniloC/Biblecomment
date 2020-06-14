@@ -5,12 +5,67 @@ div.main {
     padding: 20px;
 }
 
+.aside-visible {
+    animation: fade-in 1s ease-out;
+    opacity: 1;
+}
+
+.aside-invisible {
+    animation: fade-out 1s ease-out;
+    opacity: 0;
+}
+
 aside {
+    background-color: aliceblue;
+    position: fixed;
+    top: 160px;
+    right: 10%;
+
     background-color: white;
     border-radius: 8px;
     padding: 20px;
     margin: 0 20px;
-    min-width: 250px;
+
+    width: 350px;
+    height: 80%;
+}
+
+.entry {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.entry textarea {
+    margin-top: 8px;
+    border: 1px solid #dcdce6;
+    resize: none;
+    font-size: 15px;
+}
+
+.entry button {
+    width: 45%;
+    height: 40px;
+    background: #e02041;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    margin-top: 8px;
+    font-size: 16px;
+}
+
+ul.commentaries {
+    height: 80%;
+    overflow: auto;
+}
+
+ul.commentaries li {
+    margin-top: 10px;
+}
+
+ul.commentaries li p {
+    line-height: 30px;
 }
 
 ul.verse-list li {
@@ -19,4 +74,32 @@ ul.verse-list li {
 }
 ul.verse-list li p {
     cursor: pointer;
+}
+
+@keyframes fade-in {
+    0% {
+        right: 20%;
+        opacity: 0;
+    }
+    30% {
+        right: 10%;
+        opacity: 0.1;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-out {
+    0% {
+        right: 10%;
+        opacity: 1;
+    }
+    30% {
+        right: 20%;
+        opacity: 0.1;
+    }
+    100% {
+        opacity: 0;
+    }
 }

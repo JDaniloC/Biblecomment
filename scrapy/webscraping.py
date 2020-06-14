@@ -4,7 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlN1biBKdW4gMDcgMjAyMCAwMjozMTowMiBHTVQrMDAwMC5qZHNjQGNpbi51ZnBlLmJyIiwiaWF0IjoxNTkxNDk3MDYyfQ.OqWQ4PCWmRvV0gL99A_nqwabEkk15Rq9dIuRUul_ZZQ"
+token = "YOUR TOKEN HERE"
 
 class PageLoaded(object):
     def __init__(self, oldId):
@@ -73,11 +73,11 @@ while chapter <= totalChapters and not error:
         verses = browser.find_elements_by_css_selector("li[class=versiculoTexto]")
 
     # It create a new dictionary of the chapter
-    book[chapter] = {}
+    book[chapter] = []
     for verse in verses:
         # It split the verse number of the verse text
         verse_number, verse_text = [x for x in re.split(r'(\d+)\s+([\w\W]*)', verse.text) if x != ""]
-        book[chapter][int(verse_number)] = verse_text.strip()
+        book[chapter].append(verse_text.strip())
 
     chapter += 1
 
