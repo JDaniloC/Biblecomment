@@ -86,12 +86,12 @@ browser.quit()
 if not error:
     print("Creating File")
     with open(os.path.join("chapters", f"{abbrev}.json"), "w", encoding="utf-8") as file:
-        json.dump(book, file, ensure_ascii=False)
+        json.dump(book, file, ensure_ascii=False, indent = 2)
 
     # Add the chapters number in the books.json
     with open("books.json") as file:
         books = json.load(file)
     with open("books.json", "w") as file:
         books.update({abbrev: totalChapters})
-        json.dump(books, file)
+        json.dump(books, file, indent = 2)
     print("Files created!")

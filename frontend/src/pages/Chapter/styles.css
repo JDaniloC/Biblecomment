@@ -3,26 +3,28 @@ div.main {
     background-color: white;
     border-radius: 8px;
     padding: 20px;
+    margin-left: 20px;
 }
 
-.aside-visible {
+.visible {
     animation: fade-in 1s ease-out;
     opacity: 1;
 }
 
-.aside-invisible {
+.invisible {
     animation: fade-out 1s ease-out;
     opacity: 0;
+    position: fixed;
+    right: 0;
 }
 
 aside {
-    background-color: aliceblue;
     position: fixed;
     top: 160px;
     right: 10%;
 
     background-color: white;
-    border-radius: 8px;
+    border-radius: 0 8px;
     padding: 20px;
     margin: 0 20px;
 
@@ -30,23 +32,37 @@ aside {
     height: 80%;
 }
 
-.entry {
+.centro {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+}
+
+.new-comment {
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    margin: 10% auto;
+    max-width: 700px;;
+
+    background: white;
 }
 
-.entry textarea {
+.new-comment textarea {
     margin-top: 8px;
     border: 1px solid #dcdce6;
     resize: none;
     font-size: 15px;
 }
 
-.entry button {
+button.entry {
     width: 45%;
     height: 40px;
-    background: #e02041;
+    background: #20e0c0;
     border: 0;
     border-radius: 8px;
     color: #fff;
@@ -56,7 +72,7 @@ aside {
 }
 
 ul.commentaries {
-    height: 80%;
+    height: 90%;
     overflow: auto;
 }
 
@@ -74,6 +90,18 @@ ul.verse-list li {
 }
 ul.verse-list li p {
     cursor: pointer;
+}
+
+.top button {
+    float: right;
+    width: 20px;
+    height: 20px;
+    border: 0;
+    background-color: white;
+}
+
+.main.comment {
+    margin-right: 250px;
 }
 
 @keyframes fade-in {
@@ -99,7 +127,47 @@ ul.verse-list li p {
         right: 20%;
         opacity: 0.1;
     }
-    100% {
+    90% {
         opacity: 0;
+    }
+}
+
+@media (max-width: 1830px) {
+    aside.aside-visible {
+        position: relative;
+        right: 0;
+    }
+    .main.comment {
+        margin-right: 0;
+    }
+}
+
+@media (min-width: 1250px) {
+    aside.aside-visible {
+        width: 450px;
+    }
+}
+
+@media (max-width: 900px) {
+    aside.aside-visible {
+        top: auto;
+    }
+    .content {
+        margin: 20px 0;
+    }
+}
+
+@media (max-width: 800px) {
+    .main.comment {
+        display: none;
+    }
+    .main.text {
+        margin: 0em;
+    }
+    .aside-invisible {
+        display: none;
+    }
+    .aside-visible {
+        width: auto;
     }
 }

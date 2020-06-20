@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import "./styles.css";
 
+const close = require("../../assets/x.svg")
+
 export default function Chapter() {
-    const [classe, setClasse] = useState("aside-invisible");
+    const [asideclass, setAsideclass] = useState("invisible");
+    const [main, setMain] = useState("main text");
+    const [newbox, setNewbox] = useState("invisible")
     const [verses, setVerses] = useState([]);
     const [allCommentaries, setAllCommentaries] = useState([]);
     const [commentaries, setCommentaries] = useState([]);
@@ -32,9 +36,11 @@ export default function Chapter() {
             linha.style.backgroundColor = "white";
             setActual({"linha": 0})
             setCommentaries([]);
-            setClasse("aside-invisible")
+            setAsideclass("invisible")
+            setMain("main text")
         } else {
-            setClasse("aside-visible")
+            setAsideclass("visible")
+            setMain("main comment")
             if (actual.linha !== 0) {
                 actual.linha.style.backgroundColor = "white";
             } 
@@ -61,9 +67,24 @@ export default function Chapter() {
         }
     }
 
+    function closeCommentaries(evt) {
+        evt.preventDefault();
+        const linha = actual.linha;
+        linha.style.backgroundColor = "white";
+        setActual({"linha": 0})
+        setCommentaries([]);
+        setAsideclass("invisible")
+        setMain("main text")
+    }
+
+    function handleNewComment(evt) {
+        evt.preventDefault();
+        setNewbox("visible centro");
+    }
+
     return (
         <>  
-            <div className="main">
+            <div className={main}>
                 <h1> Gênesis 01 </h1>
                 <ul className="verse-list">
                     {verses.map((verse, index) => (
@@ -77,8 +98,14 @@ export default function Chapter() {
                 </ul>
             </div>
             
-            <aside className={classe}>
-                <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
+            <aside className={asideclass}>
+                <div className="top">
+                    <button onClick={closeCommentaries}>
+                        <img src={close} alt="Fechar"/>
+                    </button>
+                    <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
+                </div>
+                
                 <ul className="commentaries">
                     {commentaries.map(commentary => (
                         <li key = {commentary.id}>
@@ -87,11 +114,29 @@ export default function Chapter() {
                         </li>
                     ))}
                 </ul>
-                <div className="entry">
-                    <textarea name="novo" id="novo" cols="40" rows="4"></textarea>
-                    <button> Comentar </button>
+                <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems:"center"}}>
+                    <button className="entry" onClick={handleNewComment}> Comentar </button>
                 </div>
             </aside>
+
+            <spam className={newbox}>
+                <div className="new-comment">
+                    <div className="top">
+                        <button onClick={closeCommentaries}>
+                            <img src={close} alt="Fechar"/>
+                        </button>
+                        <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
+                    </div>
+
+                    <textarea name="new" id="new" cols="30" rows="10">
+
+                    </textarea>
+                    <button className="entry"> Enviar </button>
+                </div>
+            </spam>
         </>
     )
 }
