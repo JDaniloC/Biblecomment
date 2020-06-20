@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import "./styles.css";
+import "./responsive.css"
 
 const close = require("../../assets/x.svg")
 
 export default function Chapter() {
-    const [asideclass, setAsideclass] = useState("invisible");
-    const [main, setMain] = useState("main text");
-    const [newbox, setNewbox] = useState("invisible")
     const [verses, setVerses] = useState([]);
     const [allCommentaries, setAllCommentaries] = useState([]);
     const [commentaries, setCommentaries] = useState([]);
-    const [actual, setActual] = useState({linha: 0});
+
+    const [asideclass, setAsideclass] = useState("invisible");
+    const [main, setMain] = useState("main text");
+    const [newbox, setNewbox] = useState("invisible")
+    const [blur, setBlur] = useState("none");
+    const [bottom, setBottom] = useState("invisible");
+
+    const [verseatual, setVerseatual] = useState({linha: 0});
+    const [commentatual, setCommentatual] = useState({number: 0, text: ""});
 
     useEffect(() => {
         async function loadVerses() {
@@ -32,22 +38,18 @@ export default function Chapter() {
         evt.preventDefault();        
         const linha = evt.target
         
-        if (actual.linha !== 0 && actual.verse === verse) {
-            linha.style.backgroundColor = "white";
-            setActual({"linha": 0})
-            setCommentaries([]);
-            setAsideclass("invisible")
-            setMain("main text")
+        if (verseatual.linha !== 0 && verseatual.verse === verse) {
+            closeCommentaries(evt);
         } else {
             setAsideclass("visible")
             setMain("main comment")
-            if (actual.linha !== 0) {
-                actual.linha.style.backgroundColor = "white";
+            if (verseatual.linha !== 0) {
+                verseatual.linha.style.backgroundColor = "white";
             } 
     
             linha.style.backgroundColor = "yellow"
             
-            setActual({
+            setVerseatual({
                 verse,
                 linha
             })
@@ -69,9 +71,9 @@ export default function Chapter() {
 
     function closeCommentaries(evt) {
         evt.preventDefault();
-        const linha = actual.linha;
+        const linha = verseatual.linha;
         linha.style.backgroundColor = "white";
-        setActual({"linha": 0})
+        setVerseatual({"linha": 0})
         setCommentaries([]);
         setAsideclass("invisible")
         setMain("main text")
@@ -80,6 +82,30 @@ export default function Chapter() {
     function handleNewComment(evt) {
         evt.preventDefault();
         setNewbox("visible centro");
+        setBlur("block");
+    }
+
+    function closeNew(evt) {
+        evt.preventDefault();
+        setNewbox("invisible");
+        setBlur("none");
+    }
+
+    function showComment(evt) {
+        evt.preventDefault();
+        setBottom("bottom");
+        const selecionado = evt.target;
+        console.log(verseatual)
+        setCommentatual({
+            number: verseatual.verse + 1,
+            text: selecionado.innerText
+        });
+        closeCommentaries(evt);
+    }
+
+    function closeComment(evt) {
+        evt.preventDefault();
+        setBottom("invisible");
     }
 
     return (
@@ -99,44 +125,58 @@ export default function Chapter() {
             </div>
             
             <aside className={asideclass}>
-                <div className="top">
-                    <button onClick={closeCommentaries}>
-                        <img src={close} alt="Fechar"/>
-                    </button>
-                    <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
-                </div>
-                
-                <ul className="commentaries">
-                    {commentaries.map(commentary => (
-                        <li key = {commentary.id}>
-                            <h3> {commentary.name} </h3>
-                            <p> {commentary.text} </p>
-                        </li>
-                    ))}
-                </ul>
-                <div style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems:"center"}}>
-                    <button className="entry" onClick={handleNewComment}> Comentar </button>
-                </div>
-            </aside>
-
-            <spam className={newbox}>
-                <div className="new-comment">
+                <div className="side">
                     <div className="top">
                         <button onClick={closeCommentaries}>
                             <img src={close} alt="Fechar"/>
                         </button>
                         <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
                     </div>
+                    
+                    <ul className="commentaries">
+                        {commentaries.map(commentary => (
+                            <li key = {commentary.id}>
+                                <h3> {commentary.name} </h3>
+                                <p onClick = {showComment}> {commentary.text} </p>
+                            </li>
+                        ))}
+                    </ul>
+                    <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems:"center"}}>
+                        <button className="entry" onClick={handleNewComment}> Comentar </button>
+                    </div>
+                </div>
+            </aside>
 
-                    <textarea name="new" id="new" cols="30" rows="10">
+            <div className={newbox}>
+                <div className="new-comment">
+                    <div className="top">
+                        <button onClick={closeNew}>
+                            <img src={close} alt="Fechar"/>
+                        </button>
+                        <h2 style = {{ alignSelf: "center" }}> Novo comentário </h2>
+                    </div>
+
+                    <textarea name="new" id="new" cols="70" rows="30" placeholder="Descreva seu comentário">
 
                     </textarea>
                     <button className="entry"> Enviar </button>
                 </div>
-            </spam>
+            </div>
+            
+            <div className={bottom}>
+                <div className="top">
+                    <button onClick={closeComment}>
+                        <img src={close} alt="Fechar"/>
+                    </button>
+                </div>
+                <sup>{commentatual.number}</sup>
+                <p>{commentatual.text}</p>
+            </div>
+
+            <div className="overlay" style={{ display: blur }}></div>
         </>
     )
 }

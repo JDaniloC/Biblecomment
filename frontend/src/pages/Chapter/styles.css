@@ -4,6 +4,18 @@ div.main {
     border-radius: 8px;
     padding: 20px;
     margin-left: 20px;
+    margin-bottom: 80px;
+}
+
+.overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: #000;
+    opacity: 0.5;
+    filter: alpha(opacity(0.5));
 }
 
 .visible {
@@ -16,24 +28,35 @@ div.main {
     opacity: 0;
     position: fixed;
     right: 0;
+    z-index: -1;
+}
+
+.wrapper {
+    height: 80%;
+    width: 500px;
+    margin: 0 20px;
 }
 
 aside {
+    position: relative;
+    width: 500px;
+    margin: 0 20px;
+}
+
+.side {
     position: fixed;
-    top: 160px;
-    right: 10%;
 
     background-color: white;
-    border-radius: 0 8px;
+    border-radius: 0 8px 8px;
     padding: 20px;
     margin: 0 20px;
 
     width: 350px;
-    height: 80%;
+    height: 77%;
 }
 
 .centro {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -47,16 +70,11 @@ aside {
     align-items: center;
 
     margin: 10% auto;
-    max-width: 700px;;
+    max-width: 700px;
+    padding: 20px;
 
     background: white;
-}
-
-.new-comment textarea {
-    margin-top: 8px;
-    border: 1px solid #dcdce6;
-    resize: none;
-    font-size: 15px;
+    border-radius: 3px;
 }
 
 button.entry {
@@ -69,6 +87,7 @@ button.entry {
     font-weight: 700;
     margin-top: 8px;
     font-size: 16px;
+    cursor: pointer;
 }
 
 ul.commentaries {
@@ -81,6 +100,10 @@ ul.commentaries li {
 }
 
 ul.commentaries li p {
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     line-height: 30px;
 }
 
@@ -92,16 +115,39 @@ ul.verse-list li p {
     cursor: pointer;
 }
 
+.top {
+    width: 100%;
+}
+
+.top h2 {
+    margin-left: 10%;
+}
+
 .top button {
     float: right;
     width: 20px;
     height: 20px;
     border: 0;
     background-color: white;
+    cursor: pointer;
 }
 
-.main.comment {
-    margin-right: 250px;
+.bottom {
+    padding: 15px;
+    width: 100%;
+    height: 130px;
+
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+
+    background-color: white;
+    border-top: outset;
+}
+
+.bottom p {
+    font-size: medium;
 }
 
 @keyframes fade-in {
@@ -110,7 +156,7 @@ ul.verse-list li p {
         opacity: 0;
     }
     30% {
-        right: 10%;
+        right: 0%;
         opacity: 0.1;
     }
     100% {
@@ -129,45 +175,5 @@ ul.verse-list li p {
     }
     90% {
         opacity: 0;
-    }
-}
-
-@media (max-width: 1830px) {
-    aside.aside-visible {
-        position: relative;
-        right: 0;
-    }
-    .main.comment {
-        margin-right: 0;
-    }
-}
-
-@media (min-width: 1250px) {
-    aside.aside-visible {
-        width: 450px;
-    }
-}
-
-@media (max-width: 900px) {
-    aside.aside-visible {
-        top: auto;
-    }
-    .content {
-        margin: 20px 0;
-    }
-}
-
-@media (max-width: 800px) {
-    .main.comment {
-        display: none;
-    }
-    .main.text {
-        margin: 0em;
-    }
-    .aside-invisible {
-        display: none;
-    }
-    .aside-visible {
-        width: auto;
     }
 }

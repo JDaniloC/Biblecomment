@@ -1,0 +1,41 @@
+
+@media (max-width: 1650px) {
+    aside.visible {
+        width: 500px;
+    }
+}
+
+@media (max-width: 900px) {
+    aside.visible {
+        top: auto;
+        width: 600px;
+    }
+    .content {
+        margin: 20px 0;
+    }
+    .side {
+        right: 1px;
+        min-width: 300px;
+    }
+}
+
+@media (max-width: 850px) {
+    .main.comment {
+        display: none;
+    }
+    .main.text {
+        margin: 0 10px;
+    }
+    aside.invisible {
+        display: none;
+    }
+    .side {
+        width: inherit;
+    }
+}
+
+@media (max-height:500px) {
+    .new-comment {
+        height: 50%;
+    }
+}
