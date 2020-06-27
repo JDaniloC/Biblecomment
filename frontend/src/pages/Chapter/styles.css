@@ -1,3 +1,4 @@
+/* principal */
 div.main {
     max-width: 750px;
     background-color: white;
@@ -7,17 +8,24 @@ div.main {
     margin-bottom: 80px;
 }
 
-.overlay {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    background: #000;
-    opacity: 0.5;
-    filter: alpha(opacity(0.5));
+button.entry {
+    width: 45%;
+    height: 40px;
+    background: #20e0c0;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    margin-top: 8px;
+    font-size: 16px;
+    cursor: pointer;
 }
 
+button.entry:hover {
+    background: #1ad6b7;
+}
+
+/* generals */
 .visible {
     animation: fade-in 1s ease-out;
     opacity: 1;
@@ -31,12 +39,41 @@ div.main {
     z-index: -1;
 }
 
-.wrapper {
-    height: 80%;
-    width: 500px;
-    margin: 0 20px;
+/* box center */
+.centro {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
 }
 
+.overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: #000;
+    opacity: 0.5;
+    filter: alpha(opacity(0.5));
+}
+
+.new-comment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    margin: 10% auto;
+    max-width: 700px;
+    padding: 20px;
+
+    background: white;
+    border-radius: 3px;
+}
+
+/* verse commentaries */
 aside {
     position: relative;
     width: 500px;
@@ -55,41 +92,41 @@ aside {
     height: 77%;
 }
 
-.centro {
+/* title commentaries */
+.title-comments {
+    background-color: aliceblue;
+    padding: 10px 10px;
+    opacity: 0;
+    z-index: -1;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 2;
 }
 
-.new-comment {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    margin: 10% auto;
-    max-width: 700px;
-    padding: 20px;
-
-    background: white;
-    border-radius: 3px;
+.title-comments li {
+    margin-top: 10px;
+    padding-left: 20px;
 }
 
-button.entry {
-    width: 45%;
-    height: 40px;
-    background: #20e0c0;
-    border: 0;
-    border-radius: 8px;
-    color: #fff;
-    font-weight: 700;
-    margin-top: 8px;
-    font-size: 16px;
+.title-comments li p {
+    padding-left: 5px;
+}
+
+label[for=toggle] {
+    font-size: x-large;
     cursor: pointer;
+    font-weight: bold;
 }
 
+input#toggle {
+    visibility: hidden;
+}
+
+input[type=checkbox]:checked ~ .title-comments {
+    opacity: 1;
+    z-index: 0;
+    position: relative;
+}
+
+/* listas */
 ul.commentaries {
     height: 90%;
     overflow: auto;
@@ -100,6 +137,7 @@ ul.commentaries li {
 }
 
 ul.commentaries li p {
+    padding-left: 5px;
     cursor: pointer;
     overflow: hidden;
     white-space: nowrap;
@@ -108,13 +146,15 @@ ul.commentaries li p {
 }
 
 ul.verse-list li {
-    line-height: 40px;
+    margin-top: 10px;
+    line-height: 25px;
     font-size: 18px;
 }
 ul.verse-list li p {
     cursor: pointer;
 }
 
+/* comment header/foot */
 .top {
     width: 100%;
 }
@@ -150,6 +190,7 @@ ul.verse-list li p {
     font-size: medium;
 }
 
+/* animations */
 @keyframes fade-in {
     0% {
         right: 20%;

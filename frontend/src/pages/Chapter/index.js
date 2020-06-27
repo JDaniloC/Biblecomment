@@ -7,6 +7,7 @@ const close = require("../../assets/x.svg")
 export default function Chapter() {
     const [verses, setVerses] = useState([]);
     const [allCommentaries, setAllCommentaries] = useState([]);
+    const [titleComments, setTitleComments] = useState([]);
     const [commentaries, setCommentaries] = useState([]);
 
     const [asideclass, setAsideclass] = useState("invisible");
@@ -29,7 +30,8 @@ export default function Chapter() {
     useEffect(() => {
         async function loadCommentaries() {
             const result = require("./gnc.json");
-            setAllCommentaries(result[1])
+            setTitleComments(result[1]["title"])
+            setAllCommentaries(result[1]["verses"])
         }
         loadCommentaries();
     }, []);
@@ -111,7 +113,26 @@ export default function Chapter() {
     return (
         <>  
             <div className={main}>
-                <h1> Gênesis 01 </h1>
+                {/* <h1> Gênesis 01 </h1> */}
+                <label htmlFor="toggle"> Gênesis 01 </label>
+                <input type="checkbox" id='toggle'/>
+                <div className="title-comments">
+                    <ul>
+                        {titleComments.map(comment => (
+                            <li key = {comment.id}>
+                                <h3> {comment.name} </h3>
+                                <p> {comment.text} </p>
+                            </li>
+                        ))}
+                    </ul>
+                    <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems:"center"}}>
+                        <button className="entry" onClick={handleNewComment}> Comentar </button>
+                    </div>
+                </div>
+                
                 <ul className="verse-list">
                     {verses.map((verse, index) => (
                         <li key = {index + 1}>
@@ -158,10 +179,21 @@ export default function Chapter() {
                         </button>
                         <h2 style = {{ alignSelf: "center" }}> Novo comentário </h2>
                     </div>
-
-                    <textarea name="new" id="new" cols="70" rows="30" placeholder="Descreva seu comentário">
-
-                    </textarea>
+                    
+                    <div className="text-area">
+                        <div className="text-area-top">
+                            <input type="checkbox" name="devocional" id="devocional"/>
+                            <input type="checkbox" name="interpretativo" id="interpretativo"/>
+                            <input type="checkbox" name="devocional" id="devocional"/>
+                        </div>
+                        <textarea 
+                            name="new" 
+                            id="new" 
+                            cols="70" 
+                            rows="10" 
+                            placeholder="Descreva seu comentário">
+                        </textarea>
+                    </div>
                     <button className="entry"> Enviar </button>
                 </div>
             </div>
