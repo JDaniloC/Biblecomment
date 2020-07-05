@@ -3,6 +3,10 @@ import "./styles.css";
 import "./responsive.css"
 
 const close = require("../../assets/x.svg")
+const book = require("../../assets/book.svg")
+const hand = require("../../assets/hand.svg")
+const person = require("../../assets/person.svg")
+const pen = require("../../assets/pen.svg")
 
 export default function Chapter() {
     const [verses, setVerses] = useState([]);
@@ -181,10 +185,27 @@ export default function Chapter() {
                     </div>
                     
                     <div className="text-area">
-                        <div className="text-area-top">
-                            <input type="checkbox" name="devocional" id="devocional"/>
-                            <input type="checkbox" name="interpretativo" id="interpretativo"/>
-                            <input type="checkbox" name="devocional" id="devocional"/>
+                        <div className="textarea-top">
+                            <label htmlFor="devocional">
+                                <input type="checkbox" name="devocional" id="devocional"/> 
+                                <img src={hand} alt="handicon"/>
+                                {/* rosa */}
+                            </label>
+                            <label htmlFor="exegese">
+                                <input type="checkbox" name="exegese" id="exegese"/>
+                                <img src={book} alt="bookicon"/>
+                                {/* amarelo */}
+                            </label>
+                            <label htmlFor="inspirado">
+                                <input type="checkbox" name="inspirado" id="inspirado"/>
+                                <img src={pen} alt="penicon"/>
+                                {/* azul */}
+                            </label>
+                            <label htmlFor="pessoal">
+                                <input type="checkbox" name="pessoal" id="pessoal"/>
+                                <img src={person} alt="personicon"/>
+                                {/* verde */}
+                            </label>
                         </div>
                         <textarea 
                             name="new" 
@@ -215,6 +236,5 @@ export default function Chapter() {
 
 /*
 TODO
-1 - Se clicar em um comentário, vai abrir uma caixinha flutuante ao lado, para adicionar.
-2 - Se clicar em comentários, vai abrir uma aba do lado com todos os comentários, emabaixo da mesma vai ter adicionar comentários. Não esquecer de classificar os comentários.
+1 - Fazer a classificação de comentários
 */

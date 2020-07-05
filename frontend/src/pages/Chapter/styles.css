@@ -112,12 +112,19 @@ aside {
 
 label[for=toggle] {
     font-size: x-large;
-    cursor: pointer;
     font-weight: bold;
 }
 
-input#toggle {
+label {
+    cursor: pointer;
+}
+
+input {
     visibility: hidden;
+}
+
+label img:hover {
+    background-color: #dadada;   
 }
 
 input[type=checkbox]:checked ~ .title-comments {
@@ -188,6 +195,33 @@ ul.verse-list li p {
 
 .bottom p {
     font-size: medium;
+}
+
+/* textarea */
+
+.textarea-top {
+    background-color: #f0f0f0;
+    border-radius: 4px 4px 0px 0px;
+}
+
+label img {
+    height: 30px;
+    padding: 4px;
+    margin-top: 4px;
+    border-radius: 4px;
+}
+
+input#devocional:checked ~ img{
+    background-color: pink;
+}
+input#exegese:checked ~ img{
+    background-color: yellow;
+}
+input#inspirado:checked ~ img{
+    background-color: cyan;
+}
+input#pessoal:checked ~ img{
+    background-color: chartreuse;
 }
 
 /* animations */
