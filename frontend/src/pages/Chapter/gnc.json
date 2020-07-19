@@ -4,77 +4,46 @@
             {
                 "id": 0,
                 "name": "JDaniloC",
-                "text": "Vai ao contrário de tudo que havia na época APSOKSAPOK ASPOKAPOKSP APOKSAPOKSP APOKSAPOKASP PAOKSPOSAKPSO"
+                "text": "Vai ao contrário de tudo que havia na época APSOKSAPOK ASPOKAPOKSP APOKSAPOKSP APOKSAPOKASP PAOKSPOSAKPSO",
+                "tags": []
             },
             {
                 "id": 1,
                 "name": "Daniel",
-                "text": "Mostra o monoteísmo"
+                "text": "Mostra o monoteísmo",
+                "tags": [
+                    "devocional"
+                ]
             },
             {
                 "id": 2,
                 "name": "Júnior",
-                "text": "Céus e terra como opostos extremos"
+                "text": "Céus e terra como opostos extremos",
+                "tags": [
+                    "devocional",
+                    "inspirado"
+                ]
             },
             {
                 "id": 3,
                 "name": "Daniel",
-                "text": "Mostra o monoteísmo"
+                "text": "Mostra o monoteísmo",
+                "tags": [
+                    "devocional",
+                    "inspirado",
+                    "pessoal"
+                ]
             },
             {
                 "id": 4,
                 "name": "Júnior",
-                "text": "Céus e terra como opostos extremos"
-            },
-            {
-                "id": 5,
-                "name": "Daniel",
-                "text": "Mostra o monoteísmo"
-            },
-            {
-                "id": 6,
-                "name": "Júnior",
-                "text": "Céus e terra como opostos extremos"
-            },
-            {
-                "id": 7,
-                "name": "Daniel",
-                "text": "Mostra o monoteísmo"
-            },
-            {
-                "id": 8,
-                "name": "Júnior",
-                "text": "Céus e terra como opostos extremos"
-            },
-            {
-                "id": 9,
-                "name": "Daniel",
-                "text": "Mostra o monoteísmo"
-            },
-            {
-                "id": 10,
-                "name": "Júnior",
-                "text": "Céus e terra como opostos extremos"
-            },
-            {
-                "id": 11,
-                "name": "Daniel",
-                "text": "Mostra o monoteísmo"
-            },
-            {
-                "id": 12,
-                "name": "Júnior",
-                "text": "Céus e terra como opostos extremos"
-            },
-            {
-                "id": 13,
-                "name": "Daniel",
-                "text": "Mostra o monoteísmo"
-            },
-            {
-                "id": 14,
-                "name": "Júnior",
-                "text": "Céus e terra como opostos extremos"
+                "text": "Céus e terra como opostos extremos",
+                "tags": [
+                    "devocional",
+                    "inspirado",
+                    "pessoal",
+                    "exegese"
+                ]
             }
         ],
         "verses": [
@@ -82,91 +51,71 @@
                 {
                     "id": 0,
                     "name": "JDaniloC",
-                    "text": "Vai ao contrário de tudo que havia na época APSOKSAPOK ASPOKAPOKSP APOKSAPOKSP APOKSAPOKASP PAOKSPOSAKPSO"
+                    "text": "Vai ao contrário de tudo que havia na época APSOKSAPOK ASPOKAPOKSP APOKSAPOKSP APOKSAPOKASP PAOKSPOSAKPSO",
+                    "tags": [
+                        "devocional",
+                        "inspirado",
+                        "pessoal",
+                        "exegese"
+                    ]
                 },
                 {
                     "id": 1,
                     "name": "Daniel",
-                    "text": "Mostra o monoteísmo"
+                    "text": "Mostra o monoteísmo",
+                    "tags": [
+                        "devocional",
+                        "inspirado",
+                        "pessoal"
+                    ]
                 },
                 {
                     "id": 2,
                     "name": "Júnior",
-                    "text": "Céus e terra como opostos extremos"
+                    "text": "Céus e terra como opostos extremos",
+                    "tags": [
+                        "devocional",
+                        "inspirado"
+                    ]
                 },
                 {
                     "id": 3,
                     "name": "Daniel",
-                    "text": "Mostra o monoteísmo"
+                    "text": "Mostra o monoteísmo",
+                    "tags": [
+                        "devocional"
+                    ]
                 },
                 {
                     "id": 4,
                     "name": "Júnior",
-                    "text": "Céus e terra como opostos extremos"
-                },
-                {
-                    "id": 5,
-                    "name": "Daniel",
-                    "text": "Mostra o monoteísmo"
-                },
-                {
-                    "id": 6,
-                    "name": "Júnior",
-                    "text": "Céus e terra como opostos extremos"
-                },
-                {
-                    "id": 7,
-                    "name": "Daniel",
-                    "text": "Mostra o monoteísmo"
-                },
-                {
-                    "id": 8,
-                    "name": "Júnior",
-                    "text": "Céus e terra como opostos extremos"
-                },
-                {
-                    "id": 9,
-                    "name": "Daniel",
-                    "text": "Mostra o monoteísmo"
-                },
-                {
-                    "id": 10,
-                    "name": "Júnior",
-                    "text": "Céus e terra como opostos extremos"
-                },
-                {
-                    "id": 11,
-                    "name": "Daniel",
-                    "text": "Mostra o monoteísmo"
-                },
-                {
-                    "id": 12,
-                    "name": "Júnior",
-                    "text": "Céus e terra como opostos extremos"
-                },
-                {
-                    "id": 13,
-                    "name": "Daniel",
-                    "text": "Mostra o monoteísmo"
-                },
-                {
-                    "id": 14,
-                    "name": "Júnior",
-                    "text": "Céus e terra como opostos extremos"
+                    "text": "Céus e terra como opostos extremos",
+                    "tags": []
                 }
             ],
             [
                 {
                     "id": 3,
                     "name": "JDaniloC",
-                    "text": "Esse é um comentário no verso 2"
+                    "text": "Esse é um comentário no verso 2",
+                    "tags": [
+                        "devocional",
+                        "inspirado",
+                        "pessoal",
+                        "exegese"
+                    ]
                 }
             ],
             [
                 {
                     "id": 4,
                     "name": "Daniel",
-                    "text": "Esse é um comentário no verso 3"
+                    "text": "Esse é um comentário no verso 3",
+                    "tags": [
+                        "devocional",
+                        "inspirado",
+                        "pessoal"
+                    ]
                 }
             ]
         ]

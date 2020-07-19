@@ -60,3 +60,41 @@ textarea {
 textarea:focus {
   border-color: #666668;
 }
+
+.top {
+  width: 100%;
+}
+
+.top h2 {
+  margin-left: 10%;
+}
+
+.top button {
+  float: right;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background-color: white;
+  cursor: pointer;
+}
+
+img.tag {
+  height: 30px;
+  padding: 4px;
+  margin-top: 4px;
+  border-radius: 4px;
+}
+
+input[type=checkbox] ~ div {
+  background-color: aliceblue;
+  padding: 10px 10px;
+  opacity: 0;
+  z-index: -1;
+  position: fixed;
+}
+
+input[type=checkbox]:checked ~ div {
+  opacity: 1;
+  z-index: 0;
+  position: relative;
+}

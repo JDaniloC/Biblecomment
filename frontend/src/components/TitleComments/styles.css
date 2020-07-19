@@ -1,0 +1,25 @@
+.title-comments li {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.title-comments li p {
+    padding-left: 5px;
+}
+
+label[for=toggle] {
+    font-size: x-large;
+    font-weight: bold;
+}
+
+label {
+    cursor: pointer;
+}
+
+input {
+    display: none;
+}
+
+label img:hover {
+    background-color: #dadada;   
+}

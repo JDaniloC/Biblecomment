@@ -2,6 +2,7 @@ import React from 'react';
 import Routes from './routes';
 
 import './App.css';
+import './Responsive.css';
 
 function App() {
   return (
