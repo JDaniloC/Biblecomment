@@ -9,6 +9,7 @@ exports.up = function(knex) {
         table.string("name").notNullable();
         table.string("text").notNullable();
         table.json("tags").notNullable();
+        table.integer("verse").notNullable();
     })
 };
 

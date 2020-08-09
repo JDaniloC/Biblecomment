@@ -15,9 +15,14 @@ routes.get("/books/:abbrev/chapters/:number", ChapterController.show);
 routes.post("/books/:abbrev/chapters/:number", ChapterController.store);
 
 routes.get(
-    "/books/:abbrev/chapters/:number/comments", CommentController.index);
+    "/books/:abbrev/chapters/:number/comments", 
+    CommentController.index);
+routes.get(
+    "/books/:abbrev/chapters/:number/comments/:verse", 
+    CommentController.show);
 routes.post(
-    "/books/:abbrev/chapters/:number/comments", CommentController.store);
+    "/books/:abbrev/chapters/:number/comments/:verse", 
+    CommentController.store);
 routes.delete("/comments/:id", CommentController.destroy);
 
 module.exports = routes;

@@ -4,12 +4,22 @@ import "./styles.css";
 const close = require("../../assets/x.svg")
 
 export default class Comments extends Component {
+    constructor(props) {
+        super(props);
+
+        this.selected = false;
+    }
+    showNewComment(evt) {
+        this.selected = true;
+        this.props.handleNewComment(evt)
+    }
+
     render() {
         return (
             <div className="side">
                 <div className="top">
-                    <button onClick={this.props.closeFunction}>
-                        <img src={close} alt="Fechar"/>
+                    <button onClick = { this.props.closeFunction }>
+                        <img src = { close } alt="Fechar"/>
                     </button>
                     <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
                 </div>
@@ -22,7 +32,7 @@ export default class Comments extends Component {
                             </h3> {commentary.tags.map((tag, index) => (
                                     <img 
                                         key = {index}
-                                        src={this.props.imageFunction(tag)}
+                                        src = {this.props.imageFunction(tag)}
                                         className = "tag"
                                         alt = {tag}/>
                                 )
@@ -46,9 +56,7 @@ export default class Comments extends Component {
                     }}>
                     <button 
                         className = "entry" 
-                        onClick = {
-                            (evt) => this.props.newComment(evt, "verses")
-                        }> 
+                        onClick = { (evt) => {this.showNewComment(evt)} }> 
                         Comentar 
                     </button>
                 </div>

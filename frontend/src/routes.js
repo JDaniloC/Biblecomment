@@ -9,7 +9,10 @@ export default function Routes() {
         <BrowserRouter>
             <Switch>
                 <Route path="/" component={Login} exact/>
-                <Route path="/chapters" component={Chapter}/>
+                <Route 
+                    exact
+                    path="/verses/:abbrev/:number/" 
+                    component={Chapter}/>
             </Switch>
         </BrowserRouter>
     )

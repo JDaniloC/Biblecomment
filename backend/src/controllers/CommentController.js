@@ -21,13 +21,34 @@ module.exports = {
         return response.json( comments );
     },
 
+    async show(request, response) {
+        const { abbrev, number, verse } = request.params;
+
+        const chapter = await connection('chapters')
+            .where("book_abbrev", abbrev)
+            .andWhere("number", number)
+            .first()
+            .select("id")
+
+        const comments = await connection('comments')
+            .where("chapter_id", chapter.id)
+            .andWhere("verse", verse)
+            .select("*");
+
+        if (comments) {
+            return response.json(comments)
+        } else {
+            return response.json({ "error": "chapter number doesn't exists" })
+        }
+    },
+
     async store(request, response) {
-        const { abbrev, number, on_title } = request.params;
-        const { name, text, tags } = request.body;
+        const { abbrev, number, verse } = request.params;
+        const { name, text, tags, on_title } = request.body;
         
-        if (!name | !text | !tags) {
-            response.json(
-                { "error": "insuficient body: name, text, tags" }
+        if (!name | !text | !tags | on_title === null) {
+            return response.json(
+                { "error": "insuficient body: name, text, tags, on_title" }
             )
         }
 
@@ -44,6 +65,7 @@ module.exports = {
                     name,
                     text,
                     on_title,
+                    verse,
                     tags: JSON.stringify(tags),
                     chapter_id: chapter.id
                 })

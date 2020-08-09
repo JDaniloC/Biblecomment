@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import 'balloon-css';
 import "./styles.css";
 
+import axios from '../../services/api';
+
 const close = require("../../assets/x.svg")
 const book = require("../../assets/book.svg")
 const hand = require("../../assets/hand.svg")
@@ -9,6 +11,64 @@ const person = require("../../assets/person.svg")
 const pen = require("../../assets/pen.svg")
 
 export default class NewComment extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            devocional: false,
+            exegese: false,
+            inspirado: false,
+            pessoal: false,
+            texto: "",
+            nome: "Visitante"
+        }
+    }
+
+    postNewComment(evt) {
+        evt.preventDefault();
+
+        if (this.state.texto === "" | this.state.nome === "") {
+            return
+        }
+        const tags = [];
+        if (this.state.devocional) {
+            tags.push("devocional")
+        }
+        if (this.state.exegese) {
+            tags.push("exegese")
+        }
+        if (this.state.inspirado) {
+            tags.push("inspirado")
+        }
+        if (this.state.pessoal) {
+            tags.push("pessoal")
+        }
+
+        try {
+            axios.post(
+                `books/${this.props.abbrev}/chapters/${this.props.number}/comments/${this.props.verso() + 1}`, {
+                    on_title: this.props.on_title.selected,
+                    name: this.state.nome,
+                    text: this.state.texto,
+                    tags: tags
+                }).then(response => {
+                    console.log(response)
+                })
+        } catch (error) {
+            console.log(error)
+            console.log("Deu um problema na requisição.")
+        }
+
+        this.props.close(evt)
+    }
+
+
+    handleChange(event) {
+        const value = event.target.checked ? (
+            event.target.checked !== undefined
+        ) : event.target.value
+        this.setState({[event.target.name]: value});
+    }
 
     render() {
         return (
@@ -32,6 +92,10 @@ export default class NewComment extends Component {
                             <input 
                                 type="checkbox" 
                                 name="devocional" 
+                                value = {this.state.devocional}
+                                onChange = {
+                                    (evt) => {this.handleChange(evt)}
+                                }
                                 id="devocional"/> 
                             <img 
                                 className = "tag"
@@ -45,6 +109,10 @@ export default class NewComment extends Component {
                             <input 
                                 type="checkbox" 
                                 name="exegese" 
+                                value = {this.state.exegese}
+                                onChange = {
+                                    (evt) => {this.handleChange(evt)}
+                                }
                                 id="exegese"/>
                             <img 
                                 className = "tag"
@@ -58,6 +126,10 @@ export default class NewComment extends Component {
                             <input 
                                 type="checkbox" 
                                 name="inspirado" 
+                                value = {this.state.inspirado}
+                                onChange = {
+                                    (evt) => {this.handleChange(evt)}
+                                }
                                 id="inspirado"/>
                             <img 
                                 className = "tag"
@@ -71,6 +143,10 @@ export default class NewComment extends Component {
                             <input 
                                 type="checkbox" 
                                 name="pessoal" 
+                                value = {this.state.pessoal}
+                                onChange = {
+                                    (evt) => {this.handleChange(evt)}
+                                }
                                 id="pessoal"/>
                             <img 
                                 className = "tag"
@@ -79,12 +155,19 @@ export default class NewComment extends Component {
                         </label>
                     </div>
                     <textarea 
-                        name="new" 
-                        id="new" 
-                        placeholder="Descreva seu comentário">
+                        name = "texto" 
+                        id = "texto" 
+                        value = {this.state.texto}
+                        onChange = {(evt) => {this.handleChange(evt)}}
+                        placeholder = "Descreva seu comentário">
                     </textarea>
                 </div>
-                <button className="entry"> Enviar </button>
+                <button 
+                    type = "submit"
+                    onClick = {(evt) => {this.postNewComment(evt)}}
+                    className="entry"> 
+                    Enviar 
+                </button>
             </div>
         )
     }

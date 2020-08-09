@@ -3,6 +3,16 @@ import React, { Component } from 'react';
 import "./styles.css";
 
 export default class TitleComment extends Component {
+    constructor(props) {
+        super(props);
+
+        this.selected = false;
+    }
+    showNewComment(evt) {
+        this.selected = true;
+        this.props.handleNewComment(evt)
+    }
+    
     render() {
         return (
             <div className="title-comments">
@@ -29,9 +39,7 @@ export default class TitleComment extends Component {
                     alignItems:"center"}}>
                     <button 
                         className="entry" 
-                        onClick={
-                            (evt) => this.props.commentFunction(evt, "title")
-                        }>
+                        onClick = { (evt) => {this.showNewComment(evt)} }>
                             Comentar 
                     </button>
                 </div>

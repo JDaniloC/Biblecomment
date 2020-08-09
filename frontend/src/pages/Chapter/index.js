@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { Component, createRef } from 'react';
 import NewComment from "../../components/NewComment";
 import TitleComment from "../../components/TitleComments";
 import Comments from "../../components/Comments";
 
+import axios from '../../services/api';
 import "./styles.css";
 
 const book = require("../../assets/book.svg")
@@ -10,90 +11,147 @@ const hand = require("../../assets/hand.svg")
 const person = require("../../assets/person.svg")
 const pen = require("../../assets/pen.svg")
 
-export default function Chapter() {
-    const [verses, setVerses] = useState([]);
-    const [allCommentaries, setAllCommentaries] = useState([]);
-    const [titleComments, setTitleComments] = useState([]);
-    const [commentaries, setCommentaries] = useState([]);
-
-    const [asideclass, setAsideclass] = useState("invisible");
-    const [main, setMain] = useState("main text");
-    const [newbox, setNewbox] = useState("invisible")
-    const [blur, setBlur] = useState("none");
-
-    const [verseatual, setVerseatual] = useState({linha: 0});
-
-    useEffect(() => {
-        async function loadVerses() {
-            const result = require("./gn.json");
-            setVerses(result[1])
+export default class Chapter extends Component{
+    constructor(props) {
+        super(props);
+        
+        this.state = {
+            titleName: "Chapter",
+            chapterNumber: "0",
+            verses: [],
+            asideclass: "invisible",
+            blur: "none",
+            comments: [],
+            main: "main text",
+            newbox: "invisible",
+            titleComments: [],
+            verseAtual: {linha: null, verse: 0},
+            allComments: [],
         }
-        loadVerses();
-    }, []);
-    
-    useEffect(() => {
-        async function loadCommentaries() {
-            const result = require("./gnc.json");
-            setTitleComments(result[1]["title"])
-            setAllCommentaries(result[1]["verses"])
-        }
-        loadCommentaries();
-    }, []);
+        
+        this.titleComponent = createRef();
+        this.commentsComponent = createRef();
 
-    function handleCommentaries(evt, verse) {
+        // to use the state of parent in the children
+        this.handleNewComment = this.handleNewComment.bind(this);
+        this.closeComments = this.closeComments.bind(this);
+        this.closeNewCommentary = this.closeNewCommentary.bind(this);
+        this.getVerse = this.getVerse.bind(this);
+    }
+
+    getVerse() {
+        return this.state.verseAtual.verse;
+    }
+
+    componentDidMount() {
+        let {abbrev, number} = this.props.match.params;
+        this.abbrev = abbrev;
+        this.number = number;
+
+        try {
+            axios.get(`books/${abbrev}/chapters/${number}`)
+                .then(response => {
+                const {title, verses} = response.data;
+                this.setState({ titleName: title })
+                this.setState({ verses: JSON.parse(verses) })
+            });
+        } catch (err) {
+            console.log("Mandar para o 404");
+        }
+        
+        try {
+            axios.get(`books/${abbrev}/chapters/${number}/comments`)
+                .then(response => {
+                const result = response.data.map(comment => {
+                    comment.tags = JSON.parse(comment.tags);
+                    return comment
+                });
+                const titleComments = [];
+                const comments = [];
+                for (const comment of result) {
+                    if (comment.on_title) {
+                        titleComments.push(comment)
+                    } else {
+                        comments.push(comment)
+                    }
+                }
+
+                this.setState({ allComments: comments });
+                this.setState({ titleComments: titleComments });
+            });
+        } catch (err) {
+            console.log("Mandar para o 404");
+        }
+        
+        if (number.length === 1) {
+            number = "0" + number
+        }
+        this.setState({ chapterNumber: number })
+    }
+
+    handlecomments(evt, verse) {
         evt.preventDefault();        
         const linha = evt.target
         
-        if (verseatual.linha !== 0 && verseatual.verse === verse) {
-            closeCommentaries(evt);
+        if (
+            this.state.verseAtual.linha !== null && 
+            this.state.verseAtual.verse === verse) {
+            this.closeComments(evt);
         } else {
-            setAsideclass("visible")
-            setMain("main comment")
-            if (verseatual.linha !== 0) {
-                verseatual.linha.style.backgroundColor = "white";
+            this.setState({ asideclass: "visible" });
+            this.setState({ main: "main comment" });
+            if (this.state.verseAtual.linha !== null) {
+                var antigo = this.state.verseAtual;
+                antigo.linha.style.backgroundColor = "white";
+                this.setState({ verseAtual: {
+                    "linha": antigo.linha,
+                    "verse": antigo.verse
+                }})
             } 
     
             linha.style.backgroundColor = "yellow"
-            
-            setVerseatual({
+            this.setState({ verseAtual: {
                 verse,
                 linha
+            }})
+            
+            const thisComments = this.state.allComments.filter((comment) => {
+                return comment.verse === verse + 1;
             })
-    
-            if (allCommentaries.length > verse) {
-                setCommentaries(allCommentaries[verse])
+            if (thisComments.length > 0) {
+                this.setState({ comments: thisComments })
             } else {
-                console.log(verse)
-                setCommentaries([
+                this.setState({ comments: [
                     {
                         "id": -1,
                         "name": "Nenhum comentário",
                         "text": "Seja o primeiro a comentar",
                         "tags": []
                     }
-                ])
+                ]})
             }
         }
     }
 
-    function closeCommentaries(evt) {
+    closeComments(evt) {
         evt.preventDefault();
-        const linha = verseatual.linha;
+        const linha = this.state.verseAtual.linha;
         linha.style.backgroundColor = "white";
-        setVerseatual({"linha": 0})
-        setCommentaries([]);
-        setAsideclass("invisible")
-        setMain("main text")
+
+        this.setState({ verseAtual: {"linha": null, "verse": 0}})
+        this.setState({ comments: []})
+        this.setState({ asideclass: "invisible" })
+        this.setState({ main: "main text" })
     }
 
-    function handleNewComment(evt, type) {
+    handleNewComment(evt) {
         evt.preventDefault();
-        console.log(type)
-        setNewbox("visible centro");
-        setBlur("block");
+        
+        this.setState({ newbox: "visible centro"})
+        this.setState({ blur: "block"})
     }
 
-    function getImage(tag) {
+    getImage(tag) {
         switch (tag) {
             case "devocional":
                 return hand;
@@ -106,53 +164,74 @@ export default function Chapter() {
         }
     }
 
-    function closeNew(evt) {
+    closeNewCommentary(evt) {
         evt.preventDefault();
-        setNewbox("invisible");
-        setBlur("none");
+        
+        this.titleComponent.current.selected = false;
+        this.commentsComponent.current.selected = false;
+
+        this.setState({ newbox: "invisible" });
+        this.setState({ blur: "none" });
+    }
+    render() {
+        return (
+            <>  
+                <div className={this.state.main}>
+                    <label htmlFor="toggle"> 
+                        {this.state.titleName} {this.state.chapterNumber} 
+                    </label>
+                    <input type="checkbox" id='toggle'/>
+                    <TitleComment 
+                        comments = {this.state.titleComments} 
+                        handleNewComment = {this.handleNewComment}
+                        imageFunction = {this.getImage}
+                        ref = {this.titleComponent}
+                    />
+                    
+                    <ul className="verse-list">
+                        {this.state.verses.map((verse, index) => (
+                            <li key = {index + 1}>
+                                <sup> {index + 1} </sup>
+                                <p 
+                                    style={{ display: "inline" }} 
+                                    onClick = {
+                                        (evt) => 
+                                        this.handlecomments(
+                                            evt, index
+                                        )
+                                    }>
+                                    { verse }
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                
+                <aside className={this.state.asideclass}>
+                    <Comments 
+                        closeFunction = {this.closeComments}
+                        commentaries = {this.state.comments}
+                        imageFunction = {this.getImage}
+                        handleNewComment = {this.handleNewComment}
+                        ref = {this.commentsComponent}
+                    />
+                </aside>
+    
+                <div className={this.state.newbox}>
+                    <NewComment 
+                        on_title = {this.titleComponent.current}
+                        abbrev = {this.abbrev}
+                        number = {this.number}
+                        verso = {this.getVerse}
+                        close = {this.closeNewCommentary}
+                    />
+                </div>
+    
+                <div className="overlay" style={
+                    { display: this.state.blur }
+                }></div>
+            </>
+        )
     }
 
-    return (
-        <>  
-            <div className={main}>
-                <label htmlFor="toggle"> Gênesis 01 </label>
-                <input type="checkbox" id='toggle'/>
-                <TitleComment 
-                    comments = {titleComments} 
-                    commentFunction = {handleNewComment}
-                    imageFunction = {getImage}
-                />
-                
-                <ul className="verse-list">
-                    {verses.map((verse, index) => (
-                        <li key = {index + 1}>
-                            <sup> {index + 1} </sup>
-                            <p 
-                                style={{ display: "inline" }} 
-                                onClick = {
-                                    (evt) => handleCommentaries(evt, index)
-                                }>
-                                { verse }
-                            </p>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-            
-            <aside className={asideclass}>
-                <Comments 
-                    closeFunction = {closeCommentaries}
-                    commentaries = {commentaries}
-                    newComment = {handleNewComment}
-                    imageFunction = {getImage}
-                />
-            </aside>
-
-            <div className={newbox}>
-                <NewComment close = {closeNew}/>
-            </div>
-
-            <div className="overlay" style={{ display: blur }}></div>
-        </>
-    )
 }

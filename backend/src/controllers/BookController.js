@@ -20,7 +20,7 @@ module.exports = {
         const { title, abbrev, length } = request.body
         
         if (title == null | abbrev == null | length == null) {
-            response.json(
+            return response.json(
                 { "error": "insuficient body: title, abbrev, length" })
         }
 
