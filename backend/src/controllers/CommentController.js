@@ -11,14 +11,18 @@ module.exports = {
             .andWhere("number", number)
             .first()
             .select("id")
+        
+        if (chapter) {
+            const comments = await connection('comments')
+                .where("chapter_id", chapter.id)
+                .limit(5)
+                .offset((pages - 1) * 5)
+                .select("*");
 
-        const comments = await connection('comments')
-            .where("chapter_id", chapter.id)
-            .limit(5)
-            .offset((pages - 1) * 5)
-            .select("*");
-
-        return response.json( comments );
+            return response.json( comments );
+        } else {
+            return response.json({ "error": "chapter not found" })
+        }    
     },
 
     async show(request, response) {

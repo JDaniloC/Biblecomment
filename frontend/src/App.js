@@ -15,7 +15,7 @@ function App() {
       </div>
 
       <footer>
-        Developed JDaniloC
+        Developed by God through JDaniloC
       </footer>
     </div>
   );

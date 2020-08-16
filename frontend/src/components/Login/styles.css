@@ -1,0 +1,59 @@
+form.login-container {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+    width: 400px;
+    padding: 30px;
+    box-shadow: -1px 1px 20px -5px grey;
+}
+
+.login-container input {
+    text-indent: 20px;
+    border: #bbbbbb groove 1px;
+    background-color: white;
+    border-radius: 4px;
+    width: 100%;
+    height: 60px;
+    margin-bottom: 15px;
+    font-size: larger;
+}
+
+.login-container input[type=submit] {
+    border-radius: 6px;
+    border: none;
+
+    text-indent: 0;
+    text-align: center;
+    
+    background-color: #888;
+    font-weight: bolder;
+    color: white;
+    height: 50px;
+
+    cursor: pointer;
+}
+
+.login-container button {
+    margin-top: 10px;
+    border-radius: 6px;
+    border: none;
+    width: 70%;
+    background-color: #1E7;
+    font-weight: bolder;
+    color: white;
+    height: 50px;
+    cursor: pointer;
+}
+
+hr {
+    color: black;
+    width: inherit;
+}
+
+button:hover, input:hover, li:hover {
+    opacity: 0.9;
+}
