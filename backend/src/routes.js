@@ -1,10 +1,16 @@
 const express = require('express');
 
 const BookController = require('./controllers/BookController');
-const ChapterController = require('./controllers/ChapterController');
-const CommentController = require('./controllers/CommentController');
+const ChapterController = require(
+    './controllers/ChapterController');
+const CommentController = require(
+    './controllers/CommentController');
+const UserController = require('./controllers/UserController');
 
 const routes = express.Router();
+
+routes.post("/users/login", UserController.login);
+routes.post("/users/register", UserController.register);
 
 routes.get("/books", BookController.index);
 routes.get("/books/:abbrev", BookController.show);

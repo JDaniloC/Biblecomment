@@ -67,10 +67,12 @@ while chapter <= totalChapters and not error:
     # It capture the verses
     total = versesTotal(abbrev, chapter, token)
     verses = browser.find_elements_by_css_selector("li[class=versiculoTexto]")
-    while len(verses) != total:
+    cont = 0
+    while len(verses) != total and cont < 20:
         browser.execute_script("window.scrollBy(0, document.body.scrollHeight)")
         time.sleep(0.6)
         verses = browser.find_elements_by_css_selector("li[class=versiculoTexto]")
+        cont += 1
 
     # It create a new dictionary of the chapter
     book[chapter] = []

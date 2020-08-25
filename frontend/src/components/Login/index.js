@@ -1,5 +1,9 @@
 import React, { Component } from 'react';
+import axios from '../../services/api';
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/lab/Alert';
 
+import { login } from "../../services/auth";
 import "./styles.css"
 
 export default class Login extends Component {
@@ -10,63 +14,155 @@ export default class Login extends Component {
             loginClass: "",
             registerClass: "invisible",
             buttonColor: "#1E7",
-            buttonName: "Cadastrar"
+            buttonName: "Cadastrar",
+            
+            aviso: false,
+            mensagem: "",
+            severidade: "",
+
+            email: "",
+            name: "",
+            password: ""
         }
     }
 
-    changeState(evt) {
+    changeMethod(evt) {
         evt.preventDefault();
         if (this.state.loginClass === "") {
             this.setState({ 
-                loginClass: "invisible" 
-            })
-            this.setState({
-                registerClass: ""
-            })
-            
-            this.setState({
-                buttonColor: "#888"
-            })
-            this.setState({
+                loginClass: "invisible",
+                registerClass: "",
+                buttonColor: "#888",
                 buttonName: "Login"
             })
         } else {
             this.setState({ 
-                loginClass: "" 
-            })
-            this.setState({
-                registerClass: "invisible"
-            })
-    
-            this.setState({
-                buttonColor: "#1E7"
-            })
-            this.setState({
+                loginClass: "", 
+                registerClass: "invisible",
+                buttonColor: "#1E7",
                 buttonName: "Cadastrar"
             })
         }
     }
 
+    changeState(event) {
+        event.preventDefault();
+        this.setState({[event.target.name]: event.target.value});
+    }
+
+    async login(email, password) {
+        try { 
+            await axios.post("users/login", {
+                email,
+                password,
+            }).then(response => {
+                console.log(response.data)
+                const token = response.data.token;
+                if (token !== undefined) {
+                    this.setState({
+                        aviso: true,
+                        mensagem: "Login realizado com sucesso!",
+                        severidade: "success"
+                    })
+                    login(token);
+                } else {
+                    this.setState({
+                        aviso: true,
+                        severidade: "warning",
+                        mensagem: response.data.msg
+                    })
+                }
+            })
+        } catch (error) {
+            this.setState({
+                aviso: true,
+                mensagem: "Problema no servidor",
+                severidade: "error"
+            })
+        }
+    }
+
+    async register(email, name, password) {
+        try {
+            await axios.post("users/register", {
+                email,
+                name,
+                password
+            }).then(response => {
+                if (response.data.error === undefined) {
+                    this.setState({
+                        aviso: true,
+                        mensagem: "Cadastro realizado com sucesso!",
+                        severidade: "success"
+                    })
+                } else {
+                    this.setState({
+                        aviso: true,
+                        severidade: "warning",
+                        mensagem: response.data.error
+                    })
+                }
+            })
+        } catch (error) {
+            this.setState({
+                aviso: true,
+                mensagem: "Problema no servidor",
+                severidade: "error"
+            })
+        }
+    }
+
+    handleForm(evt) {
+        evt.preventDefault();
+        
+        if (this.state.loginClass === "") {
+            this.login(this.state.email, this.state.password)
+        } else {
+            this.register(
+                this.state.email, 
+                this.state.name, 
+                this.state.password)
+        }
+    }
+
+    closeAviso(evt, reason) {
+        if (evt != null){
+            evt.preventDefault();
+        }
+
+        if (reason === 'clickaway') {
+            return;
+        }
+      
+        this.setState({ aviso:false });
+    }
+
     render() { 
         return (
-            <form className="login-container">
+            <>
+            <form className="login-container" onSubmit={(evt) => {this.handleForm(evt)}}>
                 <input 
                     type="email" 
                     name="email" 
                     id="email" 
-                    placeholder = "E-mail"    
+                    placeholder = "E-mail"
+                    onChange = {(evt) => {this.changeState(evt)}}
+                    required
                 />
                 <input 
                     className = {
                     this.state.registerClass}
                     type="text" 
-                    name="nickname" 
+                    name="name" 
                     placeholder = "Nome de usuário"
+                    onChange = {(evt) => {this.changeState(evt)}}
                 />
                 <input 
                     type="password" 
                     name="password" 
                     placeholder = "Senha"
+                    onChange = {(evt) => {this.changeState(evt)}}
+                    required
                 />
                 <input 
                     className = {
@@ -86,10 +182,22 @@ export default class Login extends Component {
                         this.state.buttonColor}}
                     onClick = {
                         (evt) => 
-                        this.changeState(evt)
+                        this.changeMethod(evt)
                     }>
                         {this.state.buttonName} 
                 </button>
             </form>
+            <Snackbar 
+                open={this.state.aviso} 
+                autoHideDuration={6000} 
+                onClose={(evt, reason) => {
+                    this.closeAviso(evt, reason)}}>
+                <Alert onClose={(evt, reason) => {
+                    this.closeAviso(evt, reason)}} 
+                severity={this.state.severidade}>
+                    {this.state.mensagem}
+                </Alert>
+            </Snackbar>
+            </>
     )}
 }
