@@ -5,8 +5,9 @@ exports.up = function(knex) {
         
         table.string("chapter_id")
         table.foreign("chapter_id").references("id").inTable("chapter")
+        table.string("name")
+        table.foreign("name").references("name").inTable("users")
         table.boolean("on_title").notNullable();
-        table.string("name").notNullable();
         table.string("text").notNullable();
         table.json("tags").notNullable();
         table.integer("verse").notNullable();

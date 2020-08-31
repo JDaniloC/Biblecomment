@@ -1,4 +1,7 @@
 import React, { Component, createRef } from 'react';
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/lab/Alert';
+
 import NewComment from "../../components/NewComment";
 import TitleComment from "../../components/TitleComments";
 import Comments from "../../components/Comments";
@@ -27,6 +30,10 @@ export default class Chapter extends Component{
             titleComments: [],
             verseAtual: {linha: null, verse: 0},
             allComments: [],
+
+            aviso: false,
+            mensagem: "",
+            severidade: ""
         }
         
         this.titleComponent = createRef();
@@ -37,6 +44,7 @@ export default class Chapter extends Component{
         this.closeComments = this.closeComments.bind(this);
         this.closeNewCommentary = this.closeNewCommentary.bind(this);
         this.getVerse = this.getVerse.bind(this);
+        this.handleNotification = this.handleNotification.bind(this);
     }
 
     getVerse() {
@@ -56,7 +64,11 @@ export default class Chapter extends Component{
                 this.setState({ verses: JSON.parse(verses) })
             });
         } catch (err) {
-            console.log("Mandar para o 404");
+            this.setState({
+                aviso: true,
+                mensagem: "Não consegui me conectar com o servidor",
+                severidade: "error"
+            })
         }
         
         try {
@@ -80,7 +92,11 @@ export default class Chapter extends Component{
                 this.setState({ titleComments: titleComments });
             });
         } catch (err) {
-            console.log("Mandar para o 404");
+            this.setState({
+                aviso: true,
+                mensagem: "Não consegui me conectar com o servidor",
+                severidade: "error"
+            })
         }
         
         if (number.length === 1) {
@@ -173,6 +189,40 @@ export default class Chapter extends Component{
         this.setState({ newbox: "invisible" });
         this.setState({ blur: "none" });
     }
+
+    handleNotification(aviso, mensagem, severidade, comment) {
+        this.setState({
+            aviso: aviso,
+            mensagem: mensagem,
+            severidade: severidade
+        })
+
+        const all = this.state.allComments
+        all.push(comment)
+        this.setState({ allComments: all })
+        if (comment.on_title) {
+            const list = this.state.titleComments
+            list.push(comment)
+            this.setState({ titleComments: list })
+        } else {
+            const list = this.state.comments
+            list.push(comment)
+            this.setState({ comments: list })
+        }
+    }
+
+    closeAviso(evt, reason) {
+        if (evt != null){
+            evt.preventDefault();
+        }
+
+        if (reason === 'clickaway') {
+            return;
+        }
+      
+        this.setState({ aviso:false });
+    }
+
     render() {
         return (
             <>  
@@ -224,12 +274,25 @@ export default class Chapter extends Component{
                         number = {this.number}
                         verso = {this.getVerse}
                         close = {this.closeNewCommentary}
+                        notification = {this.handleNotification}
                     />
                 </div>
     
                 <div className="overlay" style={
                     { display: this.state.blur }
                 }></div>
+
+                <Snackbar 
+                    open={this.state.aviso} 
+                    autoHideDuration={6000} 
+                    onClose={(evt, reason) => {
+                        this.closeAviso(evt, reason)}}>
+                    <Alert onClose={(evt, reason) => {
+                        this.closeAviso(evt, reason)}} 
+                    severity={this.state.severidade}>
+                        {this.state.mensagem}
+                    </Alert>
+                </Snackbar>
             </>
         )
     }

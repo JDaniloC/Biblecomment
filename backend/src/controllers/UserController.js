@@ -3,12 +3,34 @@ const jwt = require('jsonwebtoken');
 const md5 = require('md5')
 
 module.exports = {
+    async getUser(request, response) {
+        const { token } = request.headers;
+
+        if (token == null) {
+            return response.json({
+                "error": "insufficient body: token"
+            })
+        }
+
+        const user = await connection('users')
+            .where("token", token)
+            .first()
+
+        if (user) {
+            return response.json(user)
+        } else {
+            return response.json({
+                "msg": "Usuário não cadastrado"
+            })
+        }
+    },
+
     async register(request, response) {
         const { email, name, password } = request.body;
 
         if (email == null | name == null | password == null) {
             return response.json({"error": 
-                "insulficient body: email, name, password"})
+                "insufficient body: email, name, password"})
         }
         
         var exists = await connection('users')
@@ -17,11 +39,11 @@ module.exports = {
             .first()
 
         if (!exists) {
-            const user = await connection('users').insert({
+            await connection('users').insert({
                 email,
                 name,
                 password: md5(password),
-                token: jwt.sign(email, "SóDeusNaCausa")
+                token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa")
             })
             
             return response.json(

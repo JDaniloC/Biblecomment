@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
+
 import 'balloon-css';
 import "./styles.css";
 
+import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import axios from '../../services/api';
 
 const close = require("../../assets/x.svg")
@@ -19,8 +21,7 @@ export default class NewComment extends Component {
             exegese: false,
             inspirado: false,
             pessoal: false,
-            texto: "",
-            nome: "Visitante"
+            texto: ""
         }
     }
 
@@ -45,18 +46,27 @@ export default class NewComment extends Component {
         }
 
         try {
+            var token = "0";
+            if (isAuthenticated()) {
+                token = localStorage.getItem(TOKEN_KEY);
+            }
+
             axios.post(
                 `books/${this.props.abbrev}/chapters/${this.props.number}/comments/${this.props.verso() + 1}`, {
                     on_title: this.props.on_title.selected,
-                    name: this.state.nome,
+                    token: token,
                     text: this.state.texto,
                     tags: tags
                 }).then(response => {
-                    console.log(response)
+                    this.props.notification(
+                        true, "Comentário enviado!", 
+                        "success", response.data
+                    )
                 })
         } catch (error) {
-            console.log(error)
-            console.log("Deu um problema na requisição.")
+            this.props.notification(
+                true, "Problema na requisição", "error"
+            )
         }
 
         this.props.close(evt)

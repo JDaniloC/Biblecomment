@@ -11,14 +11,14 @@ module.exports = {
             .andWhere("number", number)
             .first()
             .select("id")
-        
+
         if (chapter) {
             const comments = await connection('comments')
                 .where("chapter_id", chapter.id)
-                .limit(5)
-                .offset((pages - 1) * 5)
+                // .limit(5)
+                // .offset((pages - 1) * 5)
                 .select("*");
-
+            
             return response.json( comments );
         } else {
             return response.json({ "error": "chapter not found" })
@@ -48,13 +48,22 @@ module.exports = {
 
     async store(request, response) {
         const { abbrev, number, verse } = request.params;
-        const { name, text, tags, on_title } = request.body;
+        const { token, text, tags, on_title } = request.body;
         
-        if (!name | !text | !tags | on_title === null) {
+        if (!token | !text | !tags | on_title == null) {
             return response.json(
-                { "error": "insuficient body: name, text, tags, on_title" }
+                { "error": "insufficient body: token, text, tags, on_title" }
             )
         }
+
+        var name = "Visitante";
+        const user = await connection('users')
+            .where("token", token)
+            .first()
+        
+        if (user) {
+            name = user.name  
+        } 
 
         const chapter = await connection('chapters')
             .where("book_abbrev", abbrev)
@@ -74,7 +83,14 @@ module.exports = {
                     chapter_id: chapter.id
                 })
             
-            return response.json(comment);
+            return response.json({ 
+                id: comment[0],
+                name,
+                text,
+                on_title,
+                verse: parseInt(verse),
+                tags
+            });
         } else {
             return response.json({ "error": "Chapter doesn't exists" })
         }

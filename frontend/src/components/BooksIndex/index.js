@@ -83,7 +83,9 @@ export default class BooksIndex extends Component {
                             {this.state.numbers.slice(
                                 0, this.state.selected.max
                             ).map( chapter => (
-                                <Link to = {
+                                <Link 
+                                    key = {chapter}
+                                    to = {
                                     `/verses/${
                                     this.state.selected.abbrev
                                     }/${chapter}`}>

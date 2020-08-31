@@ -27,7 +27,7 @@ export default class Login extends Component {
     }
 
     changeMethod(evt) {
-        evt.preventDefault();
+        if (evt !== null) { evt.preventDefault(); }
         if (this.state.loginClass === "") {
             this.setState({ 
                 loginClass: "invisible",
@@ -56,7 +56,6 @@ export default class Login extends Component {
                 email,
                 password,
             }).then(response => {
-                console.log(response.data)
                 const token = response.data.token;
                 if (token !== undefined) {
                     this.setState({
@@ -95,6 +94,7 @@ export default class Login extends Component {
                         mensagem: "Cadastro realizado com sucesso!",
                         severidade: "success"
                     })
+                    this.changeMethod(null)
                 } else {
                     this.setState({
                         aviso: true,

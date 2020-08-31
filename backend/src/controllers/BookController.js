@@ -21,7 +21,7 @@ module.exports = {
         
         if (title == null | abbrev == null | length == null) {
             return response.json(
-                { "error": "insuficient body: title, abbrev, length" })
+                { "error": "insufficient body: title, abbrev, length" })
         }
 
         var exists = await connection('books')

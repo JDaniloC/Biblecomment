@@ -17,7 +17,7 @@ module.exports = {
         const { verses } = request.body;
 
         if (!verses) {
-            return response.json({ "error": "insuficient body: verses" })
+            return response.json({ "error": "insufficient body: verses" })
         }
 
         const book = await connection('books')

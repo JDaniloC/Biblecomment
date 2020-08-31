@@ -9,6 +9,7 @@ const UserController = require('./controllers/UserController');
 
 const routes = express.Router();
 
+routes.get("/users/", UserController.getUser);
 routes.post("/users/login", UserController.login);
 routes.post("/users/register", UserController.register);
 
