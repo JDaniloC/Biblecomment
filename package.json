@@ -28,7 +28,7 @@
   "scripts": {
     "frontend": "cd frontend && yarn start",
     "backend": "cd backend && yarn start",
-    "dev": "concurrently --kill-others-on-fail \"yarn backend\" \"yarn frontend\"",
+    "dev": "yarn backend && yarn frontend",
     "heroku-postbuild": "cd frontend && yarn -i && yarn build"
   }
 }
