@@ -26,9 +26,9 @@
     "sqlite3": "^5.0.0"
   },
   "scripts": {
-    "frontend": "cd frontend && npm run start",
-    "backend": "cd backend && npm run start",
-    "dev": "concurrently --kill-others-on-fail \"npm run backend\" \"npm run frontend\"",
-    "heroku-postbuild": "cd frontend && npm run install && yarn run build"
+    "frontend": "cd frontend && yarn start",
+    "backend": "cd backend && yarn start",
+    "dev": "concurrently --kill-others-on-fail \"yarn backend\" \"yarn frontend\"",
+    "heroku-postbuild": "cd frontend && yarn -i && yarn build"
   }
 }
