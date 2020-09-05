@@ -5,6 +5,7 @@ import Alert from '@material-ui/lab/Alert';
 import NewComment from "../../components/NewComment";
 import TitleComment from "../../components/TitleComments";
 import Comments from "../../components/Comments";
+import NavBar from "../../components/NavBar";
 
 import axios from '../../services/api';
 import "./styles.css";
@@ -225,38 +226,44 @@ export default class Chapter extends Component{
 
     render() {
         return (
-            <>  
-                <div className={this.state.main}>
-                    <label htmlFor="toggle"> 
-                        {this.state.titleName} {this.state.chapterNumber} 
-                    </label>
-                    <input type="checkbox" id='toggle'/>
-                    <TitleComment 
-                        comments = {this.state.titleComments} 
-                        handleNewComment = {this.handleNewComment}
-                        imageFunction = {this.getImage}
-                        ref = {this.titleComponent}
-                    />
-                    
-                    <ul className="verse-list">
-                        {this.state.verses.map((verse, index) => (
-                            <li key = {index + 1}>
-                                <sup> {index + 1} </sup>
-                                <p 
-                                    style={{ display: "inline" }} 
-                                    onClick = {
-                                        (evt) => 
-                                        this.handlecomments(
-                                            evt, index
-                                        )
-                                    }>
-                                    { verse }
-                                </p>
-                            </li>
-                        ))}
-                    </ul>
+            <>
+                <div style = {{
+                        display: "flex",
+                        flexDirection: "column",
+                        marginLeft: "20px"
+                    }}>  
+                    <NavBar/>
+                    <div className={this.state.main}>
+                        <label htmlFor="toggle"> 
+                            {this.state.titleName} {this.state.chapterNumber} 
+                        </label>
+                        <input type="checkbox" id='toggle'/>
+                        <TitleComment 
+                            comments = {this.state.titleComments} 
+                            handleNewComment = {this.handleNewComment}
+                            imageFunction = {this.getImage}
+                            ref = {this.titleComponent}
+                        />
+                        
+                        <ul className="verse-list">
+                            {this.state.verses.map((verse, index) => (
+                                <li key = {index + 1}>
+                                    <sup> {index + 1} </sup>
+                                    <p 
+                                        style={{ display: "inline" }} 
+                                        onClick = {
+                                            (evt) => 
+                                            this.handlecomments(
+                                                evt, index
+                                            )
+                                        }>
+                                        { verse }
+                                    </p>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
-                
                 <aside className={this.state.asideclass}>
                     <Comments 
                         closeFunction = {this.closeComments}
