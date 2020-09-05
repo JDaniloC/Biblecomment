@@ -1,1 +1,1 @@
-web: yarn frontend
+web: yarn dev
