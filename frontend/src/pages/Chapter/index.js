@@ -284,7 +284,7 @@ export default class Chapter extends Component{
 
                 <Snackbar 
                     open={this.state.aviso} 
-                    autoHideDuration={6000} 
+                    autoHideDuration={3000} 
                     onClose={(evt, reason) => {
                         this.closeAviso(evt, reason)}}>
                     <Alert onClose={(evt, reason) => {

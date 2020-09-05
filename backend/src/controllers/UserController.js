@@ -43,7 +43,9 @@ module.exports = {
                 email,
                 name,
                 password: md5(password),
-                token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa")
+                token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa"),
+                total_comments: 0,
+                chapters_commented: JSON.stringify({})
             })
             
             return response.json(
@@ -68,7 +70,12 @@ module.exports = {
         
         if (user) {
             if (user.password === md5(password)) {
-                return response.json({"token": user.token})
+                return response.json({
+                    "name": user.name,
+                    "token": user.token,
+                    "total_comments": user.total_comments,
+                    "chapters_commented": user.chapters_commented
+                })
             } else {
                 return response.json({"msg":
                     "Senha incorreta"})

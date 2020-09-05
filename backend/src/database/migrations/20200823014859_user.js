@@ -5,6 +5,8 @@ exports.up = function(knex) {
         table.string("password").notNullable();
         table.string("name").notNullable();
         table.string("token").notNullable();
+        table.integer("total_comments").notNullable();
+        table.json('chapters_commented').notNullable();
     })
 };
 

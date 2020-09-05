@@ -50,7 +50,6 @@ export default class NewComment extends Component {
             if (isAuthenticated()) {
                 token = localStorage.getItem(TOKEN_KEY);
             }
-
             axios.post(
                 `books/${this.props.abbrev}/chapters/${this.props.number}/comments/${this.props.verso() + 1}`, {
                     on_title: this.props.on_title.selected,
@@ -74,10 +73,15 @@ export default class NewComment extends Component {
 
 
     handleChange(event) {
-        const value = event.target.checked ? (
+        let value = event.target.checked ? (
             event.target.checked !== undefined
         ) : event.target.value
+        if (value === "true") {
+            value = false;
+        }
         this.setState({[event.target.name]: value});
+
+        console.log(this.state)
     }
 
     render() {

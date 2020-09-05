@@ -6,3 +6,7 @@ export const isAuthenticated = (
 export const login = token => {
     localStorage.setItem(TOKEN_KEY, token);
 }
+
+export const logout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+}

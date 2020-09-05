@@ -55,23 +55,42 @@ module.exports = {
                 { "error": "insufficient body: token, text, tags, on_title" }
             )
         }
-
-        var name = "Visitante";
-        const user = await connection('users')
-            .where("token", token)
-            .first()
-        
-        if (user) {
-            name = user.name  
-        } 
-
+ 
         const chapter = await connection('chapters')
-            .where("book_abbrev", abbrev)
-            .andWhere("number", number)
-            .first()
-            .select("id")
-
+        .where("book_abbrev", abbrev)
+        .andWhere("number", number)
+        .first()
+        .select("id")
+        
         if (chapter) {
+            
+            var name = "Visitante";
+            const user = await connection('users')
+                .where("token", token)
+                .first()
+            
+            if (user) {
+                name = user.name;
+                
+                const new_chapter_commented = JSON.parse(
+                    user.chapters_commented)
+                if (abbrev in new_chapter_commented) {
+                    if (!(number in new_chapter_commented[abbrev])) {
+                        new_chapter_commented[abbrev].push(number)
+                    }
+                } else {
+                    new_chapter_commented[abbrev] = [number]
+                }
+
+                await connection('users')
+                    .where("token", token)
+                    .first()
+                    .increment("total_comments", 1)
+                    .update({
+                        "chapters_commented": JSON.stringify(
+                            new_chapter_commented)
+                    })
+            }
             
             const comment = await connection('comments')
                 .insert({
