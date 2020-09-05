@@ -1,0 +1,15 @@
+{
+  "name": "BibleComment",
+  "version": "1.0.0",
+  "description": "A app to comment the bible with friends",
+  "main": "index.js",
+  "repository": "https://github.com/JDaniloC/Individual-Community-Bible.git",
+  "author": "JDaniloC <jdsc@cin.ufpe.br>",
+  "license": "MIT",
+  "scripts": {
+    "frontend": "cd frontend && yarn start",
+    "backend": "cd backend && yarn start",
+    "dev": "concurrently --kill-others-on-fail \"npm run backend\" \"npm run frontend\"",
+    "heroku-postbuild": "cd frontend && yarn install && yarn run build"
+  }
+}
