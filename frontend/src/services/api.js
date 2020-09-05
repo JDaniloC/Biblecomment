@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: "http://localhost:3333"
+    baseURL: "https://biblecomment-backend.herokuapp.com:7603"
 })
 
 export default api;
