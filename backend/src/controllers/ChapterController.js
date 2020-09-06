@@ -25,6 +25,11 @@ module.exports = {
             .first()
         
         if (book) {
+            await connection('chapters')
+                .where('book_abbrev', abbrev)
+                .andWhere('number', number)
+                .delete()
+            
             const chapter = await connection('chapters')
                 .insert({
                     "verses": JSON.stringify(verses),
