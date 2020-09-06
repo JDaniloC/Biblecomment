@@ -4,8 +4,6 @@ with open("books.json", encoding = "utf-8") as file:
     books = json.load(file)
 
 for abbrev in books:
-    if abbrev == "gn":
-        continue
     title, length = books[abbrev]
     print(f"\nSending {title}[{abbrev}] with {length} chapters = ", end = "")
     response = requests.post(
@@ -27,4 +25,4 @@ for abbrev in books:
                    "verses": verses[number]
             })
             print(response.json())
-            time.sleep(1)
+            time.sleep(0.5)

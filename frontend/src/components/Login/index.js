@@ -64,16 +64,24 @@ export default class Login extends Component {
 
         if (isAuthenticated()) {
             get_infos(localStorage.getItem(TOKEN_KEY)).then(response => {
-                const info = this.parse_user(response)
-                this.setState({                
-                    name: info["name"],
-                    total_books: info["total_books"],
-                    total_chapters: info["total_chapters"],
-                    total_comments: info["total_comments"],
-    
-                    formClass: "invisible",
-                    perfilClass: ""
-                })
+                if (response.data.chapters_commented) {
+                    const info = this.parse_user(response)
+                    this.setState({                
+                        name: info["name"],
+                        total_books: info["total_books"],
+                        total_chapters: info["total_chapters"],
+                        total_comments: info["total_comments"],
+        
+                        formClass: "invisible",
+                        perfilClass: ""
+                    })
+                } else {
+                    this.setState({
+                        aviso: true,
+                        mensagem: "Não consegui acessar sua conta.",
+                        severidade: "info"
+                    })
+                }
             })
 
         }

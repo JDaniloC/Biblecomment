@@ -5,8 +5,8 @@ module.exports = {
         const { pages = 1 } = request.query;
 
         const books = await connection('books')
-            .limit(5)
-            .offset((pages - 1) * 5)
+            // .limit(5)
+            // .offset((pages - 1) * 5)
             .select([
                 'title',
                 "abbrev",

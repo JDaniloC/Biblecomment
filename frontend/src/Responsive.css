@@ -11,7 +11,7 @@
     }
     aside.visible {
         top: auto;
-        width: 95%;
+        width: auto;
     }
     .content {
         margin: 20px 0;
@@ -21,7 +21,8 @@
         right: 1px;
         min-width: 300px;
         margin: 0 10px;
-        height: 30%;
+        height: auto;
+        max-height: 25%;
     }
     .panel {
         flex-direction: column;
@@ -41,6 +42,9 @@
     aside.invisible {
         display: none;
     }
+    aside.visible {
+        width: 95%;
+    }
     .side {
         position: fixed;
         width: inherit;
@@ -51,5 +55,14 @@
 @media (max-height:500px) {
     .new-comment {
         margin-top: 0;
+    }
+}
+
+@media (max-width: 400px) {
+    .logo-container p {
+        font-size: large;
+    }
+    .login-container form, section {
+        width: auto;
     }
 }
