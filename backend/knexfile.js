@@ -1,5 +1,7 @@
 // Update with your config settings.
 
+const path = require('path');
+
 module.exports = {
 
   development: {
@@ -16,29 +18,26 @@ module.exports = {
   staging: {
     client: 'mysql',
     connection: {
-      host: 'us-cdbr-east-02.cleardb.com',
-      user:     'bcde371b85e9bb',
-      password: '72f6888a',
-      database: 'heroku_0aacc10c4cbf403'
+      host:     'us-cdbr-east-02.cleardb.com',
+      user:     'bde99ff0a59a01',
+      password: '73dd8ca3',
+      database: 'heroku_8f188315a862a15'
     },
     migrations: {
-      tableName: 'knex_migrations'
+      directory:"./src/database/migrations/"
     }
   },
 
   production: {
-    client: 'postgresql',
+    client: 'mysql',
     connection: {
-      database: 'my_db',
-      user:     'username',
-      password: 'password'
-    },
-    pool: {
-      min: 2,
-      max: 10
+      host:     'w1h4cr5sb73o944p.cbetxkdyhwsb.us-east-1.rds.amazonaws.com',
+      user:     'tm8bsap1hsd4lil9',
+      password: 'gds9rd5uva3p966c',
+      database: 'qfk25mxhm9aawo8b'
     },
     migrations: {
-      tableName: 'knex_migrations'
+      directory:"./src/database/migrations/"
     }
   }
 

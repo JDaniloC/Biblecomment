@@ -1,1 +1,2 @@
 back: node src/server.js
+migrate: knex migrate:latest
