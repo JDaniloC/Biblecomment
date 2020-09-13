@@ -45,6 +45,7 @@ button.entry:hover {
     right: 0;
     bottom: 0;
     z-index: 2;
+    overflow: auto;
 }
 
 .overlay {

@@ -48,7 +48,12 @@
     .side {
         position: fixed;
         width: inherit;
-        height: 70%;
+        max-height: 70%;
+    }
+    .new-comment {
+        margin: 10% 0;
+        width: 90%;
+        padding: 20px 0;
     }
 }
 

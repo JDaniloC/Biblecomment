@@ -7,7 +7,7 @@ for abbrev in books:
     title, length = books[abbrev]
     print(f"\nSending {title}[{abbrev}] with {length} chapters = ", end = "")
     response = requests.post(
-        "https://biblecomment-backend.herokuapp.com/books", 
+        "http://localhost:3333/books", 
         json = {
             "title": title,
             "abbrev": abbrev,
@@ -20,7 +20,7 @@ for abbrev in books:
         for number in verses:
             print(f"Populating {abbrev}:{number} = ", end = "")
             response = requests.post(
-            f"https://biblecomment-backend.herokuapp.com/books/{abbrev}/chapters/{number}", 
+            f"http://localhost:3333/books/{abbrev}/chapters/{number}", 
                 json = {
                    "verses": verses[number]
             })

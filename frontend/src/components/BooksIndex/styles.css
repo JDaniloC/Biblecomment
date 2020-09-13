@@ -1,7 +1,8 @@
 .books-container {
     display: flex;
     flex-direction: column;
-    margin-top: 20px;
+    margin: 20px 40px;
+    max-width: 70%;
 }
 
 .books {
@@ -13,19 +14,16 @@
 }
 
 .books li {
-    flex: 1 0 10%;
+    flex: 1 0 30%;
     flex-grow: 1;
-    
     padding: 10px;
-    margin: 1%;
-    
-    color: white;
-    font-weight: bold;
-    
+    margin: 0.3%;
+    color: #000;
+    font-weight: 700;
     text-align: center;
     cursor: pointer;
-    
-    background-color: #999;
+    background-color: #DADCE2;
+    border-radius: 4px;
 }
 
 .chapters-container {
@@ -36,30 +34,23 @@
     align-items: center;
     
     width: fit-content;
+    max-width: 80%;
     height: auto;
-
     padding: 20px;
-    margin: 10% auto;
+    margin: 5% auto;
     border-radius: 3px;
-    max-width: 600px;
 }
 
 .chapters-container a {
-    flex: 1 0 10%;
+    flex: 1 0 30%;
     flex-grow: 1;
-    
     padding: 10px;
-    
     color: #777;
-    font-weight: bold;
-    
+    font-weight: 700;
     text-align: center;
     cursor: pointer;
-    
     text-decoration: none;
-    border-color: rgba(0,0,0,0.2);
-    border-style: solid;
-    border-width: 0.1px;
+    border: .1px solid rgba(0,0,0,.2);
 }
 
 .chapters-container ul {

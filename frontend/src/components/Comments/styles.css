@@ -10,3 +10,23 @@
     height: 77%;
 }
 
+.user-comment {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-comment span {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.user-comment span button {
+    margin-right: 10px;
+    border: none;
+    cursor: pointer;
+    background: none;
+}
+
+.user-comment span img {
+    width: 20px;
+}

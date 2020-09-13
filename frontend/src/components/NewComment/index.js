@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
-
-import 'balloon-css';
-import "./styles.css";
-
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import axios from '../../services/api';
+
+import "./styles.css";
 
 const close = require("../../assets/x.svg")
 const book = require("../../assets/book.svg")
@@ -80,8 +78,6 @@ export default class NewComment extends Component {
             value = false;
         }
         this.setState({[event.target.name]: value});
-
-        console.log(this.state)
     }
 
     render() {

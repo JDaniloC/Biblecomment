@@ -30,6 +30,7 @@ routes.get(
 routes.post(
     "/books/:abbrev/chapters/:number/comments/:verse", 
     CommentController.store);
+routes.patch("/comments/:id", CommentController.update);
 routes.delete("/comments/:id", CommentController.destroy);
 
 module.exports = routes;

@@ -9,8 +9,10 @@ exports.up = function(knex) {
         table.foreign("name").references("name").inTable("users")
         table.boolean("on_title").notNullable();
         table.string("text").notNullable();
-        table.json("tags").notNullable();
         table.integer("verse").notNullable();
+        table.json("tags").notNullable();
+        table.json("reports").notNullable();
+        table.json("likes").notNullable();
     })
 };
 

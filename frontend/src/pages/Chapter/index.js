@@ -10,6 +10,8 @@ import NavBar from "../../components/NavBar";
 import axios from '../../services/api';
 import "./styles.css";
 
+const warning = require("../../assets/warning.svg")
+const heart = require("../../assets/heart.svg")
 const book = require("../../assets/book.svg")
 const hand = require("../../assets/hand.svg")
 const person = require("../../assets/person.svg")
@@ -46,6 +48,7 @@ export default class Chapter extends Component{
         this.closeNewCommentary = this.closeNewCommentary.bind(this);
         this.getVerse = this.getVerse.bind(this);
         this.handleNotification = this.handleNotification.bind(this);
+        this.handleCommentNotification = this.handleCommentNotification.bind(this);
     }
 
     getVerse() {
@@ -170,6 +173,10 @@ export default class Chapter extends Component{
 
     getImage(tag) {
         switch (tag) {
+            case "heart":
+                return heart;
+            case "warning":
+                return warning;
             case "devocional":
                 return hand;
             case "inspirado":
@@ -191,12 +198,16 @@ export default class Chapter extends Component{
         this.setState({ blur: "none" });
     }
 
-    handleNotification(aviso, mensagem, severidade, comment) {
+    handleNotification(aviso, mensagem, severidade) {
         this.setState({
             aviso: aviso,
             mensagem: mensagem,
             severidade: severidade
         })
+    }
+    
+    handleCommentNotification(aviso, mensagem, severidade, comment) {
+        this.handleNotification(aviso, mensagem, severidade);
 
         const all = this.state.allComments
         all.push(comment)
@@ -271,6 +282,7 @@ export default class Chapter extends Component{
                         imageFunction = {this.getImage}
                         handleNewComment = {this.handleNewComment}
                         ref = {this.commentsComponent}
+                        notification = {this.handleNotification}
                     />
                 </aside>
     
@@ -281,7 +293,7 @@ export default class Chapter extends Component{
                         number = {this.number}
                         verso = {this.getVerse}
                         close = {this.closeNewCommentary}
-                        notification = {this.handleNotification}
+                        notification = {this.handleCommentNotification}
                     />
                 </div>
     
@@ -291,7 +303,7 @@ export default class Chapter extends Component{
 
                 <Snackbar 
                     open={this.state.aviso} 
-                    autoHideDuration={3000} 
+                    autoHideDuration={2000} 
                     onClose={(evt, reason) => {
                         this.closeAviso(evt, reason)}}>
                     <Alert onClose={(evt, reason) => {

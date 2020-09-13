@@ -45,7 +45,8 @@ module.exports = {
                 password: md5(password),
                 token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa"),
                 total_comments: 0,
-                chapters_commented: JSON.stringify({})
+                chapters_commented: JSON.stringify({}),
+                favorites: JSON.stringify([])
             })
             
             return response.json(
