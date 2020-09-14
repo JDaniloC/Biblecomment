@@ -3,8 +3,8 @@ const configuration = require('../../knexfile');
 
 let connection = null
 if (process.env.STATE) {
-    console.log("Using staging")
-    connection = knex(configuration.staging);
+    console.log("Using production")
+    connection = knex(configuration.production);
 } else {
     console.log("Using development")
     connection = knex(configuration.development);
