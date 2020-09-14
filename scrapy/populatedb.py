@@ -3,11 +3,13 @@ import requests, time, json
 with open("books.json", encoding = "utf-8") as file:
     books = json.load(file)
 
+baseurl = "https://biblecomment.herokuapp.com"
+
 for abbrev in books:
     title, length = books[abbrev]
     print(f"\nSending {title}[{abbrev}] with {length} chapters = ", end = "")
     response = requests.post(
-        "http://localhost:3333/books", 
+        f"{baseurl}/books", 
         json = {
             "title": title,
             "abbrev": abbrev,
@@ -20,7 +22,7 @@ for abbrev in books:
         for number in verses:
             print(f"Populating {abbrev}:{number} = ", end = "")
             response = requests.post(
-            f"http://localhost:3333/books/{abbrev}/chapters/{number}", 
+            f"{baseurl}/books/{abbrev}/chapters/{number}", 
                 json = {
                    "verses": verses[number]
             })
