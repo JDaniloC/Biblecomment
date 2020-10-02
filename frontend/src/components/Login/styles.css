@@ -2,26 +2,21 @@
     background-color: white;
     border-radius: 8px;
     box-shadow: -1px 1px 20px -5px grey;
+    
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    display: flex;
 }
 
-.login-container form, section {
+.login-container form, .login-container section {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 400px;
-    padding: 30px;
-}
-
-.login-container section ul li {
-    width: 100%;
-    margin: 15px 0;
-    font-size: larger;
-}
-
-.login-container section p {
-    font-size: small;
-    margin: 0;
+    padding: 1.5rem;
+    width: 35em;
+    max-width: 100vw;
 }
 
 .login-container input {
@@ -50,7 +45,7 @@
     cursor: pointer;
 }
 
-.login-container button {
+.login-container > section > button, .login-container > form > button{
     margin-top: 10px;
     border-radius: 6px;
     border: none;

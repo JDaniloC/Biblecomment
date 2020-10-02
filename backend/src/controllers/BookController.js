@@ -10,8 +10,10 @@ module.exports = {
             .select([
                 'title',
                 "abbrev",
-                "length"
-            ]);
+                "length",
+                "created_at"
+            ])
+            .orderBy("created_at", "asc");
 
         return response.json( books );
     },

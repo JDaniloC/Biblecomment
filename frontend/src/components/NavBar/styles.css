@@ -3,7 +3,7 @@ ul.navbar {
     width: 100%;
 }
 
-ul.navbar li {
+ul.navbar li, ul.navbar a {
     flex: 1 0 10%;
     flex-grow: 1;
     margin: 10px 3px;
@@ -18,7 +18,7 @@ ul.navbar li {
     border-radius: 4px;
 }
 
-ul.navbar li a {
+ul.navbar a {
     text-decoration: none;
     color: black;
 }
@@ -32,11 +32,4 @@ section.visible {
 
     transition: opacity 1s;
     margin-bottom: 10px;
-}
-
-section.visible div {
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    display: flex;
 }

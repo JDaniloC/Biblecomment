@@ -8,9 +8,13 @@ exports.up = function(knex) {
             table.foreign("chapter_id").references("id").inTable("chapters");
             table.string("name").notNullable();
             table.foreign("name").references("name").inTable("users");
+
             table.boolean("on_title").notNullable();
-            table.string("text").notNullable();
+            table.string("book_reference").notNullable();
             table.integer("verse").notNullable();
+            table.timestamp("created_at");
+            
+            table.string("text").notNullable();
             table.json("tags").notNullable();
             table.json("reports").notNullable();
             table.json("likes").notNullable();

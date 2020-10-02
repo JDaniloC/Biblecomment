@@ -5,7 +5,7 @@
     }
 }
 
-@media (max-width: 1150px) {
+@media (max-width: 1000px) {
     .main.comment {
         position: relative;
     }
@@ -51,9 +51,11 @@
         max-height: 70%;
     }
     .new-comment {
-        margin: 10% 0;
         width: 90%;
         padding: 20px 0;
+    }
+    .chapter-container {
+        margin-left: 0;
     }
 }
 
@@ -67,7 +69,7 @@
     .logo-container p {
         font-size: large;
     }
-    .login-container form, section {
-        width: auto;
+    .login-container form, .login-container form section {
+        width: 100%;
     }
 }

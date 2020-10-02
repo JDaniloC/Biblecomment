@@ -19,7 +19,14 @@ export default class NewComment extends Component {
             exegese: false,
             inspirado: false,
             pessoal: false,
-            texto: ""
+            texto: "",
+            comment_id: -1
+        }
+    }
+
+    componentDidMount() {
+        if (this.props.text !== undefined) {
+            this.setState({ texto: this.props.text })
         }
     }
 
@@ -44,28 +51,42 @@ export default class NewComment extends Component {
         }
 
         try {
-            var token = "0";
             if (isAuthenticated()) {
-                token = localStorage.getItem(TOKEN_KEY);
+                const token = localStorage.getItem(TOKEN_KEY);
+                if (this.props.post) {
+                    axios.post(
+                        `books/${this.props.abbrev}/chapters/${this.props.number}/comments/${this.props.verso() + 1}`, {
+                            on_title: this.props.on_title.selected,
+                            token: token,
+                            text: this.state.texto,
+                            tags: tags
+                        }).then(response => {
+                            this.props.notification(
+                                "Comentário enviado!", 
+                                "success", response.data
+                    )})
+                } else {
+                    axios.patch(
+                        `/comments/${this.state.comment_id}`, {
+                            token: token,
+                            text: this.state.texto,
+                            tags: tags
+                        }).then(response => {
+                            this.props.notification(
+                                "Comentário editado!", 
+                                "success", response.data
+                    )})
+                }
+            } else {
+                this.props.notification(
+                    "Você precisa estar logado", "info", null);
             }
-            axios.post(
-                `books/${this.props.abbrev}/chapters/${this.props.number}/comments/${this.props.verso() + 1}`, {
-                    on_title: this.props.on_title.selected,
-                    token: token,
-                    text: this.state.texto,
-                    tags: tags
-                }).then(response => {
-                    this.props.notification(
-                        true, "Comentário enviado!", 
-                        "success", response.data
-                    )
-                })
         } catch (error) {
             this.props.notification(
-                true, "Problema na requisição", "error"
+                "Problema na requisição", "error", null
             )
         }
-
+        this.setState({ texto: "" })
         this.props.close(evt)
     }
 
@@ -84,12 +105,12 @@ export default class NewComment extends Component {
         return (
             <div className="new-comment">
                 <div className="top">
+                    <h2 style = {{ alignSelf: "center" }}> 
+                        {this.props.title}
+                    </h2>
                     <button onClick={this.props.close}>
                         <img src={close} alt="Fechar"/>
                     </button>
-                    <h2 style = {{ alignSelf: "center" }}> 
-                        Novo comentário 
-                    </h2>
                 </div>
                 
                 <div className="text-area">

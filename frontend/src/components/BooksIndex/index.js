@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-
 import axios from '../../services/api';
+import { Loading } from '../Partials'
+
 import "./styles.css"
 
 const close = require("../../assets/x.svg")
@@ -22,10 +23,12 @@ export default class BooksIndex extends Component {
     componentDidMount() {
         try {
             axios.get("books").then(response => {
-                this.setState({ books: response.data })
+                if (typeof(response.data) === 'object') {
+                    this.setState({ books: response.data })
+                }
             })
         } catch (err) {
-            console.log("Mandar o erro 404")
+            console.log("Problema no servidor")
         }
         
         let number_list = [];
@@ -50,12 +53,21 @@ export default class BooksIndex extends Component {
         this.setState({ blur: "none" })
     }
 
+    changePage(evt, chapter, number) {
+        evt.preventDefault();
+
+        if (this.props.changeChapter !== undefined) {
+            this.props.changeChapter(chapter, number)
+            this.closeChapters();
+        }
+    }
+
     render() { 
         return (
             <div className = "books-container">
                 <h2> Escolha a meditação de hoje </h2>
                 <ul className="books">
-                    {this.state.books.map(book => (
+                    {(this.state.books.length > 0) ? this.state.books.map(book => (
                         <li 
                             key = {book.abbrev}
                             onClick = {
@@ -64,19 +76,19 @@ export default class BooksIndex extends Component {
                             }>
                             {book.title}
                         </li>
-                    ))}
+                    )) : <Loading />}
                 </ul>
                 <div className={this.state.chapters}>
                     <div className="chapters-container">
-                        <div className="top">
+                        <div className="top" style = {{ justifyContent: "space-between" }}>
+                            <h2 style = {{ alignSelf: "center" }}> 
+                                Escolha o capítulo 
+                            </h2>
                             <button 
                                 onClick={
                                     () => this.closeChapters()}>
                                 <img src={close} alt="Fechar"/>
                             </button>
-                            <h2 style = {{ alignSelf: "center" }}> 
-                                Escolha o capítulo 
-                            </h2>
                         </div>
 
                         <ul>
@@ -85,11 +97,11 @@ export default class BooksIndex extends Component {
                             ).map( chapter => (
                                 <Link 
                                     key = {chapter}
-                                    to = {
-                                    `/verses/${
-                                    this.state.selected.abbrev
-                                    }/${chapter}`}>
-                                {chapter}
+                                    to = {`/verses/${this.state.selected.abbrev}/${chapter}`}
+                                    onMouseDown = {(evt) => {this.changePage(
+                                        evt, this.state.selected.abbrev, chapter)}
+                                }>
+                                    {chapter}
                                 </Link>
                             ))}
                         </ul>

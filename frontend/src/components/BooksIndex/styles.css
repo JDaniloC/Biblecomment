@@ -1,16 +1,16 @@
 .books-container {
     display: flex;
     flex-direction: column;
-    margin: 20px 40px;
-    max-width: 70%;
+    margin: 1em 2em;
+    max-width: 85vw;
 }
 
 .books {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
-    width: 100%;
-    margin: 20px 0;
+    max-width: 55em;
+    margin: 1em 0;
 }
 
 .books li {
@@ -39,10 +39,11 @@
     padding: 20px;
     margin: 5% auto;
     border-radius: 3px;
+    min-width: 300px;
 }
 
 .chapters-container a {
-    flex: 1 0 30%;
+    flex: 1 0 20%;
     flex-grow: 1;
     padding: 10px;
     color: #777;
@@ -59,4 +60,5 @@
     flex-wrap: wrap;
 
     margin-top: 20px;
+    width: -webkit-fill-available;
 }

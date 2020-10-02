@@ -45,8 +45,7 @@ module.exports = {
                 password: md5(password),
                 token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa"),
                 total_comments: 0,
-                chapters_commented: JSON.stringify({}),
-                favorites: JSON.stringify([])
+                chapters_commented: JSON.stringify({})
             })
             
             return response.json(
@@ -60,7 +59,7 @@ module.exports = {
     async login(request, response) {
         const { email, password } = request.body
         
-        if (email == null | password == null) {
+        if (email === undefined | password === undefined) {
             return response.json({"msg": 
                 "insulficient body: email, password"})
         }
@@ -71,12 +70,7 @@ module.exports = {
         
         if (user) {
             if (user.password === md5(password)) {
-                return response.json({
-                    "name": user.name,
-                    "token": user.token,
-                    "total_comments": user.total_comments,
-                    "chapters_commented": user.chapters_commented
-                })
+                return response.json(user)
             } else {
                 return response.json({"msg":
                     "Senha incorreta"})

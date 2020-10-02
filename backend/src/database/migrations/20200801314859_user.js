@@ -8,7 +8,8 @@ exports.up = function(knex) {
         table.string("token").notNullable();
         table.integer("total_comments").notNullable();
         table.json('chapters_commented').notNullable();
-        table.json('favorites').notNullable();
+        table.string("state")
+        table.string("belief")
     })
 };
 

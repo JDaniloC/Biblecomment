@@ -8,10 +8,14 @@
   list-style: none;
 }
 
+body {
+    background-image: url("assets/background.png");
+    width: 100vw;
+}
+
 body, input, button {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
-  font-size: 14px;
-  background-color: #c0c0c033;
+  font-size: 12px;
 }
 
 header {
@@ -34,7 +38,7 @@ header img {
   display: flex;
   flex-direction: column;
   align-items: center;
-
+  width: 70vw;
   margin: 30px auto;
 }
 
@@ -64,6 +68,8 @@ textarea:focus {
 
 .top {
   width: 90%;
+  display: flex;
+  justify-content: space-between;
 }
 
 .top h2 {
@@ -71,12 +77,12 @@ textarea:focus {
 }
 
 .top button {
-  float: right;
-  width: 20px;
-  height: 20px;
-  border: 0;
-  background-color: white;
-  cursor: pointer;
+    margin-right: 5%;
+    width: 20px;
+    height: 20px;
+    border: 0;
+    background-color: white;
+    cursor: pointer;
 }
 
 img.tag {

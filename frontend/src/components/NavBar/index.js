@@ -50,9 +50,7 @@ export default class NavBar extends Component {
         return (
             <>
                 <ul className = "navbar">
-                    <li> <Link to = "/" > 
-                        Início 
-                    </Link> </li>
+                    <Link to = "/"> Início </Link> 
                     <li onClick = {(evt) => {this.handleLogin(evt)}}> 
                         Perfil 
                     </li>
@@ -64,7 +62,9 @@ export default class NavBar extends Component {
                     <Login/>
                 </section>
                 <section className = {this.state.indexClass}>
-                    <BooksIndex/>
+                    <BooksIndex
+                        changeChapter = {this.props.changeChapter}
+                    />
                 </section>
             </>
         )

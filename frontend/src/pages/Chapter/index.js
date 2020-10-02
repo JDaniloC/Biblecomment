@@ -1,13 +1,14 @@
 import React, { Component, createRef } from 'react';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
+import axios from '../../services/api';
 
 import NewComment from "../../components/NewComment";
 import TitleComment from "../../components/TitleComments";
 import Comments from "../../components/Comments";
 import NavBar from "../../components/NavBar";
+import { Loading } from '../../components/Partials';
 
-import axios from '../../services/api';
 import "./styles.css";
 
 const warning = require("../../assets/warning.svg")
@@ -25,6 +26,7 @@ export default class Chapter extends Component{
             titleName: "Chapter",
             chapterNumber: "0",
             verses: [],
+            navClass: "visible",
             asideclass: "invisible",
             blur: "none",
             comments: [],
@@ -39,10 +41,12 @@ export default class Chapter extends Component{
             severidade: ""
         }
         
+        // to parent acess children's state
         this.titleComponent = createRef();
         this.commentsComponent = createRef();
 
         // to use the state of parent in the children
+        this.loadChapter = this.loadChapter.bind(this);
         this.handleNewComment = this.handleNewComment.bind(this);
         this.closeComments = this.closeComments.bind(this);
         this.closeNewCommentary = this.closeNewCommentary.bind(this);
@@ -55,17 +59,15 @@ export default class Chapter extends Component{
         return this.state.verseAtual.verse;
     }
 
-    componentDidMount() {
-        let {abbrev, number} = this.props.match.params;
-        this.abbrev = abbrev;
-        this.number = number;
-
+    loadChapter(abbrev, number) {
         try {
-            axios.get(`books/${abbrev}/chapters/${number}`)
-                .then(response => {
-                const {title, verses} = response.data;
-                this.setState({ titleName: title })
-                this.setState({ verses: JSON.parse(verses) })
+            axios.get(`books/${abbrev}/chapters/${number}`
+                ).then(response => {
+                    if (response.data.title !== undefined) {
+                        const {title, verses} = response.data;
+                        this.setState({ titleName: title })
+                        this.setState({ verses: JSON.parse(verses) })
+                    }
             });
         } catch (err) {
             this.setState({
@@ -76,24 +78,26 @@ export default class Chapter extends Component{
         }
         
         try {
-            axios.get(`books/${abbrev}/chapters/${number}/comments`)
-                .then(response => {
-                const result = response.data.map(comment => {
-                    comment.tags = JSON.parse(comment.tags);
-                    return comment
-                });
-                const titleComments = [];
-                const comments = [];
-                for (const comment of result) {
-                    if (comment.on_title) {
-                        titleComments.push(comment)
-                    } else {
-                        comments.push(comment)
+            axios.get(`books/${abbrev}/chapters/${number}/comments`
+                ).then(response => {
+                    if (typeof(response.data) === 'object') {
+                        const result = response.data.map(comment => {
+                            comment.tags = JSON.parse(comment.tags);
+                            return comment
+                        });
+                        const titleComments = [];
+                        const comments = [];
+                        for (const comment of result) {
+                            if (comment.on_title) {
+                                titleComments.push(comment)
+                            } else {
+                                comments.push(comment)
+                            }
+                        }
+    
+                        this.setState({ allComments: comments });
+                        this.setState({ titleComments: titleComments });
                     }
-                }
-
-                this.setState({ allComments: comments });
-                this.setState({ titleComments: titleComments });
             });
         } catch (err) {
             this.setState({
@@ -109,6 +113,14 @@ export default class Chapter extends Component{
         this.setState({ chapterNumber: number })
     }
 
+    componentDidMount() {
+        let {abbrev, number} = this.props.match.params;
+        this.abbrev = abbrev;
+        this.number = number;
+
+        this.loadChapter(this.abbrev, this.number)
+    }
+
     handlecomments(evt, verse) {
         evt.preventDefault();        
         const linha = evt.target
@@ -118,8 +130,10 @@ export default class Chapter extends Component{
             this.state.verseAtual.verse === verse) {
             this.closeComments(evt);
         } else {
-            this.setState({ asideclass: "visible" });
-            this.setState({ main: "main comment" });
+            this.setState({ 
+                asideclass: "visible",
+                main: "main comment"
+            });
             if (this.state.verseAtual.linha !== null) {
                 var antigo = this.state.verseAtual;
                 antigo.linha.style.backgroundColor = "white";
@@ -141,14 +155,7 @@ export default class Chapter extends Component{
             if (thisComments.length > 0) {
                 this.setState({ comments: thisComments })
             } else {
-                this.setState({ comments: [
-                    {
-                        "id": -1,
-                        "name": "Nenhum comentário",
-                        "text": "Seja o primeiro a comentar",
-                        "tags": []
-                    }
-                ]})
+                this.setState({ comments: []})
             }
         }
     }
@@ -158,17 +165,22 @@ export default class Chapter extends Component{
         const linha = this.state.verseAtual.linha;
         linha.style.backgroundColor = "white";
 
-        this.setState({ verseAtual: {"linha": null, "verse": 0}})
-        this.setState({ comments: []})
-        this.setState({ asideclass: "invisible" })
-        this.setState({ main: "main text" })
+        this.setState({ 
+            verseAtual: {"linha": null, "verse": 0},
+            comments: [],
+            asideclass: "invisible",
+            main: "main text"
+        })
     }
 
     handleNewComment(evt) {
         evt.preventDefault();
         
-        this.setState({ newbox: "visible centro"})
-        this.setState({ blur: "block"})
+        this.setState({ 
+            newbox: "visible centro",
+            blur: "block",
+            navClass: "invisible"
+        })
     }
 
     getImage(tag) {
@@ -194,32 +206,37 @@ export default class Chapter extends Component{
         this.titleComponent.current.selected = false;
         this.commentsComponent.current.selected = false;
 
-        this.setState({ newbox: "invisible" });
-        this.setState({ blur: "none" });
+        this.setState({ 
+            blur: "none",
+            newbox: "invisible",
+            navClass: "visible" 
+        });
     }
 
-    handleNotification(aviso, mensagem, severidade) {
+    handleNotification(mensagem, severidade) {
         this.setState({
-            aviso: aviso,
+            aviso: true,
             mensagem: mensagem,
             severidade: severidade
         })
     }
     
-    handleCommentNotification(aviso, mensagem, severidade, comment) {
-        this.handleNotification(aviso, mensagem, severidade);
+    handleCommentNotification(mensagem, severidade, comment) {
+        this.handleNotification(mensagem, severidade);
 
-        const all = this.state.allComments
-        all.push(comment)
-        this.setState({ allComments: all })
-        if (comment.on_title) {
-            const list = this.state.titleComments
-            list.push(comment)
-            this.setState({ titleComments: list })
-        } else {
-            const list = this.state.comments
-            list.push(comment)
-            this.setState({ comments: list })
+        if (comment !== null) {
+            const all = this.state.allComments
+            all.push(comment)
+            this.setState({ allComments: all })
+            if (comment.on_title) {
+                const lista = this.state.titleComments
+                lista.push(comment)
+                this.setState({ titleComments: lista })
+            } else {
+                const lista = this.state.comments
+                lista.push(comment)
+                this.setState({ comments: lista })
+            }
         }
     }
 
@@ -238,12 +255,12 @@ export default class Chapter extends Component{
     render() {
         return (
             <>
-                <div style = {{
-                        display: "flex",
-                        flexDirection: "column",
-                        marginLeft: "20px"
-                    }}>  
-                    <NavBar/>
+                <div className = "chapter-container">  
+                    <div className = {this.state.navClass}>
+                        <NavBar
+                            changeChapter = {this.loadChapter}
+                        />
+                    </div>
                     <div className={this.state.main}>
                         <label htmlFor="toggle"> 
                             {this.state.titleName} {this.state.chapterNumber} 
@@ -257,7 +274,8 @@ export default class Chapter extends Component{
                         />
                         
                         <ul className="verse-list">
-                            {this.state.verses.map((verse, index) => (
+                            {(this.state.verses.length > 0) ? 
+                            this.state.verses.map((verse, index) => (
                                 <li key = {index + 1}>
                                     <sup> {index + 1} </sup>
                                     <p 
@@ -271,7 +289,7 @@ export default class Chapter extends Component{
                                         { verse }
                                     </p>
                                 </li>
-                            ))}
+                            )) : <Loading/>}
                         </ul>
                     </div>
                 </div>
@@ -288,6 +306,8 @@ export default class Chapter extends Component{
     
                 <div className={this.state.newbox}>
                     <NewComment 
+                        title = "Novo comentário"
+                        post = {true}
                         on_title = {this.titleComponent.current}
                         abbrev = {this.abbrev}
                         number = {this.number}
@@ -296,7 +316,7 @@ export default class Chapter extends Component{
                         notification = {this.handleCommentNotification}
                     />
                 </div>
-    
+                
                 <div className="overlay" style={
                     { display: this.state.blur }
                 }></div>

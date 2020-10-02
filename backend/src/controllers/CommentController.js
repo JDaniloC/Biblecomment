@@ -1,6 +1,4 @@
 const connection = require("../database/connection");
-const { destroy } = require("../database/connection");
-const { report } = require("../routes");
 
 module.exports = {
     async index(request, response) {
@@ -24,6 +22,48 @@ module.exports = {
         } else {
             return response.json({ "error": "chapter not found" })
         }    
+    },
+
+    async user_comments(request, response) {
+        const { name } = request.headers;
+        const { pages = 1 } = request.query;
+        
+        if (name === undefined) {
+            return response.json([]);
+        }
+        const result = await connection("comments")
+            .where("name", name)
+
+        if (!(result)) {
+            return response.json([]);
+        }
+        return response.json(result)
+    },
+
+    async user_infos(request, response) {
+        const { name } = request.headers;
+        if (name === undefined) {
+            return response.json([]);
+        }
+        let comments = [];
+        let favorites = [];
+        await connection("comments")
+            .where("likes", "!=", "[]")
+            .orWhere("name", name).then(function(data) {
+                data.forEach(element => {
+                    if (element.name == name) {
+                        comments.push(element)
+                    }
+                    const find = true ? JSON.parse(element.likes).indexOf(name) !== -1 : false
+                    if (find) {
+                        favorites.push(element)
+                    }
+                });
+            })
+        
+        return response.json({
+            comments, favorites
+        })
     },
 
     async show(request, response) {
@@ -61,18 +101,17 @@ module.exports = {
             .where("book_abbrev", abbrev)
             .andWhere("number", number)
             .first()
-            .select("id")
+            .select("id", "book_abbrev", "number")
         
         if (chapter) {
-            
             var name = "Visitante";
             const user = await connection('users')
                 .where("token", token)
                 .first()
-            
             if (user) {
                 name = user.name;
-                
+
+                // Add the abbrev to commented chapters array in user
                 const new_chapter_commented = JSON.parse(
                     user.chapters_commented)
                 if (abbrev in new_chapter_commented) {
@@ -82,7 +121,6 @@ module.exports = {
                 } else {
                     new_chapter_commented[abbrev] = [number]
                 }
-
                 await connection('users')
                     .where("token", token)
                     .first()
@@ -90,15 +128,21 @@ module.exports = {
                     .update({
                         "chapters_commented": JSON.stringify(
                             new_chapter_commented)
-                    })
+                })
             }
             
+            let book_abbrev = chapter.book_abbrev.charAt(0).toUpperCase() + chapter.book_abbrev.slice(1)
+            if (book_abbrev === "Job") {
+                book_abbrev = "Jó"
+            }
+
             const comment = await connection('comments')
                 .insert({
                     name,
                     text,
                     on_title,
                     verse,
+                    book_reference: `${book_abbrev} ${number}:${verse}`,
                     tags: JSON.stringify(tags),
                     chapter_id: chapter.id,
                     reports: JSON.stringify([]),
@@ -106,19 +150,18 @@ module.exports = {
                 })
             
             return response.json({ 
-                id: comment[0],
-                name,
-                text,
-                on_title,
+                id: comment[0], name,
+                text, on_title, tags,
                 verse: parseInt(verse),
-                tags
+                reports: JSON.stringify([]),
+                likes: JSON.stringify([])
             });
         } else {
             return response.json({ "error": "Chapter doesn't exists" })
         }
     },
 
-    async update(request, response) {
+    async  update(request, response) {
         const { id } = request.params;
         let { token, text, tags, likes, reports } = request.body;
         
@@ -130,7 +173,7 @@ module.exports = {
 
         const user = await connection('users')
             .where("token", token)
-            .select('name', 'favorites')
+            .select('name')
 
         if (user.length > 0) {
             const comment = await connection('comments')
@@ -143,24 +186,13 @@ module.exports = {
                 )
             }
 
-            text = text ? (text !== undefined) : comment.text
-            tags = tags ? (tags !== undefined) : comment.tags
+            text = (text !== undefined) ? text : comment.text
+            tags = (tags !== undefined) ? JSON.stringify(tags) : comment.tags
             let aux;
             if (likes !== undefined) {
                 aux = JSON.parse(comment.likes)
                 if (aux.indexOf(user[0].name) === -1) {
                     aux.push(user[0].name)
-                    const favorites = JSON.parse(user[0].favorites)
-                    favorites.push({
-                        "name": comment.name,
-                        "chapter": comment.chapter_id,
-                        "verse": comment.verse,
-                        "tags": comment.tags,
-                        "text": comment.text
-                    })
-                    await connection('users')
-                        .where('token', token)
-                        .update('favorites', JSON.stringify(favorites))
                 }
                 likes = JSON.stringify(aux)
             }
@@ -197,15 +229,36 @@ module.exports = {
 
     async destroy(request, response) {
         const { id } = request.params;
+        const { token } = request.headers;
+        
+        if (token === undefined) {
+            return response
+                .json({ 'BadRequest': "It's missing the token body" })
+        }
+
+        const user = await connection('users')
+            .where("token", token)
+            .select('name')
+
+        if (user.length === 0) {
+            return response
+                .json({ 'Unauthorized': "Você precisa estar logado" })
+        }
 
         const comment = await connection("comments")
             .where("id", id)
+            .andWhere('name', user[0].name)
             .delete()
         
         if (comment) {
+            await connection('users')
+                .where("token", token)
+                .first()
+                .decrement("total_comments", 1)
             return response.json(comment)
         } else {
-            return response.json({ "message": "Id not found" })
+            return response.json(
+                { "message": "Comentário não correspondente ao usuário" })
         }
     }
 }

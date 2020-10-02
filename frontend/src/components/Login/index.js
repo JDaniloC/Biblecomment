@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import axios from '../../services/api';
 import Snackbar from '@material-ui/core/Snackbar';
-import Alert from '@material-ui/lab/Alert';
+import Profile from '../Profile';
+import { Alert } from '@material-ui/lab';
 
 import { 
     login, logout, isAuthenticated, TOKEN_KEY 
@@ -14,7 +15,6 @@ export default class Login extends Component {
 
         this.state = {
             formClass: "",
-            perfilClass: "invisible",
             loginClass: "",
             registerClass: "invisible",
             buttonColor: "#1E7",
@@ -26,12 +26,13 @@ export default class Login extends Component {
 
             email: "",
             name: "",
-            password: "",
-
-            total_comments: 0,
-            total_books: 0,
-            total_chapters: 0
+            password: ""
         }
+        
+        this.profileComponent = createRef();
+
+        this.deleteComment = this.deleteComment.bind(this);
+        this.handleNotification = this.handleNotification.bind(this);
     }
 
     changeMethod(evt) {
@@ -54,7 +55,7 @@ export default class Login extends Component {
     }
 
     componentDidMount() {
-        async function get_infos(token) {
+        async function get_user(token) {
             return await axios.get("users", {
                 headers: {
                     "token": token
@@ -63,43 +64,60 @@ export default class Login extends Component {
         }
 
         if (isAuthenticated()) {
-            get_infos(localStorage.getItem(TOKEN_KEY)).then(response => {
+            get_user(localStorage.getItem(TOKEN_KEY)).then(response => {
                 if (response.data.chapters_commented) {
-                    const info = this.parse_user(response)
-                    this.setState({                
-                        name: info["name"],
-                        total_books: info["total_books"],
-                        total_chapters: info["total_chapters"],
-                        total_comments: info["total_comments"],
-        
-                        formClass: "invisible",
-                        perfilClass: ""
-                    })
+                    this.parse_user(response)
                 } else {
-                    this.setState({
-                        aviso: true,
-                        mensagem: "Não consegui acessar sua conta.",
-                        severidade: "info"
-                    })
+                    this.handleNotification(
+                        "Não consegui acessar sua conta.", "info")
                 }
             })
 
         }
     }
 
-    closeAccount(evt) {
-        evt.preventDefault();
-        logout();
-
-        this.setState({
-            formClass: "",
-            perfilClass: "invisible"
-        })
-    }
-
     changeState(event) {
         event.preventDefault();
         this.setState({[event.target.name]: event.target.value});
+    }
+
+    async deleteComment(identificador) {
+        try {
+            await axios.delete(`/comments/${identificador}`, {
+                headers: { "token": localStorage.getItem(TOKEN_KEY) }
+            }).then( response => {
+                console.log(response.data)
+                this.handleNotification("Comentário excluído com sucesso.", "success")
+            })
+        } catch (err) {
+            this.handleNotification("Problema no servidor", "error")
+        }
+    }
+
+    async get_infos() {
+        this.profileComponent.current.setState({
+            totalCpages: -1,
+            totalFpages: -1
+        })
+
+        try {
+            await axios.get("users/infos", {
+                headers: { "name": this.state.name }
+            }).then( response => {
+                if (response.data.favorites !== undefined) {
+                    const favorites = response.data.favorites;
+                    const comments = response.data.comments;
+                    this.profileComponent.current.setState({
+                        favorites: favorites,
+                        commentaries: comments, 
+                        totalFpages: Math.ceil(favorites.length / 5), 
+                        totalCpages: Math.ceil(comments.length / 5) 
+                    })}
+                }
+            )
+        } catch (error) {
+            this.handleNotification("Problema no servidor", "error")
+        }
     }
 
     parse_user(response) {
@@ -108,15 +126,22 @@ export default class Login extends Component {
         const total_books = Object.keys(commented).length
         let total_chapters = 0
         for (var book in commented) {
-            total_chapters += book.length
+            total_chapters += commented[book].length
         }
 
-        return {
-            "name": response.data.name,
-            "total_books": total_books,
-            "total_chapters": total_chapters,
-            "total_comments": response.data.total_comments
-        }
+        this.profileComponent.current.setState({                
+            name: response.data.name,
+            total_books: total_books,
+            total_chapters: total_chapters,
+            total_comments: response.data.total_comments,
+            perfilClass: ""
+        })
+        this.setState({
+            name: response.data.name,
+            formClass: "invisible",
+        })
+
+        this.get_infos()
     }
 
     async try_login(email, password) {
@@ -127,35 +152,16 @@ export default class Login extends Component {
             }).then(response => {
                 const token = response.data.token;
                 if (token !== undefined) {
-                    const info = this.parse_user(response)
-                    this.setState({
-                        aviso: true,
-                        mensagem: "Login realizado com sucesso!",
-                        severidade: "success",
-                        
-                        name: info["name"],
-                        total_books: info["total_books"],
-                        total_chapters: info["total_chapters"],
-                        total_comments: info["total_comments"],
-
-                        formClass: "invisible",
-                        perfilClass: ""
-                    })
+                    this.parse_user(response)
+                    this.handleNotification(
+                        "Login realizado com sucesso!", "success")
                     login(token);
                 } else {
-                    this.setState({
-                        aviso: true,
-                        severidade: "warning",
-                        mensagem: response.data.msg
-                    })
+                    this.handleNotification(response.data.msg, "warning")
                 }
             })
         } catch (error) {
-            this.setState({
-                aviso: true,
-                mensagem: "Problema no servidor",
-                severidade: "error"
-            })
+            this.handleNotification("Problema no servidor", "error")
         }
     }
 
@@ -167,26 +173,15 @@ export default class Login extends Component {
                 password
             }).then(response => {
                 if (response.data.error === undefined) {
-                    this.setState({
-                        aviso: true,
-                        mensagem: "Cadastro realizado com sucesso!",
-                        severidade: "success"
-                    })
+                    this.handleNotification(
+                        "Cadastro realizado com sucesso!", "success");
                     this.changeMethod(null)
                 } else {
-                    this.setState({
-                        aviso: true,
-                        severidade: "warning",
-                        mensagem: response.data.error
-                    })
+                    this.handleNotification(response.data.error, "warning")
                 }
             })
         } catch (error) {
-            this.setState({
-                aviso: true,
-                mensagem: "Problema no servidor",
-                severidade: "error"
-            })
+            this.handleNotification("Problema no servidor", "error")
         }
     }
 
@@ -199,8 +194,8 @@ export default class Login extends Component {
             this.try_register(
                 this.state.email, 
                 this.state.name, 
-                this.state.password)
-        }
+                this.state.password
+        )}
     }
 
     closeAviso(evt, reason) {
@@ -215,29 +210,29 @@ export default class Login extends Component {
         this.setState({ aviso:false });
     }
 
+    handleNotification(mensagem, severidade, data = null) {
+        this.setState({
+            aviso: true,
+            mensagem: mensagem,
+            severidade: severidade
+        })
+        console.log(data)
+    }
+
     render() { 
         return (
             <>
             <div className="login-container" >
-                <section className={this.state.perfilClass}>
-                    <h2> Adorador {this.state.name} </h2>
-                    <p> {this.state.email} </p>
-                    <ul>
-                        <li>
-                            Total de livros comentados: {this.state.total_books} de 66
-                        </li>
-                        <li>
-                            Total de capítulos comentados: {this.state.total_chapters} de 1.189
-                        </li>
-                        <li>
-                            Total de comentários feitos: {this.state.total_comments}
-                        </li>
-                    </ul>
-                    <button 
-                        onClick = {(evt) => {this.closeAccount(evt)}} > 
-                        Sair 
-                    </button>
-                </section>
+                <Profile 
+                    ref = {this.profileComponent}
+                    deleteComment = {this.deleteComment}
+                    notification = {this.handleNotification}
+                    closeAccount = {() => {
+                            logout();
+                            this.setState({ formClass: "" })
+                        }
+                    }
+                />
                 <form className = {this.state.formClass} onSubmit={
                     (evt) => {this.handleForm(evt)}}>
                     <input 
@@ -298,6 +293,6 @@ export default class Login extends Component {
                     {this.state.mensagem}
                 </Alert>
             </Snackbar>
-            </>
+        </>
     )}
 }

@@ -1,0 +1,52 @@
+.login-container > section > ul > li {
+    width: 100%;
+    margin: 10px 0;
+    font-size: larger;
+}
+
+.login-container > section > ul > ul {
+    border: .1px solid rgba(0,0,0,.2);
+    padding: 10px;
+    margin: 10px 0;
+}
+
+.login-container > section p {
+    font-size: small;
+    margin: 0;
+}
+
+.login-container > section div.user-comment p {
+    justify-content: space-evenly;
+    width: 100%;
+    display: flex;
+    cursor: default;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+div.user-comment {
+    align-items: center;
+}
+
+div.user-comment > p b {
+    font-size: 1rem;
+}
+
+div.user-comment > p img {
+    width: 1rem;
+    margin: 0 4px;
+}
+
+div.user-comment > p button {
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+div.user-comment > p button:active {
+    transform: scale(1.5);
+}

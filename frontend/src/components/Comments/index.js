@@ -17,7 +17,6 @@ export default class Comments extends Component {
     }
     handleLike(evt, identificador) {
         evt.preventDefault();
-        console.log("Dando like")
 
         if (isAuthenticated()) {
             var token = localStorage.getItem(TOKEN_KEY);
@@ -27,19 +26,23 @@ export default class Comments extends Component {
                         token,
                         likes: true
                     }).then(response => {
-                        this.props.notification(
-                            true, "Adicionado aos favoritos", "success"
-                        )
+                        this.props.notification("Adicionado aos favoritos", "success")
+                        this.props.commentaries.forEach(
+                            function(part, index, array) {
+                                if (array[index].id === identificador) {
+                                    const likes = JSON.parse(array[index].likes);
+                                    if (!("+1" in likes)) {
+                                        likes.push("+1");
+                                        array[index].likes = JSON.stringify(likes);
+                                    } 
+                                }
+                        });
                 })
             } catch (error) {
-                this.props.notification(
-                    true, "Problema na requisição", "error"
-                )
+                this.props.notification("Problema na requisição", "error")
             }
         } else {
-            this.props.notification(
-                true, "Você precisa está logado", "warning"
-            )
+            this.props.notification("Você precisa está logado", "warning")
         }
     }
     handleReport(evt, identificador) {
@@ -55,18 +58,14 @@ export default class Comments extends Component {
                         reports: message
                     }).then(response => {
                         this.props.notification(
-                            true, "Comentário reportado!", "success"
+                            "Comentário reportado!", "success"
                         )
                 })
             } catch (error) {
-                this.props.notification(
-                    true, "Problema na requisição", "error"
-                )
+                this.props.notification("Problema na requisição", "error")
             }
         } else {
-            this.props.notification(
-                true, "Você precisa está logado", "warning"
-            )
+            this.props.notification("Você precisa está logado", "warning")
         }
     }
 
@@ -74,25 +73,24 @@ export default class Comments extends Component {
         return (
             <div className="side">
                 <div className="top">
+                    <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
                     <button onClick = { this.props.closeFunction }>
                         <img src = { close } alt="Fechar"/>
                     </button>
-                    <h2 style = {{ alignSelf: "center" }}> Comentários </h2>
                 </div>
                 
                 <ul className="commentaries">
-                    {this.props.commentaries.map(commentary => (
+                    {(this.props.commentaries.length !== 0) ? 
+                    this.props.commentaries.map(commentary => (
                         <li key = {commentary.id}>
-                            <h3 style={{ display: "inline" }} >
+                            <h3 style={{ display: "flex" }} >
                                 {commentary.name} 
-                            </h3> {commentary.tags.map((tag, index) => (
-                                    <img 
-                                        key = {index}
+                                {commentary.tags.map((tag, index) => (
+                                    <img key = {index} alt = {tag}
                                         src = {this.props.imageFunction(tag)}
-                                        className = "tag"
-                                        alt = {tag}/>
-                                )
-                            )}
+                                        style = {{ height: "1rem", margin: "0 4px" }}/>)
+                                )}
+                            </h3> 
                             <label 
                                 style = {{ display: "flex" }}
                                 htmlFor={commentary.id}> 
@@ -104,6 +102,7 @@ export default class Comments extends Component {
                             <div className = "user-comment">
                                 {commentary.text}
                                 <span>
+                                    <p> Favoritado por <b>{JSON.parse(commentary.likes).length}</b> pessoas </p>
                                     <button 
                                         onClick = {(evt) => this.handleLike(evt, commentary.id)}>
                                         <img src = {this.props.imageFunction("heart")} alt="like"/>
@@ -115,12 +114,17 @@ export default class Comments extends Component {
                                 </span>
                             </div>
                         </li>
-                    ))}
+                    )) : // Ternary operator
+                    <li>
+                        <h3> Nenhum comentário </h3>
+                        <p> Seja o primeiro a comentar </p>
+                    </li>}
                 </ul>
                 <div style={{
                         display: "flex",
                         flexDirection: "column",
-                        alignItems:"center"
+                        alignItems:"center",
+                        width: "100%"
                     }}>
                     <button 
                         className = "entry" 

@@ -1,4 +1,9 @@
 /* principal */
+div.chapter-container {
+    display: flex;
+    flex-direction: column;
+}
+
 div.main {
     max-width: 750px;
     background-color: white;
@@ -33,7 +38,6 @@ button.entry:hover {
 .invisible {
     opacity: 0;
     position: fixed;
-    right: 0;
     z-index: -1;
 }
 
@@ -70,9 +74,10 @@ aside {
 ul.commentaries {
     height: 88%;
     overflow: auto;
+    width: 100%;
 }
 
-ul.commentaries li {
+ul.commentaries > li {
     margin-top: 10px;
 }
 

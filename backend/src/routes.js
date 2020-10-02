@@ -21,6 +21,8 @@ routes.get("/books/:abbrev/chapters", ChapterController.index);
 routes.get("/books/:abbrev/chapters/:number", ChapterController.show);
 routes.post("/books/:abbrev/chapters/:number", ChapterController.store);
 
+routes.get("/users/comments", CommentController.user_comments);
+routes.get("/users/infos", CommentController.user_infos);
 routes.get(
     "/books/:abbrev/chapters/:number/comments", 
     CommentController.index);
