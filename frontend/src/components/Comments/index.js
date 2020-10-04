@@ -45,6 +45,7 @@ export default class Comments extends Component {
             this.props.notification("Você precisa está logado", "warning")
         }
     }
+    
     handleReport(evt, identificador) {
         evt.preventDefault();
         if (isAuthenticated()) {
