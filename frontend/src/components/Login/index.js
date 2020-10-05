@@ -39,7 +39,7 @@ export default class Login extends Component {
         if (this._isEventNull(event)) { 
             event.preventDefault();
         }
-        
+
         if (this._isLoginClassEmpty()) {
             this._setStateCaseLoginClassIsEmpty();
         } else {
@@ -47,7 +47,7 @@ export default class Login extends Component {
         }
     }
 
-    _isEventNull = (event) => {
+    _isEventNotNull = (event) => {
         return event !== null;
     } 
 
