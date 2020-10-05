@@ -35,23 +35,42 @@ export default class Login extends Component {
         this.handleNotification = this.handleNotification.bind(this);
     }
 
-    changeMethod(evt) {
-        if (evt !== null) { evt.preventDefault(); }
-        if (this.state.loginClass === "") {
-            this.setState({ 
-                loginClass: "invisible",
-                registerClass: "",
-                buttonColor: "#888",
-                buttonName: "Login"
-            })
-        } else {
-            this.setState({ 
-                loginClass: "", 
-                registerClass: "invisible",
-                buttonColor: "#1E7",
-                buttonName: "Cadastrar"
-            })
+    changeMethod(event) {
+        if (this._isEventNull(event)) { 
+            event.preventDefault();
         }
+
+        if (this._isLoginClassEmpty()) {
+            this._setStateCaseLoginClassIsEmpty();
+        } else {
+            this._setStateCaseLoginClassIsNotEmpty();
+        }
+    }
+
+    _isEventNotNull = (event) => {
+        return event !== null;
+    } 
+
+    _isLoginClassEmpty = () => {
+        return this.state.loginClass === "";
+    }
+
+    _setStateCaseLoginClassIsEmpty = () => {
+        this.setState({ 
+            loginClass: "invisible",
+            registerClass: "",
+            buttonColor: "#888",
+            buttonName: "Login"
+        })
+    }
+
+    _setStateCaseLoginClassIsNotEmpty = () => {
+        this.setState({ 
+            loginClass: "", 
+            registerClass: "invisible",
+            buttonColor: "#1E7",
+            buttonName: "Cadastrar"
+        })
     }
 
     componentDidMount() {
@@ -185,8 +204,8 @@ export default class Login extends Component {
         }
     }
 
-    handleForm(evt) {
-        evt.preventDefault();
+    handleForm(event) {
+        event.preventDefault();
         
         if (this.state.loginClass === "") {
             this.try_login(this.state.email, this.state.password)
@@ -198,9 +217,9 @@ export default class Login extends Component {
         )}
     }
 
-    closeAviso(evt, reason) {
-        if (evt != null){
-            evt.preventDefault();
+    closeAviso(event, reason) {
+        if (event != null){
+            event.preventDefault();
         }
 
         if (reason === 'clickaway') {
@@ -234,13 +253,13 @@ export default class Login extends Component {
                     }
                 />
                 <form className = {this.state.formClass} onSubmit={
-                    (evt) => {this.handleForm(evt)}}>
+                    (event) => {this.handleForm(event)}}>
                     <input 
                         type="email" 
                         name="email" 
                         id="email" 
                         placeholder = "E-mail"
-                        onChange = {(evt) => {this.changeState(evt)}}
+                        onChange = {(event) => {this.changeState(event)}}
                         required
                     />
                     <input 
@@ -249,13 +268,13 @@ export default class Login extends Component {
                         type="text" 
                         name="name" 
                         placeholder = "Nome de usuário"
-                        onChange = {(evt) => {this.changeState(evt)}}
+                        onChange = {(event) => {this.changeState(event)}}
                     />
                     <input 
                         type="password" 
                         name="password" 
                         placeholder = "Senha"
-                        onChange = {(evt) => {this.changeState(evt)}}
+                        onChange = {(event) => {this.changeState(event)}}
                         required
                     />
                     <input 
@@ -275,8 +294,8 @@ export default class Login extends Component {
                         {backgroundColor:
                             this.state.buttonColor}}
                         onClick = {
-                            (evt) => 
-                            this.changeMethod(evt)
+                            (event) => 
+                            this.changeMethod(event)
                         }>
                             {this.state.buttonName} 
                     </button>
@@ -285,10 +304,10 @@ export default class Login extends Component {
             <Snackbar 
                 open={this.state.aviso} 
                 autoHideDuration={2000} 
-                onClose={(evt, reason) => {
-                    this.closeAviso(evt, reason)}}>
-                <Alert onClose={(evt, reason) => {
-                    this.closeAviso(evt, reason)}} 
+                onClose={(event, reason) => {
+                    this.closeAviso(event, reason)}}>
+                <Alert onClose={(event, reason) => {
+                    this.closeAviso(event, reason)}} 
                 severity={this.state.severidade}>
                     {this.state.mensagem}
                 </Alert>
