@@ -26,7 +26,8 @@ export default class Login extends Component {
 
             email: "",
             name: "",
-            password: ""
+            password: "",
+            commented: {}
         }
         
         this.profileComponent = createRef();
@@ -105,7 +106,6 @@ export default class Login extends Component {
             await axios.delete(`/comments/${identificador}`, {
                 headers: { "token": localStorage.getItem(TOKEN_KEY) }
             }).then( response => {
-                console.log(response.data)
                 this.handleNotification("Comentário excluído com sucesso.", "success")
             })
         } catch (err) {
@@ -142,6 +142,7 @@ export default class Login extends Component {
     parse_user(response) {
         const commented = JSON.parse(
             response.data.chapters_commented)
+        this.setState({ commented: commented })
         const total_books = Object.keys(commented).length
         let total_chapters = 0
         for (var book in commented) {

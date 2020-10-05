@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import BooksIndex from '../BooksIndex';
@@ -14,6 +14,8 @@ export default class NavBar extends Component {
             indexClass: "invisible",
             loginClass: "invisible"
         }
+
+        this.loginComponent = createRef();
     }
 
     handleBooks(evt) {
@@ -59,11 +61,12 @@ export default class NavBar extends Component {
                     </li>
                 </ul>
                 <section className = {this.state.loginClass}>
-                    <Login/>
+                    <Login ref = {this.loginComponent} />
                 </section>
                 <section className = {this.state.indexClass}>
                     <BooksIndex
                         changeChapter = {this.props.changeChapter}
+                        loginComponent = {this.loginComponent}
                     />
                 </section>
             </>

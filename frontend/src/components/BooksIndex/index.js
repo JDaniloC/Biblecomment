@@ -16,7 +16,7 @@ export default class BooksIndex extends Component {
             numbers: [],
             selected: {"abbrev": "", "max": 0},
             blur: "none",
-            chapters: "invisible",
+            chapters: "invisible"
         }
     }
     
@@ -62,6 +62,29 @@ export default class BooksIndex extends Component {
         }
     }
 
+    bookCommented(book, length) {
+        if (this.props.loginComponent !== undefined) {
+            const commented = this.props.loginComponent.current.state.commented;
+            
+            if (book in commented) {
+                console.log(commented[book].length * 100 / length)
+                return commented[book].length * 100 / length;
+            }
+        }
+        return 0;
+    }
+
+    chapterCommented(book, chapter) {
+        if (this.props.loginComponent !== undefined) {
+            const commented = this.props.loginComponent.current.state.commented;
+            
+            if (book in commented && chapter in commented[book]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     render() { 
         return (
             <div className = "books-container">
@@ -69,6 +92,9 @@ export default class BooksIndex extends Component {
                 <ul className="books">
                     {(this.state.books.length > 0) ? this.state.books.map(book => (
                         <li 
+                            style = {{ background: `linear-gradient(to right, lightgreen ${
+                                this.bookCommented(book.abbrev, book.length)
+                            }%,  #DADCE2 0%)` }}
                             key = {book.abbrev}
                             onClick = {
                                 () => this.showChapterNumbers(
@@ -96,6 +122,9 @@ export default class BooksIndex extends Component {
                                 0, this.state.selected.max
                             ).map( chapter => (
                                 <Link 
+                                    style = {{ backgroundColor: (this.chapterCommented(
+                                        this.state.selected.abbrev, chapter
+                                    )) ? "lightgreen" : "white"}}
                                     key = {chapter}
                                     to = {`/verses/${this.state.selected.abbrev}/${chapter}`}
                                     onMouseDown = {(evt) => {this.changePage(

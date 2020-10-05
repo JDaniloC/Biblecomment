@@ -60,6 +60,9 @@ export default class Chapter extends Component{
     }
 
     loadChapter(abbrev, number) {
+        this.abbrev = abbrev;
+        this.number = number;
+        
         try {
             axios.get(`books/${abbrev}/chapters/${number}`
                 ).then(response => {
@@ -115,10 +118,8 @@ export default class Chapter extends Component{
 
     componentDidMount() {
         let {abbrev, number} = this.props.match.params;
-        this.abbrev = abbrev;
-        this.number = number;
 
-        this.loadChapter(this.abbrev, this.number)
+        this.loadChapter(abbrev, number)
     }
 
     handlecomments(evt, verse) {
@@ -132,7 +133,9 @@ export default class Chapter extends Component{
         } else {
             this.setState({ 
                 asideclass: "visible",
-                main: "main comment"
+                main: "main comment",
+                navClass: (this.state.navClass.includes("navHide")) ? 
+                    this.state.navClass : this.state.navClass + " navHide"
             });
             if (this.state.verseAtual.linha !== null) {
                 var antigo = this.state.verseAtual;
@@ -169,7 +172,8 @@ export default class Chapter extends Component{
             verseAtual: {"linha": null, "verse": 0},
             comments: [],
             asideclass: "invisible",
-            main: "main text"
+            main: "main text",
+            navClass: "visible"
         })
     }
 
@@ -252,6 +256,23 @@ export default class Chapter extends Component{
         this.setState({ aviso:false });
     }
 
+    renderAmount(index) {
+        const amount = this.state.allComments.filter((comment) => {
+            return comment.verse === index + 1;
+        }).length
+        if (amount === 0) {
+            return 
+        }
+
+        const color = (amount === 1) ? "lightgray" : (amount < 3) ? "lightblue" : 
+            (amount < 5) ? "lightgreen" : (amount < 10) ? "gold" : "lightcoral"
+        return(
+            <div className = "amount" style = {{ backgroundColor: color }}>
+                {amount}
+            </div>
+        )
+    }
+
     render() {
         return (
             <>
@@ -288,6 +309,7 @@ export default class Chapter extends Component{
                                         }>
                                         { verse }
                                     </p>
+                                    {this.renderAmount(index)}
                                 </li>
                             )) : <Loading/>}
                         </ul>
