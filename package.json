@@ -7,5 +7,8 @@
   "license": "MIT",
   "scripts": {
     "heroku-postbuild": "yarn --cwd backend -i && migrate:latest && start"
+  },
+  "engines": {
+    "node": "12.x"
   }
 }
