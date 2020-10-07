@@ -81,7 +81,7 @@ ul.commentaries > li {
     margin-top: 10px;
 }
 
-ul.commentaries li p {
+p.label-title {
     padding-left: 5px;
     cursor: pointer;
     overflow: hidden;

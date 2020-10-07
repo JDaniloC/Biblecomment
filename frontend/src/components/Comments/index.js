@@ -95,7 +95,7 @@ export default class Comments extends Component {
                             <label 
                                 style = {{ display: "flex" }}
                                 htmlFor={commentary.id}> 
-                                <p>
+                                <p className = "label-title">
                                     {commentary.text}
                                 </p> 
                             </label>

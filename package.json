@@ -1,0 +1,11 @@
+{
+  "name": "BibleComment",
+  "version": "1.0.0",
+  "description": "A bible comment app",
+  "main": "index.js",
+  "author": "JDaniloC",
+  "license": "MIT",
+  "scripts": {
+    "heroku-postbuild": "yarn --cwd backend -i && migrate:latest && start"
+  }
+}
