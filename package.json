@@ -6,7 +6,7 @@
   "author": "JDaniloC",
   "license": "MIT",
   "scripts": {
-    "heroku-postbuild": "npm install yarn && yarn --cwd backend -i && yarn start"
+    "heroku-postbuild": "npm install yarn && yarn --cwd backend -i && yarn --cwd backend start"
   },
   "engines": {
     "node": "12.x"
