@@ -10,5 +10,7 @@
   },
   "engines": {
     "node": "12.x"
-  }
+  },
+  "repository": "https://github.com/JDaniloC/Individual-Community-Bible.git",
+  "private": false
 }
