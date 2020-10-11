@@ -3,6 +3,7 @@ import { BrowserRouter, Switch, Route } from 'react-router-dom';
 
 import Main from './pages/Main'
 import Chapter from './pages/Chapter';
+import Discussion from './pages/Discussion';
 
 export default function Routes() {
     return (
@@ -13,6 +14,10 @@ export default function Routes() {
                     exact
                     path="/verses/:abbrev/:number/" 
                     component={Chapter}/>
+                <Route 
+                    exact 
+                    path="/discussion/:abbrev" 
+                    component = {Discussion}/>
             </Switch>
         </BrowserRouter>
     )

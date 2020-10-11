@@ -2,19 +2,10 @@ const connection = require('../database/connection');
 
 module.exports = {
     async index(request, response) {
-        const { pages = 1 } = request.query;
-
         const books = await connection('books')
-            // .limit(5)
-            // .offset((pages - 1) * 5)
-            .select([
-                'title',
-                "abbrev",
-                "length",
-                "created_at"
-            ])
+            .select("*")
             .orderBy("created_at", "asc");
-
+        
         return response.json( books );
     },
 
@@ -34,7 +25,8 @@ module.exports = {
             const book = await connection('books').insert({
                 title,
                 abbrev,
-                length
+                length,
+                created_at: Date.now()
             })
     
             return response.json(book);

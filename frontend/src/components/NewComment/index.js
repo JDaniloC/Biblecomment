@@ -103,7 +103,7 @@ export default class NewComment extends Component {
 
     render() {
         return (
-            <div className="new-comment">
+            <div className="pop-up">
                 <div className="top">
                     <h2 style = {{ alignSelf: "center" }}> 
                         {this.props.title}
@@ -189,7 +189,8 @@ export default class NewComment extends Component {
                         name = "texto" 
                         id = "texto" 
                         value = {this.state.texto}
-                        onChange = {(evt) => {this.handleChange(evt)}}
+                        onChange = {(evt) => {
+                            this.handleChange(evt)}}
                         placeholder = "Descreva seu comentário">
                     </textarea>
                 </div>

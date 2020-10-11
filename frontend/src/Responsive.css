@@ -1,4 +1,10 @@
 
+@media (min-width: 850px) {
+    .pop-up {
+        min-width: 500px;
+    }
+}
+
 @media (max-width: 1650px) {
     aside.visible {
         width: 500px;
@@ -50,7 +56,7 @@
         width: inherit;
         max-height: 70%;
     }
-    .new-comment {
+    .pop-up {
         width: 90%;
         padding: 20px 0;
     }
@@ -63,7 +69,7 @@
 }
 
 @media (max-height:500px) {
-    .new-comment {
+    .pop-up {
         margin-top: 0;
     }
 }

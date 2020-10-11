@@ -67,7 +67,6 @@ export default class BooksIndex extends Component {
             const commented = this.props.loginComponent.current.state.commented;
             
             if (book in commented) {
-                console.log(commented[book].length * 100 / length)
                 return commented[book].length * 100 / length;
             }
         }

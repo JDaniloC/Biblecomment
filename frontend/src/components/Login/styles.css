@@ -62,6 +62,6 @@ hr {
     width: inherit;
 }
 
-button:hover, input:hover, li:hover {
+button:hover, input:hover {
     opacity: 0.9;
 }

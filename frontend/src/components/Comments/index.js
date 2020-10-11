@@ -5,16 +5,18 @@ import axios from '../../services/api';
 import "./styles.css";
 const close = require("../../assets/x.svg")
 
-export default class Comments extends Component {
+class Comments extends Component {
     constructor(props) {
         super(props);
 
         this.selected = false;
     }
+
     showNewComment(evt) {
         this.selected = true;
         this.props.handleNewComment(evt)
     }
+
     handleLike(evt, identificador) {
         evt.preventDefault();
 
@@ -45,7 +47,7 @@ export default class Comments extends Component {
             this.props.notification("Você precisa está logado", "warning")
         }
     }
-    
+
     handleReport(evt, identificador) {
         evt.preventDefault();
         if (isAuthenticated()) {
@@ -69,6 +71,7 @@ export default class Comments extends Component {
             this.props.notification("Você precisa está logado", "warning")
         }
     }
+    
 
     render() {
         return (
@@ -101,12 +104,18 @@ export default class Comments extends Component {
                             </label>
                             <input type="checkbox" id={commentary.id}/>
                             <div className = "user-comment">
-                                {commentary.text}
+                                <p style = {{ textAlign: "justify" }}>
+                                    {commentary.text}
+                                </p>
                                 <span>
                                     <p> Favoritado por <b>{JSON.parse(commentary.likes).length}</b> pessoas </p>
                                     <button 
                                         onClick = {(evt) => this.handleLike(evt, commentary.id)}>
                                         <img src = {this.props.imageFunction("heart")} alt="like"/>
+                                    </button>
+                                    <button 
+                                        onClick = {() => this.props.goToChat(commentary)}>
+                                        <img src = {this.props.imageFunction("chat")} alt="chat"/>
                                     </button>
                                     <button 
                                         onClick = {(evt) => this.handleReport(evt, commentary.id)}>
@@ -137,3 +146,5 @@ export default class Comments extends Component {
         )
     }
 }
+
+export default Comments;

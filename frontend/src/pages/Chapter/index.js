@@ -13,6 +13,7 @@ import "./styles.css";
 
 const warning = require("../../assets/warning.svg")
 const heart = require("../../assets/heart.svg")
+const chat = require("../../assets/chat.svg")
 const book = require("../../assets/book.svg")
 const hand = require("../../assets/hand.svg")
 const person = require("../../assets/person.svg")
@@ -46,6 +47,7 @@ export default class Chapter extends Component{
         this.commentsComponent = createRef();
 
         // to use the state of parent in the children
+        this.goToChat = this.goToChat.bind(this);
         this.loadChapter = this.loadChapter.bind(this);
         this.handleNewComment = this.handleNewComment.bind(this);
         this.closeComments = this.closeComments.bind(this);
@@ -193,6 +195,8 @@ export default class Chapter extends Component{
                 return heart;
             case "warning":
                 return warning;
+            case "chat":
+                return chat;
             case "devocional":
                 return hand;
             case "inspirado":
@@ -273,6 +277,18 @@ export default class Chapter extends Component{
         )
     }
 
+    goToChat(comment) {
+        console.log(this.state.verseAtual)
+        this.props.history.push({
+            pathname: `/discussion/${this.state.titleName}`,
+            state: { 
+                abbrev: this.props.match.params.abbrev,
+                verse: this.state.verseAtual.linha.innerText,
+                comment
+            }
+        })
+    }
+
     render() {
         return (
             <>
@@ -323,6 +339,7 @@ export default class Chapter extends Component{
                         handleNewComment = {this.handleNewComment}
                         ref = {this.commentsComponent}
                         notification = {this.handleNotification}
+                        goToChat = {this.goToChat}
                     />
                 </aside>
     

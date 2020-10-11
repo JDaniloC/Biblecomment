@@ -37,7 +37,7 @@ export default class Login extends Component {
     }
 
     changeMethod(event) {
-        if (this._isEventNull(event)) { 
+        if (this._isEventNotNull(event)) { 
             event.preventDefault();
         }
 
