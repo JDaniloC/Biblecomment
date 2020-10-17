@@ -4,7 +4,7 @@ exports.up = function(knex) {
     .createTable("discussions", function(table) {
         table.increments();
 
-        table.integer("book_abbrev").unsigned();
+        table.string("book_abbrev");
         table.foreign("book_abbrev").references("abbrev").inTable("books");
         table.integer("comment_id").unsigned();
         table.foreign("comment_id").references("id").inTable("comments");
