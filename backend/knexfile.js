@@ -30,15 +30,9 @@ module.exports = {
 
   production: {
     client: 'mysql',
-    connection: {
-      host:     'w1h4cr5sb73o944p.cbetxkdyhwsb.us-east-1.rds.amazonaws.com',
-      user:     'tm8bsap1hsd4lil9',
-      password: 'gds9rd5uva3p966c',
-      database: 'qfk25mxhm9aawo8b'
-    },
+    connection: process.env.JAWSDB_URL,
     migrations: {
       directory:"./src/database/migrations/"
     }
   }
-
 };
