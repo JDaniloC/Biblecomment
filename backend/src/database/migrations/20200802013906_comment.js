@@ -14,7 +14,7 @@ exports.up = function(knex) {
             table.integer("verse").notNullable();
             table.timestamp("created_at");
             
-            table.string("text").notNullable();
+            table.text("text").notNullable();
             table.json("tags").notNullable();
             table.json("reports").notNullable();
             table.json("likes").notNullable();

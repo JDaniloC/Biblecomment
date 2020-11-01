@@ -29,7 +29,7 @@ export default class TitleComment extends Component {
                                         alt = {tag}/>
                                 )
                             )}
-                            <p> {comment.text} </p>
+                            <p style = {{ whiteSpace: "break-spaces" }}> {comment.text} </p>
                         </li>
                     ))}
                 </ul>

@@ -104,7 +104,7 @@ class Comments extends Component {
                             </label>
                             <input type="checkbox" id={commentary.id}/>
                             <div className = "user-comment">
-                                <p style = {{ textAlign: "justify" }}>
+                                <p style = {{ textAlign: "justify", whiteSpace: "break-spaces" }}>
                                     {commentary.text}
                                 </p>
                                 <span>
