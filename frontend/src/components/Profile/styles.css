@@ -13,6 +13,9 @@
 .login-container > section p {
     font-size: small;
     margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .login-container > section div.user-comment p {
