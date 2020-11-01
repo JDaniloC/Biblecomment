@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import axios from '../../services/api';
 
+import 'balloon-css';
 import "./styles.css";
 
 const close = require("../../assets/x.svg")
@@ -92,16 +93,18 @@ export default class NewComment extends Component {
 
 
     handleChange(event) {
-        let value = event.target.checked ? (
-            event.target.checked !== undefined
-        ) : event.target.value
-        if (value === "true") {
-            value = false;
+        let value = "";
+        if (event.target.checked !== undefined) {
+            value = event.target.checked;
+        } else {
+            value = event.target.value;
         }
         this.setState({[event.target.name]: value});
     }
 
     render() {
+        const tipo = (this.props.post) ? "" : "c";
+
         return (
             <div className="pop-up">
                 <div className="top">
@@ -119,15 +122,15 @@ export default class NewComment extends Component {
                         style = {{ marginLeft: "20px"}}
                         aria-label="Devocional" 
                         data-balloon-pos="down-right" 
-                        htmlFor="devocional">
+                        htmlFor={`devocional${tipo}`}>
                             <input 
                                 type="checkbox" 
-                                name="devocional" 
+                                name={`devocional${tipo}`} 
                                 value = {this.state.devocional}
                                 onChange = {
                                     (evt) => {this.handleChange(evt)}
                                 }
-                                id="devocional"/> 
+                                id={`devocional${tipo}`}/> 
                             <img 
                                 className = "tag"
                                 src={hand} 
@@ -136,15 +139,15 @@ export default class NewComment extends Component {
                         <label 
                         aria-label="Exegese" 
                         data-balloon-pos="down-right" 
-                        htmlFor="exegese">
+                        htmlFor={"exegese" + tipo}>
                             <input 
                                 type="checkbox" 
-                                name="exegese" 
+                                name={"exegese" + tipo} 
                                 value = {this.state.exegese}
                                 onChange = {
                                     (evt) => {this.handleChange(evt)}
                                 }
-                                id="exegese"/>
+                                id={"exegese" + tipo}/>
                             <img 
                                 className = "tag"
                                 src={book} 
@@ -153,15 +156,15 @@ export default class NewComment extends Component {
                         <label 
                         aria-label="Inspirado" 
                         data-balloon-pos="down-right" 
-                        htmlFor="inspirado">
+                        htmlFor={"inspirado" + tipo}>
                             <input 
                                 type="checkbox" 
-                                name="inspirado" 
+                                name={"inspirado" + tipo} 
                                 value = {this.state.inspirado}
                                 onChange = {
                                     (evt) => {this.handleChange(evt)}
                                 }
-                                id="inspirado"/>
+                                id={"inspirado" + tipo}/>
                             <img 
                                 className = "tag"
                                 src={pen} 
@@ -170,15 +173,15 @@ export default class NewComment extends Component {
                         <label 
                         aria-label="Pessoal" 
                         data-balloon-pos="down-right" 
-                        htmlFor="pessoal">
+                        htmlFor={"pessoal" + tipo}>
                             <input 
                                 type="checkbox" 
-                                name="pessoal" 
+                                name={"pessoal" + tipo} 
                                 value = {this.state.pessoal}
                                 onChange = {
                                     (evt) => {this.handleChange(evt)}
                                 }
-                                id="pessoal"/>
+                                id={"pessoal" + tipo}/>
                             <img 
                                 className = "tag"
                                 src={person} 

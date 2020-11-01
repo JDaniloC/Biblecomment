@@ -15,15 +15,19 @@
     border-radius: 4px 4px 0px 0px;
 }
 
-input#devocional:checked ~ img{
+input#devocional:checked ~ img, 
+input#devocionalc:checked ~ img{
     background-color: pink;
 }
-input#exegese:checked ~ img{
+input#exegese:checked ~ img,
+input#exegesec:checked ~ img{
     background-color: yellow;
 }
-input#inspirado:checked ~ img{
+input#inspirado:checked ~ img,
+input#inspiradoc:checked ~ img{
     background-color: cyan;
 }
-input#pessoal:checked ~ img{
+input#pessoal:checked ~ img,
+input#pessoalc:checked ~ img{
     background-color: chartreuse;
 }
