@@ -278,7 +278,6 @@ export default class Chapter extends Component{
     }
 
     goToChat(comment) {
-        console.log(this.state.verseAtual)
         this.props.history.push({
             pathname: `/discussion/${this.state.titleName}`,
             state: { 

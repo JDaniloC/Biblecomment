@@ -154,7 +154,7 @@ export default class Discussion extends Component {
         if (this.state.text !== "" && isAuthenticated()) {
             try {
                 const references = this.props.location.state
-                    .comment.book_reference.split(" ")
+                .comment.book_reference.split(" ")
                 const abbrev = references[0]
                 const verse_reference = references[1]
                 const verse = this.props.location.state.verse
@@ -182,7 +182,7 @@ export default class Discussion extends Component {
                     }
                 })
             } catch (err) {
-                this.handleNotification(err, "error")
+                this.handleNotification(err.message, "error")
             }
         } else if (!isAuthenticated()) {
             this.handleNotification("Você precisa estar logado", "info")

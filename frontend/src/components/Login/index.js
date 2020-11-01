@@ -236,7 +236,6 @@ export default class Login extends Component {
             mensagem: mensagem,
             severidade: severidade
         })
-        console.log(data)
     }
 
     render() { 

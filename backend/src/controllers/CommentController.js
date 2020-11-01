@@ -154,7 +154,8 @@ module.exports = {
                 text, on_title, tags,
                 verse: parseInt(verse),
                 reports: JSON.stringify([]),
-                likes: JSON.stringify([])
+                likes: JSON.stringify([]),
+                book_reference: `${book_abbrev} ${number}:${verse}`
             });
         } else {
             return response.json({ "error": "Chapter doesn't exists" })
