@@ -32,6 +32,8 @@ export default class Login extends Component {
         
         this.profileComponent = createRef();
 
+        this.updateAccount = this.updateAccount.bind(this);
+        this.deleteAccount = this.deleteAccount.bind(this);
         this.deleteComment = this.deleteComment.bind(this);
         this.handleNotification = this.handleNotification.bind(this);
     }
@@ -140,8 +142,10 @@ export default class Login extends Component {
     }
 
     parse_user(response) {
+        const data = response.data;
+
         const commented = JSON.parse(
-            response.data.chapters_commented)
+            data.chapters_commented)
         this.setState({ commented: commented })
         const total_books = Object.keys(commented).length
         let total_chapters = 0
@@ -149,26 +153,28 @@ export default class Login extends Component {
             total_chapters += commented[book].length
         }
 
-        this.profileComponent.current.setState({                
-            name: response.data.name,
+        this.profileComponent.current.setState({   
+            email: this.state.email,             
+            name: data.name,
             total_books: total_books,
             total_chapters: total_chapters,
-            total_comments: response.data.total_comments,
-            perfilClass: ""
+            total_comments: data.total_comments,
+            perfilClass: "",
+            belief: (data.belief !== null) ? data.belief : "",
+            state: (data.state !== null) ? data.state : ""
         })
         this.setState({
-            name: response.data.name,
+            name: data.name,
             formClass: "invisible",
         })
 
         this.get_infos()
     }
 
-    async try_login(email, password) {
+    async tryLogin(email, password) {
         try { 
             await axios.post("users/login", {
-                email,
-                password
+                email, password
             }).then(response => {
                 const token = response.data.token;
                 if (token !== undefined) {
@@ -185,7 +191,7 @@ export default class Login extends Component {
         }
     }
 
-    async try_register(email, name, password) {
+    async tryRegister(email, name, password) {
         try {
             await axios.post("users/register", {
                 email,
@@ -209,9 +215,9 @@ export default class Login extends Component {
         event.preventDefault();
         
         if (this.state.loginClass === "") {
-            this.try_login(this.state.email, this.state.password)
+            this.tryLogin(this.state.email, this.state.password)
         } else {
-            this.try_register(
+            this.tryRegister(
                 this.state.email, 
                 this.state.name, 
                 this.state.password
@@ -238,6 +244,45 @@ export default class Login extends Component {
         })
     }
 
+    async updateAccount(belief, state) {
+        try {
+            await axios.patch("users", {
+                token: localStorage.getItem(TOKEN_KEY),
+                belief, state
+            }).then(response => {
+                if (response.data.error === undefined) {
+                    this.handleNotification(
+                        "Conta atualizada com sucesso.", "success");
+                } else {
+                    this.handleNotification(
+                        response.data.error, "warning")
+                }
+            })
+        } catch (error) {
+            this.handleNotification(`${error}`, "error")
+        }
+    }
+
+    async deleteAccount(email) {
+        try {
+            await axios.delete("users", {
+                data: { token: localStorage.getItem(TOKEN_KEY), email }
+            }).then(response => {
+                if (response.data.error === undefined) {
+                    console.log(response.data)
+                    this.handleNotification(
+                        "Conta removida com sucesso.", "success");
+                    this.profileComponent.current.closeAccount();
+                } else {
+                    this.handleNotification(
+                        response.data.error, "warning")
+                }
+            })
+        } catch (error) {
+            this.handleNotification(`${error}`, "error")
+        }
+    }
+    
     render() { 
         return (
             <>
@@ -247,10 +292,10 @@ export default class Login extends Component {
                     deleteComment = {this.deleteComment}
                     notification = {this.handleNotification}
                     closeAccount = {() => {
-                            logout();
-                            this.setState({ formClass: "" })
-                        }
-                    }
+                        logout();
+                        this.setState({ formClass: "" })}}
+                    updateAccount = {this.updateAccount}
+                    deleteAccount = {this.deleteAccount}
                 />
                 <form className = {this.state.formClass} onSubmit={
                     (event) => {this.handleForm(event)}}>

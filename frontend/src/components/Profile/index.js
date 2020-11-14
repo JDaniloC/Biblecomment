@@ -8,6 +8,44 @@ import "./styles.css"
 const heartIcon = require("../../assets/heart.svg");
 const deleteIcon = require("../../assets/delete.svg");
 const editIcon = require("../../assets/edit.svg");
+const gearsIcon = require("../../assets/gears.svg");
+
+const states = [
+    "Acre", "Alagoas", "Amapá",
+    "Amazonas", "Bahia", "Ceará",
+    "Distrito Federal", 
+    "Espírito Santo", "Goiás",
+    "Maranhão", "Mato Grosso", 
+    "Mato Grosso do Sul", 
+    "Minas Gerais", "Pará",
+    "Paraíba", "Paraná",
+    "Pernambuco", "Piauí",
+    "Rio de Janeiro",
+    "Rio Grande do Norte", 
+    "Rio Grande do Sul", 
+    "Rondônia", "Roraima",
+    "Santa Catarina", 
+    "São Paulo", "Sergipe",
+    "Tocantins"
+]
+
+const beliefs = [
+    "Ateu", "Cético", "Espírita",
+    "Budista", "Candomblé", "Hare Krishna",
+    "Islamismo", "Judaismo", "Catolicismo",
+    "Anglicana", "Mórmon", "Ümbanda",
+    "Testemunha de Jeová", "Satanismo",
+    "Metodista", "Brasil para Cristo", 
+    "Congregacional", "Batista",
+    "Congregação Cristã no Brasil",
+    "Universal do Reino de Deus",
+    "Internacional da Graça de Deus",
+    "Mundial do Poder de Deus",
+    "Evangelho Quadrangular",
+    "Adventista do Sétimo Dia",
+    "Igreja Luterana", "Presbiteriana",
+    "Assembleia de Deus", "Outra"
+]
 
 export default class Profile extends Component {
     constructor(props) {
@@ -17,9 +55,14 @@ export default class Profile extends Component {
             perfilClass: "invisible",
             editBox: "invisible",
             blur: "none",
+            perfilDisplay: "contents",
+            configDisplay: "none",
+            buttonDisplay: "block",
 
             email: "",
             name: "",
+            belief: "",
+            state: "",
 
             total_comments: 0,
             total_books: 0,
@@ -103,13 +146,38 @@ export default class Profile extends Component {
         this.props.closeAccount();
     }
 
+    handleConfig() { 
+        if (this.state.perfilDisplay === "contents") {
+            this.setState({ 
+                perfilDisplay: "none",
+                buttonDisplay: "none",
+                configDisplay: "flex"
+            })
+        } else {
+            this.setState({ 
+                perfilDisplay: "contents",
+                buttonDisplay: "block",
+                configDisplay: "none"
+            })
+        }
+    }
+
+    handleSelect(event) {
+        this.setState({
+            [event.target.name]: event.target.value
+        });
+    }
 
     render() { return (
         <>
         <section className={this.state.perfilClass}>
-            <h2> Adorador {this.state.name} </h2>
-            <p> {this.state.email} </p>
-            <ul style = {{ display:"contents" }}>
+            <h2> 
+                Adorador {this.state.name} 
+                <button onClick = {() => {this.handleConfig()}}> 
+                    <img src={gearsIcon} alt="config"/> 
+                </button>
+            </h2>
+            <ul style = {{ display: this.state.perfilDisplay }}>
                 <li>
                     Total de livros comentados: {this.state.total_books} de 66
                 </li>
@@ -197,8 +265,49 @@ export default class Profile extends Component {
                     />
                 </ul>
             </ul>
-            <button 
-                onClick = {(evt) => {this.closeAccount()}} > 
+            <div style={{ display: this.state.configDisplay }}
+                className = "user-config">
+                <div className="dropdown-menu">
+                    <label htmlFor="state"> Estado: </label>
+                    <select name="state" id="state" value = {this.state.state}
+                        onChange = {(evt) => this.handleSelect(evt)}>
+                        {states.map(item => (
+                            <option 
+                                value={item}
+                                key = {item}
+                            > {item} </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="dropdown-menu">
+                    <label htmlFor="belief"> Crença: </label>
+                    <select name="belief" id="belief" value = {this.state.belief}
+                        onChange = {(evt) => this.handleSelect(evt)}>
+                        {beliefs.map(item => (
+                            <option 
+                                value={item}
+                                key = {item}
+                            > {item} </option>
+                        ))}
+                    </select> 
+                </div>
+                <div className="config-buttons">
+                    <button style={{ backgroundColor: "#1D1"}}
+                        onClick = {() => this.props.updateAccount(
+                            this.state.belief, this.state.state
+                        )}> 
+                        Salvar 
+                    </button>
+                    <button style={{ backgroundColor: "#FF4030"}}
+                        onClick = {() => this.props.deleteAccount(
+                            this.state.email
+                        )}>
+                        Excluir conta 
+                    </button>
+                </div>
+            </div>
+            <button style={{ display: this.state.buttonDisplay }}
+                onClick = {() => {this.closeAccount()}} > 
                 Sair 
             </button>
         </section>

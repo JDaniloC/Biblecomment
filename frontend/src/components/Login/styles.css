@@ -45,7 +45,8 @@
     cursor: pointer;
 }
 
-.login-container > section > button, .login-container > form > button{
+.login-container > section > button, 
+.login-container > form > button{
     margin-top: 10px;
     border-radius: 6px;
     border: none;
@@ -55,6 +56,7 @@
     color: white;
     height: 50px;
     cursor: pointer;
+    font-size: large;
 }
 
 hr {

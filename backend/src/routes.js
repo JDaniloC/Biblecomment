@@ -14,6 +14,8 @@ const DiscussionController = require(
 const routes = express.Router();
 
 routes.get("/users/", UserController.getUser);
+routes.patch("/users/", UserController.update);
+routes.delete("/users/", UserController.delete);
 routes.post("/users/login", UserController.login);
 routes.post("/users/register", UserController.register);
 
