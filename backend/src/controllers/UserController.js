@@ -1,6 +1,4 @@
 const connection = require('../database/connection');
-const jwt = require('jsonwebtoken');
-const md5 = require('md5')
 
 module.exports = {
     async index(request, response) {
@@ -43,17 +41,30 @@ module.exports = {
         const user = await connection('users')
             .where('token', token)
             .first()
-            .select('moderator', 'email')
+            .select('moderator', 'email', "name")
 
         if (!user) {
             return response.json({"msg": "User doesn't exists"})
         }
 
         if (user.email === email | user.moderator) {
-            return await connection('users')
+            const deleted = await connection('users')
                 .where('email', email)
                 .first()
-                .delete();
+
+            await connection('discussions')
+                .where('user_name', deleted.name)
+                .delete()
+
+            await connection("comments")
+                .where("name", deleted.name)
+                .first()
+                .delete()
+
+            return response.json(await connection('users')
+                .where('email', email)
+                .first()
+                .delete())
         } else {
             return response.json({"msg": "Not authorized"})
         }

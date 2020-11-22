@@ -8,8 +8,7 @@ module.exports = {
             .orderBy("created_at", "desc")
             .limit(5)
             .offset((pages - 1) * 5)
-            .select("name", "book_reference", "id",
-                "text", "likes", "reports");
+            .select("*");
 
         return response.json( comments ); 
     },
@@ -21,8 +20,7 @@ module.exports = {
             .orderBy("id", "desc")
             .limit(5)
             .offset((pages - 1) * 5)
-            .select("user_name", "question", "verse_reference",
-                "comment_text", "verse_text", "id");
+            .select("*");
 
         return response.json( discussions );
     },
@@ -35,7 +33,7 @@ module.exports = {
             return response.json([]);
         }
         const result = await connection("comments")
-            .where("name", name)
+            .where("username", name)
 
         if (!(result)) {
             return response.json([]);
@@ -52,7 +50,7 @@ module.exports = {
         let favorites = [];
         await connection("comments")
             .where("likes", "!=", "[]")
-            .orWhere("name", name).then(function(data) {
+            .orWhere("username", name).then(function(data) {
                 data.forEach(element => {
                     if (element.name == name) {
                         comments.push(element)

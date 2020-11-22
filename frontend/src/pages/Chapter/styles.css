@@ -109,7 +109,7 @@ ul.verse-list li sup {
     margin-right: 0.5em
 }
 
-ul.verse-list li div.amount {
+.chapter-container div.amount {
     min-width: 25px;
     height: 25px;
     border-radius: 4px;
@@ -118,6 +118,8 @@ ul.verse-list li div.amount {
     
     align-self: center;
     text-align: center;
+    font-size: large;
+    font-weight: normal;
 }
 
 /* animations */

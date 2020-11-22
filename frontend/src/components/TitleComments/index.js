@@ -19,16 +19,15 @@ export default class TitleComment extends Component {
                 <ul>
                     {this.props.comments.map(comment => (
                         <li key = {comment.id}>
-                            <h3 style={{ display: "inline" }} > 
-                                {comment.name} 
-                            </h3> {comment.tags.map((tag, index) => (
-                                    <img
-                                        key = {index}
+                            <h3> 
+                                {comment.username} 
+                                {comment.tags.map((tag, index) => (
+                                    <img key = {index}
                                         src={this.props.imageFunction(tag)}
                                         className = "tag"
                                         alt = {tag}/>
-                                )
-                            )}
+                                ))}
+                            </h3> 
                             <p style = {{ whiteSpace: "break-spaces" }}> {comment.text} </p>
                         </li>
                     ))}

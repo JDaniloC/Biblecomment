@@ -64,12 +64,12 @@ module.exports = {
             .select("id", "book_abbrev", "number")
         
         if (chapter) {
-            var name = "Visitante";
+            var username = "Visitante";
             const user = await connection('users')
                 .where("token", token)
                 .first()
             if (user) {
-                name = user.name;
+                username = user.name;
 
                 // Add the abbrev to commented chapters array in user
                 const new_chapter_commented = JSON.parse(
@@ -99,7 +99,7 @@ module.exports = {
 
             const comment = await connection('comments')
                 .insert({
-                    name, text, verse, on_title,
+                    username, text, verse, on_title,
                     created_at: new Date().toISOString().replace('Z','').replace('T', ' '),
                     book_reference: `${book_abbrev} ${number}:${verse}`,
                     tags: JSON.stringify(tags),
@@ -109,7 +109,7 @@ module.exports = {
                 })
             
             return response.json({ 
-                id: comment[0], name,
+                id: comment[0], username,
                 text, on_title, tags,
                 verse: parseInt(verse),
                 reports: JSON.stringify([]),
@@ -190,9 +190,10 @@ module.exports = {
     async destroy(request, response) {
         const { id } = request.params;
         const { token } = request.headers;
-        console.log(id)
+
         if (token === undefined) {
             return response
+                .status(400)
                 .json({ 'BadRequest': "It's missing the header token" })
         }
 
@@ -203,6 +204,7 @@ module.exports = {
 
         if (user.length === 0) {
             return response
+                .status(401)    
                 .json({ 'Unauthorized': "Você precisa estar logado" })
         }
 
@@ -210,20 +212,26 @@ module.exports = {
             .where("id", id)
             .first()
         
-        if (comment.name === user.name || user.moderator) {
+        if (comment.username === user.name || user.moderator) {
+            await connection('discussions')
+                .where('comment_text', comment.text)
+                .delete()
+
             await connection("comments")
                 .where("id", id)
                 .first()
                 .delete()
 
             await connection('users')
-                .where("name", comment.name)
+                .where("name", comment.username)
                 .first()
                 .decrement("total_comments", 1)
             return response.json(comment)
         } else {
-            return response.json(
-                { "message": "Comentário não correspondente ao usuário" })
+            return response
+                .status(401)    
+                .json(
+                { "Unauthorized": "Comentário não correspondente ao usuário" })
         }
     }
 }

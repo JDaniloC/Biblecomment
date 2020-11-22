@@ -103,6 +103,7 @@ export default class Control extends Component {
         await axios.delete("users", {
             data: { token: localStorage.getItem(TOKEN_KEY), email }
         }).then(response => {
+            console.log(response.data)
             if (response.data.error === undefined) {
                 this.setState({ users: this.state.users.filter(
                     (user) => (user.email !== email))})
@@ -222,7 +223,7 @@ export default class Control extends Component {
                                 </label>
                                 <input type="checkbox" id={comment.text}/>
                                 <div className = "user-comment">
-                                    <p> Por: {comment.name}</p>
+                                    <p> Por: {comment.username}</p>
                                     <p> {comment.text} </p>
                                     <p> Denúncias: {comment.reports.length}</p>
                                     <p> Favoritos: {comment.likes.length}</p>
@@ -265,11 +266,11 @@ export default class Control extends Component {
                             <li key={discussion.id * -1}>
                                 <label style = {{ display: "flex" }}
                                     htmlFor={discussion.question}> 
-                                    <p> {discussion.verse_reference} {discussion.question} </p> 
+                                    <p> {discussion.book_abbrev} {discussion.verse_reference} -{discussion.question} </p> 
                                 </label>
                                 <input type="checkbox" id={discussion.question}/>
                                 <div className = "user-comment">
-                                    <p> Por: {discussion.user_name}</p>
+                                    <p> Por: {discussion.username}</p>
                                     <p> {discussion.verse_text} </p>
                                     <hr/>
                                     <p> {discussion.comment_text}</p>

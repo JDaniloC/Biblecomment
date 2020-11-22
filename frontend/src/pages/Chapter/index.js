@@ -261,9 +261,14 @@ export default class Chapter extends Component{
     }
 
     renderAmount(index) {
-        const amount = this.state.allComments.filter((comment) => {
-            return comment.verse === index + 1;
-        }).length
+        let amount;
+        if (index === false) {
+            amount = this.state.titleComments.length
+        } else {
+            amount = this.state.allComments.filter(
+                (comment) => (comment.verse === index + 1)
+            ).length
+        }
         if (amount === 0) {
             return 
         }
@@ -298,8 +303,8 @@ export default class Chapter extends Component{
                         />
                     </div>
                     <div className={this.state.main}>
-                        <label htmlFor="toggle"> 
-                            {this.state.titleName} {this.state.chapterNumber} 
+                        <label htmlFor="toggle" style = {{ display: "flex" }}> 
+                            {this.state.titleName} {this.state.chapterNumber} {this.renderAmount(false)}
                         </label>
                         <input type="checkbox" id='toggle'/>
                         <TitleComment 
@@ -316,11 +321,8 @@ export default class Chapter extends Component{
                                     <sup> {index + 1} </sup>
                                     <p 
                                         style={{ display: "inline" }} 
-                                        onClick = {
-                                            (evt) => 
-                                            this.handlecomments(
-                                                evt, index
-                                            )
+                                        onClick = {(evt) => 
+                                            this.handlecomments(evt, index)
                                         }>
                                         { verse }
                                     </p>

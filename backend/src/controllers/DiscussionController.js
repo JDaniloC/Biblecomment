@@ -82,7 +82,7 @@ module.exports = {
                     book_abbrev: abbrev,
                     comment_id,
                     comment_text: comment.text,
-                    user_name: user.name,
+                    username: user.name,
                     verse_text,
                     verse_reference,
                     question,
@@ -92,7 +92,7 @@ module.exports = {
             return response.json({ 
                 id: discussion[0],
                 comment_text: comment.text,
-                user_name: user.name,
+                username: user.name,
                 verse_text,
                 verse_reference,
                 question,
@@ -167,7 +167,6 @@ module.exports = {
             .first()
             .select('moderator', 'name')
         
-        console.log(id)
         const discussion = await connection('discussions')
             .where('id', id)
             .first()
@@ -176,7 +175,7 @@ module.exports = {
             return response.json({"msg": "Discussion doesn't exists'"})
         }
 
-        if (discussion.user_name === user.name | user.moderator) {
+        if (discussion.username === user.name | user.moderator) {
             return response.json(
                 await connection('discussions')
                     .where('id', id)

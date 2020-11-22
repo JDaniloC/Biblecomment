@@ -88,7 +88,7 @@ class Comments extends Component {
                     this.props.commentaries.map(commentary => (
                         <li key = {commentary.id}>
                             <h3 style={{ display: "flex" }} >
-                                {commentary.name} 
+                                {commentary.username} 
                                 {commentary.tags.map((tag, index) => (
                                     <img key = {index} alt = {tag}
                                         src = {this.props.imageFunction(tag)}
