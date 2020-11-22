@@ -77,16 +77,14 @@ export default class Login extends Component {
     }
 
     componentDidMount() {
-        async function get_user(token) {
-            return await axios.get("users", {
-                headers: {
-                    "token": token
-                }
+        async function getUser(token) {
+            return await axios.get("session", {
+                headers: { "token": token }
             })
         }
 
         if (isAuthenticated()) {
-            get_user(localStorage.getItem(TOKEN_KEY)).then(response => {
+            getUser(localStorage.getItem(TOKEN_KEY)).then(response => {
                 if (response.data.chapters_commented) {
                     this.parse_user(response)
                 } else {
@@ -173,7 +171,7 @@ export default class Login extends Component {
 
     async tryLogin(email, password) {
         try { 
-            await axios.post("users/login", {
+            await axios.post("session/login", {
                 email, password
             }).then(response => {
                 const token = response.data.token;
@@ -193,7 +191,7 @@ export default class Login extends Component {
 
     async tryRegister(email, name, password) {
         try {
-            await axios.post("users/register", {
+            await axios.post("session/register", {
                 email,
                 name,
                 password

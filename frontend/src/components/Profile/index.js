@@ -59,10 +59,8 @@ export default class Profile extends Component {
             configDisplay: "none",
             buttonDisplay: "block",
 
-            email: "",
-            name: "",
-            belief: "",
-            state: "",
+            email: "", name: "",
+            belief: "", state: "",
 
             total_comments: 0,
             total_books: 0,
@@ -80,12 +78,8 @@ export default class Profile extends Component {
         this.closeEditComment = this.closeEditComment.bind(this);
     }
     
-    handleFPaginate(evt, page) {
-        this.setState({ currentFPage: page })  
-    }
-    handleCPaginate(evt, page) {
-        this.setState({ currentCPage: page })
-    }
+    handleFPaginate(evt, page) { this.setState({ currentFPage: page }) }
+    handleCPaginate(evt, page) { this.setState({ currentCPage: page }) }
     calculatePagination(type) {
         let page = 0;
         let array = [];
@@ -121,11 +115,7 @@ export default class Profile extends Component {
     }
     closeEditComment(evt) {
         evt.preventDefault();
-        
-        this.setState({ 
-            blur: "none",
-            editBox: "invisible"
-        });
+        this.setState({ blur: "none", editBox: "invisible" });
     }
 
     deleteComment(identificador) {
@@ -139,10 +129,7 @@ export default class Profile extends Component {
     }
 
     closeAccount() {
-        this.setState({
-            perfilClass: "invisible"
-        })
-
+        this.setState({ perfilClass: "invisible" })
         this.props.closeAccount();
     }
 
@@ -254,7 +241,7 @@ export default class Profile extends Component {
                         </li>
                     )) : (this.state.totalFpages !== -1) ? 
                     <li>
-                        <p> Você não favoritou nenhum </p>
+                        <p> Você não favoritou nenhum comentário </p>
                     </li> :
                     <Loading />}
                     <Pagination 

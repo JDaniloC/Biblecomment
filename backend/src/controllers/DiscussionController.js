@@ -152,5 +152,38 @@ module.exports = {
             return response
                 .json({ 'Unauthorized': "Você precisa estar logado" })
         }
+    },
+
+    async delete(request, response) {
+        const { id } = request.params;
+        const { token } = request.body;
+
+        if (token === undefined) {
+            return response.json({ "msg": "insulficient body: token" })
+        }
+
+        const user = await connection('users')
+            .where('token', token)
+            .first()
+            .select('moderator', 'name')
+        
+        console.log(id)
+        const discussion = await connection('discussions')
+            .where('id', id)
+            .first()
+        
+        if (!discussion) {
+            return response.json({"msg": "Discussion doesn't exists'"})
+        }
+
+        if (discussion.user_name === user.name | user.moderator) {
+            return response.json(
+                await connection('discussions')
+                    .where('id', id)
+                    .first()
+                    .delete())
+        } else {
+            return response.json({"msg": "Not authorized"})
+        }
     }
 }

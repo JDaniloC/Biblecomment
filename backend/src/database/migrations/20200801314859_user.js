@@ -8,6 +8,8 @@ exports.up = function(knex) {
         table.string("token").notNullable();
         table.integer("total_comments").notNullable();
         table.json('chapters_commented').notNullable();
+
+        table.timestamp("created_at").defaultTo(knex.fn.now());
         table.string("state");
         table.string("belief");
         table.boolean("moderator");

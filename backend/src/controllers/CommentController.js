@@ -24,48 +24,6 @@ module.exports = {
         }    
     },
 
-    async user_comments(request, response) {
-        const { name } = request.headers;
-        const { pages = 1 } = request.query;
-        
-        if (name === undefined) {
-            return response.json([]);
-        }
-        const result = await connection("comments")
-            .where("name", name)
-
-        if (!(result)) {
-            return response.json([]);
-        }
-        return response.json(result)
-    },
-
-    async user_infos(request, response) {
-        const { name } = request.headers;
-        if (name === undefined) {
-            return response.json([]);
-        }
-        let comments = [];
-        let favorites = [];
-        await connection("comments")
-            .where("likes", "!=", "[]")
-            .orWhere("name", name).then(function(data) {
-                data.forEach(element => {
-                    if (element.name == name) {
-                        comments.push(element)
-                    }
-                    const find = true ? JSON.parse(element.likes).indexOf(name) !== -1 : false
-                    if (find) {
-                        favorites.push(element)
-                    }
-                });
-            })
-        
-        return response.json({
-            comments, favorites
-        })
-    },
-
     async show(request, response) {
         const { abbrev, number, verse } = request.params;
 
@@ -83,7 +41,9 @@ module.exports = {
         if (comments) {
             return response.json(comments)
         } else {
-            return response.json({ "error": "chapter number doesn't exists" })
+            return response.json({ 
+                "error": "chapter number doesn't exists" 
+            })
         }
     },
 
@@ -92,9 +52,9 @@ module.exports = {
         const { token, text, tags, on_title } = request.body;
         
         if (!token | !text | !tags | on_title == undefined) {
-            return response.json(
-                { "error": "insufficient body: token, text, tags, on_title" }
-            )
+            return response.json({ "error": 
+                "insufficient body: token, text, tags, on_title" 
+            })
         }
  
         const chapter = await connection('chapters')
@@ -131,17 +91,16 @@ module.exports = {
                 })
             }
             
-            let book_abbrev = chapter.book_abbrev.charAt(0).toUpperCase() + chapter.book_abbrev.slice(1)
+            let book_abbrev = chapter.book_abbrev.charAt(
+                0).toUpperCase() + chapter.book_abbrev.slice(1)
             if (book_abbrev === "Job") {
                 book_abbrev = "Jó"
             }
 
             const comment = await connection('comments')
                 .insert({
-                    name,
-                    text,
-                    on_title,
-                    verse,
+                    name, text, verse, on_title,
+                    created_at: new Date().toISOString().replace('Z','').replace('T', ' '),
                     book_reference: `${book_abbrev} ${number}:${verse}`,
                     tags: JSON.stringify(tags),
                     chapter_id: chapter.id,
@@ -231,15 +190,16 @@ module.exports = {
     async destroy(request, response) {
         const { id } = request.params;
         const { token } = request.headers;
-        
+        console.log(id)
         if (token === undefined) {
             return response
-                .json({ 'BadRequest': "It's missing the token body" })
+                .json({ 'BadRequest': "It's missing the header token" })
         }
 
         const user = await connection('users')
             .where("token", token)
-            .select('name')
+            .first()
+            .select('name', "moderator")
 
         if (user.length === 0) {
             return response
@@ -248,12 +208,16 @@ module.exports = {
 
         const comment = await connection("comments")
             .where("id", id)
-            .andWhere('name', user[0].name)
-            .delete()
+            .first()
         
-        if (comment) {
+        if (comment.name === user.name || user.moderator) {
+            await connection("comments")
+                .where("id", id)
+                .first()
+                .delete()
+
             await connection('users')
-                .where("token", token)
+                .where("name", comment.name)
                 .first()
                 .decrement("total_comments", 1)
             return response.json(comment)

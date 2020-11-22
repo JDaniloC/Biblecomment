@@ -392,7 +392,7 @@ export default class Discussion extends Component {
                         </button>
                     </div>
                     
-                    <p style = {{ padding: "5px 20px 0" }}>
+                    <p style = {{ padding: "5px 20px 0", whiteSpace: "break-spaces" }}>
                         {this.props.location.state.comment.text}
                     </p>
 
