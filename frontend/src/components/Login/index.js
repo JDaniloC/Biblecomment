@@ -106,7 +106,8 @@ export default class Login extends Component {
             await axios.delete(`/comments/${identificador}`, {
                 headers: { "token": localStorage.getItem(TOKEN_KEY) }
             }).then( response => {
-                this.handleNotification("Comentário excluído com sucesso.", "success")
+                this.handleNotification(
+                    "Comentário excluído com sucesso.", "success")
             })
         } catch (err) {
             this.handleNotification("Problema no servidor", "error")

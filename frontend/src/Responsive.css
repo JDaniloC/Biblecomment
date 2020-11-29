@@ -36,6 +36,12 @@
         align-items: center;
         margin-top: 0;
     }
+    .help-component > section {
+        flex-direction: column;
+    }
+    .help-component > section > div {
+        margin: 1em 0;
+    }
 }
 
 @media (max-width: 800px) {
@@ -65,6 +71,12 @@
     }
     .navHide {
         display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        width: 100vw;
     }
 }
 

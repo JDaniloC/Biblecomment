@@ -78,8 +78,8 @@ export default class Profile extends Component {
         this.closeEditComment = this.closeEditComment.bind(this);
     }
     
-    handleFPaginate(evt, page) { this.setState({ currentFPage: page }) }
-    handleCPaginate(evt, page) { this.setState({ currentCPage: page }) }
+    handleFPaginate(page) { this.setState({ currentFPage: page }) }
+    handleCPaginate(page) { this.setState({ currentCPage: page }) }
     calculatePagination(type) {
         let page = 0;
         let array = [];
@@ -215,7 +215,7 @@ export default class Profile extends Component {
                         className = "pagination" showFirstButton showLastButton
                         count = {this.state.totalCpages} size = "small"
                         page = {this.state.currentCPage} shape="rounded"
-                        onChange = {(evt, page) => {this.handleCPaginate(evt, page)}}
+                        onChange = {(evt, page) => {this.handleCPaginate(page)}}
                     />
                 </ul>
 
@@ -248,7 +248,7 @@ export default class Profile extends Component {
                         className = "pagination" showFirstButton showLastButton
                         count = {this.state.totalFpages} size = "small" 
                         page = {this.state.currentFPage} shape="rounded"
-                        onChange = {(evt, page) => {this.handleFPaginate(evt, page)}}
+                        onChange = {(evt, page) => {this.handleFPaginate(page)}}
                     />
                 </ul>
             </ul>

@@ -3,21 +3,21 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
 import axios from '../../services/api';
 
-import NewComment from "../../components/NewComment";
 import TitleComment from "../../components/TitleComments";
+import NewComment from "../../components/NewComment";
+import { Loading } from '../../components/Partials';
 import Comments from "../../components/Comments";
 import NavBar from "../../components/NavBar";
-import { Loading } from '../../components/Partials';
 
 import "./styles.css";
 
 const warning = require("../../assets/warning.svg")
-const heart = require("../../assets/heart.svg")
-const chat = require("../../assets/chat.svg")
-const book = require("../../assets/book.svg")
-const hand = require("../../assets/hand.svg")
-const person = require("../../assets/person.svg")
-const pen = require("../../assets/pen.svg")
+const heart   = require("../../assets/heart.svg")
+const chat    = require("../../assets/chat.svg")
+const book    = require("../../assets/book.svg")
+const hand    = require("../../assets/hand.svg")
+const person  = require("../../assets/person.svg")
+const pen     = require("../../assets/pen.svg")
 
 export default class Chapter extends Component{
     constructor(props) {
@@ -303,13 +303,14 @@ export default class Chapter extends Component{
                         />
                     </div>
                     <div className={this.state.main}>
-                        <label htmlFor="toggle" style = {{ display: "flex" }}> 
+                        <label htmlFor="toggle" 
+                            style = {{ display: "flex" }}> 
                             {this.state.titleName} {this.state.chapterNumber} {this.renderAmount(false)}
                         </label>
                         <input type="checkbox" id='toggle'/>
                         <TitleComment 
-                            comments = {this.state.titleComments} 
                             handleNewComment = {this.handleNewComment}
+                            comments = {this.state.titleComments} 
                             imageFunction = {this.getImage}
                             ref = {this.titleComponent}
                         />

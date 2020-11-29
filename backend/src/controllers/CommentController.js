@@ -192,9 +192,9 @@ module.exports = {
         const { token } = request.headers;
 
         if (token === undefined) {
-            return response
-                .status(400)
-                .json({ 'BadRequest': "It's missing the header token" })
+            return response.status(400)
+                .json({ 'BadRequest': 
+                    "It's missing the header token" })
         }
 
         const user = await connection('users')
@@ -203,9 +203,9 @@ module.exports = {
             .select('name', "moderator")
 
         if (user.length === 0) {
-            return response
-                .status(401)    
-                .json({ 'Unauthorized': "Você precisa estar logado" })
+            return response.status(401)    
+                .json({ 'Unauthorized': 
+                    "Você precisa estar logado" })
         }
 
         const comment = await connection("comments")
@@ -228,10 +228,9 @@ module.exports = {
                 .decrement("total_comments", 1)
             return response.json(comment)
         } else {
-            return response
-                .status(401)    
-                .json(
-                { "Unauthorized": "Comentário não correspondente ao usuário" })
+            return response.status(401)    
+                .json({ "Unauthorized": 
+                    "Comentário não correspondente ao usuário" })
         }
     }
 }

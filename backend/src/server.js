@@ -4,7 +4,10 @@ const routes = require("./routes");
 const app = express();
 
 app.options('*', cors({
-  origin: ['http://www.biblecomment.net', 'http://localhost:3000', 'https://www.biblecomment.net'],
+  origin: [
+    'http://localhost:3000', 
+    'http://www.biblecomment.net', 
+    'https://www.biblecomment.net'],
   optionsSuccessStatus: 200 
 }))
 app.use(cors());

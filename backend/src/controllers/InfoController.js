@@ -34,7 +34,7 @@ module.exports = {
         }
         const result = await connection("comments")
             .where("username", name)
-
+        
         if (!(result)) {
             return response.json([]);
         }
@@ -46,13 +46,14 @@ module.exports = {
         if (name === undefined) {
             return response.json([]);
         }
-        let comments = [];
-        let favorites = [];
+
+        const comments = [];
+        const favorites = [];
         await connection("comments")
             .where("likes", "!=", "[]")
             .orWhere("username", name).then(function(data) {
                 data.forEach(element => {
-                    if (element.name == name) {
+                    if (element.username === name) {
                         comments.push(element)
                     }
                     const find = true ? JSON.parse(

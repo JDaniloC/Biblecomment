@@ -16,6 +16,7 @@ body {
 body, input, button {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
   font-size: 12px;
+  max-width: 100%;
 }
 
 header {

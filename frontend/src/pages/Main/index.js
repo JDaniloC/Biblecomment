@@ -1,6 +1,7 @@
 import React, { Component, createRef } from 'react';
-import Login from "../../components/Login";
+import { HelpButton } from "../../components/Partials";
 import BooksIndex from "../../components/BooksIndex";
+import Login from "../../components/Login";
 
 import "./styles.css";
 
@@ -16,6 +17,7 @@ export default class Main extends Component {
     render() {
         return (
             <div className="panel">
+                <HelpButton/>
                 <div className="logo-container">
                     <img src={logo} alt="logo"/>
                     <p> 
