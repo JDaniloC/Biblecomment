@@ -3,7 +3,6 @@ const connection = require("../database/connection");
 module.exports = {
     async index(request, response) {
         const { abbrev, number } = request.params;
-        const { pages = 1 } = request.query;
 
         const chapter = await connection('chapters')
             .where("book_abbrev", abbrev)
@@ -14,8 +13,6 @@ module.exports = {
         if (chapter) {
             const comments = await connection('comments')
                 .where("chapter_id", chapter.id)
-                // .limit(5)
-                // .offset((pages - 1) * 5)
                 .select("*");
             
             return response.json( comments );
@@ -75,7 +72,7 @@ module.exports = {
                 const new_chapter_commented = JSON.parse(
                     user.chapters_commented)
                 if (abbrev in new_chapter_commented) {
-                    if (!(number in new_chapter_commented[abbrev])) {
+                    if (new_chapter_commented[abbrev].indexOf(number) === -1) {
                         new_chapter_commented[abbrev].push(number)
                     }
                 } else {

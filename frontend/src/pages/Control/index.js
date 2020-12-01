@@ -252,7 +252,7 @@ export default class Control extends Component {
                         <button className = "load-btn" 
                             onClick = {() => this.loadPagination("comments")}> 
                             Carregar 
-                        </button> }
+                        </button>}
                         <Pagination 
                             className = "pagination" showFirstButton showLastButton
                             count = {this.state.totalCpages} size = "small" 

@@ -53,11 +53,11 @@ module.exports = {
                 .first()
 
             await connection('discussions')
-                .where('user_name', deleted.name)
+                .where('username', deleted.name)
                 .delete()
 
             await connection("comments")
-                .where("name", deleted.name)
+                .where("username", deleted.name)
                 .first()
                 .delete()
 

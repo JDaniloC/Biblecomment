@@ -106,3 +106,15 @@ input[type=checkbox]:checked ~ div {
   z-index: 0;
   position: relative;
 }
+.load-btn {
+  height: 4em;
+  width: -webkit-fill-available;
+  font-weight: bolder;
+  color: white;
+  border: none;
+  cursor: pointer;
+  background-color: #0dffd4;
+}
+.load-btn:hover {
+  background-color: #7fffd4
+}

@@ -57,13 +57,3 @@ main.control .config-buttons button {
     border: none;
     cursor: pointer;
 }
-
-main.control .load-btn {
-    height: 4em;
-    width: -webkit-fill-available;
-    font-weight: bolder;
-    color: white;
-    border: none;
-    cursor: pointer;
-    background-color: aquamarine;
-}

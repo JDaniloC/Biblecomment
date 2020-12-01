@@ -22,6 +22,9 @@
     .content {
         margin: 20px 0;
     }
+    .logo-container {
+        max-width: 90vw;
+    }
     .side {
         position: relative;
         right: 1px;

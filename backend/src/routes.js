@@ -22,7 +22,7 @@ routes.post("/session/login", SessionController.login);
 routes.post("/session/register", SessionController.register);
 
 routes.get("/users/comments", InfoController.userComments);
-routes.get("/users/infos", InfoController.userFavorites);
+routes.get("/users/favorites", InfoController.userFavorites);
 routes.get("/comments/", InfoController.getComments);
 routes.get("/discussions/", InfoController.getDiscussions);
 

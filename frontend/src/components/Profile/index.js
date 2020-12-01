@@ -178,6 +178,7 @@ export default class Profile extends Component {
                 <ul className="commentaries">
                     <h3> Comentários feitos </h3>
                     {(this.state.commentaries.length !== 0) ? 
+                    (this.calculatePagination("comments").length > 0) ?
                     this.calculatePagination("comments").map(commentary => (
                         <li key = {"0" + commentary.id}>
                             <label 
@@ -206,7 +207,13 @@ export default class Profile extends Component {
                                 </p>
                             </div>
                         </li>
-                    )) : (this.state.totalCpages !== -1) ? 
+                    )) :
+                    <button className = "load-btn" 
+                        onClick = {() => this.props.getComments(
+                        this.state.currentCPage)}> 
+                            Carregar 
+                    </button>
+                    : (this.state.totalCpages !== -1) ? 
                     <li>
                         <p> Nenhum comentário realizado </p>
                     </li> :
@@ -222,7 +229,9 @@ export default class Profile extends Component {
                 <ul className="commentaries">
                     <h3> Comentários favoritados </h3>
                     {(this.state.favorites.length !== 0) ? 
-                    this.calculatePagination("favorites").map((favorite, index) => (
+                    this.calculatePagination("favorites").length > 0 ?
+                    this.calculatePagination("favorites").map(
+                        (favorite, index) => (
                         <li key = {"-" + index}>
                             <h5 style={{ display: "inline" }} >
                                 {favorite.name} em {favorite.book_reference}
@@ -239,7 +248,12 @@ export default class Profile extends Component {
                                 {favorite.text}
                             </div>
                         </li>
-                    )) : (this.state.totalFpages !== -1) ? 
+                    )) : 
+                    <button className = "load-btn" 
+                        onClick = {() => this.props.getFavorites(
+                        this.state.currentFPage)}> 
+                            Carregar 
+                    </button> : (this.state.totalFpages !== -1) ? 
                     <li>
                         <p> Você não favoritou nenhum comentário </p>
                     </li> :

@@ -28,45 +28,34 @@ module.exports = {
     async userComments(request, response) {
         const { name } = request.headers;
         const { pages = 1 } = request.query;
-        
+        console.log(name, pages)
         if (name === undefined) {
             return response.json([]);
         }
-        const result = await connection("comments")
+        const comments = await connection("comments")
             .where("username", name)
-        
-        if (!(result)) {
-            return response.json([]);
-        }
-        return response.json(result);
+            .limit(5)
+            .offset((pages - 1) * 5);
+        console.log(comments);
+        return response.json({ comments });
     },
 
     async userFavorites(request, response) {
         const { name } = request.headers;
+        const { pages = 1 } = request.query;
+        console.log(pages)
         if (name === undefined) {
             return response.json([]);
         }
 
-        const comments = [];
-        const favorites = [];
-        await connection("comments")
-            .where("likes", "!=", "[]")
-            .orWhere("username", name).then(function(data) {
-                data.forEach(element => {
-                    if (element.username === name) {
-                        comments.push(element)
-                    }
-                    const find = true ? JSON.parse(
-                        element.likes
-                    ).indexOf(name) !== -1 : false
-                    if (find) {
-                        favorites.push(element)
-                    }
-                });
-            })
-        
-        return response.json({
-            comments, favorites
-        })
+        const favorites = await connection.raw(`
+            SELECT * 
+            FROM json_each(comments.likes), comments
+            WHERE json_each.value LIKE "${name}"
+            LIMIT 5
+            OFFSET (${pages} - 1) * 5
+        `)
+        console.log(favorites)
+        return response.json({ favorites });
     }
 }

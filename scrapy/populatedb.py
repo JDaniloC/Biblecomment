@@ -3,7 +3,7 @@ import requests, time, json
 with open("books.json", encoding = "utf-8") as file:
     books = json.load(file)
 
-baseurl = "https://biblecomment.herokuapp.com"
+baseurl = "http://localhost:3333"
 
 for abbrev in books:
     title, length = books[abbrev]

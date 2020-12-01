@@ -13,6 +13,7 @@
     justify-content: center;
     flex-direction: column;
     color: #444;
+    width: 42em;
 }
 
 .logo-container p {

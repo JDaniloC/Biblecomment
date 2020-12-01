@@ -32,6 +32,8 @@ export default class Login extends Component {
         
         this.profileComponent = createRef();
 
+        this.getComments = this.getComments.bind(this);
+        this.getFavorites = this.getFavorites.bind(this);
         this.updateAccount = this.updateAccount.bind(this);
         this.deleteAccount = this.deleteAccount.bind(this);
         this.deleteComment = this.deleteComment.bind(this);
@@ -114,26 +116,59 @@ export default class Login extends Component {
         }
     }
 
-    async get_infos() {
+    async getComments(page = 1) {
         this.profileComponent.current.setState({
-            totalCpages: -1,
+            totalCpages: -1
+        })
+
+        try {
+            const state = this.profileComponent.current.state;
+            await axios.get("users/comments", {
+                headers: { "name": state.name },
+                params: { pages: page }
+            }).then( response => {
+                if (response.data.comments !== undefined) {
+                    const comments = response.data.comments;
+                    const state = this.profileComponent.current.state;
+                    state.commentaries.push(...comments);
+                    this.profileComponent.current.setState({
+                        commentaries: state.commentaries 
+                    })
+                    let length =  Math.ceil(state.commentaries.length / 5)
+                    if (comments.length === 5) { length += 1 } 
+                    this.profileComponent.current.setState({
+                        totalCpages: length
+                    })
+                }}
+            )
+        } catch (error) {
+            this.handleNotification("Problema no servidor", "error")
+        }
+    }
+
+    async getFavorites(page = 1) {
+        this.profileComponent.current.setState({
             totalFpages: -1
         })
 
         try {
-            await axios.get("users/infos", {
-                headers: { "name": this.state.name }
+            const state = this.profileComponent.current.state;
+            await axios.get("users/favorites", {
+                headers: { "name": state.name },
+                params: { pages: page }
             }).then( response => {
                 if (response.data.favorites !== undefined) {
                     const favorites = response.data.favorites;
-                    const comments = response.data.comments;
+                    state.favorites.push(...favorites);
                     this.profileComponent.current.setState({
-                        favorites: favorites,
-                        commentaries: comments, 
-                        totalFpages: Math.ceil(favorites.length / 5), 
-                        totalCpages: Math.ceil(comments.length / 5) 
-                    })}
-                }
+                        favorites: state.favorites
+                    })
+                    let length =  Math.ceil(state.favorites.length / 5)
+                    if (favorites.length === 5) { length += 1 } 
+                    this.profileComponent.current.setState({
+                        totalFpages: length
+                    })
+                }}
             )
         } catch (error) {
             this.handleNotification("Problema no servidor", "error")
@@ -167,7 +202,8 @@ export default class Login extends Component {
             formClass: "invisible",
         })
 
-        this.get_infos()
+        this.getComments()
+        this.getFavorites()
     }
 
     async tryLogin(email, password) {
@@ -198,9 +234,9 @@ export default class Login extends Component {
                 password
             }).then(response => {
                 if (response.data.error === undefined) {
+                    this.changeMethod(null)
                     this.handleNotification(
                         "Cadastro realizado com sucesso!", "success");
-                    this.changeMethod(null)
                 } else {
                     this.handleNotification(response.data.error, "warning")
                 }
@@ -268,7 +304,6 @@ export default class Login extends Component {
                 data: { token: localStorage.getItem(TOKEN_KEY), email }
             }).then(response => {
                 if (response.data.error === undefined) {
-                    console.log(response.data)
                     this.handleNotification(
                         "Conta removida com sucesso.", "success");
                     this.profileComponent.current.closeAccount();
@@ -295,6 +330,8 @@ export default class Login extends Component {
                         this.setState({ formClass: "" })}}
                     updateAccount = {this.updateAccount}
                     deleteAccount = {this.deleteAccount}
+                    getComments = {this.getComments}
+                    getFavorites = {this.getFavorites}
                 />
                 <form className = {this.state.formClass} onSubmit={
                     (event) => {this.handleForm(event)}}>
