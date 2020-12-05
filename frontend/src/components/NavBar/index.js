@@ -60,7 +60,8 @@ export default class NavBar extends Component {
                         Livros 
                     </li>
                 </ul>
-                <section className = {this.state.loginClass}>
+                <section className = {this.state.loginClass} 
+                    style = {{ maxWidth: "min(62em, 100vw)" }}>
                     <Login ref = {this.loginComponent} />
                 </section>
                 <section className = {this.state.indexClass}>

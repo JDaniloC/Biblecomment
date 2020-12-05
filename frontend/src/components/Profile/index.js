@@ -189,7 +189,7 @@ export default class Profile extends Component {
                                 </p> 
                             </label>
                             <input type="checkbox" id={"0" + commentary.id}/>
-                            <div className = "user-comment">
+                            <div className = "user-comment" style = {{ whiteSpace: "break-spaces" }}>
                                 {commentary.text}
                                 <p>
                                     <button onClick={

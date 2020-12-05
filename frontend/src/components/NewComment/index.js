@@ -99,11 +99,11 @@ export default class NewComment extends Component {
         } else {
             value = event.target.value;
         }
-        this.setState({[event.target.name]: value});
+        this.setState({[event.target.name.replace("y", "")]: value});
     }
 
     render() {
-        const tipo = (this.props.post) ? "" : "c";
+        const tipo = (this.props.post) ? "" : "y";
 
         return (
             <div className="pop-up">

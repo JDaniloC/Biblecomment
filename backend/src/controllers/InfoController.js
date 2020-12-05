@@ -28,7 +28,7 @@ module.exports = {
     async userComments(request, response) {
         const { name } = request.headers;
         const { pages = 1 } = request.query;
-        console.log(name, pages)
+
         if (name === undefined) {
             return response.json([]);
         }
@@ -36,14 +36,14 @@ module.exports = {
             .where("username", name)
             .limit(5)
             .offset((pages - 1) * 5);
-        console.log(comments);
-        return response.json({ comments });
+
+            return response.json({ comments });
     },
 
     async userFavorites(request, response) {
         const { name } = request.headers;
         const { pages = 1 } = request.query;
-        console.log(pages)
+
         if (name === undefined) {
             return response.json([]);
         }
@@ -55,7 +55,7 @@ module.exports = {
             LIMIT 5
             OFFSET (${pages} - 1) * 5
         `)
-        console.log(favorites)
+
         return response.json({ favorites });
     }
 }

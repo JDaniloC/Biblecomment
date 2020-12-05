@@ -16,18 +16,18 @@
 }
 
 input#devocional:checked + img, 
-input#devocionalc:checked + img{
+input#devocionaly:checked + img{
     background-color: pink;
 }
 input#exegese:checked + img,
-input#exegesec:checked + img{
+input#exegesey:checked + img{
     background-color: yellow;
 }
 input#inspirado:checked + img,
-input#inspiradoc:checked + img{
+input#inspiradoy:checked + img{
     background-color: cyan;
 }
 input#pessoal:checked + img,
-input#pessoalc:checked + img{
+input#pessoaly:checked + img{
     background-color: chartreuse;
 }
