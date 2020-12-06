@@ -34,8 +34,14 @@ export default class NewComment extends Component {
     postNewComment(evt) {
         evt.preventDefault();
 
-        if (this.state.texto === "" | this.state.nome === "") {
-            return
+        if (this.state.nome === "") {
+            return this.props.notification(
+                "Você precisa estar logado!", "info", null)
+        } else if (this.state.texto.length < 200 || 
+            this.state.texto.length > 1000) {
+            return this.props.notification(
+                "O mínimo de caracteres é 200 e o máximo de 1000!", 
+                "info", null)
         }
         const tags = [];
         if (this.state.devocional) {
@@ -50,7 +56,7 @@ export default class NewComment extends Component {
         if (this.state.pessoal) {
             tags.push("pessoal")
         }
-
+        
         try {
             if (isAuthenticated()) {
                 const token = localStorage.getItem(TOKEN_KEY);
@@ -98,6 +104,11 @@ export default class NewComment extends Component {
             value = event.target.checked;
         } else {
             value = event.target.value;
+            if (value.length < 200 || value.length > 1000) {
+                this.textArea.style.borderColor = "red";
+            } else {
+                this.textArea.style.borderColor = "aquamarine";
+            }
         }
         this.setState({[event.target.name.replace("y", "")]: value});
     }
@@ -189,11 +200,11 @@ export default class NewComment extends Component {
                         </label>
                     </div>
                     <textarea 
-                        name = "texto" 
-                        id = "texto" 
+                        name = "texto" id = "texto"
                         value = {this.state.texto}
                         onChange = {(evt) => {
                             this.handleChange(evt)}}
+                        ref = {ref => this.textArea = ref}
                         placeholder = "Descreva seu comentário">
                     </textarea>
                 </div>
