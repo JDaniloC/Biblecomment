@@ -76,8 +76,8 @@ export default class BooksIndex extends Component {
     chapterCommented(book, chapter) {
         if (this.props.loginComponent !== undefined) {
             const commented = this.props.loginComponent.current.state.commented;
-            
-            if (book in commented && chapter in commented[book]) {
+            if (book in commented && 
+                commented[book].indexOf(String(chapter)) !== -1) {
                 return true;
             }
         }

@@ -14,6 +14,8 @@ const DiscussionController = require(
     './controllers/DiscussionController');
 const InfoController = require(
     './controllers/InfoController');
+const BackupController = require(
+    './controllers/BackupController');
 
 const routes = express.Router();
 
@@ -52,5 +54,12 @@ routes.get("/discussion/:abbrev/:id", DiscussionController.show);
 routes.post("/discussion/:abbrev", DiscussionController.store);
 routes.patch("/discussion/:id", DiscussionController.update);
 routes.delete("/discussion/:id", DiscussionController.delete);
+
+routes.get("/backup/users", BackupController.saveUsers);
+routes.get("/backup/comments", BackupController.saveComments);
+routes.get("/backup/discussions", BackupController.saveDiscussions);
+routes.post("/backup/users", BackupController.loadUsers);
+routes.post("/backup/comments", BackupController.loadComments);
+routes.post("/backup/discussions", BackupController.loadDiscussions);
 
 module.exports = routes;
