@@ -3,12 +3,11 @@ const cors = require('cors');
 const routes = require("./routes");
 const app = express();
 
-const fs = require('fs');
-const https = require('https');
-const key = fs.readFileSync('ssl/selfsigned.key');
-const cert = fs.readFileSync('ssl/selfsigned.crt');
-
-const credentials = {key: key, cert: cert};
+// const fs = require('fs');
+// const https = require('https');
+// const key = fs.readFileSync('ssl/selfsigned.key');
+// const cert = fs.readFileSync('ssl/selfsigned.crt');
+// const credentials = {key: key, cert: cert};
 
 app.options('*', cors({
   origin: [
@@ -27,5 +26,5 @@ const port = process.env.PORT || 3333
 // httpsServer.listen(port);
 // console.log("HTTPS server started on port", port)
 
-app.listen(3333, 
+app.listen(port, 
   () => console.log("HTTP server started on port", port));
