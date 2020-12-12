@@ -23,9 +23,9 @@ app.use(routes);
 
 const port = process.env.PORT || 3333
 
-const httpsServer = https.createServer(credentials, app);
-httpsServer.listen(port);
-console.log("HTTPS server started on port", port)
+// const httpsServer = https.createServer(credentials, app);
+// httpsServer.listen(port);
+// console.log("HTTPS server started on port", port)
 
-// app.listen(3333, 
-//   () => console.log("HTTP server started on port", 3333));
+app.listen(3333, 
+  () => console.log("HTTP server started on port", port));
