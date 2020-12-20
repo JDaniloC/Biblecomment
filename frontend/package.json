@@ -9,6 +9,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "@uiw/react-md-editor": "^2.0.3",
     "axios": "^0.19.2",
     "balloon-css": "^1.2.0",
     "react": "^16.13.1",

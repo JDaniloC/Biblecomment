@@ -108,7 +108,8 @@ export default class BooksIndex extends Component {
                         <Loading />
                     </a>}
                 </ul>
-                <div className={this.state.chapters}>
+                <div className={this.state.chapters} style = {{
+                    alignItems: "baseline"}}>
                     <div className="chapters-container">
                         <div className="top" style = {{ justifyContent: "space-between" }}>
                             <h2 style = {{ alignSelf: "center" }}> 

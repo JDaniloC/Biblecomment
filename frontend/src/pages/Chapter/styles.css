@@ -41,33 +41,6 @@ button.entry:hover {
     z-index: -1;
 }
 
-/* box center */
-.centro {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 3;
-    overflow: auto;
-}
-
-.overlay {
-    z-index: 2;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    background: #000;
-    opacity: 0.5;
-    filter: alpha(opacity(0.5));
-}
-
 /* verse commentaries */
 aside {
     position: relative;

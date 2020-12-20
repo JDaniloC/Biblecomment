@@ -6,6 +6,7 @@ import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
 import { Pagination } from '@material-ui/lab';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
+import MDEditor, { commands } from '@uiw/react-md-editor';
 
 import "./styles.css";
 
@@ -143,10 +144,13 @@ export default class Discussion extends Component {
         this.closeAnswers();
     }
 
-    handleChange(event) {
-        this.setState({
-            text: event.target.value
-        })
+    handleChange(value) {
+        if (value.length < 200 || value.length > 1000) {
+            this.textArea.style.borderColor = "red";
+        } else {
+            this.textArea.style.borderColor = "aquamarine";
+        }
+        this.setState({text: value});
     }
 
     postNewQuestion() {
@@ -197,6 +201,7 @@ export default class Discussion extends Component {
                     text: this.state.text,
                     token: localStorage.getItem(TOKEN_KEY)
                 }).then(response => {
+                    console.log(response.data)
                     if (typeof(response.data) === "object" &&
                         response.data.answers) {
                         const answers = JSON.parse(response.data.answers)
@@ -316,8 +321,9 @@ export default class Discussion extends Component {
 
                                         <hr/>
                                         <h4 style = {{ fontSize: "large" }}> 
-                                            {chat.user} {chat.question} 
+                                            {chat.username} 
                                         </h4>
+                                        <MDEditor.Markdown source = {chat.question} />
                                         <hr/>
                                         
                                         <button 
@@ -346,7 +352,9 @@ export default class Discussion extends Component {
             </main>    
 
             <div className = {this.state.answersClass} > 
-                <div className = {this.state.newAnswerClass}>
+                <div className = {this.state.newAnswerClass} style = {{
+                    width: "min(700px, 100vw)", maxWidth: "100vw"
+                }}>
                     <div className="top">
                         <h1 style = {{ alignSelf: "center" }}> Respostas </h1>
                         <button onClick = { () => this.closeAnswers() }>
@@ -357,8 +365,10 @@ export default class Discussion extends Component {
                     <ul className = "answer-list">
                         {(this.state.answers.length > 0) ? this.state.answers.map((answer, index) => (
                             <li key = {(index - 1) * -1}>
-                                <p style = {{ color: "#111" }}> {answer.name} </p>
-                                <p style = {{ fontSize: "medium" }} > {answer.text} </p> 
+                                <h3 style = {{ color: "#111" }}> 
+                                    {answer.name} 
+                                </h3>
+                                <MDEditor.Markdown source = {answer.text} />
                             </li>
                         )) : <h2 style = {{ margin: "1em 1.3em" }}> 
                             Seja o primeiro a responder 
@@ -367,13 +377,17 @@ export default class Discussion extends Component {
                     
                     
                     <div className = "reply-area">
-                        <textarea 
-                            name = "texto" 
-                            id = "texto" 
-                            value = {this.state.texto}
-                            onChange = {(evt) => {this.handleChange(evt)}}
-                            placeholder = "Descreva sua resposta">
-                        </textarea>
+                        <div style = {{ 
+                                border: "1px solid #dcdce6", width: "100%"}}>
+                            <MDEditor
+                                value = {this.state.text}
+                                onChange={(evt) => {this.handleChange(evt)}}
+                                commands = {[
+                                    commands.bold, commands.italic, commands.strikethrough, commands.link, commands.checkedListCommand, commands.unorderedListCommand, commands.orderedListCommand, commands.codeEdit, commands.codeLive, commands.codePreview, commands.fullscreen, 
+                                ]}
+                            />
+                            <MDEditor.Markdown value = {this.state.text} />
+                        </div>
                         <button 
                             className = "answer-btn"
                             onClick = {() => {this.postNewAnswer()}}>
@@ -397,13 +411,15 @@ export default class Discussion extends Component {
                     </p>
 
                     <div className = "reply-area">
-                        <textarea 
-                            name = "texto" 
-                            id = "texto" 
-                            value = {this.state.texto}
-                            onChange = {(evt) => {this.handleChange(evt)}}
-                            placeholder = "Descreva o problema">
-                        </textarea>
+                        <div ref = {ref => this.textArea = ref}
+                            style = {{ 
+                                border: "1px solid #dcdce6", width: "100%"}}>
+                            <MDEditor
+                                value = {this.state.text}
+                                onChange={(evt) => {this.handleChange(evt)}}
+                            />
+                            <MDEditor.Markdown value = {this.state.text} />
+                        </div>
                         <button 
                             className = "answer-btn" 
                             onClick = {() => {this.postNewQuestion()}}>

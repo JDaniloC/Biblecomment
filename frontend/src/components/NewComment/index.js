@@ -104,6 +104,9 @@ export default class NewComment extends Component {
             value = event.target.checked;
         } else {
             value = event.target.value;
+            if (value.slice(-2) === "  ") {
+                value = value.slice(0, -1);
+            }
             if (value.length < 200 || value.length > 1000) {
                 this.textArea.style.borderColor = "red";
             } else {
