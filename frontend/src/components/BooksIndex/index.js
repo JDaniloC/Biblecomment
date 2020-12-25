@@ -101,12 +101,7 @@ export default class BooksIndex extends Component {
                             }>
                             {book.title}
                         </li>
-                    )) : 
-                    <a href="https://34.107.239.132/" 
-                        style = {{ fontSize: "2em", textAlign: "center" }}> 
-                        Não está carregando? <br/> Clique aqui para dar permissão 
-                        <Loading />
-                    </a>}
+                    )) : <Loading />}
                 </ul>
                 <div className={this.state.chapters} style = {{
                     alignItems: "baseline"}}>
