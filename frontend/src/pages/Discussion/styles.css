@@ -63,6 +63,7 @@ details.comment p{
     text-align: initial;
     font-size: large;
     margin-bottom: 0.5em;
+    white-space: break-spaces;
 }
 
 ul.answer-list {

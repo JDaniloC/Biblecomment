@@ -14,6 +14,7 @@ const close = require("../../assets/x.svg")
 
 export default class Discussion extends Component {
     constructor(props) {
+        console.log(props.location)
         super(props);
 
         this.state = {
@@ -77,37 +78,49 @@ export default class Discussion extends Component {
     }
 
     componentDidMount() {
-        const title = this.props.match.params.abbrev;
-        const search_by = this.props.location.state.comment.id;
-        const abbrev = this.props.location.state.abbrev;
+        const abbrev = this.props.match.params.abbrev;
+        let search_by = -1;
+        let title = "";
+        if (this.props.location.state !== undefined) {    
+            search_by = this.props.location.state.comment.id;
+            title = this.props.location.state.title;
+        } else {
+            axios.get(`/books/${abbrev}/chapters/1`).then(response => {
+                if (response.data.title !== undefined) {
+                    this.setState({
+                        title: response.data.title
+                    })
+                }
+            })
+        }
         this.setState({ 
             selected: search_by, 
-            title: title, 
-            abbrev: abbrev 
+            title, abbrev 
         })
-        
         this.loadDiscussions(1, abbrev)
 
-        try {
-            axios.get(`/discussion/${abbrev}/${search_by}`).then(
-                response => {
-                    if (response.data.length > 0) {
-                        this.closeNewPost();
-                        if (!this.searchDiscussionId(search_by)) {
-                            const discussion = response.data[0];
-                            discussion.id = "0";
-                            discussion.answers = JSON.parse(
-                                discussion.answers);
+        if (this.props.location.state !== undefined) {
+            try {
+                axios.get(`/discussion/${abbrev}/${search_by}`).then(
+                    response => {
+                        if (response.data.length > 0) {
+                            this.closeNewPost();
+                            if (!this.searchDiscussionId(search_by)) {
+                                const discussion = response.data[0];
+                                discussion.id = -discussion.id;
+                                discussion.answers = JSON.parse(
+                                    discussion.answers);
 
-                            this.setState(prev => ({
-                                discussions: [
-                                    discussion, ...prev.discussions]
-                            }))
+                                this.setState(prev => ({
+                                    discussions: [
+                                        discussion, ...prev.discussions]
+                                }))
+                            }
                         }
-                    }
-            })
-        } catch (err) {
-            this.handleNotification(err, "error")
+                })
+            } catch (err) {
+                this.handleNotification(err, "error")
+            }
         }
     }
 
@@ -122,7 +135,7 @@ export default class Discussion extends Component {
 
     openAnswers(identificador, answers) {
         this.setState({
-            selected: identificador,
+            selected: Math.abs(identificador),
             answers: answers,
             answersClass: "centro",
             blur: "block",
@@ -201,7 +214,6 @@ export default class Discussion extends Component {
                     text: this.state.text,
                     token: localStorage.getItem(TOKEN_KEY)
                 }).then(response => {
-                    console.log(response.data)
                     if (typeof(response.data) === "object" &&
                         response.data.answers) {
                         const answers = JSON.parse(response.data.answers)
@@ -396,6 +408,7 @@ export default class Discussion extends Component {
                     </div>
                 </div>
 
+                {(this.props.location.state !== undefined) ? 
                 <div className = {this.state.newPostClass}>
                     <div className="top">
                         <h1 style = {{ alignSelf: "center" }}> 
@@ -427,11 +440,16 @@ export default class Discussion extends Component {
                         </button>
                     </div>
                 </div>
+                : <div onClick = {() => {
+                    this.closeNewPost()
+                }} style = {{
+                    width: "100%", height: "100%"
+                }}></div>}
             </div>
             
             <div className="overlay" style={
-                { display: this.state.blur }
-            }></div>
+                { display: this.state.blur }}>
+            </div>
 
             <Snackbar 
                 open={this.state.aviso} 

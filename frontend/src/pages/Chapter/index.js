@@ -47,7 +47,7 @@ export default class Chapter extends Component{
         this.commentsComponent = createRef();
 
         // to use the state of parent in the children
-        this.goToChat = this.goToChat.bind(this);
+        this.goToDiscussion = this.goToDiscussion.bind(this);
         this.loadChapter = this.loadChapter.bind(this);
         this.handleNewComment = this.handleNewComment.bind(this);
         this.closeComments = this.closeComments.bind(this);
@@ -57,9 +57,7 @@ export default class Chapter extends Component{
         this.handleCommentNotification = this.handleCommentNotification.bind(this);
     }
 
-    getVerse() {
-        return this.state.verseAtual.verse;
-    }
+    getVerse() { return this.state.verseAtual.verse; }
 
     loadChapter(abbrev, number) {
         this.abbrev = abbrev;
@@ -282,11 +280,11 @@ export default class Chapter extends Component{
         )
     }
 
-    goToChat(comment) {
+    goToDiscussion(comment) {
         this.props.history.push({
-            pathname: `/discussion/${this.state.titleName}`,
+            pathname: `/discussion/${this.props.match.params.abbrev}`,
             state: { 
-                abbrev: this.props.match.params.abbrev,
+                title: this.state.titleName,
                 verse: this.state.verseAtual.linha.innerText,
                 comment
             }
@@ -341,7 +339,7 @@ export default class Chapter extends Component{
                         handleNewComment = {this.handleNewComment}
                         ref = {this.commentsComponent}
                         notification = {this.handleNotification}
-                        goToChat = {this.goToChat}
+                        goToDiscussion = {this.goToDiscussion}
                     />
                 </aside>
     

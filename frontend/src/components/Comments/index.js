@@ -114,11 +114,13 @@ class Comments extends Component {
                                         <img src = {this.props.imageFunction("heart")} alt="like"/>
                                     </button>
                                     <button 
-                                        onClick = {() => this.props.goToChat(commentary)}>
+                                        onClick = {() => 
+                                            this.props.goToDiscussion(commentary)}>
                                         <img src = {this.props.imageFunction("chat")} alt="chat"/>
                                     </button>
                                     <button 
-                                        onClick = {(evt) => this.handleReport(evt, commentary.id)}>
+                                        onClick = {(evt) => 
+                                            this.handleReport(evt, commentary.id)}>
                                         <img src={this.props.imageFunction("warning")} alt="report"/>
                                     </button>
                                 </span>
