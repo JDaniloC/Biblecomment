@@ -1,8 +1,6 @@
 import re, json, time, requests, os
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 
 token = "YOUR TOKEN HERE"
 
@@ -20,7 +18,7 @@ def waitToLoad(browser, oldId):
     '''
     try:
         wait = WebDriverWait(browser, 10)
-        result = wait.until(PageLoaded(oldId))
+        wait.until(PageLoaded(oldId))
         return True
     except Exception as e:
         print(e)
@@ -40,7 +38,7 @@ def versesTotal(abbrev, chapter, token):
 book_list = []
 
 opcoes = ChromeOptions()
-opcoes.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+# opcoes.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 browser = Chrome(chrome_options = opcoes)
 
 for abbrev in book_list:
@@ -54,7 +52,7 @@ for abbrev in book_list:
     book = {}
 
     while chapter <= totalChapters and not error:
-        print(f"Capturing the chapter {chapter}")
+        print(f"Capturing the chapter {chapter} with ", end = "")
         # It enter in the chapter and wait to load
 
         oldId = browser.find_element_by_tag_name("html").id
@@ -85,6 +83,7 @@ for abbrev in book_list:
             # It split the verse number of the verse text
             verse_number, verse_text = [x for x in re.split(r'(\d+)\s+([\w\W]*)', verse.text) if x != ""]
             book[chapter].append(verse_text.strip())
+        print(len(book[chapter]), "verses")
 
         chapter += 1
 
@@ -95,11 +94,11 @@ for abbrev in book_list:
             json.dump(book, file, ensure_ascii=False, indent = 2)
 
         # Add the chapters number in the books.json
-        with open("books.json", encoding="utf-8") as file:
-            books = json.load(file)
-        with open("books.json", "w", encoding="utf-8") as file:
-            books.update({abbrev: totalChapters})
-            json.dump(books, file, indent = 2)
+        # with open("books.json", encoding="utf-8") as file:
+        #     books = json.load(file)
+        # with open("books.json", "w", encoding="utf-8") as file:
+        #     books.update({abbrev: totalChapters})
+        #     json.dump(books, file, ensure_ascii=False, indent = 2)
         print("Files created!")
 
 browser.quit()

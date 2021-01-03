@@ -60,5 +60,31 @@ module.exports = {
         } else {
             return response.json({ "error": "chapter number doesn't exists" })
         }
+    },
+    
+    async update(request, response) {
+        const { abbrev, number } = request.params;
+        const { verses } = request.body;
+
+        if (!verses) {
+            return response.json({ "error": "insufficient body: verses" })
+        }
+
+        const book = await connection('books')
+            .where('abbrev', abbrev)
+            .first()
+        
+        if (book) {
+            await connection('chapters')
+                .where('book_abbrev', abbrev)
+                .andWhere('number', number)
+                .update({ 
+                    "verses": JSON.stringify(verses)
+                })
+            
+            return response.json(verses)
+        } else {
+            return response.json({ "error": "this books doesn't exists" })
+        }
     }
 }
