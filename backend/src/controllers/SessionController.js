@@ -18,7 +18,7 @@ module.exports = {
 
         if (!exists) {
             await connection('users').insert({
-                email,
+                email: email.toLowerCase(),
                 name,
                 password: md5(password),
                 token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa"),
@@ -44,7 +44,7 @@ module.exports = {
         }
 
         const user = await connection('users')
-            .where('email', email)
+            .where('email', email.toLowerCase())
             .first()
         
         if (user) {

@@ -5,10 +5,11 @@ module.exports = {
         const { pages = 1 } = request.query;
 
         const users = await connection('users')
+            .orderBy("created_at", "desc")
             .limit(5)
             .offset((pages - 1) * 5)
             .select('email', 'name', 'total_comments', 
-                'state', 'belief');
+                'state', 'belief', 'created_at');
 
         return response.json(users);
     },
@@ -49,7 +50,7 @@ module.exports = {
 
         if (user.email === email | user.moderator) {
             const deleted = await connection('users')
-                .where('email', email)
+                .where('email', email.toLowerCase())
                 .first()
 
             await connection('discussions')

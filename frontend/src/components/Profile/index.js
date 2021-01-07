@@ -44,7 +44,7 @@ const beliefs = [
     "Evangelho Quadrangular",
     "Adventista do Sétimo Dia",
     "Igreja Luterana", "Presbiteriana",
-    "Assembleia de Deus", "Outra"
+    "Assembleia de Deus", "Outro"
 ]
 
 export default class Profile extends Component {

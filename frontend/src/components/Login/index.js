@@ -136,7 +136,9 @@ export default class Login extends Component {
                     })
                     let length =  Math.ceil(state.commentaries.length / 5)
                     if (comments.length === 5) { length += 1 } 
+                    else { page -= 1; }
                     this.profileComponent.current.setState({
+                        currentCPage: page,
                         totalCpages: length
                     })
                 }}
@@ -165,7 +167,9 @@ export default class Login extends Component {
                     })
                     let length =  Math.ceil(state.favorites.length / 5)
                     if (favorites.length === 5) { length += 1 } 
+                    else { page -= 1; }
                     this.profileComponent.current.setState({
+                        currentFPage: page,
                         totalFpages: length
                     })
                 }}

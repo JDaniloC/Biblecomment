@@ -21,7 +21,7 @@ export default class Control extends Component {
             totalCpages: 0,
             totalDpages: 0,
 
-            currentUpage: 1,
+            currentUPage: 1,
             currentCPage: 1,
             currentDPage: 1,
         }
@@ -38,7 +38,10 @@ export default class Control extends Component {
             if (users.length === 5) {
                 this.setState({ totalUpages: length + 1 });
             } else {
-                this.setState({ totalUpages: length })
+                this.setState({ 
+                    currentUPage: page - 1,
+                    totalUpages: length 
+                })
             }
         })
     }
@@ -59,7 +62,10 @@ export default class Control extends Component {
             if (comments.length === 5) {
                 this.setState({ totalCpages: length + 1 });
             } else {
-                this.setState({ totalCpages: length })
+                this.setState({ 
+                    currentCPage: page - 1,
+                    totalCpages: length 
+                })
             }
         })
     }
@@ -75,7 +81,10 @@ export default class Control extends Component {
             if (discussions.length === 5) {
                 this.setState({ totalDpages: length + 1 });
             } else {
-                this.setState({ totalDpages: length })
+                this.setState({ 
+                    currentDPage: this.state.currentDPage - 1,
+                    totalDpages: length 
+                })
             }
         })
     }
@@ -137,7 +146,7 @@ export default class Control extends Component {
         let page = 0;
         let array = [];
         if (type === "users") {
-            page = this.state.currentUpage;
+            page = this.state.currentUPage;
             array = this.state.users;
         } else if (type === "comments") {
             page = this.state.currentCPage;
@@ -154,20 +163,17 @@ export default class Control extends Component {
 
     loadPagination(type) {
         if (type === "users") {
-            const page = this.state.currentUpage;
-            this.getUsers(page);
+            this.getUsers(this.state.currentUPage);
         } else if (type === "comments") {
-            const page = this.state.currentCPage;
-            this.getComments(page);
+            this.getComments(this.state.currentCPage);
         } else {
-            const page = this.state.currentDPage;
-            this.getDiscussions(page);
+            this.getDiscussions(this.state.currentDPage);
         }
     }
 
-    handleCPaginate(evt, page) { this.setState({ currentCPage: page }); }
-    handleUPaginate(evt, page) { this.setState({ currentUPage: page }); }
-    handleDPaginate(evt, page) { this.setState({ currentDPage: page }); }
+    handleUPaginate(page) { this.setState({ currentUPage: page }); }
+    handleCPaginate(page) { this.setState({ currentCPage: page }); }
+    handleDPaginate(page) { this.setState({ currentDPage: page }); }
 
     render() {
         return (
@@ -209,8 +215,8 @@ export default class Control extends Component {
                         <Pagination 
                             className = "pagination" showFirstButton showLastButton
                             count = {this.state.totalUpages} size = "small" 
-                            page = {this.state.currentUpage} shape="rounded"
-                            onChange = {(evt, page) => {this.handleUPaginate(evt, page)}}/>
+                            page = {this.state.currentUPage} shape = "rounded"
+                            onChange = {(evt, page) => {this.handleUPaginate(page)}}/>
                     </ul>
                     <ul>
                         <h3> Últimos comentários </h3>
@@ -256,8 +262,8 @@ export default class Control extends Component {
                         <Pagination 
                             className = "pagination" showFirstButton showLastButton
                             count = {this.state.totalCpages} size = "small" 
-                            page = {this.state.currentCpage} shape="rounded"
-                            onChange = {(evt, page) => {this.handleCPaginate(evt, page)}}/>
+                            page = {this.state.currentCpage} shape = "rounded"
+                            onChange = {(evt, page) => {this.handleCPaginate(page)}}/>
                     </ul>
                     <ul>
                         <h3> Discussões </h3>
@@ -295,7 +301,7 @@ export default class Control extends Component {
                             className = "pagination" showFirstButton showLastButton
                             count = {this.state.totalDpages} size = "small" 
                             page = {this.state.currentDpage} shape="rounded"
-                            onChange = {(evt, page) => {this.handleDPaginate(evt, page)}}/>
+                            onChange = {(evt, page) => {this.handleDPaginate(page)}}/>
                     </ul>
                 </div>
             </main> : <h1> Não autorizado </h1>
