@@ -34,8 +34,8 @@ module.exports = {
         }
         const comments = await connection("comments")
             .where("username", name)
-            .limit(5)
-            .offset((pages - 1) * 5);
+            .limit(50)
+            .offset((pages - 1) * 50);
 
             return response.json({ comments });
     },

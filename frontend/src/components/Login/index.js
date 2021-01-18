@@ -125,7 +125,7 @@ export default class Login extends Component {
             const state = this.profileComponent.current.state;
             await axios.get("users/comments", {
                 headers: { "name": state.name },
-                params: { pages: page }
+                params: { pages: Math.ceil(page * 5 / 50) }
             }).then( response => {
                 if (response.data.comments !== undefined) {
                     const comments = response.data.comments;
@@ -135,10 +135,8 @@ export default class Login extends Component {
                         commentaries: state.commentaries 
                     })
                     let length =  Math.ceil(state.commentaries.length / 5)
-                    if (comments.length === 5) { length += 1 } 
-                    else { page -= 1; }
+                    if (comments.length === 50) { length += 1 } 
                     this.profileComponent.current.setState({
-                        currentCPage: page,
                         totalCpages: length
                     })
                 }}

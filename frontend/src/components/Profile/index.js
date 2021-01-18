@@ -185,7 +185,7 @@ export default class Profile extends Component {
                                 style = {{ display: "flex" }}
                                 htmlFor={"0" + commentary.id}> 
                                 <p>
-                                    {commentary.text}
+                                    {commentary.book_reference} {commentary.text}
                                 </p> 
                             </label>
                             <input type="checkbox" id={"0" + commentary.id}/>
