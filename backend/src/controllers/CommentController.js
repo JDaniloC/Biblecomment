@@ -94,10 +94,11 @@ module.exports = {
                 book_abbrev = "Jó"
             }
 
+            const created_at = new Date().toISOString().replace('Z','').replace('T', ' ')
             const comment = await connection('comments')
                 .insert({
                     username, text, verse, on_title,
-                    created_at: new Date().toISOString().replace('Z','').replace('T', ' '),
+                    created_at,
                     book_reference: `${book_abbrev} ${number}:${verse}`,
                     tags: JSON.stringify(tags),
                     chapter_id: chapter.id,
@@ -111,7 +112,8 @@ module.exports = {
                 verse: parseInt(verse),
                 reports: JSON.stringify([]),
                 likes: JSON.stringify([]),
-                book_reference: `${book_abbrev} ${number}:${verse}`
+                book_reference: `${book_abbrev} ${number}:${verse}`,
+                created_at
             });
         } else {
             return response.json({ "error": "Chapter doesn't exists" })

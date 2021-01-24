@@ -350,6 +350,7 @@ export default class Login extends Component {
                         this.state.registerClass}
                         type="text" 
                         name="name" 
+                        maxLength = "15"
                         placeholder = "Nome de usuário"
                         onChange = {(event) => {this.changeState(event)}}
                     />

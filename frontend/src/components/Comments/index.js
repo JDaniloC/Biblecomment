@@ -72,6 +72,10 @@ class Comments extends Component {
         }
     }
     
+    dateFormat(string) {
+        const [year, month, day] = string.slice(0, 10).split("-");
+        return `${day}/${month}/${year}`
+    }
 
     render() {
         return (
@@ -94,6 +98,9 @@ class Comments extends Component {
                                         src = {this.props.imageFunction(tag)}
                                         style = {{ height: "1rem", margin: "0 4px" }}/>)
                                 )}
+                                <sub>
+                                    {this.dateFormat(commentary.created_at)}
+                                </sub>
                             </h3> 
                             <label 
                                 style = {{ display: "flex" }}

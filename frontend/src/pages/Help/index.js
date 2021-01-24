@@ -46,7 +46,7 @@ export default class Help extends Component {
                         <h2> Por que preciso me cadastrar? </h2>
                         <p> Para o controle de possíveis usuários indesejados e a identificação na criação dos comentários e tópicos. Mas o conteúdo é <b>disponível para visualização</b> independente da criação de uma conta. </p>
                         <h2> Como se cadastrar </h2>
-                        <p> Clique no botão verde para cadastro, preencha com o seu melhor e-mail, nome de usuário e uma senha. Por fim clique novamente no botão verde. Agora é só <b>entrar na conta</b>. </p>
+                        <p> <b>Vá para a página inicial</b>, clique no botão verde para cadastro, preencha com o seu melhor e-mail, nome de usuário e uma senha. Por fim clique novamente no botão verde. </p>
                         <h2> Irei receber notificações ou e-mails? </h2>
                         <p> Não, você entra quando quiser, <b>não receberá</b> nenhum e-mail nem noticação, o e-mail será apenas necessário como uma forma de identificação ao entrar na conta. </p>
                         <h2> É possível deletar a conta? </h2>
@@ -56,11 +56,11 @@ export default class Help extends Component {
                         <div className="login-container">
                             <form onSubmit={(evt) => {evt.preventDefault()}} 
                                 style = {{ width: "100%" }}>
-                                <input type="email" required
+                                <input type="email" disabled
                                     placeholder = "E-mail"/>
-                                <input type="text" required
+                                <input type="text" disabled
                                     placeholder = "Nome de usuário"/>
-                                <input type="password" required
+                                <input type="password" disabled
                                     placeholder = "Senha"/>
                                 <input style = {{backgroundColor:"#1E7"}}
                                     type="submit" value="Cadastrar"/>
@@ -84,22 +84,22 @@ export default class Help extends Component {
                     <div>
                         <h2> O que significa cada tipo de comentário? </h2>
                         <div>
-                            <input type="checkbox" name="hand" id="devocional" checked/>
+                            <input type="checkbox" name="hand" id="devocional" checked onChange={() => {}}/>
                             <img className = "tag" src={hand} alt="handIcon"/>
                             Comentário devocional, indica um ensinamento extraído do texto, trazendo uma aplicação prática para a vida.
                         </div>
                         <div>
-                            <input type="checkbox" name="book" id="exegese" checked/>
+                            <input type="checkbox" name="book" id="exegese" checked onChange={() => {}}/>
                             <img className = "tag" src={book} alt="bookIcon"/>
                             Comentário exegético, indica um comentário que é necessário estudo da língua original, cultura, curiosidades e teólogos.
                         </div>
                         <div>
-                            <input type="checkbox" name="person" id="pessoal" checked/>
+                            <input type="checkbox" name="person" id="pessoal" checked onChange={() => {}}/>
                             <img className = "tag" src={person} alt="personIcon"/>
                             Comentário pessoal, feito caso o verso tenha tocado a pessoa em algum momento na vida, e queira relatar para os demais.
                         </div>
                         <div>
-                            <input type="checkbox" name="pen" id="inspirado" checked/>
+                            <input type="checkbox" name="pen" id="inspirado" checked onChange={() => {}}/>
                             <img className = "tag" src={pen} alt="penIcon"/>
                             Comentário inspirado, indica comentários de algum profeta inspirado, canônico ou não.
                         </div>
@@ -110,7 +110,7 @@ export default class Help extends Component {
                         width: "100%", minWidth: "300px"  }}>
                         <ul className="commentaries"
                             style = {{ fontSize: 14 }}>
-                            <input type="checkbox" checked/>
+                            <input type="checkbox" checked onChange={() => {}}/>
                             <div className = "user-comment">
                                 <p style = {{ 
                                     textAlign: "justify", 

@@ -159,7 +159,7 @@ export default class Profile extends Component {
         <>
         <section className={this.state.perfilClass}>
             <h2> 
-                Adorador {this.state.name} 
+                Membro {this.state.name} 
                 <button onClick = {() => {this.handleConfig()}}> 
                     <img src={gearsIcon} alt="config"/> 
                 </button>

@@ -13,6 +13,11 @@ export default class TitleComment extends Component {
         this.props.handleNewComment(evt)
     }
     
+    dateFormat(string) {
+        const [year, month, day] = string.slice(0, 10).split("-");
+        return `${day}/${month}/${year}`
+    }
+
     render() {
         return (
             <div className="title-comments">
@@ -22,13 +27,18 @@ export default class TitleComment extends Component {
                             <h3> 
                                 {comment.username} 
                                 {comment.tags.map((tag, index) => (
-                                    <img key = {index}
+                                    <img key = {index} 
+                                        style = {{ marginTop: 0 }}
                                         src={this.props.imageFunction(tag)}
-                                        className = "tag"
-                                        alt = {tag}/>
+                                        className = "tag" alt = {tag}/>
                                 ))}
+                                <sub>
+                                    {this.dateFormat(comment.created_at)}
+                                </sub>
                             </h3> 
-                            <p style = {{ whiteSpace: "break-spaces" }}> {comment.text} </p>
+                            <p style = {{ whiteSpace: "break-spaces" }}>    
+                                {comment.text} 
+                            </p>
                         </li>
                     ))}
                 </ul>

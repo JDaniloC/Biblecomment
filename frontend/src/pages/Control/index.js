@@ -191,7 +191,8 @@ export default class Control extends Component {
                                     <p> {user.email} </p> 
                                 </label>
                                 <input type="checkbox" id={user.email}/>
-                                <div className = "user-comment">
+                                <div className = "user-comment" 
+                                    style = {{ alignItems: "flex-start" }}>
                                     <p> E-mail: {user.email} </p>
                                     <p> Name: {user.name} </p>
                                     <p> State: {user.state} </p>

@@ -38,3 +38,10 @@
 .user-comment span img {
     width: 20px;
 }
+
+h3 sub {
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
