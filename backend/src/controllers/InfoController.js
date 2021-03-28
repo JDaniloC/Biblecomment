@@ -52,8 +52,8 @@ module.exports = {
             SELECT * 
             FROM json_each(comments.likes), comments
             WHERE json_each.value LIKE "${name}"
-            LIMIT 5
-            OFFSET (${pages} - 1) * 5
+            LIMIT 50
+            OFFSET (${pages} - 1) * 50
         `)
 
         return response.json({ favorites });

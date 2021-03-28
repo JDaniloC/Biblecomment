@@ -4,6 +4,7 @@ import { Pagination } from '@material-ui/lab';
 import NewComment from "../../components/NewComment";
 
 import "./styles.css"
+import { ProfileContext } from '../../contexts/ProfileContext';
 
 const heartIcon = require("../../assets/heart.svg");
 const deleteIcon = require("../../assets/delete.svg");
@@ -48,6 +49,8 @@ const beliefs = [
 ]
 
 export default class Profile extends Component {
+    static contextType = ProfileContext;
+
     constructor(props) {
         super(props);
 
@@ -58,37 +61,23 @@ export default class Profile extends Component {
             perfilDisplay: "contents",
             configDisplay: "none",
             buttonDisplay: "block",
-
-            email: "", name: "",
-            belief: "", state: "",
-
-            total_comments: 0,
-            total_books: 0,
-            total_chapters: 0,
-            commentaries: [],
-            favorites: [],
-
-            currentFPage: 1,
-            currentCPage: 1,
-            totalFpages: 0,
-            totalCpages: 0
         }
 
         this.editComponent = createRef();
         this.closeEditComment = this.closeEditComment.bind(this);
     }
     
-    handleFPaginate(page) { this.setState({ currentFPage: page }) }
-    handleCPaginate(page) { this.setState({ currentCPage: page }) }
+    handleFPaginate(page) { this.context.setCurrentFPage(page) }
+    handleCPaginate(page) { this.context.setCurrentCPage(page) }
     calculatePagination(type) {
         let page = 0;
         let array = [];
         if (type === "favorites") {
-            page = this.state.currentFPage;
-            array = this.state.favorites;
+            page = this.context.currentFPage;
+            array = this.context.favorites;
         } else {
-            page = this.state.currentCPage;
-            array = this.state.commentaries;
+            page = this.context.currentCPage;
+            array = this.context.commentaries;
         }
         var inicio = (page - 1) * 5;
         var final = inicio + 5;
@@ -98,7 +87,7 @@ export default class Profile extends Component {
 
     editComment(identificador) {
         let selected = "";
-        this.state.commentaries.forEach(element => {
+        this.context.commentaries.forEach(element => {
             if (element.id === identificador) {
                 selected = element.text;
             }
@@ -120,16 +109,17 @@ export default class Profile extends Component {
 
     deleteComment(identificador) {
         if (window.confirm("Tem certeza que quer deletar este comentário?")) {
-            this.setState({
-                commentaries: this.state.commentaries.filter(
+            
+            this.context.setCommentaries(
+                this.context.commentaries.filter(
                     (item) => {return item.id !== identificador})
-            })
+            )
             this.props.deleteComment(identificador);
         }
     }
 
     closeAccount() {
-        this.setState({ perfilClass: "invisible" })
+        this.context.setPerfilClass("invisible");
         this.props.closeAccount();
     }
 
@@ -149,35 +139,29 @@ export default class Profile extends Component {
         }
     }
 
-    handleSelect(event) {
-        this.setState({
-            [event.target.name]: event.target.value
-        });
-    }
-
     render() { return (
         <>
-        <section className={this.state.perfilClass}>
+        <section className={this.context.perfilClass}>
             <h2> 
-                Membro {this.state.name} 
+                Membro {this.context.name} 
                 <button onClick = {() => {this.handleConfig()}}> 
                     <img src={gearsIcon} alt="config"/> 
                 </button>
             </h2>
             <ul style = {{ display: this.state.perfilDisplay }}>
                 <li>
-                    Total de livros comentados: {this.state.total_books} de 66
+                    Total de livros comentados: {this.context.booksCount} de 66
                 </li>
                 <li>
-                    Total de capítulos comentados: {this.state.total_chapters} de 1.189
+                    Total de capítulos comentados: {this.context.chaptersCount} de 1.189
                 </li>
                 <li>
-                    Total de comentários feitos: {this.state.total_comments}
+                    Total de comentários feitos: {this.context.commentsCount}
                 </li>
 
                 <ul className="commentaries">
                     <h3> Comentários feitos </h3>
-                    {(this.state.commentaries.length !== 0) ? 
+                    {(this.context.commentaries.length !== 0) ? 
                     (this.calculatePagination("comments").length > 0) ?
                     this.calculatePagination("comments").map(commentary => (
                         <li key = {"0" + commentary.id}>
@@ -189,7 +173,7 @@ export default class Profile extends Component {
                                 </p> 
                             </label>
                             <input type="checkbox" id={"0" + commentary.id}/>
-                            <div className = "user-comment" style = {{ whiteSpace: "break-spaces" }}>
+                            <div className = "user-comment">
                                 {commentary.text}
                                 <p>
                                     <button onClick={
@@ -209,32 +193,33 @@ export default class Profile extends Component {
                         </li>
                     )) :
                     <button className = "load-btn" 
-                        onClick = {() => this.props.getComments(
-                        this.state.currentCPage)}> 
+                        onClick = {() => this.context.getComments(
+                                this.context.name)
+                        }> 
                             Carregar 
                     </button>
-                    : (this.state.totalCpages !== -1) ? 
+                    : (this.context.totalCPages !== -1) ? 
                     <li>
                         <p> Nenhum comentário realizado </p>
                     </li> :
                     <Loading />}
                     <Pagination 
-                        className = "pagination" showFirstButton showLastButton
-                        count = {this.state.totalCpages} size = "small"
-                        page = {this.state.currentCPage} shape="rounded"
+                        className = "pagination" showFirstButton showLastButton boundaryCount={2}
+                        count = {this.context.totalCPages} size = "small"
+                        page = {this.context.currentCPage} shape="rounded"
                         onChange = {(evt, page) => {this.handleCPaginate(page)}}
                     />
                 </ul>
 
                 <ul className="commentaries">
                     <h3> Comentários favoritados </h3>
-                    {(this.state.favorites.length !== 0) ? 
+                    {(this.context.favorites.length !== 0) ? 
                     this.calculatePagination("favorites").length > 0 ?
                     this.calculatePagination("favorites").map(
                         (favorite, index) => (
                         <li key = {"-" + index}>
                             <h5 style={{ display: "inline" }} >
-                                {favorite.name} em {favorite.book_reference}
+                                {favorite.username} em {favorite.book_reference}
                             </h5>
                             <label 
                                 style = {{ display: "flex" }}
@@ -250,18 +235,19 @@ export default class Profile extends Component {
                         </li>
                     )) : 
                     <button className = "load-btn" 
-                        onClick = {() => this.props.getFavorites(
-                        this.state.currentFPage)}> 
+                        onClick = {() => this.context.getFavorites(
+                            this.context.name)
+                        }> 
                             Carregar 
-                    </button> : (this.state.totalFpages !== -1) ? 
+                    </button> : (this.context.totalFPages !== -1) ? 
                     <li>
                         <p> Você não favoritou nenhum comentário </p>
                     </li> :
                     <Loading />}
                     <Pagination 
-                        className = "pagination" showFirstButton showLastButton
-                        count = {this.state.totalFpages} size = "small" 
-                        page = {this.state.currentFPage} shape="rounded"
+                        className = "pagination" showFirstButton showLastButton boundaryCount={2}
+                        count = {this.context.totalFPages} size = "small" 
+                        page = {this.context.currentFPage} shape="rounded"
                         onChange = {(evt, page) => {this.handleFPaginate(page)}}
                     />
                 </ul>
@@ -270,8 +256,10 @@ export default class Profile extends Component {
                 className = "user-config">
                 <div className="dropdown-menu">
                     <label htmlFor="state"> Estado: </label>
-                    <select name="state" id="state" value = {this.state.state}
-                        onChange = {(evt) => this.handleSelect(evt)}>
+                    <select name="state" id="state" value = {this.context.stateName}
+                        onChange = {(evt) => {
+                            this.context.setStateName(evt.target.value);
+                        }}>
                         {states.map(item => (
                             <option 
                                 value={item}
@@ -282,8 +270,10 @@ export default class Profile extends Component {
                 </div>
                 <div className="dropdown-menu">
                     <label htmlFor="belief"> Crença: </label>
-                    <select name="belief" id="belief" value = {this.state.belief}
-                        onChange = {(evt) => this.handleSelect(evt)}>
+                    <select name="belief" id="belief" value = {this.context.belief}
+                        onChange = {(evt) => {
+                            this.context.setBelief(evt.target.value);
+                        }}>
                         {beliefs.map(item => (
                             <option 
                                 value={item}
@@ -295,13 +285,13 @@ export default class Profile extends Component {
                 <div className="config-buttons">
                     <button style={{ backgroundColor: "#1D1"}}
                         onClick = {() => this.props.updateAccount(
-                            this.state.belief, this.state.state
+                            this.context.belief, this.context.stateName
                         )}> 
                         Salvar 
                     </button>
                     <button style={{ backgroundColor: "#FF4030"}}
                         onClick = {() => this.props.deleteAccount(
-                            this.state.email
+                            this.context.email
                         )}>
                         Excluir conta 
                     </button>

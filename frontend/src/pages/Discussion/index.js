@@ -14,7 +14,6 @@ const close = require("../../assets/x.svg")
 
 export default class Discussion extends Component {
     constructor(props) {
-        console.log(props.location)
         super(props);
 
         this.state = {

@@ -8,7 +8,7 @@ module.exports = {
 
         if (email == null | name == null | password == null) {
             return response.json({"error": 
-                "insufficient body: email, name, password"})
+                "Faltando os campos: email, name, password"})
         }
         
         var exists = await connection('users')
@@ -40,7 +40,7 @@ module.exports = {
         
         if (email === undefined | password === undefined) {
             return response.json({"msg": 
-                "insulficient body: email, password"})
+                "Faltando os campos: email, password"})
         }
 
         const user = await connection('users')
@@ -51,12 +51,12 @@ module.exports = {
             if (user.password === md5(password)) {
                 return response.json(user)
             } else {
-                return response.json({"msg":
-                    "Senha incorreta"})
+                return response.json(
+                    {"error": "Senha incorreta"})
             }
         } else {
-            return response.json({"msg": 
-                "E-mail não cadastrado"})
+            return response.json(
+                {"error": "E-mail não cadastrado"})
         }
     },
 
@@ -65,7 +65,7 @@ module.exports = {
 
         if (token == null) {
             return response.json({
-                "error": "insufficient body: token"
+                "error": "Faltando o campo: token"
             })
         }
 
@@ -77,7 +77,7 @@ module.exports = {
             return response.json(user)
         } else {
             return response.json({
-                "msg": "Usuário não cadastrado"
+                "error": "Usuário não cadastrado"
             })
         }
     }

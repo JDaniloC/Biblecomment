@@ -12,7 +12,7 @@ export default class TitleComment extends Component {
         this.selected = true;
         this.props.handleNewComment(evt)
     }
-    
+
     dateFormat(string) {
         const [year, month, day] = string.slice(0, 10).split("-");
         return `${day}/${month}/${year}`
@@ -32,6 +32,7 @@ export default class TitleComment extends Component {
                                         src={this.props.imageFunction(tag)}
                                         className = "tag" alt = {tag}/>
                                 ))}
+                                
                                 <sub>
                                     {this.dateFormat(comment.created_at)}
                                 </sub>
@@ -39,6 +40,22 @@ export default class TitleComment extends Component {
                             <p style = {{ whiteSpace: "break-spaces" }}>    
                                 {comment.text} 
                             </p>
+                            <span className = "comment-buttons">
+                                <p> Favoritado por <b>{JSON.parse(comment.likes).length}</b> pessoas </p>
+                                <button 
+                                    onClick = {() => this.props.likeFunction(comment.id)}>
+                                    <img src = {this.props.imageFunction("heart")} alt="like"/>
+                                </button>
+                                <button 
+                                    onClick = {() => 
+                                        this.props.goToDiscussion(comment)}>
+                                    <img src = {this.props.imageFunction("chat")} alt="chat"/>
+                                </button>
+                                <button 
+                                    onClick = {() => this.props.reportFunction(comment.id)}>
+                                    <img src={this.props.imageFunction("warning")} alt="report"/>
+                                </button>
+                            </span>
                         </li>
                     ))}
                 </ul>

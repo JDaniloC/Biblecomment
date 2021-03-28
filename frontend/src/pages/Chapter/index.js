@@ -3,6 +3,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
 import axios from '../../services/api';
 
+import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import TitleComment from "../../components/TitleComments";
 import NewComment from "../../components/NewComment";
 import { Loading } from '../../components/Partials';
@@ -24,18 +25,20 @@ export default class Chapter extends Component{
         super(props);
         
         this.state = {
+            asideclass: "invisible",
+            navClass: "visible",
+            newbox: "invisible",
+            main: "main text",
+            blur: "none",
+            
             titleName: "Chapter",
             chapterNumber: "0",
+            
             verses: [],
-            navClass: "visible",
-            asideclass: "invisible",
-            blur: "none",
             comments: [],
-            main: "main text",
-            newbox: "invisible",
+            allComments: [],
             titleComments: [],
             verseAtual: {linha: null, verse: 0},
-            allComments: [],
 
             aviso: false,
             mensagem: "",
@@ -55,6 +58,8 @@ export default class Chapter extends Component{
         this.getVerse = this.getVerse.bind(this);
         this.handleNotification = this.handleNotification.bind(this);
         this.handleCommentNotification = this.handleCommentNotification.bind(this);
+        this.handleLike = this.handleLike.bind(this);
+        this.handleReport = this.handleReport.bind(this);
     }
 
     getVerse() { return this.state.verseAtual.verse; }
@@ -73,11 +78,8 @@ export default class Chapter extends Component{
                     }
             });
         } catch (err) {
-            this.setState({
-                aviso: true,
-                mensagem: "Não consegui me conectar com o servidor",
-                severidade: "error"
-            })
+            this.handleNotification(
+                "Não consegui me conectar com o servidor", "error")
         }
         
         try {
@@ -103,11 +105,8 @@ export default class Chapter extends Component{
                     }
             });
         } catch (err) {
-            this.setState({
-                aviso: true,
-                mensagem: "Não consegui me conectar com o servidor",
-                severidade: "error"
-            })
+            this.handleNotification(
+                "Não consegui me conectar com o servidor", "error")
         }
         
         if (number.length === 1) {
@@ -147,10 +146,7 @@ export default class Chapter extends Component{
             } 
     
             linha.style.backgroundColor = "yellow"
-            this.setState({ verseAtual: {
-                verse,
-                linha
-            }})
+            this.setState({ verseAtual: { verse, linha }})
             
             const thisComments = this.state.allComments.filter((comment) => {
                 return comment.verse === verse + 1;
@@ -231,9 +227,6 @@ export default class Chapter extends Component{
         this.handleNotification(mensagem, severidade);
 
         if (comment !== null) {
-            const all = this.state.allComments
-            all.push(comment)
-            this.setState({ allComments: all })
             if (comment.on_title) {
                 const lista = this.state.titleComments
                 lista.push(comment)
@@ -242,37 +235,30 @@ export default class Chapter extends Component{
                 const lista = this.state.comments
                 lista.push(comment)
                 this.setState({ comments: lista })
+                
+                const all = this.state.allComments
+                all.push(comment)
+                this.setState({ allComments: all })
             }
         }
-    }
-
-    closeAviso(evt, reason) {
-        if (evt != null){
-            evt.preventDefault();
-        }
-
-        if (reason === 'clickaway') {
-            return;
-        }
-      
-        this.setState({ aviso:false });
     }
 
     renderAmount(index) {
         let amount;
         if (index === false) {
-            amount = this.state.titleComments.length
+            amount = this.state.titleComments.length;
         } else {
             amount = this.state.allComments.filter(
                 (comment) => (comment.verse === index + 1)
-            ).length
+            ).length;
         }
         if (amount === 0) {
             return 
         }
 
-        const color = (amount === 1) ? "lightgray" : (amount < 3) ? "lightblue" : 
-            (amount < 5) ? "lightgreen" : (amount < 10) ? "gold" : "lightcoral"
+        const color = (amount === 1) ? "lightgray" : 
+            (amount < 3) ? "lightblue" : (amount < 5) ? "lightgreen" : 
+            (amount < 10) ? "gold" : "lightcoral"
         return(
             <div className = "amount" style = {{ backgroundColor: color }}>
                 {amount}
@@ -280,13 +266,73 @@ export default class Chapter extends Component{
         )
     }
 
+    handleLike(identificador) {
+        function searchLike(array) {
+            let commentFound = false;
+            array.forEach(
+                function(part, index, array) {
+                    if (array[index].id === identificador) {
+                        const likes = JSON.parse(array[index].likes);
+                        if (!("+1" in likes)) {
+                            likes.push("+1");
+                            array[index].likes = JSON.stringify(likes);
+                            commentFound = true;
+                        } 
+                    }
+            });
+            return commentFound;
+        }
+        if (isAuthenticated()) {
+            var token = localStorage.getItem(TOKEN_KEY);
+            try {
+                axios.patch(
+                    `comments/${identificador}`, {
+                        token, likes: true
+                    }).then(response => {
+                        this.handleNotification(
+                            "Adicionado aos favoritos", "success")
+                        const found = searchLike(this.state.comments);
+                        if (!found) {
+                            searchLike(this.state.titleComments);
+                        }
+                })
+            } catch (error) {
+                this.handleNotification("Problema na requisição", "error")
+            }
+        } else {
+            this.handleNotification("Você precisa está logado", "warning")
+        }
+    }
+
+    handleReport(identificador) {
+        if (isAuthenticated()) {
+            var token = localStorage.getItem(TOKEN_KEY);
+            const message = window.prompt(
+                "Qual o problema com o comentário?")
+            try {
+                axios.patch(
+                    `comments/${identificador}`, {
+                        token, reports: message
+                    }).then(() => {
+                        this.handleNotification(
+                            "Comentário reportado!", "success")
+                })
+            } catch (error) {
+                this.handleNotification(
+                    "Problema na requisição", "error")
+            }
+        } else {
+            this.handleNotification(
+                "Você precisa está logado", "warning")
+        }
+    }
+
     goToDiscussion(comment) {
         this.props.history.push({
             pathname: `/discussion/${this.props.match.params.abbrev}`,
             state: { 
-                title: this.state.titleName,
-                verse: this.state.verseAtual.linha.innerText,
-                comment
+                title: this.state.titleName, 
+                verse: comment.text, comment, 
             }
         })
     }
@@ -310,6 +356,9 @@ export default class Chapter extends Component{
                             handleNewComment = {this.handleNewComment}
                             comments = {this.state.titleComments} 
                             imageFunction = {this.getImage}
+                            likeFunction = {this.handleLike}
+                            reportFunction = {this.handleReport}
+                            goToDiscussion = {this.goToDiscussion}
                             ref = {this.titleComponent}
                         />
                         
@@ -337,9 +386,10 @@ export default class Chapter extends Component{
                         commentaries = {this.state.comments}
                         imageFunction = {this.getImage}
                         handleNewComment = {this.handleNewComment}
-                        ref = {this.commentsComponent}
-                        notification = {this.handleNotification}
+                        likeFunction = {this.handleLike}
+                        reportFunction = {this.handleReport}
                         goToDiscussion = {this.goToDiscussion}
+                        ref = {this.commentsComponent}
                     />
                 </aside>
     
@@ -363,10 +413,12 @@ export default class Chapter extends Component{
                 <Snackbar 
                     open={this.state.aviso} 
                     autoHideDuration={2000} 
-                    onClose={(evt, reason) => {
-                        this.closeAviso(evt, reason)}}>
-                    <Alert onClose={(evt, reason) => {
-                        this.closeAviso(evt, reason)}} 
+                    onClose={() => {
+                        this.setState({ aviso:false })
+                    }}>
+                    <Alert onClose={() => {
+                        this.setState({ aviso:false })
+                    }}
                     severity={this.state.severidade}>
                         {this.state.mensagem}
                     </Alert>

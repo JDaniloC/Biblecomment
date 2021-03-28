@@ -4,6 +4,7 @@ import axios from '../../services/api';
 
 import 'balloon-css';
 import "./styles.css";
+import { ProfileContext } from '../../contexts/ProfileContext';
 
 const close = require("../../assets/x.svg")
 const book = require("../../assets/book.svg")
@@ -12,6 +13,8 @@ const person = require("../../assets/person.svg")
 const pen = require("../../assets/pen.svg")
 
 export default class NewComment extends Component {
+    static contextType = ProfileContext;
+
     constructor(props) {
         super(props);
 
@@ -60,24 +63,25 @@ export default class NewComment extends Component {
         try {
             if (isAuthenticated()) {
                 const token = localStorage.getItem(TOKEN_KEY);
+                const text = this.state.texto;
                 if (this.props.post) {
+                    const abbrev = this.props.abbrev;
+                    const number = this.props.number;
+                    const verso = this.props.verso() + 1;
                     axios.post(
-                        `books/${this.props.abbrev}/chapters/${this.props.number}/comments/${this.props.verso() + 1}`, {
+                        `books/${abbrev}/chapters/${number}/comments/${verso}`, {
                             on_title: this.props.on_title.selected,
-                            token: token,
-                            text: this.state.texto,
-                            tags: tags
+                            text, token, tags,
                         }).then(response => {
                             this.props.notification(
                                 "Comentário enviado!", 
-                                "success", response.data
-                    )})
+                                "success", response.data)
+                            this.context.addNewComment(response.data);
+                        })
                 } else {
                     axios.patch(
                         `/comments/${this.state.comment_id}`, {
-                            token: token,
-                            text: this.state.texto,
-                            tags: tags
+                            text, token, tags,
                         }).then(response => {
                             this.props.notification(
                                 "Comentário editado!", 
@@ -89,9 +93,9 @@ export default class NewComment extends Component {
                     "Você precisa estar logado", "info", null);
             }
         } catch (error) {
+            console.log(error)
             this.props.notification(
-                "Problema na requisição", "error", null
-            )
+                "Problema na requisição", "error", null);
         }
         this.setState({ texto: "" })
         this.props.close(evt)

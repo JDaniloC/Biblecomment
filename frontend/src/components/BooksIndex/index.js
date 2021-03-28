@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import { ProfileContext } from '../../contexts/ProfileContext';
 import axios from '../../services/api';
 import { Loading } from '../Partials'
 
@@ -8,6 +9,8 @@ import "./styles.css"
 const close = require("../../assets/x.svg")
 
 export default class BooksIndex extends Component {
+    static contextType = ProfileContext;
+    
     constructor(props) {
         super(props);
 
@@ -28,7 +31,7 @@ export default class BooksIndex extends Component {
                 }
             })
         } catch (err) {
-            console.log("Problema no servidor")
+            console.log("Problema no servidor: ", String(err))
         }
         
         let number_list = [];
@@ -39,18 +42,20 @@ export default class BooksIndex extends Component {
     }
 
     showChapterNumbers(abbrev, max) {
-        this.setState({ selected: {
-            "abbrev": abbrev,
-            "max": max
-        } })
-
-        this.setState({ chapters: "visible centro" })
-        this.setState({ blur: "block" })
+        this.setState({ 
+            selected: {
+                "abbrev": abbrev, "max": max
+            },
+            chapters: "visible centro",
+            blur: "block"
+        })
     }
 
     closeChapters() {
-        this.setState({ chapters: "invisible" })
-        this.setState({ blur: "none" })
+        this.setState({ 
+            chapters: "invisible",
+            blur: "none"
+        })
     }
 
     changePage(evt, chapter, number) {
@@ -59,27 +64,27 @@ export default class BooksIndex extends Component {
         if (this.props.changeChapter !== undefined) {
             this.props.changeChapter(chapter, number)
             this.closeChapters();
+            this.props.closeBookComponent();
+            window.history.replaceState(
+                null, `Bible Comment: ${chapter} ${number}`, 
+                `/verses/${chapter}/${number}`)
         }
     }
 
     bookCommented(book, length) {
-        if (this.props.loginComponent !== undefined) {
-            const commented = this.props.loginComponent.current.state.commented;
-            
-            if (book in commented) {
-                return commented[book].length * 100 / length;
-            }
+        const commented = this.context.commented;
+        
+        if (book in commented) {
+            return commented[book].length * 100 / length;
         }
         return 0;
     }
 
     chapterCommented(book, chapter) {
-        if (this.props.loginComponent !== undefined) {
-            const commented = this.props.loginComponent.current.state.commented;
-            if (book in commented && 
-                commented[book].indexOf(String(chapter)) !== -1) {
-                return true;
-            }
+        const commented = this.context.commented;
+        if (book in commented && 
+            commented[book].indexOf(String(chapter)) !== -1) {
+            return true;
         }
         return false;
     }
@@ -127,8 +132,10 @@ export default class BooksIndex extends Component {
                                     )) ? "lightgreen" : "white"}}
                                     key = {chapter}
                                     to = {`/verses/${this.state.selected.abbrev}/${chapter}`}
-                                    onMouseDown = {(evt) => {this.changePage(
-                                        evt, this.state.selected.abbrev, chapter)}
+                                    onMouseDown = {(evt) => {
+                                        this.changePage(evt, 
+                                            this.state.selected.abbrev, 
+                                            chapter)}
                                 }>
                                     {chapter}
                                 </Link>

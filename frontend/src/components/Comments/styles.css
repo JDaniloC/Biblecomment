@@ -18,24 +18,24 @@
     flex-direction: column;
 }
 
-.user-comment span {
+span.comment-buttons {
     display: flex;
     align-items: center;
     justify-content: flex-end;
 }
 
-.user-comment span button {
+span.comment-buttons button {
     margin-left: 10px;
     border: none;
     cursor: pointer;
     background: none;
 }
 
-.user-comment span button:active {
+span.comment-buttons button:active {
     transform: scale(1.5);
 }
 
-.user-comment span img {
+span.comment-buttons img {
     width: 20px;
 }
 

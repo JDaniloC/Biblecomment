@@ -4,17 +4,19 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Profile from '../Profile';
 import { Alert } from '@material-ui/lab';
 
+import { ProfileContext } from '../../contexts/ProfileContext';
 import { 
-    login, logout, isAuthenticated, TOKEN_KEY 
+    login, logout, TOKEN_KEY 
 } from "../../services/auth";
 import "./styles.css"
 
 export default class Login extends Component {
+    static contextType = ProfileContext;
+
     constructor(props) {
         super(props);
 
         this.state = {
-            formClass: "",
             loginClass: "",
             registerClass: "invisible",
             buttonColor: "#1E7",
@@ -27,17 +29,28 @@ export default class Login extends Component {
             email: "",
             name: "",
             password: "",
-            commented: {}
         }
         
         this.profileComponent = createRef();
 
-        this.getComments = this.getComments.bind(this);
-        this.getFavorites = this.getFavorites.bind(this);
         this.updateAccount = this.updateAccount.bind(this);
         this.deleteAccount = this.deleteAccount.bind(this);
         this.deleteComment = this.deleteComment.bind(this);
         this.handleNotification = this.handleNotification.bind(this);
+    }
+
+    componentDidMount() {
+        const { 
+            setFavorites,
+            loadUserInfos,
+            setCommentaries, 
+            setFormClass, 
+        } = this.context;
+
+        this.setFavorites = setFavorites;
+        this.setFormClass = setFormClass;
+        this.loadUserInfos = loadUserInfos;
+        this.setCommentaries = setCommentaries;
     }
 
     changeMethod(event) {
@@ -78,26 +91,6 @@ export default class Login extends Component {
         })
     }
 
-    componentDidMount() {
-        async function getUser(token) {
-            return await axios.get("session", {
-                headers: { "token": token }
-            })
-        }
-
-        if (isAuthenticated()) {
-            getUser(localStorage.getItem(TOKEN_KEY)).then(response => {
-                if (response.data.chapters_commented) {
-                    this.parse_user(response)
-                } else {
-                    this.handleNotification(
-                        "Não consegui acessar sua conta.", "info")
-                }
-            })
-
-        }
-    }
-
     changeState(event) {
         event.preventDefault();
         this.setState({[event.target.name]: event.target.value});
@@ -116,98 +109,6 @@ export default class Login extends Component {
         }
     }
 
-    async getComments(page = 1) {
-        this.profileComponent.current.setState({
-            totalCpages: -1
-        })
-
-        try {
-            const state = this.profileComponent.current.state;
-            await axios.get("users/comments", {
-                headers: { "name": state.name },
-                params: { pages: Math.ceil(page * 5 / 50) }
-            }).then( response => {
-                if (response.data.comments !== undefined) {
-                    const comments = response.data.comments;
-                    const state = this.profileComponent.current.state;
-                    state.commentaries.push(...comments);
-                    this.profileComponent.current.setState({
-                        commentaries: state.commentaries 
-                    })
-                    let length =  Math.ceil(state.commentaries.length / 5)
-                    if (comments.length === 50) { length += 1 } 
-                    this.profileComponent.current.setState({
-                        totalCpages: length
-                    })
-                }}
-            )
-        } catch (error) {
-            this.handleNotification("Problema no servidor", "error")
-        }
-    }
-
-    async getFavorites(page = 1) {
-        this.profileComponent.current.setState({
-            totalFpages: -1
-        })
-
-        try {
-            const state = this.profileComponent.current.state;
-            await axios.get("users/favorites", {
-                headers: { "name": state.name },
-                params: { pages: page }
-            }).then( response => {
-                if (response.data.favorites !== undefined) {
-                    const favorites = response.data.favorites;
-                    state.favorites.push(...favorites);
-                    this.profileComponent.current.setState({
-                        favorites: state.favorites
-                    })
-                    let length =  Math.ceil(state.favorites.length / 5)
-                    if (favorites.length === 5) { length += 1 } 
-                    else { page -= 1; }
-                    this.profileComponent.current.setState({
-                        currentFPage: page,
-                        totalFpages: length
-                    })
-                }}
-            )
-        } catch (error) {
-            this.handleNotification("Problema no servidor", "error")
-        }
-    }
-
-    parse_user(response) {
-        const data = response.data;
-
-        const commented = JSON.parse(
-            data.chapters_commented)
-        this.setState({ commented: commented })
-        const total_books = Object.keys(commented).length
-        let total_chapters = 0
-        for (var book in commented) {
-            total_chapters += commented[book].length
-        }
-
-        this.profileComponent.current.setState({   
-            email: this.state.email,             
-            name: data.name,
-            total_books: total_books,
-            total_chapters: total_chapters,
-            total_comments: data.total_comments,
-            perfilClass: "",
-            belief: (data.belief !== null) ? data.belief : "",
-            state: (data.state !== null) ? data.state : ""
-        })
-        this.setState({
-            name: data.name,
-            formClass: "invisible",
-        })
-
-        this.getComments()
-        this.getFavorites()
-    }
-
     async tryLogin(email, password) {
         try { 
             await axios.post("session/login", {
@@ -215,15 +116,16 @@ export default class Login extends Component {
             }).then(response => {
                 const token = response.data.token;
                 if (token !== undefined) {
-                    this.parse_user(response)
+                    this.context.loadUserInfos(response);
                     this.handleNotification(
                         "Login realizado com sucesso!", "success")
                     login(token);
                 } else {
-                    this.handleNotification(response.data.msg, "warning")
+                    this.handleNotification(response.data.error, "warning")
                 }
             })
         } catch (error) {
+            console.log(error)
             this.handleNotification("Problema no servidor", "error")
         }
     }
@@ -259,18 +161,6 @@ export default class Login extends Component {
                 this.state.name, 
                 this.state.password
         )}
-    }
-
-    closeAviso(event, reason) {
-        if (event != null){
-            event.preventDefault();
-        }
-
-        if (reason === 'clickaway') {
-            return;
-        }
-      
-        this.setState({ aviso:false });
     }
 
     handleNotification(mensagem, severidade, data = null) {
@@ -329,13 +219,12 @@ export default class Login extends Component {
                     notification = {this.handleNotification}
                     closeAccount = {() => {
                         logout();
-                        this.setState({ formClass: "" })}}
+                        this.setFormClass("");
+                    }}
                     updateAccount = {this.updateAccount}
                     deleteAccount = {this.deleteAccount}
-                    getComments = {this.getComments}
-                    getFavorites = {this.getFavorites}
                 />
-                <form className = {this.state.formClass} onSubmit={
+                <form className = {this.context.formClass} onSubmit={
                     (event) => {this.handleForm(event)}}>
                     <input 
                         type="email" 
@@ -388,10 +277,12 @@ export default class Login extends Component {
             <Snackbar 
                 open={this.state.aviso} 
                 autoHideDuration={2000} 
-                onClose={(event, reason) => {
-                    this.closeAviso(event, reason)}}>
-                <Alert onClose={(event, reason) => {
-                    this.closeAviso(event, reason)}} 
+                onClose={() => {
+                    this.setState({ aviso:false })
+                }}>
+                <Alert onClose={() => {
+                    this.setState({ aviso:false })
+                }} 
                 severity={this.state.severidade}>
                     {this.state.mensagem}
                 </Alert>

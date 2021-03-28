@@ -36,6 +36,9 @@
     white-space: nowrap;
 }
 
+.login-container > section div.user-comment {
+    white-space: break-spaces;
+}
 .login-container > section div.user-comment p {
     justify-content: space-evenly;
     width: 100%;
