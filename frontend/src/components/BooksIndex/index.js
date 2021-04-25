@@ -106,7 +106,16 @@ export default class BooksIndex extends Component {
                             }>
                             {book.title}
                         </li>
-                    )) : <Loading />}
+                    )) : 
+                    <div style = {{ textAlign: "center" }}>
+                        <Loading />
+                        <p style = {{ marginTop: "1em" }}> 
+                            Este carregamento pode demorar 1-2min.
+                        </p>
+                        <p> Este site só permite visualização. </p>
+                        <p> Toda interação não ficará salva, pois </p>
+                        <p> o servidor está congelado. </p>
+                    </div>}
                 </ul>
                 <div className={this.state.chapters} style = {{
                     alignItems: "baseline"}}>
