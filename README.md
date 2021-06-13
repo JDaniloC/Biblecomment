@@ -1,7 +1,9 @@
 # [Bible Comment](https://biblecomment.com.br)
 A web site to share comments about bible versicles.
 
-![index](.github/index.png)
+<p align="center">
+  <img alt="ADM" src=".github/index.png">
+</p>
 
 ## Motivation
 I usually make notes in the bible in order to remember important aspects for understanding the text. With free time due to the pandemic of 2020, starting a comment in another bible and wanting to use the weekend hours in a useful way, the biblecomment was born, with the objective of sharing interpretations of the bible and answering difficult verses in an accessible and intuitive way.

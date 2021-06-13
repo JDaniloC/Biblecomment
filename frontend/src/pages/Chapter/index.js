@@ -395,7 +395,7 @@ export default class Chapter extends Component{
     
                 <div className={this.state.newbox}>
                     <NewComment 
-                        title = "Novo comentário"
+                        title = "Criar comentário"
                         post = {true}
                         on_title = {this.titleComponent.current}
                         abbrev = {this.abbrev}

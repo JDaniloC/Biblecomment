@@ -6,6 +6,8 @@
   outline: 0;
   box-sizing: border-box;
   list-style: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -50,7 +52,9 @@ div.content {
 
 .text-area {
   margin-top: 8px;
-  width: 90%;
+  width: 100%;
+  padding: 0 15px;
+  border-radius: 0 0 4px 4px;
 }
 
 /* box center */
@@ -75,9 +79,7 @@ div.content {
   height: 100%;
   top: 0;
   left: 0;
-  background: #000;
-  opacity: 0.5;
-  filter: alpha(opacity(0.5));
+  background: rgba(244, 244, 244, 0.8);
 }
 
 textarea {
@@ -95,13 +97,17 @@ textarea {
 }
 
 .top {
-  width: 90%;
+  width: 100%;
   display: flex;
   justify-content: space-between;
+  padding-bottom: 1em;
+  border-bottom: solid 0.1px #DDD;
 }
 
 .top h2 {
   margin-left: 5%;
+  width: 100%;
+  text-align: center;
 }
 
 .top button {

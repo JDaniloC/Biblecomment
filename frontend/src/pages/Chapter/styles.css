@@ -12,6 +12,12 @@ div.main {
     margin-bottom: 80px;
 }
 
+button.entry:disabled {
+    background: #EEE;
+    color: #BBB;
+    cursor: not-allowed;
+}
+
 button.entry {
     width: 45%;
     height: 40px;
