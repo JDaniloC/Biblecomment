@@ -1,6 +1,6 @@
 // Update with your config settings.
 
-const path = require('path');
+const path = require('path')
 
 module.exports = {
 
@@ -12,19 +12,19 @@ module.exports = {
     migrations: {
       directory: './src/database/migrations'
     },
-    useNullAsDefault: true,
+    useNullAsDefault: true
   },
 
   staging: {
     client: 'mysql',
     connection: {
-      host:     'us-cdbr-east-02.cleardb.com',
-      user:     'bde99ff0a59a01',
+      host: 'us-cdbr-east-02.cleardb.com',
+      user: 'bde99ff0a59a01',
       password: '73dd8ca3',
       database: 'heroku_8f188315a862a15'
     },
     migrations: {
-      directory:"./src/database/migrations/"
+      directory: './src/database/migrations/'
     }
   },
 
@@ -32,7 +32,7 @@ module.exports = {
     client: 'mysql',
     connection: process.env.JAWSDB_URL,
     migrations: {
-      directory:"./src/database/migrations/"
+      directory: './src/database/migrations/'
     }
   }
-};
+}
