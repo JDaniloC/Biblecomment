@@ -1,21 +1,13 @@
-const express = require('express');
+const express = require("express");
 
-const BookController = require(
-    './controllers/BookController');
-const UserController = require(
-    './controllers/UserController');
-const SessionController = require(
-    './controllers/SessionController');
-const ChapterController = require(
-    './controllers/ChapterController');
-const CommentController = require(
-    './controllers/CommentController');
-const DiscussionController = require(
-    './controllers/DiscussionController');
-const InfoController = require(
-    './controllers/InfoController');
-const BackupController = require(
-    './controllers/BackupController');
+const BookController = require("./controllers/BookController");
+const UserController = require("./controllers/UserController");
+const SessionController = require("./controllers/SessionController");
+const ChapterController = require("./controllers/ChapterController");
+const CommentController = require("./controllers/CommentController");
+const DiscussionController = require("./controllers/DiscussionController");
+const InfoController = require("./controllers/InfoController");
+const BackupController = require("./controllers/BackupController");
 
 const routes = express.Router();
 
@@ -41,12 +33,15 @@ routes.get("/books/:abbrev/chapters/:number", ChapterController.show);
 routes.post("/books/:abbrev/chapters/:number", ChapterController.store);
 routes.patch("/books/:abbrev/chapters/:number", ChapterController.update);
 
-routes.get("/books/:abbrev/chapters/:number/comments", 
-    CommentController.index);
-routes.get("/books/:abbrev/chapters/:number/comments/:verse", 
-    CommentController.show);
-routes.post("/books/:abbrev/chapters/:number/comments/:verse", 
-    CommentController.store);
+routes.get("/books/:abbrev/chapters/:number/comments", CommentController.index);
+routes.get(
+  "/books/:abbrev/chapters/:number/comments/:verse",
+  CommentController.show
+);
+routes.post(
+  "/books/:abbrev/chapters/:number/comments/:verse",
+  CommentController.store
+);
 routes.patch("/comments/:id", CommentController.update);
 routes.delete("/comments/:id", CommentController.destroy);
 
