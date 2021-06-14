@@ -1,5 +1,5 @@
 {
-  "name": "Biblecomment backend",
+  "name": "backend",
   "version": "1.5.0",
   "description": "REST of database of comments and users from bible comment",
   "main": "index.js",
