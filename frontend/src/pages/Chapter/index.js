@@ -375,7 +375,7 @@ export default class Chapter extends Component {
                     <p
                       style={{ display: 'inline' }}
                       onClick={(evt) =>
-                            this.handlecomments(evt, index)}
+                        this.handlecomments(evt, index)}
                     >
                       {verse}
                     </p>

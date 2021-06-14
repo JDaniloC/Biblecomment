@@ -214,7 +214,7 @@ export default class Control extends Component {
                         style={{ backgroundColor: '#FF4030' }}
                         onClick={() => this.deleteAccount(user.email)}
                       >
-                                  Deletar
+                        Deletar
                       </button>
                     </div>
                   </div>
@@ -255,11 +255,11 @@ export default class Control extends Component {
                       ? <ul style={{ width: '100%' }}>
                         <h4> Denúncias </h4>
                         {comment.reports.map(report => (
-                                <li key={report.msg}>
-                                    <h5> {report.user} </h5>
-                                    <p> {report.msg} </p>
-                                  </li>
-                              ))}
+                          <li key={report.msg}>
+                            <h5> {report.user} </h5>
+                            <p> {report.msg} </p>
+                          </li>
+                        ))}
                         </ul> : <></>}
 
                     <div className='config-buttons'>
@@ -267,7 +267,7 @@ export default class Control extends Component {
                         style={{ backgroundColor: '#FF4030' }}
                         onClick={() => this.deleteComment(comment.id)}
                       >
-                                  Deletar
+                        Deletar
                       </button>
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export default class Control extends Component {
                         style={{ backgroundColor: '#FF4030' }}
                         onClick={() => this.deleteDiscussion(discussion.id)}
                       >
-                                  Deletar
+                        Deletar
                       </button>
                     </div>
                   </div>

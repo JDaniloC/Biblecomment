@@ -309,45 +309,45 @@ export default class Discussion extends Component {
                       htmlFor={chat.id}
                     >
                       <p className='label-title'>
-                            {chat.verse_reference} - {chat.question}
-                          </p>
+                        {chat.verse_reference} - {chat.question}
+                      </p>
                     </label>
                     <input type='checkbox' id={chat.id} />
                     <div>
                       <div className='question-header'>
-                            <div className='reference'>
-                                {chat.verse_reference}
-                              </div>
-                            <p className='question-verse'>
-                                {chat.verse_text}
-                              </p>
-                          </div>
+                        <div className='reference'>
+                          {chat.verse_reference}
+                        </div>
+                        <p className='question-verse'>
+                          {chat.verse_text}
+                        </p>
+                      </div>
 
                       <details className='comment'>
-                            <summary>
-                                Comentário mencionado
-                                    </summary>
-                            <p>
-                                {chat.comment_text}
-                              </p>
-                          </details>
+                        <summary>
+                          Comentário mencionado
+                        </summary>
+                        <p>
+                          {chat.comment_text}
+                        </p>
+                      </details>
 
                       <hr />
                       <h4 style={{ fontSize: 'large' }}>
-                            {chat.username}
-                          </h4>
+                        {chat.username}
+                      </h4>
                       <MDEditor.Markdown source={chat.question} />
                       <hr />
 
                       <button
-                            onClick={() => {
-                                this.openAnswers(
-                                  chat.id, chat.answers)
-                              }}
-                            className='answer-btn'
-                          >
-                                    Responder
-                          </button>
+                        onClick={() => {
+                          this.openAnswers(
+                            chat.id, chat.answers)
+                        }}
+                        className='answer-btn'
+                      >
+                        Responder
+                      </button>
                     </div>
                   </li>
                   ))

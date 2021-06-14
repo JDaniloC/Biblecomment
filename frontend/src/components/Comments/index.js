@@ -69,7 +69,7 @@ class Comments extends Component {
                     </button>
                     <button
                       onClick={() =>
-                            this.props.goToDiscussion(commentary)}
+                        this.props.goToDiscussion(commentary)}
                     >
                       <img src={this.props.imageFunction('chat')} alt='chat' />
                     </button>
