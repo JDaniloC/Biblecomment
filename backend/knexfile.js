@@ -1,7 +1,3 @@
-// Update with your config settings.
-
-const path = require("path");
-
 module.exports = {
   development: {
     client: "sqlite3",

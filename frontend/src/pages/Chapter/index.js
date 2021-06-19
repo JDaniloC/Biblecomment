@@ -284,9 +284,9 @@ export default class Chapter extends Component {
   }
 
   handleLike(identificador) {
-    function searchLike(array) {
+    function searchLike(comments) {
       let commentFound = false;
-      array.forEach(function (part, index, array) {
+      comments.forEach(function (part, index, array) {
         if (array[index].id === identificador) {
           const likes = JSON.parse(array[index].likes);
           if (!("+1" in likes)) {
@@ -306,7 +306,7 @@ export default class Chapter extends Component {
             token,
             likes: true,
           })
-          .then((response) => {
+          .then(() => {
             this.handleNotification("Adicionado aos favoritos", "success");
             const found = searchLike(this.state.comments);
             if (!found) {
@@ -412,7 +412,7 @@ export default class Chapter extends Component {
         <div className={this.state.newbox}>
           <NewComment
             title="Criar comentário"
-            post={true}
+            post
             on_title={this.titleComponent.current}
             abbrev={this.abbrev}
             number={this.number}
@@ -422,7 +422,7 @@ export default class Chapter extends Component {
           />
         </div>
 
-        <div className="overlay" style={{ display: this.state.blur }}></div>
+        <div className="overlay" style={{ display: this.state.blur }}/>
 
         <Snackbar
           open={this.state.aviso}

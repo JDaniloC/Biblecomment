@@ -26,7 +26,7 @@ export default class Control extends Component {
 	}
 
 	async getUsers(page = 1) {
-		return await axios
+		return axios
 			.get("users", { params: { pages: page } })
 			.then((response) => {
 				const users = response.data;
@@ -46,7 +46,7 @@ export default class Control extends Component {
 	}
 
 	async getComments(page = 1) {
-		return await axios
+		return axios
 			.get("comments", { params: { pages: page } })
 			.then((response) => {
 				const comments = response.data;
@@ -73,7 +73,7 @@ export default class Control extends Component {
 	}
 
 	async getDiscussions(page = 1) {
-		return await axios
+		return axios
 			.get("discussions", { params: { pages: page } })
 			.then((response) => {
 				const discussions = response.data;
@@ -94,7 +94,7 @@ export default class Control extends Component {
 
 	componentDidMount() {
 		async function getUser(token) {
-			return await axios.get("session", {
+			return axios.get("session", {
 				headers: { token: token },
 			});
 		}
@@ -256,7 +256,6 @@ export default class Control extends Component {
 							</button>
 						)}
 						<Pagination
-							className="pagination"
 							showFirstButton
 							showLastButton
 							count={this.state.totalUpages}
@@ -326,9 +325,7 @@ export default class Control extends Component {
 														)
 													)}
 												</ul>
-											) : (
-												<></>
-											)}
+											) : <></>}
 
 											<div className="config-buttons">
 												<button
@@ -358,7 +355,6 @@ export default class Control extends Component {
 							</button>
 						)}
 						<Pagination
-							className="pagination"
 							showFirstButton
 							showLastButton
 							count={this.state.totalCpages}
@@ -429,7 +425,6 @@ export default class Control extends Component {
 							</button>
 						)}
 						<Pagination
-							className="pagination"
 							showFirstButton
 							showLastButton
 							count={this.state.totalDpages}

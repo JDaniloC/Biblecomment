@@ -1,5 +1,5 @@
 import axios from "../services/api";
-import React, { createContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { isAuthenticated, TOKEN_KEY } from "../services/auth";
 
 export const ProfileContext = createContext({});
@@ -26,60 +26,29 @@ export function ProfileProvider({ children }) {
   const [currentFPage, setCurrentFPage] = useState(1);
   const [currentCPage, setCurrentCPage] = useState(1);
 
-  const getFavoritesRef = useRef(getFavorites);
-  const getCommentsRef = useRef(getComments);
-
-  useEffect(() => {
-    async function getUserInfos(token) {
-      return await axios.get("session", {
-        headers: { token: token },
-      });
-    }
-
-    if (isAuthenticated()) {
-      const token = localStorage.getItem(TOKEN_KEY);
-      getUserInfos(token).then((response) => {
-        let hasError = response.data.error;
-        if (!hasError) {
-          loadUserInfos(response);
-        }
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    async function getUserHistory() {
-      await getFavoritesRef.current.bind(this)(name);
-      await getCommentsRef.current.bind(this)(name);
-    }
-    if (name !== "") {
-      getUserHistory();
-    }
-  }, [name]);
-
-  function loadUserInfos(response) {
+  async function loadUserInfos(response) {
     const data = response.data;
 
-    const { email, name } = data;
-    const commentsCount = data.total_comments;
-    const commented = JSON.parse(data.chapters_commented);
-    const booksCount = Object.keys(commented).length;
-    const belief = data.belief !== null ? data.belief : "";
-    const stateName = data.state !== null ? data.state : "";
+    const { email: currentEmail, name: currentName } = data;
+    const currentCommentsCount = data.total_comments;
+    const currentCommented = JSON.parse(data.chapters_commented);
+    const currentBooksCount = Object.keys(currentCommented).length;
+    const currentBelief = data.belief !== null ? data.belief : "";
+    const currentStateName = data.state !== null ? data.state : "";
 
-    let chaptersCount = 0;
-    for (var book in commented) {
-      chaptersCount += commented[book].length;
+    let currentChaptersCount = 0;
+    for (var book in currentCommented) {
+      currentChaptersCount += currentCommented[book].length;
     }
 
-    setEmail(email);
-    setName(name);
-    setCommented(commented);
-    setChaptersCount(chaptersCount);
-    setCommentsCount(commentsCount);
-    setBooksCount(booksCount);
-    setBelief(belief);
-    setStateName(stateName);
+    setName(currentName);
+    setEmail(currentEmail);
+    setCommented(currentCommented);
+    setChaptersCount(currentChaptersCount);
+    setCommentsCount(currentCommentsCount);
+    setBooksCount(currentBooksCount);
+    setStateName(currentStateName);
+    setBelief(currentBelief);
 
     setPerfilClass(""); // Shows the profile component
     setFormClass("invisible"); // Shows the profile component
@@ -93,14 +62,14 @@ export function ProfileProvider({ children }) {
     setTotalCPages(length);
   }
 
-  async function getComments(name) {
+  async function getComments() {
     let page = currentCPage;
     setTotalCPages(-1);
 
     try {
       await axios
         .get("users/comments", {
-          headers: { name: name },
+          headers: { name },
           params: { pages: Math.ceil((page * 5) / 50) },
         })
         .then((response) => {
@@ -125,14 +94,14 @@ export function ProfileProvider({ children }) {
     }
   }
 
-  async function getFavorites(name) {
+  async function getFavorites() {
     let page = currentFPage;
     setTotalFPages(-1);
 
     try {
       await axios
         .get("users/favorites", {
-          headers: { name: name },
+          headers: { name },
           params: { pages: Math.ceil((page * 5) / 50) },
         })
         .then((response) => {
@@ -156,6 +125,33 @@ export function ProfileProvider({ children }) {
       // this.handleNotification("Problema no servidor", "error")
     }
   }
+
+  useEffect(() => {
+    async function getUserInfos(token) {
+      await axios.get("session", {
+        headers: { token: token },
+      }).then(response => {
+        let hasError = response.data.error;
+        if (!hasError) {
+          loadUserInfos(response);
+        }
+      });
+    }
+
+    if (isAuthenticated()) {
+      const token = localStorage.getItem(TOKEN_KEY);
+      getUserInfos(token);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function getUserHistory() {
+      await getFavorites();
+      await getComments();
+    }
+    getUserHistory()
+    // eslint-disable-next-line
+  }, [name])
 
   return (
     <ProfileContext.Provider

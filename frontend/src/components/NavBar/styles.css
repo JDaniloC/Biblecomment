@@ -33,4 +33,5 @@ section.visible {
 
   transition: opacity 1s;
   margin-bottom: 10px;
+  border-radius: 8px;
 }

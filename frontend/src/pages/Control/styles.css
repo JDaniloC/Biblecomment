@@ -24,6 +24,11 @@ main.control div.control-container > ul {
   margin: 2em 1em;
 }
 
+main.control div.control-container > ul > nav {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
 main.control div.control-container ul ul {
   background-color: #fff;
   padding: 1em;

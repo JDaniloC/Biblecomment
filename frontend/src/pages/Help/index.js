@@ -31,24 +31,21 @@ export default class Help extends Component {
 					<div>
 						<h2> O que é o Bible Comment? </h2>
 						<p>
-							{" "}
 							Um projeto desenvolvido com intuito de ser um meio
 							de ensino e propagação do livro sagrado cristão,
 							através do <b>compartilhamento</b> de comentários e
-							interpretações do mesmo.{" "}
+							interpretações do mesmo.
 						</p>
 						<p>
-							{" "}
 							"[...] Deus nosso Salvador, o qual deseja que todos
 							os homens sejam salvos e cheguem ao pleno
-							conhecimento da verdade." 1 Timóteo 2:3-4{" "}
+							conhecimento da verdade." 1 Timóteo 2:3-4
 						</p>
 						<h2> Como posso participar? </h2>
 						<p>
-							{" "}
-							Assim como o projeto{" "}
+							Assim como o projeto
 							<a href="https://reavivadosporsuapalavra.org/">
-								{" "}
+								
 								reavivados por sua palavra
 							</a>
 							, o projeto incentiva a <b>leitura da bíblia</b>, um
@@ -57,32 +54,30 @@ export default class Help extends Component {
 							vezes será percebido detalhes interessantes para a
 							compreensão do texto bíblico ou lições edificantes
 							para a vida. São esse tipo de comentário ou relato
-							pessoal que é interessante compartilhar.{" "}
+							pessoal que é interessante compartilhar.
 						</p>
 					</div>
 					<div>
 						<h2> Eu não gosto de ler no site </h2>
 						<p>
-							{" "}
 							E nem terá a necessidade, o site serve apenas para a
 							alocação dos comentários e tópicos levantados pela
-							comunidade. A leitura deve ser feita na sua{" "}
-							<b>bíblia pessoal</b>, independente da versão, de
+							comunidade. A leitura deve ser feita na sua
+							<b> bíblia pessoal</b>, independente da versão, de
 							forma que os versos aqui encontrados sirvam apenas
-							para a procura ou consulta.{" "}
+							para a procura ou consulta.
 						</p>
 						<h2> Como posso ajudar? </h2>
 						<p>
-							{" "}
 							Divulgando o projeto para amigos e familiares, para
 							que mais pessoas sejam edificadas. Encontrando e
 							relatando <b>problemas</b>, oferecendo sugestões ou
-							contribuindo diretamente no{" "}
+							contribuindo diretamente no
 							<a href="https://github.com/JDaniloC/Biblecomment">
 								código do projeto
 							</a>
 							, ainda assim mais importante do que tudo isso é
-							você mesmo participar do projeto.{" "}
+							você mesmo participar do projeto.
 						</p>
 					</div>
 				</section>
@@ -90,37 +85,31 @@ export default class Help extends Component {
 					<div>
 						<h2> Por que preciso me cadastrar? </h2>
 						<p>
-							{" "}
 							Para o controle de possíveis usuários indesejados e
 							a identificação na criação dos comentários e
-							tópicos. Mas o conteúdo é{" "}
-							<b>disponível para visualização</b> independente da
-							criação de uma conta.{" "}
+							tópicos. Mas o conteúdo é <b> disponível para 
+							visualização</b> independente da
+							criação de uma conta.
 						</p>
 						<h2> Como se cadastrar </h2>
 						<p>
-							{" "}
 							<b>Vá para a página inicial</b>, clique no botão
 							verde para cadastro, preencha com o seu melhor
 							e-mail, nome de usuário e uma senha. Por fim clique
-							novamente no botão verde.{" "}
+							novamente no botão verde.
 						</p>
 						<h2> Irei receber notificações ou e-mails? </h2>
 						<p>
-							{" "}
-							Não, você entra quando quiser, <b>
-								não receberá
-							</b>{" "}
+							Não, você entra quando quiser, <b>não receberá </b>
 							nenhum e-mail nem notificação, o e-mail será apenas
 							necessário como uma forma de identificação ao entrar
-							na conta.{" "}
+							na conta.
 						</p>
 						<h2> É possível deletar a conta? </h2>
 						<p>
-							{" "}
 							Sim, você é livre para <b>deletar sua conta</b>,
 							assim como é possível deletar quaisquer comentários
-							feitos na plataforma.{" "}
+							feitos na plataforma.
 						</p>
 					</div>
 					<div style={{ width: "100%", minWidth: "300px" }}>
@@ -167,25 +156,22 @@ export default class Help extends Component {
 					<div>
 						<h2> Quais informações são armazenadas? </h2>
 						<p>
-							{" "}
 							O número de capítulos comentados, os comentários
-							favoritados e opiniões na aba de discussões. A sua{" "}
-							<b>crença atual e o seu Estado</b> podem ser
-							armazenados nas configurações da conta.{" "}
+							favoritados e opiniões na aba de discussões. A sua
+							<b> crença atual e o seu Estado</b> podem ser
+							armazenados nas configurações da conta.
 						</p>
 						<h2> Há mais de um local para comentar? </h2>
 						<p>
-							{" "}
 							Sim, além dos comentários de cada verso, é possível
 							comentar ao clicar no <b>título</b> do capítulo, no
-							qual representa comentários para todo o capítulo.{" "}
+							qual representa comentários para todo o capítulo.
 						</p>
 						<h2> Eu preciso comentar? </h2>
 						<p>
-							{" "}
 							Não, você pode criar uma conta com o único intuito
 							de <b>participar</b> dos tópicos ou interagir
-							favoritando comentários.{" "}
+							favoritando comentários.
 						</p>
 					</div>
 					<div>
@@ -289,10 +275,9 @@ export default class Help extends Component {
 									Mostrando o perigo de tentar enquadrar os
 									ensinos bíblicos em sistemas humanos.
 								</p>
-								<span>
+								<span className="comment-buttons">
 									<p>
-										{" "}
-										Favoritado por <b>10</b> pessoas{" "}
+										Favoritado por <b>10</b> pessoas
 									</p>
 									<button>
 										<img src={heart} alt="like" />
@@ -310,26 +295,23 @@ export default class Help extends Component {
 					<div>
 						<h2> O que significa o coração? </h2>
 						<p>
-							{" "}
 							Ele favorita o comentário para que ao logar na conta
 							possa vê-lo diretamente na aba de comentários
-							favoritados em vez de precisar procurar.{" "}
+							favoritados em vez de precisar procurar.
 						</p>
 						<h2> Para que serve o botão de chat? </h2>
 						<p>
-							{" "}
 							Caso houver alguma discordância em relação a alguma
 							comentário, então o botão cria um novo tópico para
 							que através da orientação do Espírito Santo possamos
-							entender a verdadeira interpretação.{" "}
+							entender a verdadeira interpretação.
 						</p>
 						<h2> Quando devo reportar um comentário? </h2>
 						<p>
-							{" "}
-							Quando o comentário tem o único objetivo de{" "}
-							<b>ofender</b>, esteja totalmente desconexo com a
+							Quando o comentário tem o único objetivo de
+							<b> ofender</b>, esteja totalmente desconexo com a
 							realidade do capítulo ou seja apenas interjeições
-							como "amém"{" "}
+							como "amém"
 						</p>
 					</div>
 				</section>

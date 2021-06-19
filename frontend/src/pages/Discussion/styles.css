@@ -3,6 +3,11 @@ div.main > ul > p.placeholder {
   margin-top: 1em;
 }
 
+div.main > nav  {
+  display: flex;
+  justify-content: center;
+}
+
 div.main ul.discussion-list {
   display: flex;
   flex-wrap: wrap;

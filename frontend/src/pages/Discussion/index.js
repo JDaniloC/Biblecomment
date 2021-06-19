@@ -386,7 +386,6 @@ export default class Discussion extends Component {
 							)}
 						</ul>
 						<Pagination
-							className="pagination"
 							showFirstButton
 							showLastButton
 							count={this.state.totalPages}
@@ -476,7 +475,7 @@ export default class Discussion extends Component {
 					{this.props.location.state !== undefined ? (
 						<div className={this.state.newPostClass}>
 							<div className="top">
-								<h1 style={{ alignSelf: "center" }}>
+								<h1 style={{ marginLeft: "1em" }}>
 									Postar novo ponto
 								</h1>
 								<button onClick={() => this.closeNewPost()}>
@@ -530,14 +529,14 @@ export default class Discussion extends Component {
 								width: "100%",
 								height: "100%",
 							}}
-						></div>
+						/>
 					)}
 				</div>
 
 				<div
 					className="overlay"
 					style={{ display: this.state.blur }}
-				></div>
+				/>
 
 				<Snackbar
 					open={this.state.aviso}

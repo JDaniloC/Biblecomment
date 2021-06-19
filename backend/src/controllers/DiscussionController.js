@@ -123,15 +123,15 @@ module.exports = {
         return response.json({ error: "Discussion not found" });
       }
 
-      aux = JSON.parse(discussion.answers);
-      aux.push({
+      const prevAnswers = JSON.parse(discussion.answers);
+      prevAnswers.push({
         name: user.name,
         text: text,
       });
-      answers = JSON.stringify(aux);
+      const answers = JSON.stringify(prevAnswers);
 
       await connection("discussions").where("id", id).first().update({
-        answers: answers,
+        answers,
       });
 
       return response.json({

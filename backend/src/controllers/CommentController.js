@@ -114,7 +114,7 @@ module.exports = {
         text,
         on_title,
         tags,
-        verse: parseInt(verse),
+        verse: parseInt(verse, 10),
         reports: JSON.stringify([]),
         likes: JSON.stringify([]),
         book_reference: `${book_abbrev} ${number}:${verse}`,

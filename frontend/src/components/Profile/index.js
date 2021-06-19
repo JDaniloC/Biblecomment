@@ -232,7 +232,7 @@ export default class Profile extends Component {
                 ) : (
                   <button
                     className="load-btn"
-                    onClick={() => this.context.getComments(this.context.name)}
+                    onClick={() => this.context.getComments()}
                   >
                     Carregar
                   </button>
@@ -283,7 +283,7 @@ export default class Profile extends Component {
                 ) : (
                   <button
                     className="load-btn"
-                    onClick={() => this.context.getFavorites(this.context.name)}
+                    onClick={() => this.context.getFavorites()}
                   >
                     Carregar
                   </button>
