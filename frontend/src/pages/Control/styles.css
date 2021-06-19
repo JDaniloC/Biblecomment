@@ -1,59 +1,64 @@
 main.control {
-  font-size: larger;
-  line-height: 1.5em;
-  text-align: center;
+	font-size: larger;
+	line-height: 1.5em;
+	text-align: center;
 }
 
 main.control hr {
-  width: -webkit-fill-available;
+	width: -webkit-fill-available;
 }
 
 main.control .control-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 70vw;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	max-width: 70vw;
 }
 
 main.control div.control-container > ul {
-  background-color: #fff;
-  padding: 1em;
-  flex: 1 1 30%;
-  max-width: max(48%, 400px);
-  border-radius: 4px;
-  margin: 2em 1em;
+	background-color: #fff;
+	padding: 1em;
+	flex: 1 1 30%;
+	max-width: max(48%, 400px);
+	border-radius: 4px;
+	margin: 2em 1em;
 }
 
+main.control div.control-container > ul > nav {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+}
 main.control div.control-container ul ul {
-  background-color: #fff;
-  padding: 1em;
-  flex: 1 1 30%;
-  border-radius: 4px;
-  margin: 1em 1em;
+	background-color: #fff;
+	padding: 1em;
+	flex: 1 1 30%;
+	border-radius: 4px;
+	margin: 1em 1em;
 }
 
 main.control li .user-comment p {
-  white-space: break-spaces;
-  text-align: left;
+	white-space: break-spaces;
+	text-align: left;
 }
 
 main.control ul li label > p {
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 main.control .config-buttons {
-  display: flex;
-  width: 100%;
+	display: flex;
+	width: 100%;
 }
 
 main.control .config-buttons button {
-  flex: 1;
-  height: 4em;
-  font-weight: bolder;
-  color: white;
-  border: none;
-  cursor: pointer;
+	flex: 1;
+	height: 4em;
+	font-weight: bolder;
+	color: white;
+	border: none;
+	cursor: pointer;
 }

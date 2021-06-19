@@ -1,91 +1,96 @@
 div.main > ul > p.placeholder {
-  font-size: 2em;
-  margin-top: 1em;
+	font-size: 2em;
+	margin-top: 1em;
+}
+
+div.main > nav {
+	display: flex;
+	justify-content: center;
 }
 
 div.main ul.discussion-list {
-  display: flex;
-  flex-wrap: wrap;
-  overflow: auto;
-  max-width: 100vw;
-  flex-direction: column;
+	display: flex;
+	flex-wrap: wrap;
+	overflow: auto;
+	max-width: 100vw;
+	flex-direction: column;
 }
 
 ul.discussion-list li.question {
-  flex-grow: 1;
-  padding: 10px;
-  text-align: center;
-  border: 0.1px solid rgba(0, 0, 0, 0.2);
-  margin: 0.5em 0;
-  overflow: auto;
-  width: 100%;
+	flex-grow: 1;
+	padding: 10px;
+	text-align: center;
+	border: 0.1px solid rgba(0, 0, 0, 0.2);
+	margin: 0.5em 0;
+	overflow: auto;
+	width: 100%;
 }
 
 button.answer-btn {
-  margin-top: 10px;
-  border-radius: 6px;
-  border: none;
-  width: 10em;
-  font-size: large;
-  background-color: #1e5;
-  font-weight: bolder;
-  color: white;
-  height: 50px;
-  cursor: pointer;
+	margin-top: 10px;
+	border-radius: 6px;
+	border: none;
+	width: 10em;
+	font-size: large;
+	background-color: #1e5;
+	font-weight: bolder;
+	color: white;
+	height: 50px;
+	cursor: pointer;
 }
 
 div.question-header {
-  display: flex;
-  font-size: larger;
-  margin-bottom: 2em;
+	display: flex;
+	font-size: larger;
+	margin-bottom: 2em;
 }
 
 div.question-header div.reference {
-  padding: 10px;
-  background-color: slategrey;
-  color: white;
-  border-radius: 8px;
-  font-size: x-large;
-  margin: 3px 10px 3px 0px;
-  display: flex;
-  align-items: center;
+	padding: 10px;
+	background-color: slategrey;
+	color: white;
+	border-radius: 8px;
+	font-size: x-large;
+	margin: 3px 10px 3px 0px;
+	display: flex;
+	align-items: center;
 }
 
 div.question-header p.question-verse {
-  text-align: initial;
+	text-align: initial;
 }
 details.comment summary {
-  font-size: initial;
-  text-align: initial;
+	font-size: initial;
+	text-align: initial;
 }
 
 details.comment p {
-  text-align: initial;
-  font-size: large;
-  margin-bottom: 0.5em;
-  white-space: break-spaces;
+	text-align: initial;
+	font-size: large;
+	margin-bottom: 0.5em;
+	white-space: break-spaces;
 }
 
 ul.answer-list {
-  width: 100%;
-  max-height: 60vh;
-  overflow-y: scroll;
-  margin: 0.5em 0;
+	width: 100%;
+	max-height: 60vh;
+	overflow-y: scroll;
+	margin: 0.5em 0;
 }
 
 ul.answer-list li {
-  background-color: aliceblue;
-  padding: 20px;
-  margin: 20px 0;
+	background-color: aliceblue;
+	padding: 20px;
+	margin: 20px 0;
 }
 
 .reply-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
 }
 
 .reply-area textarea {
-  resize: none;
+	resize: none;
 }
