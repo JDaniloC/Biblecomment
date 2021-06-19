@@ -38,7 +38,7 @@ export default class Help extends Component {
                         <h2> Eu não gosto de ler no site </h2>
                         <p> E nem terá a necessidade, o site serve apenas para a alocação dos comentários e tópicos levantados pela comunidade. A leitura deve ser feita na sua <b>bíblia pessoal</b>, independente da versão, de forma que os versos aqui encontrados sirvam apenas para a procura ou consulta. </p>
                         <h2> Como posso ajudar? </h2>
-                        <p> Divulgando o projeto para amigos e familiares, para que mais pessoas sejam edificadas. Encontrando e relatando <b>problemas</b>, oferecendo sugestões ou contribuindo diretamente no <a href="https://github.com/JDaniloC/Individual-Community-Bible">código do projeto</a>, ainda assim mais importante do que tudo isso é você mesmo participar do projeto. </p>
+                        <p> Divulgando o projeto para amigos e familiares, para que mais pessoas sejam edificadas. Encontrando e relatando <b>problemas</b>, oferecendo sugestões ou contribuindo diretamente no <a href="https://github.com/JDaniloC/Biblecomment">código do projeto</a>, ainda assim mais importante do que tudo isso é você mesmo participar do projeto. </p>
                     </div>
                 </section>
                 <section id="what-account">
@@ -48,7 +48,7 @@ export default class Help extends Component {
                         <h2> Como se cadastrar </h2>
                         <p> <b>Vá para a página inicial</b>, clique no botão verde para cadastro, preencha com o seu melhor e-mail, nome de usuário e uma senha. Por fim clique novamente no botão verde. </p>
                         <h2> Irei receber notificações ou e-mails? </h2>
-                        <p> Não, você entra quando quiser, <b>não receberá</b> nenhum e-mail nem noticação, o e-mail será apenas necessário como uma forma de identificação ao entrar na conta. </p>
+                        <p> Não, você entra quando quiser, <b>não receberá</b> nenhum e-mail nem notificação, o e-mail será apenas necessário como uma forma de identificação ao entrar na conta. </p>
                         <h2> É possível deletar a conta? </h2>
                         <p> Sim, você é livre para <b>deletar sua conta</b>, assim como é possível deletar quaisquer comentários feitos na plataforma. </p>
                     </div>
@@ -75,7 +75,7 @@ export default class Help extends Component {
                 <section id = "what-comment">
                     <div>
                         <h2> Quais informações são armazenadas? </h2>
-                        <p> O número de capítulos comentados, comentários selecionados serão armazenaos automaticamente. A sua <b>crença atual e o seu Estado</b> podem ser armazenados nas configurações da conta. </p>
+                        <p> O número de capítulos comentados, os comentários favoritados e opiniões na aba de discussões. A sua <b>crença atual e o seu Estado</b> podem ser armazenados nas configurações da conta. </p>
                         <h2> Há mais de um local para comentar? </h2>
                         <p> Sim, além dos comentários de cada verso, é possível comentar ao clicar no <b>título</b> do capítulo, no qual representa comentários para todo o capítulo. </p>
                         <h2> Eu preciso comentar? </h2>
