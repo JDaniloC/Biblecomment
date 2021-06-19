@@ -1,29 +1,29 @@
 .title-comments li {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 .title-comments li p {
-    padding-left: 5px;
+  padding-left: 5px;
 }
 
 .title-comments li h3 {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
-label[for=toggle] {
-    font-size: x-large;
-    font-weight: bold;
+label[for="toggle"] {
+  font-size: x-large;
+  font-weight: bold;
 }
 
 label {
-    cursor: pointer;
+  cursor: pointer;
 }
 
-input[type=checkbox] {
-    display: none;
+input[type="checkbox"] {
+  display: none;
 }
 
 label img:hover {
-    background-color: #dadada;   
+  background-color: #dadada;
 }

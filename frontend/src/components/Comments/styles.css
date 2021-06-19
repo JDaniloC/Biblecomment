@@ -1,47 +1,47 @@
 .side {
-    position: fixed;
-    display: flex;
+  position: fixed;
+  display: flex;
 
-    background-color: white;
-    border-radius: 0 8px 8px;
-    padding: 20px;
-    margin: 0 20px;
-    flex-direction: column;
-    align-items: center;
+  background-color: white;
+  border-radius: 0 8px 8px;
+  padding: 20px;
+  margin: 0 20px;
+  flex-direction: column;
+  align-items: center;
 
-    width: 350px;
-    height: 77%;
+  width: 350px;
+  height: 77%;
 }
 
 .user-comment {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 span.comment-buttons {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 span.comment-buttons button {
-    margin-left: 10px;
-    border: none;
-    cursor: pointer;
-    background: none;
+  margin-left: 10px;
+  border: none;
+  cursor: pointer;
+  background: none;
 }
 
 span.comment-buttons button:active {
-    transform: scale(1.5);
+  transform: scale(1.5);
 }
 
 span.comment-buttons img {
-    width: 20px;
+  width: 20px;
 }
 
 h3 sub {
-    display: flex;
-    flex: 1;
-    align-items: flex-end;
-    justify-content: flex-end;
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: flex-end;
 }

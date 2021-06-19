@@ -1,21 +1,21 @@
 .loading {
-    display: flex;
-    width: 100%;
-    justify-content: center;    
+  display: flex;
+  width: 100%;
+  justify-content: center;
 }
 
 span.help-popup {
-    position: fixed;
-    top: 2em;
-    right: 2em;
-    background-color: #F5CB00;;
-    color: white;
-    max-width: 8em;
-    padding: 2em;
-    font-size: 15px;
-    text-align: center;
-    font-weight: bold;
-    border-radius: 4em 0 4em 4em;
-    z-index: 2;
-    cursor: pointer;
+  position: fixed;
+  top: 2em;
+  right: 2em;
+  background-color: #f5cb00;
+  color: white;
+  max-width: 8em;
+  padding: 2em;
+  font-size: 15px;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 4em 0 4em 4em;
+  z-index: 2;
+  cursor: pointer;
 }
