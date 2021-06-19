@@ -12,7 +12,7 @@ module.exports = {
   async store(request, response) {
     const { title, abbrev, length } = request.body;
 
-    if ((title == null) | (abbrev == null) | (length == null)) {
+    if ((title === null) | (abbrev === null) | (length === null)) {
       return response.json({
         error: "insufficient body: title, abbrev, length",
       });
@@ -37,7 +37,7 @@ module.exports = {
   async show(request, response) {
     const { abbrev } = request.params;
 
-    if (abbrev != null) {
+    if (abbrev !== null) {
       const book = await connection("books")
         .where("abbrev", abbrev)
         .select("abbrev", "title", "length")

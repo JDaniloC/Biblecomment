@@ -6,7 +6,7 @@ module.exports = {
   async register(request, response) {
     const { email, name, password } = request.body;
 
-    if ((email == null) | (name == null) | (password == null)) {
+    if ((email === null) | (name === null) | (password === null)) {
       return response.json({
         error: "Faltando os campos: email, name, password",
       });
@@ -61,7 +61,7 @@ module.exports = {
   async show(request, response) {
     const { token } = request.headers;
 
-    if (token == null) {
+    if (token === null) {
       return response.json({
         error: "Faltando o campo: token",
       });

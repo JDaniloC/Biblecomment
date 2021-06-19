@@ -268,7 +268,7 @@ export default class Discussion extends Component {
   }
 
   closeAviso(evt, reason) {
-    if (evt != null) {
+    if (evt !== null) {
       evt.preventDefault();
     }
 
