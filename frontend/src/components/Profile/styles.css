@@ -1,106 +1,106 @@
 .login-container > section > ul > li {
-    width: 100%;
-    margin: 7px 0;
-    font-size: larger;
+  width: 100%;
+  margin: 7px 0;
+  font-size: larger;
 }
 
 .login-container > section > ul > ul {
-    border: .1px solid rgba(0,0,0,.2);
-    padding: 10px;
-    margin: 7px 0;
+  border: 0.1px solid rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  margin: 7px 0;
 }
 
 .login-container > section > h2 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-} 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
 
 .login-container > section > h2 button {
-    display: flex;
-    background-color: white;
-    border: none;
-    cursor: pointer;
+  display: flex;
+  background-color: white;
+  border: none;
+  cursor: pointer;
 }
 
 .login-container > section > h2 button img {
-    width: 30px;
+  width: 30px;
 }
 
 .login-container > section p {
-    font-size: small;
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  font-size: small;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .login-container > section div.user-comment {
-    white-space: break-spaces;
+  white-space: break-spaces;
 }
 .login-container > section div.user-comment p {
-    justify-content: space-evenly;
-    width: 100%;
-    display: flex;
-    cursor: default;
+  justify-content: space-evenly;
+  width: 100%;
+  display: flex;
+  cursor: default;
 }
 
 .pagination {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
 }
 
 div.user-comment {
-    align-items: center;
+  align-items: center;
 }
 
 div.user-comment > p b {
-    font-size: 1rem;
+  font-size: 1rem;
 }
 
 div.user-comment > p img {
-    width: 1rem;
-    margin: 0 4px;
+  width: 1rem;
+  margin: 0 4px;
 }
 
 div.user-comment > p button {
-    border: none;
-    background: none;
-    cursor: pointer;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 div.user-comment > p button:active {
-    transform: scale(1.5);
+  transform: scale(1.5);
 }
 
 .user-config {
-    width: 100%;
-    margin-top: 1em;
-    font-size: 1rem;
-    flex-direction: column;
+  width: 100%;
+  margin-top: 1em;
+  font-size: 1rem;
+  flex-direction: column;
 }
 
 .user-config .dropdown-menu {
-    display: flex;
-    margin-bottom: 0.5em;
+  display: flex;
+  margin-bottom: 0.5em;
 }
 
 .user-config .dropdown-menu label {
-    margin-right: 10px;
+  margin-right: 10px;
 }
 
 .user-config .config-buttons {
-    display: flex;
-    width: 100%;
+  display: flex;
+  width: 100%;
 }
 
 .user-config .config-buttons button {
-    flex: 1;
-    height: 4em;
-    font-weight: bolder;
-    color: white;
-    border: none;
-    cursor: pointer;
+  flex: 1;
+  height: 4em;
+  font-weight: bolder;
+  color: white;
+  border: none;
+  cursor: pointer;
 }

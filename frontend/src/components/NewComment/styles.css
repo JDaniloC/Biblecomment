@@ -1,32 +1,33 @@
 .pop-up {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 700px;
-    padding: 15px 0;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 12px 28px 0 rgb(0 0 0 / 20%), 0 2px 4px 0 rgb(0 0 0 / 10%), inset 0 0 0 1px rgb(255 255 255 / 50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 700px;
+  padding: 15px 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px 0 rgb(0 0 0 / 20%), 0 2px 4px 0 rgb(0 0 0 / 10%),
+    inset 0 0 0 1px rgb(255 255 255 / 50%);
 }
 
 .textarea-top {
-    background-color: #f0f0f0;
-    border-radius: 4px 4px 0px 0px;
+  background-color: #f0f0f0;
+  border-radius: 4px 4px 0px 0px;
 }
 
-input#devocional:checked + img, 
-input#devocionaly:checked + img{
-    background-color: pink;
+input#devocional:checked + img,
+input#devocionaly:checked + img {
+  background-color: pink;
 }
 input#exegese:checked + img,
-input#exegesey:checked + img{
-    background-color: yellow;
+input#exegesey:checked + img {
+  background-color: yellow;
 }
 input#inspirado:checked + img,
-input#inspiradoy:checked + img{
-    background-color: cyan;
+input#inspiradoy:checked + img {
+  background-color: cyan;
 }
 input#pessoal:checked + img,
-input#pessoaly:checked + img{
-    background-color: chartreuse;
+input#pessoaly:checked + img {
+  background-color: chartreuse;
 }
