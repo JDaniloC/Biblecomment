@@ -278,10 +278,9 @@ export default class Help extends Component {
 									2 - "criou", não apenas teve um início, mas
 									veio a existir não pelo acaso divino ou
 									evolucionista, mas por meio de uma criação
-									planejada. <br />
-									3 - "Deus", em contrapartida ao panteísmo
-									essa criação se deu por um único Deus.{" "}
-									<br />
+									planejada. <br />3 - "Deus", em
+									contrapartida ao panteísmo essa criação se
+									deu por um único Deus. <br />
 									Por fim, contrário ao deísmo, esse Deus se
 									importa com suas criaturas. <br />
 									Ou seja, vai de contrário ao ateísmo,
