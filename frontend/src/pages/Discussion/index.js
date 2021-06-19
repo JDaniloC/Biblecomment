@@ -46,33 +46,26 @@ export default class Discussion extends Component {
 		}
 
 		try {
-			axios
-				.get(`/discussion/${abbrev}/?pages=${page}`)
-				.then((response) => {
-					if (typeof response.data === "object") {
-						if (response.data.length > 0) {
-							for (let i = 0; i < response.data.length; i++) {
-								response.data[i].answers = JSON.parse(
-									response.data[i].answers
-								);
-							}
-							this.setState((prev) => ({
-								discussions: [
-									...prev.discussions,
-									...response.data,
-								],
-							}));
+			axios.get(`/discussion/${abbrev}/?pages=${page}`).then((response) => {
+				if (typeof response.data === "object") {
+					if (response.data.length > 0) {
+						for (let i = 0; i < response.data.length; i++) {
+							response.data[i].answers = JSON.parse(response.data[i].answers);
 						}
-
-						if (response.data.length < 5) {
-							this.setState((prev) => ({
-								totalPages: prev.totalPages - 1,
-							}));
-						}
-					} else {
-						this.handleNotification("Algo deu errado", "warning");
+						this.setState((prev) => ({
+							discussions: [...prev.discussions, ...response.data],
+						}));
 					}
-				});
+
+					if (response.data.length < 5) {
+						this.setState((prev) => ({
+							totalPages: prev.totalPages - 1,
+						}));
+					}
+				} else {
+					this.handleNotification("Algo deu errado", "warning");
+				}
+			});
 		} catch (err) {
 			this.handleNotification(err, "error");
 		}
@@ -103,27 +96,20 @@ export default class Discussion extends Component {
 
 		if (this.props.location.state !== undefined) {
 			try {
-				axios
-					.get(`/discussion/${abbrev}/${search_by}`)
-					.then((response) => {
-						if (response.data.length > 0) {
-							this.closeNewPost();
-							if (!this.searchDiscussionId(search_by)) {
-								const discussion = response.data[0];
-								discussion.id = -discussion.id;
-								discussion.answers = JSON.parse(
-									discussion.answers
-								);
+				axios.get(`/discussion/${abbrev}/${search_by}`).then((response) => {
+					if (response.data.length > 0) {
+						this.closeNewPost();
+						if (!this.searchDiscussionId(search_by)) {
+							const discussion = response.data[0];
+							discussion.id = -discussion.id;
+							discussion.answers = JSON.parse(discussion.answers);
 
-								this.setState((prev) => ({
-									discussions: [
-										discussion,
-										...prev.discussions,
-									],
-								}));
-							}
+							this.setState((prev) => ({
+								discussions: [discussion, ...prev.discussions],
+							}));
 						}
-					});
+					}
+				});
 			} catch (err) {
 				this.handleNotification(err, "error");
 			}
@@ -191,25 +177,16 @@ export default class Discussion extends Component {
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (
-							typeof response.data === "object" &&
-							response.data.question
-						) {
+						if (typeof response.data === "object" && response.data.question) {
 							response.data.answers = [];
 
 							this.setState((prev) => ({
-								discussions: [
-									response.data,
-									...prev.discussions,
-								],
+								discussions: [response.data, ...prev.discussions],
 								text: "",
 							}));
 							this.handleNotification("Postado!", "success");
 						} else {
-							this.handleNotification(
-								"Algo deu errado",
-								"warning"
-							);
+							this.handleNotification("Algo deu errado", "warning");
 						}
 					});
 			} catch (err) {
@@ -230,10 +207,7 @@ export default class Discussion extends Component {
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (
-							typeof response.data === "object" &&
-							response.data.answers
-						) {
+						if (typeof response.data === "object" && response.data.answers) {
 							const answers = JSON.parse(response.data.answers);
 							let chats = this.state.discussions;
 
@@ -248,15 +222,9 @@ export default class Discussion extends Component {
 								text: "",
 							});
 
-							this.handleNotification(
-								"Resposta enviada",
-								"success"
-							);
+							this.handleNotification("Resposta enviada", "success");
 						} else {
-							this.handleNotification(
-								"Algo deu errado",
-								"warning"
-							);
+							this.handleNotification("Algo deu errado", "warning");
 						}
 					});
 			} catch (err) {
@@ -319,55 +287,36 @@ export default class Discussion extends Component {
 						<NavBar />
 					</div>
 					<div className="main">
-						<h1 style={{ textAlign: "center" }}>
-							{this.state.title}
-						</h1>
+						<h1 style={{ textAlign: "center" }}>{this.state.title}</h1>
 						<ul className="discussion-list">
 							{this.state.discussions.length > 0 ? (
 								this.calculatePagination().map((chat) => (
 									<li key={chat.id} className="question">
-										<label
-											style={{ display: "flex" }}
-											htmlFor={chat.id}
-										>
+										<label style={{ display: "flex" }} htmlFor={chat.id}>
 											<p className="label-title">
-												{chat.verse_reference} -{" "}
-												{chat.question}
+												{chat.verse_reference} - {chat.question}
 											</p>
 										</label>
 										<input type="checkbox" id={chat.id} />
 										<div>
 											<div className="question-header">
-												<div className="reference">
-													{chat.verse_reference}
-												</div>
-												<p className="question-verse">
-													{chat.verse_text}
-												</p>
+												<div className="reference">{chat.verse_reference}</div>
+												<p className="question-verse">{chat.verse_text}</p>
 											</div>
 
 											<details className="comment">
-												<summary>
-													Comentário mencionado
-												</summary>
+												<summary>Comentário mencionado</summary>
 												<p>{chat.comment_text}</p>
 											</details>
 
 											<hr />
-											<h4 style={{ fontSize: "large" }}>
-												{chat.username}
-											</h4>
-											<MDEditor.Markdown
-												source={chat.question}
-											/>
+											<h4 style={{ fontSize: "large" }}>{chat.username}</h4>
+											<MDEditor.Markdown source={chat.question} />
 											<hr />
 
 											<button
 												onClick={() => {
-													this.openAnswers(
-														chat.id,
-														chat.answers
-													);
+													this.openAnswers(chat.id, chat.answers);
 												}}
 												className="answer-btn"
 											>
@@ -378,10 +327,8 @@ export default class Discussion extends Component {
 								))
 							) : (
 								<p className="placeholder">
-									Nada a ser examinado (João 5:39) neste
-									capítulo. <br />
-									"Vinde, pois, e arrazoemos, diz o Senhor."
-									Is 1:18
+									Nada a ser examinado (João 5:39) neste capítulo. <br />
+									"Vinde, pois, e arrazoemos, diz o Senhor." Is 1:18
 								</p>
 							)}
 						</ul>
@@ -418,12 +365,8 @@ export default class Discussion extends Component {
 							{this.state.answers.length > 0 ? (
 								this.state.answers.map((answer, index) => (
 									<li key={(index - 1) * -1}>
-										<h3 style={{ color: "#111" }}>
-											{answer.name}
-										</h3>
-										<MDEditor.Markdown
-											source={answer.text}
-										/>
+										<h3 style={{ color: "#111" }}>{answer.name}</h3>
+										<MDEditor.Markdown source={answer.text} />
 									</li>
 								))
 							) : (
@@ -475,9 +418,7 @@ export default class Discussion extends Component {
 					{this.props.location.state !== undefined ? (
 						<div className={this.state.newPostClass}>
 							<div className="top">
-								<h1 style={{ marginLeft: "1em" }}>
-									Postar novo ponto
-								</h1>
+								<h1 style={{ marginLeft: "1em" }}>Postar novo ponto</h1>
 								<button onClick={() => this.closeNewPost()}>
 									<img src={close} alt="Fechar" />
 								</button>
@@ -506,9 +447,7 @@ export default class Discussion extends Component {
 											this.handleChange(evt);
 										}}
 									/>
-									<MDEditor.Markdown
-										value={this.state.text}
-									/>
+									<MDEditor.Markdown value={this.state.text} />
 								</div>
 								<button
 									className="answer-btn"
@@ -533,10 +472,7 @@ export default class Discussion extends Component {
 					)}
 				</div>
 
-				<div
-					className="overlay"
-					style={{ display: this.state.blur }}
-				/>
+				<div className="overlay" style={{ display: this.state.blur }} />
 
 				<Snackbar
 					open={this.state.aviso}

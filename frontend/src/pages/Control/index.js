@@ -26,23 +26,21 @@ export default class Control extends Component {
 	}
 
 	async getUsers(page = 1) {
-		return axios
-			.get("users", { params: { pages: page } })
-			.then((response) => {
-				const users = response.data;
-				this.setState({
-					users: [...this.state.users, ...users],
-				});
-				const length = Math.ceil(this.state.users.length / 5);
-				if (users.length === 5) {
-					this.setState({ totalUpages: length + 1 });
-				} else {
-					this.setState({
-						currentUPage: page - 1,
-						totalUpages: length,
-					});
-				}
+		return axios.get("users", { params: { pages: page } }).then((response) => {
+			const users = response.data;
+			this.setState({
+				users: [...this.state.users, ...users],
 			});
+			const length = Math.ceil(this.state.users.length / 5);
+			if (users.length === 5) {
+				this.setState({ totalUpages: length + 1 });
+			} else {
+				this.setState({
+					currentUPage: page - 1,
+					totalUpages: length,
+				});
+			}
+		});
 	}
 
 	async getComments(page = 1) {
@@ -119,9 +117,7 @@ export default class Control extends Component {
 			.then((response) => {
 				if (response.data.error === undefined) {
 					this.setState({
-						users: this.state.users.filter(
-							(user) => user.email !== email
-						),
+						users: this.state.users.filter((user) => user.email !== email),
 					});
 				}
 			});
@@ -209,10 +205,7 @@ export default class Control extends Component {
 						{this.calculatePagination("users").length > 0 ? (
 							this.calculatePagination("users").map((user) => (
 								<li key={user.email}>
-									<label
-										style={{ display: "flex" }}
-										htmlFor={user.email}
-									>
+									<label style={{ display: "flex" }} htmlFor={user.email}>
 										<p> {user.email} </p>
 									</label>
 									<input type="checkbox" id={user.email} />
@@ -225,21 +218,13 @@ export default class Control extends Component {
 										<p> State: {user.state} </p>
 										<p> Belief: {user.belief} </p>
 										<p> Since: {user.created_at} </p>
-										<p>
-											{" "}
-											Total Comments:{" "}
-											{user.total_comments}{" "}
-										</p>
+										<p> Total Comments: {user.total_comments} </p>
 										<div className="config-buttons">
 											<button
 												style={{
 													backgroundColor: "#FF4030",
 												}}
-												onClick={() =>
-													this.deleteAccount(
-														user.email
-													)
-												}
+												onClick={() => this.deleteAccount(user.email)}
 											>
 												Deletar
 											</button>
@@ -270,82 +255,48 @@ export default class Control extends Component {
 					<ul>
 						<h3> Últimos comentários </h3>
 						{this.calculatePagination("comments").length > 0 ? (
-							this.calculatePagination("comments").map(
-								(comment) => (
-									<li key={comment.id}>
-										<label
-											style={{ display: "flex" }}
-											htmlFor={comment.text}
-										>
-											<p>
-												{" "}
-												{comment.book_reference}{" "}
-												{comment.text}{" "}
-											</p>
-										</label>
-										<input
-											type="checkbox"
-											id={comment.text}
-										/>
-										<div className="user-comment">
-											<p> Por: {comment.username}</p>
-											<p> {comment.text} </p>
-											<p>
-												{" "}
-												Denúncias:{" "}
-												{comment.reports.length}
-											</p>
-											<p>
-												{" "}
-												Favoritos:{" "}
-												{comment.likes.length}
-											</p>
+							this.calculatePagination("comments").map((comment) => (
+								<li key={comment.id}>
+									<label style={{ display: "flex" }} htmlFor={comment.text}>
+										<p>
+											{" "}
+											{comment.book_reference} {comment.text}{" "}
+										</p>
+									</label>
+									<input type="checkbox" id={comment.text} />
+									<div className="user-comment">
+										<p> Por: {comment.username}</p>
+										<p> {comment.text} </p>
+										<p> Denúncias: {comment.reports.length}</p>
+										<p> Favoritos: {comment.likes.length}</p>
 
-											{comment.reports.length > 0 ? (
-												<ul style={{ width: "100%" }}>
-													<h4> Denúncias </h4>
-													{comment.reports.map(
-														(report) => (
-															<li
-																key={report.msg}
-															>
-																<h5>
-																	{" "}
-																	{
-																		report.user
-																	}{" "}
-																</h5>
-																<p>
-																	{" "}
-																	{
-																		report.msg
-																	}{" "}
-																</p>
-															</li>
-														)
-													)}
-												</ul>
-											) : <></>}
+										{comment.reports.length > 0 ? (
+											<ul style={{ width: "100%" }}>
+												<h4> Denúncias </h4>
+												{comment.reports.map((report) => (
+													<li key={report.msg}>
+														<h5> {report.user} </h5>
+														<p> {report.msg} </p>
+													</li>
+												))}
+											</ul>
+										) : (
+											<></>
+										)}
 
-											<div className="config-buttons">
-												<button
-													style={{
-														backgroundColor:
-															"#FF4030",
-													}}
-													onClick={() =>
-														this.deleteComment(
-															comment.id
-														)
-													}
-												>
-													Deletar
-												</button>
-											</div>
+										<div className="config-buttons">
+											<button
+												style={{
+													backgroundColor: "#FF4030",
+												}}
+												onClick={() => this.deleteComment(comment.id)}
+											>
+												Deletar
+											</button>
 										</div>
-									</li>
-								)
-							)
+									</div>
+								</li>
+							))
 						) : (
 							<button
 								className="load-btn"
@@ -369,57 +320,44 @@ export default class Control extends Component {
 					<ul>
 						<h3> Discussões </h3>
 						{this.calculatePagination("discussions").length > 0 ? (
-							this.calculatePagination("discussions").map(
-								(discussion) => (
-									<li key={discussion.id * -1}>
-										<label
-											style={{ display: "flex" }}
-											htmlFor={discussion.question}
-										>
-											<p>
-												{" "}
-												{discussion.book_abbrev}{" "}
-												{discussion.verse_reference} -
-												{discussion.question}{" "}
-											</p>
-										</label>
-										<input
-											type="checkbox"
-											id={discussion.question}
-										/>
-										<div className="user-comment">
-											<p> Por: {discussion.username}</p>
-											<p> {discussion.verse_text} </p>
-											<hr />
-											<p> {discussion.comment_text}</p>
-											<hr />
-											<p> {discussion.question} </p>
+							this.calculatePagination("discussions").map((discussion) => (
+								<li key={discussion.id * -1}>
+									<label
+										style={{ display: "flex" }}
+										htmlFor={discussion.question}
+									>
+										<p>
+											{" "}
+											{discussion.book_abbrev} {discussion.verse_reference} -
+											{discussion.question}{" "}
+										</p>
+									</label>
+									<input type="checkbox" id={discussion.question} />
+									<div className="user-comment">
+										<p> Por: {discussion.username}</p>
+										<p> {discussion.verse_text} </p>
+										<hr />
+										<p> {discussion.comment_text}</p>
+										<hr />
+										<p> {discussion.question} </p>
 
-											<div className="config-buttons">
-												<button
-													style={{
-														backgroundColor:
-															"#FF4030",
-													}}
-													onClick={() =>
-														this.deleteDiscussion(
-															discussion.id
-														)
-													}
-												>
-													Deletar
-												</button>
-											</div>
+										<div className="config-buttons">
+											<button
+												style={{
+													backgroundColor: "#FF4030",
+												}}
+												onClick={() => this.deleteDiscussion(discussion.id)}
+											>
+												Deletar
+											</button>
 										</div>
-									</li>
-								)
-							)
+									</div>
+								</li>
+							))
 						) : (
 							<button
 								className="load-btn"
-								onClick={() =>
-									this.loadPagination("discussion")
-								}
+								onClick={() => this.loadPagination("discussion")}
 							>
 								Carregar
 							</button>
