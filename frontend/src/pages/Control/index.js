@@ -117,7 +117,7 @@ export default class Control extends Component {
         data: { token: localStorage.getItem(TOKEN_KEY), email },
       })
       .then((response) => {
-        console.log(response.data);
+        
         if (response.data.error === undefined) {
           this.setState({
             users: this.state.users.filter((user) => user.email !== email),
