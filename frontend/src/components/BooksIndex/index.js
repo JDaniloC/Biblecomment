@@ -62,7 +62,7 @@ export default class BooksIndex extends Component {
   changePage(evt, chapter, number) {
     evt.preventDefault();
 
-    if (this.props.changeChapter !== undefined) {
+    if (typeof this.props.changeChapter !== "undefined") {
       this.props.changeChapter(chapter, number);
       this.closeChapters();
       this.props.closeBookComponent();

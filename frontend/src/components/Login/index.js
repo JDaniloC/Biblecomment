@@ -116,7 +116,7 @@ export default class Login extends Component {
         })
         .then((response) => {
           const token = response.data.token;
-          if (token !== undefined) {
+          if (typeof token !== "undefined") {
             this.context.loadUserInfos(response);
             this.handleNotification("Login realizado com sucesso!", "success");
             login(token);
@@ -139,7 +139,7 @@ export default class Login extends Component {
           password,
         })
         .then((response) => {
-          if (response.data.error === undefined) {
+          if (typeof response.data.error === "undefined") {
             this.changeMethod(null);
             this.handleNotification(
               "Cadastro realizado com sucesso!",
@@ -181,7 +181,7 @@ export default class Login extends Component {
           state,
         })
         .then((response) => {
-          if (response.data.error === undefined) {
+          if (typeof response.data.error === "undefined") {
             this.handleNotification("Conta atualizada com sucesso.", "success");
           } else {
             this.handleNotification(response.data.error, "warning");
@@ -199,7 +199,7 @@ export default class Login extends Component {
           data: { token: localStorage.getItem(TOKEN_KEY), email },
         })
         .then((response) => {
-          if (response.data.error === undefined) {
+          if (typeof response.data.error === "undefined") {
             this.handleNotification("Conta removida com sucesso.", "success");
             this.profileComponent.current.closeAccount();
           } else {

@@ -29,7 +29,7 @@ module.exports = {
     const { name } = request.headers;
     const { pages = 1 } = request.query;
 
-    if (name === undefined) {
+    if (typeof name === "undefined") {
       return response.json([]);
     }
     const comments = await connection("comments")
@@ -44,7 +44,7 @@ module.exports = {
     const { name } = request.headers;
     const { pages = 1 } = request.query;
 
-    if (name === undefined) {
+    if (typeof name === "undefined") {
       return response.json([]);
     }
 

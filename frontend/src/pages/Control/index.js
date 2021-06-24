@@ -115,7 +115,7 @@ export default class Control extends Component {
 				data: { token: localStorage.getItem(TOKEN_KEY), email },
 			})
 			.then((response) => {
-				if (response.data.error === undefined) {
+				if (typeof response.data.error === "undefined") {
 					this.setState({
 						users: this.state.users.filter((user) => user.email !== email),
 					});
@@ -129,7 +129,7 @@ export default class Control extends Component {
 				headers: { token: localStorage.getItem(TOKEN_KEY) },
 			})
 			.then((response) => {
-				if (response.data.error === undefined) {
+				if (typeof response.data.error === "undefined") {
 					this.setState({
 						comments: this.state.comments.filter(
 							(comment) => comment.id !== id
@@ -145,7 +145,7 @@ export default class Control extends Component {
 				data: { token: localStorage.getItem(TOKEN_KEY) },
 			})
 			.then((response) => {
-				if (response.data.error === undefined) {
+				if (typeof response.data.error === "undefined") {
 					this.setState({
 						discussions: this.state.discussions.filter(
 							(discussion) => discussion.id !== id

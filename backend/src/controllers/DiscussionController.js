@@ -47,7 +47,7 @@ module.exports = {
 
 		if (
 			[comment_id, token, verse_reference, verse_text, question].some(
-				(element) => element === undefined
+				(element) => typeof element === "undefined"
 			) ||
 			question === ""
 		) {
@@ -62,7 +62,7 @@ module.exports = {
 			.first()
 			.select("name");
 
-		if (user === undefined) {
+		if (typeof user === "undefined") {
 			return response.json({ error: "not authorized" });
 		}
 
@@ -103,7 +103,7 @@ module.exports = {
 		const { id } = request.params;
 		let { token, text } = request.body;
 
-		if (token === undefined || text === undefined) {
+		if (typeof token === "undefined" || typeof text === "undefined") {
 			return response.json({
 				error: "It's missing the token",
 			});
@@ -148,7 +148,7 @@ module.exports = {
 		const { id } = request.params;
 		const { token } = request.body;
 
-		if (token === undefined) {
+		if (typeof token === "undefined") {
 			return response.json({ msg: "insulficient body: token" });
 		}
 

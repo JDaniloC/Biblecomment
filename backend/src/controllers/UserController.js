@@ -23,7 +23,9 @@ module.exports = {
   async update(request, response) {
     const { token, belief, state } = request.body;
 
-    if (token === undefined || state === undefined || belief === undefined) {
+    if (typeof token === "undefined" || 
+        typeof state === "undefined" || 
+        typeof belief === "undefined") {
       return response.json({
         error: "It's missing the token, state or belief",
       });
@@ -40,8 +42,8 @@ module.exports = {
   async delete(request, response) {
     const { token, email } = request.body;
 
-    if (token === undefined || email === undefined) {
-      return response.json({ msg: "insulficient body: token or email" });
+    if (typeof token === "undefined" || typeof  email === "undefined") {
+      return response.json({ msg: "insufficient body: token or email" });
     }
 
     const user = await connection("users")

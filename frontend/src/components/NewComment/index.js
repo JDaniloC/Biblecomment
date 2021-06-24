@@ -29,7 +29,7 @@ export default class NewComment extends Component {
   }
 
   componentDidMount() {
-    if (this.props.text !== undefined) {
+    if (typeof this.props.text !== "undefined") {
       this.setState({ texto: this.props.text });
     }
   }
@@ -118,7 +118,7 @@ export default class NewComment extends Component {
 
   handleChange(event) {
     let value = "";
-    if (event.target.checked !== undefined) {
+    if (typeof event.target.checked !== "undefined") {
       value = event.target.checked;
     } else {
       value = event.target.value;

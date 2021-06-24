@@ -39,7 +39,7 @@ module.exports = {
 	async login(request, response) {
 		const { email, password } = request.body;
 
-		if ((email === undefined) | (password === undefined)) {
+		if ((typeof email === "undefined") | (typeof password === "undefined")) {
 			return response.json({
 				msg: "Faltando os campos: email, password",
 			});

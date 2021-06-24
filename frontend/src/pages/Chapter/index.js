@@ -72,7 +72,7 @@ export default class Chapter extends Component {
 
 		try {
 			axios.get(`books/${abbrev}/chapters/${number}`).then((response) => {
-				if (response.data.title !== undefined) {
+				if (typeof response.data.title !== "undefined") {
 					const { title, verses } = response.data;
 					this.setState({ titleName: title });
 					this.setState({ verses: JSON.parse(verses) });
