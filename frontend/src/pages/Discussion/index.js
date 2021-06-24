@@ -41,7 +41,7 @@ export default class Discussion extends Component {
 	}
 
 	loadDiscussions(page, abbrev = undefined) {
-		if (abbrev === undefined) {
+		if (typeof abbrev === "undefined") {
 			abbrev = this.state.abbrev;
 		}
 
@@ -75,12 +75,12 @@ export default class Discussion extends Component {
 		const abbrev = this.props.match.params.abbrev;
 		let search_by = -1;
 		let title = "";
-		if (this.props.location.state !== undefined) {
+		if (typeof this.props.location.state !== "undefined") {
 			search_by = this.props.location.state.comment.id;
 			title = this.props.location.state.title;
 		} else {
 			axios.get(`/books/${abbrev}/chapters/1`).then((response) => {
-				if (response.data.title !== undefined) {
+				if (typeof response.data.title !== "undefined") {
 					this.setState({
 						title: response.data.title,
 					});
@@ -94,7 +94,7 @@ export default class Discussion extends Component {
 		});
 		this.loadDiscussions(1, abbrev);
 
-		if (this.props.location.state !== undefined) {
+		if (typeof this.props.location.state !== "undefined") {
 			try {
 				axios.get(`/discussion/${abbrev}/${search_by}`).then((response) => {
 					if (response.data.length > 0) {
@@ -415,7 +415,7 @@ export default class Discussion extends Component {
 						</div>
 					</div>
 
-					{this.props.location.state !== undefined ? (
+					{typeof this.props.location.state !== "undefined" ? (
 						<div className={this.state.newPostClass}>
 							<div className="top">
 								<h1 style={{ marginLeft: "1em" }}>Postar novo ponto</h1>

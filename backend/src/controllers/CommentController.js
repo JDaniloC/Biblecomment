@@ -48,7 +48,7 @@ module.exports = {
 		const { abbrev, number, verse } = request.params;
 		const { token, text, tags, on_title } = request.body;
 
-		if (!token | !text | !tags | (on_title == undefined)) {
+		if (!token | !text | !tags | (typeof on_title == "undefined")) {
 			return response.json({
 				error: "insufficient body: token, text, tags, on_title",
 			});
@@ -129,7 +129,7 @@ module.exports = {
 		const { id } = request.params;
 		let { token, text, tags, likes, reports } = request.body;
 
-		if (token === undefined) {
+		if (typeof token === "undefined") {
 			return response.json({
 				error: "It's missing the token",
 			});
@@ -144,17 +144,17 @@ module.exports = {
 				return response.json({ error: "Comment not found" });
 			}
 
-			text = text !== undefined ? text : comment.text;
-			tags = tags !== undefined ? JSON.stringify(tags) : comment.tags;
+			text = typeof text !== "undefined" ? text : comment.text;
+			tags = typeof tags !== "undefined" ? JSON.stringify(tags) : comment.tags;
 			let aux;
-			if (likes !== undefined) {
+			if (typeof likes !== "undefined") {
 				aux = JSON.parse(comment.likes);
 				if (aux.indexOf(user[0].name) === -1) {
 					aux.push(user[0].name);
 				}
 				likes = JSON.stringify(aux);
 			}
-			if (reports !== undefined) {
+			if (typeof reports !== "undefined") {
 				aux = JSON.parse(comment.reports);
 				aux.push({
 					user: user[0].name,
@@ -185,7 +185,7 @@ module.exports = {
 		const { id } = request.params;
 		const { token } = request.headers;
 
-		if (token === undefined) {
+		if (typeof token === "undefined") {
 			return response
 				.status(400)
 				.json({ BadRequest: "It's missing the header token" });

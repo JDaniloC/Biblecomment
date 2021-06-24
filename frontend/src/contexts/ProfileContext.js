@@ -73,7 +73,7 @@ export function ProfileProvider({ children }) {
 					params: { pages: Math.ceil((page * 5) / 50) },
 				})
 				.then((response) => {
-					if (response.data.comments !== undefined) {
+					if (typeof response.data.comments !== "undefined") {
 						const comments = response.data.comments;
 						const newResult = [...commentaries, ...comments];
 						setCommentaries(newResult);
@@ -105,7 +105,7 @@ export function ProfileProvider({ children }) {
 					params: { pages: Math.ceil((page * 5) / 50) },
 				})
 				.then((response) => {
-					if (response.data.favorites !== undefined) {
+					if (typeof response.data.favorites !== "undefined") {
 						const newFavorites = response.data.favorites;
 						const newResult = [...favorites, ...newFavorites];
 						setFavorites(newResult);
