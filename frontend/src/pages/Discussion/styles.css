@@ -84,10 +84,17 @@ ul.answer-list li {
 	margin: 20px 0;
 }
 
+p.verse-text {
+	padding: 5px 20px 0;
+	white-space: break-spaces;
+	margin: 1em;
+}
+
 .reply-area {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	padding: 0 1em;
 	width: 100%;
 }
 

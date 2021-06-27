@@ -45,21 +45,25 @@ export default class Chapter extends Component {
 			severidade: "",
 		};
 
-		// to parent acess children's state
+		// to parent access children's state
 		this.titleComponent = createRef();
 		this.commentsComponent = createRef();
 
 		// to use the state of parent in the children
-		this.goToDiscussion = this.goToDiscussion.bind(this);
-		this.loadChapter = this.loadChapter.bind(this);
-		this.handleNewComment = this.handleNewComment.bind(this);
-		this.closeComments = this.closeComments.bind(this);
-		this.closeNewCommentary = this.closeNewCommentary.bind(this);
 		this.getVerse = this.getVerse.bind(this);
-		this.handleNotification = this.handleNotification.bind(this);
-		this.handleCommentNotification = this.handleCommentNotification.bind(this);
+		this.loadChapter = this.loadChapter.bind(this);
+		this.goToDiscussion = this.goToDiscussion.bind(this);
+		this.handleNewComment = this.handleNewComment.bind(this);
+
 		this.handleLike = this.handleLike.bind(this);
 		this.handleReport = this.handleReport.bind(this);
+
+		this.handleNotification = this.handleNotification.bind(this);
+		this.handleCommentNotification = this.handleCommentNotification.bind(this);
+
+		this.closeAviso = this.closeAviso.bind(this);
+		this.closeComments = this.closeComments.bind(this);
+		this.closeNewCommentary = this.closeNewCommentary.bind(this);
 	}
 
 	getVerse() {
@@ -127,7 +131,7 @@ export default class Chapter extends Component {
 		this.loadChapter(abbrev, number);
 	}
 
-	handlecomments(evt, verse) {
+	handleComments(evt, verse) {
 		evt.preventDefault();
 		const linha = evt.target;
 
@@ -254,14 +258,13 @@ export default class Chapter extends Component {
 	}
 
 	renderAmount(index) {
-		let amount;
-		if (index === false) {
-			amount = this.state.titleComments.length;
-		} else {
-			amount = this.state.allComments.filter(
-				(comment) => comment.verse === index + 1
-			).length;
-		}
+		let amount =
+			index === false
+				? this.state.titleComments.length
+				: this.state.allComments.filter(
+						(comment) => comment.verse === index + 1
+				  ).length;
+
 		if (amount === 0) {
 			return;
 		}
@@ -353,6 +356,10 @@ export default class Chapter extends Component {
 		});
 	}
 
+	closeAviso() {
+		this.setState({ aviso: false });
+	}
+
 	render() {
 		return (
 			<>
@@ -383,7 +390,7 @@ export default class Chapter extends Component {
 										<sup> {index + 1} </sup>
 										<p
 											style={{ display: "inline" }}
-											onClick={(evt) => this.handlecomments(evt, index)}
+											onClick={(evt) => this.handleComments(evt, index)}
 										>
 											{verse}
 										</p>
@@ -427,16 +434,9 @@ export default class Chapter extends Component {
 				<Snackbar
 					open={this.state.aviso}
 					autoHideDuration={2000}
-					onClose={() => {
-						this.setState({ aviso: false });
-					}}
+					onClose={this.closeAviso}
 				>
-					<Alert
-						onClose={() => {
-							this.setState({ aviso: false });
-						}}
-						severity={this.state.severidade}
-					>
+					<Alert onClose={this.closeAviso} severity={this.state.severidade}>
 						{this.state.mensagem}
 					</Alert>
 				</Snackbar>

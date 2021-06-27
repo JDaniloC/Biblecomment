@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, createRef } from "react";
 import NavBar from "../../components/NavBar";
 import axios from "../../services/api";
 import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
@@ -38,6 +38,15 @@ export default class Discussion extends Component {
 			severidade: "success",
 			mensagem: "",
 		};
+
+		this.textArea = createRef();
+
+		this.closeAviso = this.closeAviso.bind(this);
+		this.closeNewPost = this.closeNewPost.bind(this);
+		this.closeAnswers = this.closeAnswers.bind(this);
+		this.changeText = this.changeText.bind(this);
+		this.postNewAnswer = this.postNewAnswer.bind(this);
+		this.postNewQuestion = this.postNewQuestion.bind(this);
 	}
 
 	loadDiscussions(page, abbrev = undefined) {
@@ -149,12 +158,7 @@ export default class Discussion extends Component {
 		this.closeAnswers();
 	}
 
-	handleChange(value) {
-		if (value.length < 200 || value.length > 1000) {
-			this.textArea.style.borderColor = "red";
-		} else {
-			this.textArea.style.borderColor = "aquamarine";
-		}
+	changeText(value) {
 		this.setState({ text: value });
 	}
 
@@ -235,9 +239,7 @@ export default class Discussion extends Component {
 		}
 	}
 
-	handlePaginate(evt, page) {
-		evt.preventDefault();
-
+	handlePaginate(_, page) {
 		this.setState({
 			currentPage: page,
 		});
@@ -267,15 +269,7 @@ export default class Discussion extends Component {
 		});
 	}
 
-	closeAviso(evt, reason) {
-		if (evt !== null) {
-			evt.preventDefault();
-		}
-
-		if (reason === "clickaway") {
-			return;
-		}
-
+	closeAviso() {
 		this.setState({ aviso: false });
 	}
 
@@ -339,9 +333,7 @@ export default class Discussion extends Component {
 							size="small"
 							page={this.state.currentPage}
 							shape="rounded"
-							onChange={(evt, page) => {
-								this.handlePaginate(evt, page);
-							}}
+							onChange={this.handlePaginate}
 						/>
 					</div>
 				</main>
@@ -355,8 +347,8 @@ export default class Discussion extends Component {
 						}}
 					>
 						<div className="top">
-							<h1 style={{ alignSelf: "center" }}> Respostas </h1>
-							<button onClick={() => this.closeAnswers()}>
+							<h1 style={{ marginLeft: "1em" }}> Respostas </h1>
+							<button onClick={this.closeAnswers}>
 								<img src={close} alt="Fechar" />
 							</button>
 						</div>
@@ -385,9 +377,7 @@ export default class Discussion extends Component {
 							>
 								<MDEditor
 									value={this.state.text}
-									onChange={(evt) => {
-										this.handleChange(evt);
-									}}
+									onChange={this.changeText}
 									commands={[
 										commands.bold,
 										commands.italic,
@@ -404,12 +394,7 @@ export default class Discussion extends Component {
 								/>
 								<MDEditor.Markdown value={this.state.text} />
 							</div>
-							<button
-								className="answer-btn"
-								onClick={() => {
-									this.postNewAnswer();
-								}}
-							>
+							<button className="answer-btn" onClick={this.postNewAnswer}>
 								Responder
 							</button>
 						</div>
@@ -419,23 +404,18 @@ export default class Discussion extends Component {
 						<div className={this.state.newPostClass}>
 							<div className="top">
 								<h1 style={{ marginLeft: "1em" }}>Postar novo ponto</h1>
-								<button onClick={() => this.closeNewPost()}>
+								<button onClick={this.closeNewPost}>
 									<img src={close} alt="Fechar" />
 								</button>
 							</div>
 
-							<p
-								style={{
-									padding: "5px 20px 0",
-									whiteSpace: "break-spaces",
-								}}
-							>
+							<p className="verse-text">
 								{this.props.location.state.comment.text}
 							</p>
 
 							<div className="reply-area">
 								<div
-									ref={(ref) => (this.textArea = ref)}
+									ref={this.textArea}
 									style={{
 										border: "1px solid #dcdce6",
 										width: "100%",
@@ -443,27 +423,18 @@ export default class Discussion extends Component {
 								>
 									<MDEditor
 										value={this.state.text}
-										onChange={(evt) => {
-											this.handleChange(evt);
-										}}
+										onChange={this.changeText}
 									/>
 									<MDEditor.Markdown value={this.state.text} />
 								</div>
-								<button
-									className="answer-btn"
-									onClick={() => {
-										this.postNewQuestion();
-									}}
-								>
+								<button className="answer-btn" onClick={this.postNewQuestion}>
 									Postar
 								</button>
 							</div>
 						</div>
 					) : (
 						<div
-							onClick={() => {
-								this.closeNewPost();
-							}}
+							onClick={this.closeNewPost}
 							style={{
 								width: "100%",
 								height: "100%",
@@ -477,16 +448,9 @@ export default class Discussion extends Component {
 				<Snackbar
 					open={this.state.aviso}
 					autoHideDuration={2000}
-					onClose={(evt, reason) => {
-						this.closeAviso(evt, reason);
-					}}
+					onClose={this.closeAviso}
 				>
-					<Alert
-						onClose={(evt, reason) => {
-							this.closeAviso(evt, reason);
-						}}
-						severity={this.state.severidade}
-					>
+					<Alert onClose={this.closeAviso} severity={this.state.severidade}>
 						{this.state.mensagem}
 					</Alert>
 				</Snackbar>

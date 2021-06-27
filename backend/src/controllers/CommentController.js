@@ -35,20 +35,20 @@ module.exports = {
 			.andWhere("verse", verse)
 			.select("*");
 
-		if (comments) {
-			return response.json(comments);
-		} else {
-			return response.json({
-				error: "chapter number doesn't exists",
-			});
-		}
+		return response.json(
+			comments
+				? comments
+				: {
+						error: "chapter number doesn't exists",
+				  }
+		);
 	},
 
 	async store(request, response) {
 		const { abbrev, number, verse } = request.params;
 		const { token, text, tags, on_title } = request.body;
 
-		if (!token | !text | !tags | (typeof on_title == "undefined")) {
+		if (!token | !text | !tags | (typeof on_title === "undefined")) {
 			return response.json({
 				error: "insufficient body: token, text, tags, on_title",
 			});
