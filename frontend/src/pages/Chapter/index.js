@@ -258,11 +258,12 @@ export default class Chapter extends Component {
 	}
 
 	renderAmount(index) {
-		let amount = index === false ? 
-			this.state.titleComments.length : 
-			this.state.allComments.filter(
-				(comment) => comment.verse === index + 1
-			).length;
+		let amount =
+			index === false
+				? this.state.titleComments.length
+				: this.state.allComments.filter(
+						(comment) => comment.verse === index + 1
+				  ).length;
 
 		if (amount === 0) {
 			return;

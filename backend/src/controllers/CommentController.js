@@ -35,9 +35,13 @@ module.exports = {
 			.andWhere("verse", verse)
 			.select("*");
 
-		return response.json(comments ? comments : {
-			error: "chapter number doesn't exists",
-		});
+		return response.json(
+			comments
+				? comments
+				: {
+						error: "chapter number doesn't exists",
+				  }
+		);
 	},
 
 	async store(request, response) {

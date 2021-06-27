@@ -50,8 +50,9 @@ module.exports = {
 			.first();
 
 		if (user) {
-			return response.json(user.password === md5(password) ? 
-				user : { error: "Senha incorreta" })
+			return response.json(
+				user.password === md5(password) ? user : { error: "Senha incorreta" }
+			);
 		} else {
 			return response.json({ error: "E-mail não cadastrado" });
 		}
@@ -68,6 +69,6 @@ module.exports = {
 
 		const user = await connection("users").where("token", token).first();
 
-		return response.json(user ? user : { error: "Usuário não cadastrado."});
+		return response.json(user ? user : { error: "Usuário não cadastrado." });
 	},
 };

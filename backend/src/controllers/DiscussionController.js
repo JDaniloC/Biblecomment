@@ -164,10 +164,10 @@ module.exports = {
 		}
 
 		if ((discussion.username === user.name) | user.moderator) {
-			const deletedDiscussion = await connection("discussions").
-				where("id", id).
-				first().
-				delete()
+			const deletedDiscussion = await connection("discussions")
+				.where("id", id)
+				.first()
+				.delete();
 
 			return response.json(deletedDiscussion);
 		} else {
