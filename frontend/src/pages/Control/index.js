@@ -15,14 +15,18 @@ export default class Control extends Component {
 			users: [],
 			discussions: [],
 
-			totalUpages: 0,
-			totalCpages: 0,
-			totalDpages: 0,
-
-			currentUPage: 1,
-			currentCPage: 1,
-			currentDPage: 1,
+			usersLength: 0,
+			commentsLength: 0,
+			
+			commentsPage: 1,
+			usersPage: 1,
+			discussionLength: 0,
+			discussionsPage: 1,
 		};
+
+		this.changeUsersPage = this.changeUsersPage.bind(this);
+		this.changeCommentPage = this.changeCommentPage.bind(this);
+		this.changeDiscussionsPage = this.changeDiscussionsPage.bind(this);
 	}
 
 	async getUsers(page = 1) {
@@ -33,11 +37,11 @@ export default class Control extends Component {
 			});
 			const length = Math.ceil(this.state.users.length / 5);
 			if (users.length === 5) {
-				this.setState({ totalUpages: length + 1 });
+				this.setState({ usersLength: length + 1 });
 			} else {
 				this.setState({
-					currentUPage: page - 1,
-					totalUpages: length,
+					usersLength: length,
+					usersPage: page - 1,
 				});
 			}
 		});
@@ -60,11 +64,11 @@ export default class Control extends Component {
 				});
 				const length = Math.ceil(this.state.comments.length / 5);
 				if (comments.length === 5) {
-					this.setState({ totalCpages: length + 1 });
+					this.setState({ commentsLength: length + 1 });
 				} else {
 					this.setState({
-						currentCPage: page - 1,
-						totalCpages: length,
+						commentsPage: page - 1,
+						commentsLength: length,
 					});
 				}
 			});
@@ -80,11 +84,11 @@ export default class Control extends Component {
 				});
 				const length = Math.ceil(this.state.discussions.length / 5);
 				if (discussions.length === 5) {
-					this.setState({ totalDpages: length + 1 });
+					this.setState({ discussionLength: length + 1 });
 				} else {
 					this.setState({
-						currentDPage: this.state.currentDPage - 1,
-						totalDpages: length,
+						discussionsPage: this.state.discussionsPage - 1,
+						discussionLength: length,
 					});
 				}
 			});
@@ -159,13 +163,13 @@ export default class Control extends Component {
 		let page = 0;
 		let array = [];
 		if (type === "users") {
-			page = this.state.currentUPage;
+			page = this.state.usersPage;
 			array = this.state.users;
 		} else if (type === "comments") {
-			page = this.state.currentCPage;
+			page = this.state.commentsPage;
 			array = this.state.comments;
 		} else {
-			page = this.state.currentDPage;
+			page = this.state.discussionsPage;
 			array = this.state.discussions;
 		}
 		var inicio = (page - 1) * 5;
@@ -176,23 +180,16 @@ export default class Control extends Component {
 
 	loadPagination(type) {
 		if (type === "users") {
-			this.getUsers(this.state.currentUPage);
+			this.getUsers(this.state.usersPage);
 		} else if (type === "comments") {
-			this.getComments(this.state.currentCPage);
+			this.getComments(this.state.commentsPage);
 		} else {
-			this.getDiscussions(this.state.currentDPage);
+			this.getDiscussions(this.state.discussionsPage);
 		}
 	}
-
-	handleUPaginate(page) {
-		this.setState({ currentUPage: page });
-	}
-	handleCPaginate(page) {
-		this.setState({ currentCPage: page });
-	}
-	handleDPaginate(page) {
-		this.setState({ currentDPage: page });
-	}
+	changeUsersPage(_, page) { this.setState({ usersPage: page }) }
+	changeCommentPage(_, page) { this.setState({ commentsPage: page }) }
+	changeDiscussionsPage(_, page) { this.setState({ discussionsPage: page }) }
 
 	render() {
 		return this.state.authorized ? (
@@ -243,13 +240,11 @@ export default class Control extends Component {
 						<Pagination
 							showFirstButton
 							showLastButton
-							count={this.state.totalUpages}
 							size="small"
-							page={this.state.currentUPage}
 							shape="rounded"
-							onChange={(evt, page) => {
-								this.handleUPaginate(page);
-							}}
+							page={this.state.usersPage}
+							count={this.state.usersLength}
+							onChange={this.changeUsersPage}
 						/>
 					</ul>
 					<ul>
@@ -259,8 +254,7 @@ export default class Control extends Component {
 								<li key={comment.id}>
 									<label style={{ display: "flex" }} htmlFor={comment.text}>
 										<p>
-											{" "}
-											{comment.book_reference} {comment.text}{" "}
+											{comment.book_reference} {comment.text}
 										</p>
 									</label>
 									<input type="checkbox" id={comment.text} />
@@ -308,13 +302,11 @@ export default class Control extends Component {
 						<Pagination
 							showFirstButton
 							showLastButton
-							count={this.state.totalCpages}
 							size="small"
-							page={this.state.currentCpage}
 							shape="rounded"
-							onChange={(evt, page) => {
-								this.handleCPaginate(page);
-							}}
+							page={this.state.commentsPage}
+							count={this.state.commentsLength}
+							onChange={this.changeCommentPage}
 						/>
 					</ul>
 					<ul>
@@ -365,13 +357,11 @@ export default class Control extends Component {
 						<Pagination
 							showFirstButton
 							showLastButton
-							count={this.state.totalDpages}
 							size="small"
-							page={this.state.currentDpage}
 							shape="rounded"
-							onChange={(evt, page) => {
-								this.handleDPaginate(page);
-							}}
+							page={this.state.discussionsPage}
+							count={this.state.discussionLength}
+							onChange={this.changeDiscussionsPage}
 						/>
 					</ul>
 				</div>

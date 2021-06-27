@@ -16,10 +16,11 @@ export default class NavBar extends Component {
     };
 
     this.loginComponent = createRef();
-    this.closeBookComponent = this.handleBooks.bind(this);
+    this.toggleLoginComponent = this.toggleLoginComponent.bind(this);
+    this.toggleBooksComponent = this.toggleBooksComponent.bind(this);
   }
 
-  handleBooks() {
+  toggleBooksComponent() {
     if (this.state.indexClass === "invisible") {
       this.setState({
         indexClass: "visible",
@@ -32,9 +33,7 @@ export default class NavBar extends Component {
     }
   }
 
-  handleLogin(evt) {
-    evt.preventDefault();
-
+  toggleLoginComponent() {
     if (this.state.loginClass === "invisible") {
       this.setState({
         loginClass: "visible",
@@ -53,16 +52,12 @@ export default class NavBar extends Component {
         <ul className="navbar">
           <Link to="/"> Início </Link>
           <li
-            onClick={(evt) => {
-              this.handleLogin(evt);
-            }}
+            onClick={this.toggleLoginComponent}
           >
             Perfil
           </li>
           <li
-            onClick={() => {
-              this.handleBooks();
-            }}
+            onClick={this.toggleBooksComponent}
           >
             Livros
           </li>
@@ -76,7 +71,7 @@ export default class NavBar extends Component {
         <section className={this.state.indexClass}>
           <BooksIndex
             changeChapter={this.props.changeChapter}
-            closeBookComponent={this.closeBookComponent}
+            closeBookComponent={this.toggleBooksComponent}
           />
         </section>
       </>

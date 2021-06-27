@@ -6,6 +6,7 @@ export default class TitleComment extends Component {
   constructor(props) {
     super(props);
 
+    this.showNewComment = this.showNewComment.bind(this);
     this.selected = false;
   }
   showNewComment(evt) {
@@ -67,9 +68,7 @@ export default class TitleComment extends Component {
         >
           <button
             className="entry"
-            onClick={(evt) => {
-              this.showNewComment(evt);
-            }}
+            onClick={this.showNewComment}
           >
             Comentar
           </button>

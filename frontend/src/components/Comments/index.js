@@ -8,6 +8,7 @@ class Comments extends Component {
     super(props);
 
     this.selected = false;
+    this.showNewComment = this.showNewComment.bind(this);
   }
 
   showNewComment(evt) {
@@ -101,9 +102,7 @@ class Comments extends Component {
         >
           <button
             className="entry"
-            onClick={(evt) => {
-              this.showNewComment(evt);
-            }}
+            onClick={this.showNewComment}
           >
             Comentar
           </button>

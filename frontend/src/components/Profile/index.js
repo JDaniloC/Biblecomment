@@ -89,12 +89,15 @@ export default class Profile extends Component {
 
 		this.editComponent = createRef();
 		this.closeEditComment = this.closeEditComment.bind(this);
+		this.changeCommentPage = this.changeCommentPage.bind(this);
+		this.changeFavoritePage = this.changeFavoritePage.bind(this);
+		this.closeAccount = this.closeAccount.bind(this);
 	}
 
-	handleFPaginate(page) {
+	changeFavoritePage(_, page) {
 		this.context.setCurrentFPage(page);
 	}
-	handleCPaginate(page) {
+	changeCommentPage(_, page) {
 		this.context.setCurrentCPage(page);
 	}
 	calculatePagination(type) {
@@ -174,9 +177,7 @@ export default class Profile extends Component {
 					<h2>
 						Membro {this.context.name}
 						<button
-							onClick={() => {
-								this.handleConfig();
-							}}
+							onClick={this.handleConfig}
 						>
 							<img src={gearsIcon} alt="config" />
 						</button>
@@ -232,7 +233,7 @@ export default class Profile extends Component {
 								) : (
 									<button
 										className="load-btn"
-										onClick={() => this.context.getComments()}
+										onClick={this.context.getComments}
 									>
 										Carregar
 									</button>
@@ -253,9 +254,7 @@ export default class Profile extends Component {
 								size="small"
 								page={this.context.currentCPage}
 								shape="rounded"
-								onChange={(evt, page) => {
-									this.handleCPaginate(page);
-								}}
+								onChange={this.changeCommentPage}
 							/>
 						</ul>
 
@@ -283,7 +282,7 @@ export default class Profile extends Component {
 								) : (
 									<button
 										className="load-btn"
-										onClick={() => this.context.getFavorites()}
+										onClick={this.context.getFavorites}
 									>
 										Carregar
 									</button>
@@ -304,9 +303,7 @@ export default class Profile extends Component {
 								size="small"
 								page={this.context.currentFPage}
 								shape="rounded"
-								onChange={(evt, page) => {
-									this.handleFPaginate(page);
-								}}
+								onChange={this.changeFavoritePage}
 							/>
 						</ul>
 					</ul>
@@ -372,9 +369,7 @@ export default class Profile extends Component {
 					</div>
 					<button
 						style={{ display: this.state.buttonDisplay }}
-						onClick={() => {
-							this.closeAccount();
-						}}
+						onClick={this.closeAccount}
 					>
 						Sair
 					</button>
