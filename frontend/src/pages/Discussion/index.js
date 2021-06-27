@@ -158,7 +158,9 @@ export default class Discussion extends Component {
 		this.closeAnswers();
 	}
 
-	changeText(value) { this.setState({ text: value }) }
+	changeText(value) {
+		this.setState({ text: value });
+	}
 
 	postNewQuestion() {
 		this.closeNewPost();
@@ -267,7 +269,9 @@ export default class Discussion extends Component {
 		});
 	}
 
-	closeAviso() { this.setState({ aviso: false }) }
+	closeAviso() {
+		this.setState({ aviso: false });
+	}
 
 	render() {
 		return (
@@ -390,10 +394,7 @@ export default class Discussion extends Component {
 								/>
 								<MDEditor.Markdown value={this.state.text} />
 							</div>
-							<button
-								className="answer-btn"
-								onClick={this.postNewAnswer}
-							>
+							<button className="answer-btn" onClick={this.postNewAnswer}>
 								Responder
 							</button>
 						</div>
@@ -426,10 +427,7 @@ export default class Discussion extends Component {
 									/>
 									<MDEditor.Markdown value={this.state.text} />
 								</div>
-								<button
-									className="answer-btn"
-									onClick={this.postNewQuestion}
-								>
+								<button className="answer-btn" onClick={this.postNewQuestion}>
 									Postar
 								</button>
 							</div>
@@ -452,10 +450,7 @@ export default class Discussion extends Component {
 					autoHideDuration={2000}
 					onClose={this.closeAviso}
 				>
-					<Alert
-						onClose={this.closeAviso}
-						severity={this.state.severidade}
-					>
+					<Alert onClose={this.closeAviso} severity={this.state.severidade}>
 						{this.state.mensagem}
 					</Alert>
 				</Snackbar>

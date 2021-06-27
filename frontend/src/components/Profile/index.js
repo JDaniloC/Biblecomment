@@ -176,9 +176,7 @@ export default class Profile extends Component {
 				<section className={this.context.perfilClass}>
 					<h2>
 						Membro {this.context.name}
-						<button
-							onClick={this.handleConfig}
-						>
+						<button onClick={this.handleConfig}>
 							<img src={gearsIcon} alt="config" />
 						</button>
 					</h2>

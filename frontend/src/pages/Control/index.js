@@ -17,7 +17,7 @@ export default class Control extends Component {
 
 			usersLength: 0,
 			commentsLength: 0,
-			
+
 			commentsPage: 1,
 			usersPage: 1,
 			discussionLength: 0,
@@ -187,9 +187,15 @@ export default class Control extends Component {
 			this.getDiscussions(this.state.discussionsPage);
 		}
 	}
-	changeUsersPage(_, page) { this.setState({ usersPage: page }) }
-	changeCommentPage(_, page) { this.setState({ commentsPage: page }) }
-	changeDiscussionsPage(_, page) { this.setState({ discussionsPage: page }) }
+	changeUsersPage(_, page) {
+		this.setState({ usersPage: page });
+	}
+	changeCommentPage(_, page) {
+		this.setState({ commentsPage: page });
+	}
+	changeDiscussionsPage(_, page) {
+		this.setState({ discussionsPage: page });
+	}
 
 	render() {
 		return this.state.authorized ? (

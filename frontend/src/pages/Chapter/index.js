@@ -54,13 +54,13 @@ export default class Chapter extends Component {
 		this.loadChapter = this.loadChapter.bind(this);
 		this.goToDiscussion = this.goToDiscussion.bind(this);
 		this.handleNewComment = this.handleNewComment.bind(this);
-		
+
 		this.handleLike = this.handleLike.bind(this);
 		this.handleReport = this.handleReport.bind(this);
 
 		this.handleNotification = this.handleNotification.bind(this);
 		this.handleCommentNotification = this.handleCommentNotification.bind(this);
-		
+
 		this.closeAviso = this.closeAviso.bind(this);
 		this.closeComments = this.closeComments.bind(this);
 		this.closeNewCommentary = this.closeNewCommentary.bind(this);
@@ -357,7 +357,9 @@ export default class Chapter extends Component {
 		});
 	}
 
-	closeAviso() { this.setState({ aviso: false }) }
+	closeAviso() {
+		this.setState({ aviso: false });
+	}
 
 	render() {
 		return (
@@ -435,10 +437,7 @@ export default class Chapter extends Component {
 					autoHideDuration={2000}
 					onClose={this.closeAviso}
 				>
-					<Alert
-						onClose={this.closeAviso}
-						severity={this.state.severidade}
-					>
+					<Alert onClose={this.closeAviso} severity={this.state.severidade}>
 						{this.state.mensagem}
 					</Alert>
 				</Snackbar>

@@ -14,7 +14,9 @@ const heart = require("../../assets/heart.svg");
 const chat = require("../../assets/chat.svg");
 
 export default class Help extends Component {
-	foo(e) {e.preventDefault()}
+	foo(e) {
+		e.preventDefault();
+	}
 
 	render() {
 		return (
@@ -103,7 +105,7 @@ export default class Help extends Component {
 					</div>
 					<div style={{ width: "100%", minWidth: "300px" }}>
 						<div className="login-container">
-							<form style={{ width: "100%" }} onSubmit = {this.foo}>
+							<form style={{ width: "100%" }} onSubmit={this.foo}>
 								<input type="email" disabled placeholder="E-mail" />
 								<input type="text" disabled placeholder="Nome de usuário" />
 								<input type="password" disabled placeholder="Senha" />
@@ -113,7 +115,8 @@ export default class Help extends Component {
 									value="Cadastrar"
 								/>
 								<hr />
-								<button type = "button"
+								<button
+									type="button"
 									style={{
 										backgroundColor: "rgb(136, 136, 136)",
 									}}
@@ -153,7 +156,8 @@ export default class Help extends Component {
 								type="checkbox"
 								name="hand"
 								id="devocional"
-								checked onChange = {this.foo}
+								checked
+								onChange={this.foo}
 							/>
 							<img className="tag" src={hand} alt="handIcon" />
 							Comentário devocional, indica um ensinamento extraído do texto,
@@ -164,7 +168,8 @@ export default class Help extends Component {
 								type="checkbox"
 								name="book"
 								id="exegese"
-								checked onChange = {this.foo}
+								checked
+								onChange={this.foo}
 							/>
 							<img className="tag" src={book} alt="bookIcon" />
 							Comentário exegético, indica um comentário que é necessário estudo
@@ -175,7 +180,8 @@ export default class Help extends Component {
 								type="checkbox"
 								name="person"
 								id="pessoal"
-								checked onChange = {this.foo}
+								checked
+								onChange={this.foo}
 							/>
 							<img className="tag" src={person} alt="personIcon" />
 							Comentário pessoal, feito caso o verso tenha tocado a pessoa em
@@ -186,7 +192,8 @@ export default class Help extends Component {
 								type="checkbox"
 								name="pen"
 								id="inspirado"
-								checked onChange = {this.foo}
+								checked
+								onChange={this.foo}
 							/>
 							<img className="tag" src={pen} alt="penIcon" />
 							Comentário inspirado, indica comentários de algum profeta
@@ -202,7 +209,7 @@ export default class Help extends Component {
 						}}
 					>
 						<ul className="commentaries" style={{ fontSize: 14 }}>
-							<input type="checkbox" checked onChange = {this.foo}/>
+							<input type="checkbox" checked onChange={this.foo} />
 							<div className="user-comment">
 								<p
 									style={{
