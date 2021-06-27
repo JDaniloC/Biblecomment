@@ -92,6 +92,7 @@ export default class Profile extends Component {
 		this.changeCommentPage = this.changeCommentPage.bind(this);
 		this.changeFavoritePage = this.changeFavoritePage.bind(this);
 		this.closeAccount = this.closeAccount.bind(this);
+		this.handleConfig = this.handleConfig.bind(this);
 	}
 
 	changeFavoritePage(_, page) {

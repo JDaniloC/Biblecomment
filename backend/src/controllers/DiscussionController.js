@@ -164,9 +164,12 @@ module.exports = {
 		}
 
 		if ((discussion.username === user.name) | user.moderator) {
-			return response.json(
-				await connection("discussions").where("id", id).first().delete()
-			);
+			const deletedDiscussion = await connection("discussions").
+				where("id", id).
+				first().
+				delete()
+
+			return response.json(deletedDiscussion);
 		} else {
 			return response.json({ msg: "Not authorized" });
 		}
