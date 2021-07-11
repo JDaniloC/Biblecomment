@@ -111,11 +111,11 @@ export default class Comments extends Component {
 }
 
 Comments.propTypes = {
-	handleNewComment:  PropTypes.func.isRequired,
+	handleNewComment: PropTypes.func.isRequired,
 	closeFunction: PropTypes.func.isRequired,
 	commentaries: PropTypes.array.isRequired,
 	imageFunction: PropTypes.func.isRequired,
 	likeFunction: PropTypes.func.isRequired,
 	goToDiscussion: PropTypes.func.isRequired,
 	reportFunction: PropTypes.func.isRequired,
-}
+};

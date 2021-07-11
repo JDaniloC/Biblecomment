@@ -76,10 +76,10 @@ export default class TitleComment extends Component {
 	}
 }
 TitleComment.propTypes = {
-	comments:  PropTypes.array.isRequired,
+	comments: PropTypes.array.isRequired,
 	imageFunction: PropTypes.func.isRequired,
 	likeFunction: PropTypes.func.isRequired,
 	goToDiscussion: PropTypes.func.isRequired,
 	reportFunction: PropTypes.func.isRequired,
-	handleNewComment: PropTypes.func.isRequired
-}
+	handleNewComment: PropTypes.func.isRequired,
+};
