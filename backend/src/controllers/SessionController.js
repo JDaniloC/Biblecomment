@@ -49,13 +49,9 @@ module.exports = {
 			.where("email", email.toLowerCase())
 			.first();
 
-		if (user) {
-			return response.json(
-				user.password === md5(password) ? user : { error: "Senha incorreta" }
-			);
-		} else {
-			return response.json({ error: "E-mail não cadastrado" });
-		}
+		return (user) ? response.json(
+			user.password === md5(password) ? user : { error: "Senha incorreta" }
+		) : response.json({ error: "E-mail não cadastrado" });
 	},
 
 	async show(request, response) {

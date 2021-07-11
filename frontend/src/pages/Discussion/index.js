@@ -322,7 +322,7 @@ export default class Discussion extends Component {
 							) : (
 								<p className="placeholder">
 									Nada a ser examinado (João 5:39) neste capítulo. <br />
-									"Vinde, pois, e arrazoemos, diz o Senhor." Is 1:18
+									&quot;Vinde, pois, e arrazoemos, diz o Senhor.&quot; Is 1:18
 								</p>
 							)}
 						</ul>

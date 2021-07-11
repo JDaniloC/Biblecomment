@@ -1,9 +1,10 @@
 import React, { Component } from "react";
+import PropTypes from "prop-types";
 
 import "./styles.css";
 const close = require("../../assets/x.svg");
 
-class Comments extends Component {
+export default class Comments extends Component {
 	constructor(props) {
 		super(props);
 
@@ -109,4 +110,12 @@ class Comments extends Component {
 	}
 }
 
-export default Comments;
+Comments.propTypes = {
+	handleNewComment:  PropTypes.func.isRequired,
+	closeFunction: PropTypes.func.isRequired,
+	commentaries: PropTypes.array.isRequired,
+	imageFunction: PropTypes.func.isRequired,
+	likeFunction: PropTypes.func.isRequired,
+	goToDiscussion: PropTypes.func.isRequired,
+	reportFunction: PropTypes.func.isRequired,
+}
