@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import PropTypes from "prop-types";
 
 import "./styles.css";
 
@@ -74,3 +75,11 @@ export default class TitleComment extends Component {
 		);
 	}
 }
+TitleComment.propTypes = {
+	comments: PropTypes.array.isRequired,
+	imageFunction: PropTypes.func.isRequired,
+	likeFunction: PropTypes.func.isRequired,
+	goToDiscussion: PropTypes.func.isRequired,
+	reportFunction: PropTypes.func.isRequired,
+	handleNewComment: PropTypes.func.isRequired,
+};

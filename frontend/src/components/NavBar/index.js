@@ -1,5 +1,6 @@
 import React, { Component, createRef } from "react";
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
 
 import BooksIndex from "../BooksIndex";
 import Login from "../Login";
@@ -70,3 +71,7 @@ export default class NavBar extends Component {
 		);
 	}
 }
+
+NavBar.propTypes = {
+	changeChapter: PropTypes.func.isRequired,
+};

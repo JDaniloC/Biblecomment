@@ -36,8 +36,8 @@ export default class Help extends Component {
 							<b> compartilhamento</b> de comentários e interpretações do mesmo.
 						</p>
 						<p>
-							"[...] Deus nosso Salvador, o qual deseja que todos os homens
-							sejam salvos e cheguem ao pleno conhecimento da verdade." 1
+							&quot;[...] Deus nosso Salvador, o qual deseja que todos os homens
+							sejam salvos e cheguem ao pleno conhecimento da verdade.&quot; 1
 							Timóteo 2:3-4
 						</p>
 						<h2> Como posso participar? </h2>
@@ -219,14 +219,16 @@ export default class Help extends Component {
 								>
 									O livro de Gênesis começa com uma verdade absoluta que vai de
 									contrário a muitos pensamentos da época: <br />
-									1 - "No princípio", significa que houve um início (a título de
-									exemplo os gregos, anos depois, acreditavam que o universo
-									sempre existiu, e só foi descoberto que houve um início no
-									século XX). <br />
-									2 - "criou", não apenas teve um início, mas veio a existir não
-									pelo acaso divino ou evolucionista, mas por meio de uma
-									criação planejada. <br />3 - "Deus", em contrapartida ao
-									panteísmo essa criação se deu por um único Deus. <br />
+									1 - &quot;No princípio&quot;, significa que houve um início (a
+									título de exemplo os gregos, anos depois, acreditavam que o
+									universo sempre existiu, e só foi descoberto que houve um
+									início no século XX).
+									<br />
+									2 - &quot;criou&quot;, não apenas teve um início, mas veio a
+									existir não pelo acaso divino ou evolucionista, mas por meio
+									de uma criação planejada. <br />3 - &quot;Deus&quot;, em
+									contrapartida ao panteísmo essa criação se deu por um único
+									Deus. <br />
 									Por fim, contrário ao deísmo, esse Deus se importa com suas
 									criaturas. <br />
 									Ou seja, vai de contrário ao ateísmo, materialismo, humanismo,
@@ -268,7 +270,7 @@ export default class Help extends Component {
 						<p>
 							Quando o comentário tem o único objetivo de
 							<b> ofender</b>, esteja totalmente desconexo com a realidade do
-							capítulo ou seja apenas interjeições como "amém"
+							capítulo ou seja apenas interjeições como &quot;amém&quot;
 						</p>
 					</div>
 				</section>
