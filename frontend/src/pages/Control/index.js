@@ -47,8 +47,7 @@ export default class Control extends Component {
 	}
 
 	async getComments(page = 1) {
-		const response = await axios
-			.get("comments", { params: { pages: page } });
+		const response = await axios.get("comments", { params: { pages: page } });
 		const comments = response.data;
 		this.setState({
 			comments: [
@@ -72,8 +71,9 @@ export default class Control extends Component {
 	}
 
 	async getDiscussions(page = 1) {
-		const response = await axios
-			.get("discussions", { params: { pages: page } });
+		const response = await axios.get("discussions", {
+			params: { pages: page },
+		});
 		const discussions = response.data;
 		this.setState({
 			discussions: [...this.state.discussions, ...discussions],

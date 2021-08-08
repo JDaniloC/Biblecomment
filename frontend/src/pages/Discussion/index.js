@@ -344,7 +344,7 @@ export default class Discussion extends Component {
 
 						<ul className="answer-list">
 							{this.state.answers.length > 0 ? (
-								this.state.answers.map(answer => (
+								this.state.answers.map((answer) => (
 									<li key={answer}>
 										<h3 style={{ color: "#111" }}>{answer.name}</h3>
 										<MDEditor.Markdown source={answer.text} />

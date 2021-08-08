@@ -172,4 +172,4 @@ export default class BooksIndex extends Component {
 }
 BooksIndex.propTypes = {
 	changeChapter: PropTypes.func,
-}
+};
