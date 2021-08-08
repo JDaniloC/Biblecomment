@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ProfileContext } from "../../contexts/ProfileContext";
 import axios from "../../services/api";
 import { Loading } from "../Partials";
+import PropTypes from "prop-types";
 
 import "./styles.css";
 
@@ -168,4 +169,7 @@ export default class BooksIndex extends Component {
 			</div>
 		);
 	}
+}
+BooksIndex.propTypes = {
+	changeChapter: PropTypes.func,
 }

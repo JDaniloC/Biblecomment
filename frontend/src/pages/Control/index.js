@@ -30,72 +30,67 @@ export default class Control extends Component {
 	}
 
 	async getUsers(page = 1) {
-		return axios.get("users", { params: { pages: page } }).then((response) => {
-			const users = response.data;
-			this.setState({
-				users: [...this.state.users, ...users],
-			});
-			const length = Math.ceil(this.state.users.length / 5);
-			if (users.length === 5) {
-				this.setState({ usersLength: length + 1 });
-			} else {
-				this.setState({
-					usersLength: length,
-					usersPage: page - 1,
-				});
-			}
+		const response = await axios.get("users", { params: { pages: page } });
+		const users = response.data;
+		this.setState({
+			users: [...this.state.users, ...users],
 		});
+		const length = Math.ceil(this.state.users.length / 5);
+		if (users.length === 5) {
+			this.setState({ usersLength: length + 1 });
+		} else {
+			this.setState({
+				usersLength: length,
+				usersPage: page - 1,
+			});
+		}
 	}
 
 	async getComments(page = 1) {
-		return axios
-			.get("comments", { params: { pages: page } })
-			.then((response) => {
-				const comments = response.data;
-				this.setState({
-					comments: [
-						...this.state.comments,
-						...comments.map((item) => {
-							item.likes = JSON.parse(item.likes);
-							item.reports = JSON.parse(item.reports);
-							return item;
-						}),
-					],
-				});
-				const length = Math.ceil(this.state.comments.length / 5);
-				if (comments.length === 5) {
-					this.setState({ commentsLength: length + 1 });
-				} else {
-					this.setState({
-						commentsPage: page - 1,
-						commentsLength: length,
-					});
-				}
+		const response = await axios
+			.get("comments", { params: { pages: page } });
+		const comments = response.data;
+		this.setState({
+			comments: [
+				...this.state.comments,
+				...comments.map((item) => {
+					item.likes = JSON.parse(item.likes);
+					item.reports = JSON.parse(item.reports);
+					return item;
+				}),
+			],
+		});
+		const length = Math.ceil(this.state.comments.length / 5);
+		if (comments.length === 5) {
+			this.setState({ commentsLength: length + 1 });
+		} else {
+			this.setState({
+				commentsPage: page - 1,
+				commentsLength: length,
 			});
+		}
 	}
 
 	async getDiscussions(page = 1) {
-		return axios
-			.get("discussions", { params: { pages: page } })
-			.then((response) => {
-				const discussions = response.data;
-				this.setState({
-					discussions: [...this.state.discussions, ...discussions],
-				});
-				const length = Math.ceil(this.state.discussions.length / 5);
-				if (discussions.length === 5) {
-					this.setState({ discussionLength: length + 1 });
-				} else {
-					this.setState({
-						discussionsPage: this.state.discussionsPage - 1,
-						discussionLength: length,
-					});
-				}
+		const response = await axios
+			.get("discussions", { params: { pages: page } });
+		const discussions = response.data;
+		this.setState({
+			discussions: [...this.state.discussions, ...discussions],
+		});
+		const length = Math.ceil(this.state.discussions.length / 5);
+		if (discussions.length === 5) {
+			this.setState({ discussionLength: length + 1 });
+		} else {
+			this.setState({
+				discussionsPage: this.state.discussionsPage - 1,
+				discussionLength: length,
 			});
+		}
 	}
 
 	componentDidMount() {
-		async function getUser(token) {
+		function getUser(token) {
 			return axios.get("session", {
 				headers: { token: token },
 			});

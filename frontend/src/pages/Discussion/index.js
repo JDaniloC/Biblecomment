@@ -16,18 +16,25 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
+		let selected = -1;
+		let title = "";
+		if (typeof this.props.location.state !== "undefined") {
+			selected = this.props.location.state.comment.id;
+			title = this.props.location.state.title;
+		}
+
 		this.state = {
 			newPostClass: "pop-up",
 			newAnswerClass: "invisible",
 			answersClass: "centro",
 			blur: "block",
 
-			title: "",
-			abbrev: "",
+			title: title,
+			abbrev: this.props.match.params.abbrev,
 			discussions: [],
 			answers: [],
 
-			selected: -1,
+			selected: selected,
 			text: "",
 
 			totalPages: 2,
@@ -49,8 +56,35 @@ export default class Discussion extends Component {
 		this.postNewQuestion = this.postNewQuestion.bind(this);
 	}
 
-	loadDiscussions(page, abbrev = undefined) {
-		if (typeof abbrev === "undefined") {
+	componentDidMount() {
+		const abbrev = this.state.abbrev;
+		const searchBy = this.state.selected;
+		this.loadDiscussions(1, abbrev);
+
+		if (typeof this.props.location.state !== "undefined") {
+			try {
+				axios.get(`/discussion/${abbrev}/${searchBy}`).then((response) => {
+					if (response.data.length > 0) {
+						this.closeNewPost();
+						if (!this.searchDiscussionId(searchBy)) {
+							const discussion = response.data[0];
+							discussion.id = -discussion.id;
+							discussion.answers = JSON.parse(discussion.answers);
+
+							this.setState((prev) => ({
+								discussions: [discussion, ...prev.discussions],
+							}));
+						}
+					}
+				});
+			} catch (err) {
+				this.handleNotification(err, "error");
+			}
+		}
+	}
+
+	loadDiscussions(page, abbrev = false) {
+		if (!abbrev) {
 			abbrev = this.state.abbrev;
 		}
 
@@ -77,51 +111,6 @@ export default class Discussion extends Component {
 			});
 		} catch (err) {
 			this.handleNotification(err, "error");
-		}
-	}
-
-	componentDidMount() {
-		const abbrev = this.props.match.params.abbrev;
-		let search_by = -1;
-		let title = "";
-		if (typeof this.props.location.state !== "undefined") {
-			search_by = this.props.location.state.comment.id;
-			title = this.props.location.state.title;
-		} else {
-			axios.get(`/books/${abbrev}/chapters/1`).then((response) => {
-				if (typeof response.data.title !== "undefined") {
-					this.setState({
-						title: response.data.title,
-					});
-				}
-			});
-		}
-		this.setState({
-			selected: search_by,
-			title,
-			abbrev,
-		});
-		this.loadDiscussions(1, abbrev);
-
-		if (typeof this.props.location.state !== "undefined") {
-			try {
-				axios.get(`/discussion/${abbrev}/${search_by}`).then((response) => {
-					if (response.data.length > 0) {
-						this.closeNewPost();
-						if (!this.searchDiscussionId(search_by)) {
-							const discussion = response.data[0];
-							discussion.id = -discussion.id;
-							discussion.answers = JSON.parse(discussion.answers);
-
-							this.setState((prev) => ({
-								discussions: [discussion, ...prev.discussions],
-							}));
-						}
-					}
-				});
-			} catch (err) {
-				this.handleNotification(err, "error");
-			}
 		}
 	}
 
@@ -355,8 +344,8 @@ export default class Discussion extends Component {
 
 						<ul className="answer-list">
 							{this.state.answers.length > 0 ? (
-								this.state.answers.map((answer, index) => (
-									<li key={(index - 1) * -1}>
+								this.state.answers.map(answer => (
+									<li key={answer}>
 										<h3 style={{ color: "#111" }}>{answer.name}</h3>
 										<MDEditor.Markdown source={answer.text} />
 									</li>

@@ -20,6 +20,10 @@ export default class TitleComment extends Component {
 		return `${day}/${month}/${year}`;
 	}
 
+	getLikeCount(comment) {
+		return JSON.parse(comment.likes).length;
+	}
+
 	render() {
 		return (
 			<div className="title-comments">
@@ -28,9 +32,9 @@ export default class TitleComment extends Component {
 						<li key={comment.id}>
 							<h3>
 								{comment.username}
-								{comment.tags.map((tag, index) => (
+								{comment.tags.map((tag) => (
 									<img
-										key={index}
+										key={tag}
 										style={{ marginTop: 0 }}
 										src={this.props.imageFunction(tag)}
 										className="tag"
@@ -43,9 +47,7 @@ export default class TitleComment extends Component {
 							<p style={{ whiteSpace: "break-spaces" }}>{comment.text}</p>
 							<span className="comment-buttons">
 								<p>
-									{" "}
-									Favoritado por <b>{JSON.parse(comment.likes).length}</b>{" "}
-									pessoas{" "}
+									Favoritado por <b>{this.getLikeCount(comment)}</b> pessoas
 								</p>
 								<button onClick={() => this.props.likeFunction(comment.id)}>
 									<img src={this.props.imageFunction("heart")} alt="like" />

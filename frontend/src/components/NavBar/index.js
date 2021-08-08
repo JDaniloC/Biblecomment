@@ -73,5 +73,5 @@ export default class NavBar extends Component {
 }
 
 NavBar.propTypes = {
-	changeChapter: PropTypes.func.isRequired,
+	changeChapter: PropTypes.func,
 }
