@@ -4,7 +4,7 @@ module.exports = {
 	async saveComments(request, response) {
 		return response.json(await connection("comments"));
 	},
-	async loadComments(request, response) {
+	loadComments(request, response) {
 		const { comments } = request.body;
 		for (const comment of comments) {
 			connection("comments").insert(comment);
@@ -14,7 +14,7 @@ module.exports = {
 	async saveUsers(request, response) {
 		return response.json(await connection("users"));
 	},
-	async loadUsers(request, response) {
+	loadUsers(request, response) {
 		const { users } = request.body;
 		for (const user of users) {
 			connection("users").insert(user);
@@ -24,7 +24,7 @@ module.exports = {
 	async saveDiscussions(request, response) {
 		return response.json(await connection("discussions"));
 	},
-	async loadDiscussions(request, response) {
+	loadDiscussions(request, response) {
 		const { discussions } = request.body;
 		for (const discussion of discussions) {
 			connection("discussions").insert(discussion);

@@ -25,10 +25,10 @@ export default class Chapter extends Component {
 		super(props);
 
 		this.state = {
-			asideclass: "invisible",
+			newBoxClass: "invisible",
+			asideClass: "invisible",
+			mainClass: "main text",
 			navClass: "visible",
-			newbox: "invisible",
-			main: "main text",
 			blur: "none",
 
 			titleName: "Chapter",
@@ -142,8 +142,8 @@ export default class Chapter extends Component {
 			this.closeComments(evt);
 		} else {
 			this.setState({
-				asideclass: "visible",
-				main: "main comment",
+				asideClass: "visible",
+				mainClass: "main comment",
 				navClass: this.state.navClass.includes("navHide")
 					? this.state.navClass
 					: this.state.navClass + " navHide",
@@ -181,8 +181,8 @@ export default class Chapter extends Component {
 		this.setState({
 			verseAtual: { linha: null, verse: 0 },
 			comments: [],
-			asideclass: "invisible",
-			main: "main text",
+			asideClass: "invisible",
+			mainClass: "main text",
 			navClass: "visible",
 		});
 	}
@@ -191,7 +191,7 @@ export default class Chapter extends Component {
 		evt.preventDefault();
 
 		this.setState({
-			newbox: "visible centro",
+			newBoxClass: "visible centro",
 			blur: "block",
 			navClass: "invisible",
 		});
@@ -224,7 +224,7 @@ export default class Chapter extends Component {
 
 		this.setState({
 			blur: "none",
-			newbox: "invisible",
+			newBoxClass: "invisible",
 			navClass: "visible",
 		});
 	}
@@ -367,7 +367,7 @@ export default class Chapter extends Component {
 					<div className={this.state.navClass}>
 						<NavBar changeChapter={this.loadChapter} />
 					</div>
-					<div className={this.state.main}>
+					<div className={this.state.mainClass}>
 						<label htmlFor="toggle" style={{ display: "flex" }}>
 							{this.state.titleName} {this.state.chapterNumber}{" "}
 							{this.renderAmount(false)}
@@ -386,7 +386,7 @@ export default class Chapter extends Component {
 						<ul className="verse-list">
 							{this.state.verses.length > 0 ? (
 								this.state.verses.map((verse, index) => (
-									<li key={index + 1}>
+									<li key={verse}>
 										<sup> {index + 1} </sup>
 										<p
 											style={{ display: "inline" }}
@@ -403,7 +403,7 @@ export default class Chapter extends Component {
 						</ul>
 					</div>
 				</div>
-				<aside className={this.state.asideclass}>
+				<aside className={this.state.asideClass}>
 					<Comments
 						closeFunction={this.closeComments}
 						commentaries={this.state.comments}
@@ -416,7 +416,7 @@ export default class Chapter extends Component {
 					/>
 				</aside>
 
-				<div className={this.state.newbox}>
+				<div className={this.state.newBoxClass}>
 					<NewComment
 						title="Criar comentário"
 						post

@@ -26,7 +26,7 @@ export function ProfileProvider({ children }) {
 	const [currentFPage, setCurrentFPage] = useState(1);
 	const [currentCPage, setCurrentCPage] = useState(1);
 
-	async function loadUserInfos(response) {
+	function loadUserInfos(response) {
 		const data = response.data;
 
 		const { email: currentEmail, name: currentName } = data;
