@@ -16,7 +16,8 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
-		let object = { title: ""}, selected = -1;
+		let object = { title: "" },
+			selected = -1;
 		if (typeof this.props.location.state !== "undefined") {
 			selected = this.props.location.state.comment.id;
 			object = this.props.location.state;
@@ -66,7 +67,7 @@ export default class Discussion extends Component {
 					if (response.data.length > 0) {
 						this.closeNewPost();
 						if (!this.alreadyInDiscussions(selected)) {
-							const [ discussion ] = response.data;
+							const [discussion] = response.data;
 							discussion.id = -discussion.id;
 							discussion.answers = JSON.parse(discussion.answers);
 

@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 
 import "./styles.css";
 
-
 function getLikeCount(comment) {
 	return JSON.parse(comment.likes).length;
 }

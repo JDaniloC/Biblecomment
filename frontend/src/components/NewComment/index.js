@@ -249,12 +249,12 @@ NewComment.propTypes = {
 	close: PropTypes.func.isRequired,
 	title: PropTypes.string.isRequired,
 	post: PropTypes.bool.isRequired,
-	notification: PropTypes.func.isRequired
-}
+	notification: PropTypes.func.isRequired,
+};
 NewComment.defaultProps = {
 	text: "",
 	number: 0,
 	abbrev: "",
 	verso: () => 0,
-	on_title: { selected: 0 }
-}
+	on_title: { selected: 0 },
+};
