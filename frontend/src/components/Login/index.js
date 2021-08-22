@@ -1,6 +1,4 @@
 import React, { Component, createRef } from "react";
-import Snackbar from "@material-ui/core/Snackbar";
-import { Alert } from "@material-ui/lab";
 import axios from "../../services/api";
 
 import { ProfileContext } from "../../contexts/ProfileContext";
@@ -21,31 +19,35 @@ export default class Login extends Component {
 			buttonColor: "#1E7",
 			buttonName: "Cadastrar",
 
-			aviso: false,
-			mensagem: "",
-			severidade: "",
-
-			email: "",
 			name: "",
+			email: "",
 			password: "",
 		};
 
 		this.profileComponent = createRef();
 
+		this.handleForm = this.handleForm.bind(this);
+		this.changeState = this.changeState.bind(this);
+		this.closeAccount = this.closeAccount.bind(this);
 		this.updateAccount = this.updateAccount.bind(this);
 		this.deleteAccount = this.deleteAccount.bind(this);
 		this.deleteComment = this.deleteComment.bind(this);
-		this.handleNotification = this.handleNotification.bind(this);
 	}
 
 	componentDidMount() {
-		const { setFavorites, loadUserInfos, setCommentaries, setFormClass } =
-			this.context;
+		const { 
+			setFormClass,
+			setFavorites, 
+			loadUserInfos, 
+			setCommentaries, 
+			handleNotification
+		} =this.context;
 
 		this.setFavorites = setFavorites;
 		this.setFormClass = setFormClass;
 		this.loadUserInfos = loadUserInfos;
 		this.setCommentaries = setCommentaries;
+		this.handleNotification = handleNotification;
 	}
 
 	changeMethod(event) {
@@ -97,14 +99,14 @@ export default class Login extends Component {
 				.delete(`/comments/${identificador}`, {
 					headers: { token: localStorage.getItem(TOKEN_KEY) },
 				})
-				.then((response) => {
+				.then(() => {
 					this.handleNotification(
-						"Comentário excluído com sucesso.",
-						"success"
+						"success",
+						"Comentário excluído com sucesso."
 					);
 				});
-		} catch (err) {
-			this.handleNotification("Problema no servidor", "error");
+		} catch (error) {
+			this.handleNotification("error", error.toString());
 		}
 	}
 
@@ -119,15 +121,14 @@ export default class Login extends Component {
 					const token = response.data.token;
 					if (typeof token !== "undefined") {
 						this.context.loadUserInfos(response);
-						this.handleNotification("Login realizado com sucesso!", "success");
+						this.handleNotification("success", "Login realizado com sucesso!");
 						login(token);
 					} else {
-						this.handleNotification(response.data.error, "warning");
+						this.handleNotification("warning", response.data.error);
 					}
 				});
 		} catch (error) {
-			console.log(error);
-			this.handleNotification("Problema no servidor", "error");
+			this.handleNotification("error", error.toString());
 		}
 	}
 
@@ -143,15 +144,15 @@ export default class Login extends Component {
 					if (typeof response.data.error === "undefined") {
 						this.changeMethod(null);
 						this.handleNotification(
-							"Cadastro realizado com sucesso!",
-							"success"
+							"success",
+							"Cadastro realizado com sucesso!"
 						);
 					} else {
-						this.handleNotification(response.data.error, "warning");
+						this.handleNotification("warning", response.data.error);
 					}
 				});
 		} catch (error) {
-			this.handleNotification("Problema no servidor", "error");
+			this.handleNotification("error", error.toString());
 		}
 	}
 
@@ -165,14 +166,6 @@ export default class Login extends Component {
 		}
 	}
 
-	handleNotification(mensagem, severidade, data = null) {
-		this.setState({
-			aviso: true,
-			mensagem: mensagem,
-			severidade: severidade,
-		});
-	}
-
 	async updateAccount(belief, state) {
 		try {
 			await axios
@@ -183,13 +176,13 @@ export default class Login extends Component {
 				})
 				.then((response) => {
 					if (typeof response.data.error === "undefined") {
-						this.handleNotification("Conta atualizada com sucesso.", "success");
+						this.handleNotification("success", "Conta atualizada com sucesso.");
 					} else {
-						this.handleNotification(response.data.error, "warning");
+						this.handleNotification("warning", response.data.error);
 					}
 				});
 		} catch (error) {
-			this.handleNotification(`${error}`, "error");
+			this.handleNotification("error", error.toString());
 		}
 	}
 
@@ -201,104 +194,79 @@ export default class Login extends Component {
 				})
 				.then((response) => {
 					if (typeof response.data.error === "undefined") {
-						this.handleNotification("Conta removida com sucesso.", "success");
+						this.handleNotification("success", "Conta removida com sucesso.");
 						this.profileComponent.current.closeAccount();
 					} else {
-						this.handleNotification(response.data.error, "warning");
+						this.handleNotification("warning", response.data.error);
 					}
 				});
 		} catch (error) {
-			this.handleNotification(`${error}`, "error");
+			this.handleNotification("error", error.toString());
 		}
+	}
+
+	closeAccount() {
+		logout();
+		this.setFormClass("");
 	}
 
 	render() {
 		return (
-			<>
-				<div className="login-container">
-					<Profile
-						ref={this.profileComponent}
-						deleteComment={this.deleteComment}
-						notification={this.handleNotification}
-						closeAccount={() => {
-							logout();
-							this.setFormClass("");
-						}}
-						updateAccount={this.updateAccount}
-						deleteAccount={this.deleteAccount}
-					/>
-					<form
-						className={this.context.formClass}
-						onSubmit={(event) => {
-							this.handleForm(event);
-						}}
-					>
-						<input
-							type="email"
-							name="email"
-							id="email"
-							placeholder="E-mail"
-							onChange={(event) => {
-								this.changeState(event);
-							}}
-							required
-						/>
-						<input
-							className={this.state.registerClass}
-							type="text"
-							name="name"
-							maxLength="15"
-							placeholder="Nome de usuário"
-							onChange={(event) => {
-								this.changeState(event);
-							}}
-						/>
-						<input
-							type="password"
-							name="password"
-							placeholder="Senha"
-							onChange={(event) => {
-								this.changeState(event);
-							}}
-							required
-						/>
-						<input
-							className={this.state.loginClass}
-							type="submit"
-							value="Entrar"
-						/>
-						<input
-							className={this.state.registerClass}
-							style={{ backgroundColor: "#1E7" }}
-							type="submit"
-							value="Cadastrar"
-						/>
-						<hr />
-						<button
-							style={{ backgroundColor: this.state.buttonColor }}
-							onClick={(event) => this.changeMethod(event)}
-						>
-							{this.state.buttonName}
-						</button>
-					</form>
-				</div>
-				<Snackbar
-					open={this.state.aviso}
-					autoHideDuration={2000}
-					onClose={() => {
-						this.setState({ aviso: false });
-					}}
+			<div className="login-container">
+				<Profile
+					ref={this.profileComponent}
+					closeAccount={this.closeAccount}
+					deleteComment={this.deleteComment}
+					updateAccount={this.updateAccount}
+					deleteAccount={this.deleteAccount}
+				/>
+				<form
+					className={this.context.formClass}
+					onSubmit={this.handleForm}
 				>
-					<Alert
-						onClose={() => {
-							this.setState({ aviso: false });
-						}}
-						severity={this.state.severidade}
+					<input
+						type="email"
+						name="email"
+						id="email"
+						placeholder="E-mail"
+						onChange={this.changeState}
+						required
+					/>
+					<input
+						className={this.state.registerClass}
+						type="text"
+						name="name"
+						maxLength="15"
+						placeholder="Nome de usuário"
+						onChange={this.changeState}
+					/>
+					<input
+						type="password"
+						name="password"
+						placeholder="Senha"
+						onChange={this.changeState}
+						required
+					/>
+					<input
+						className={this.state.loginClass}
+						type="submit"
+						value="Entrar"
+					/>
+					<input
+						className={this.state.registerClass}
+						style={{ backgroundColor: "#1E7" }}
+						type="submit"
+						value="Cadastrar"
+					/>
+					<hr />
+					<button
+						style={{ backgroundColor: this.state.buttonColor }}
+						onClick={this.changeMethod}
 					>
-						{this.state.mensagem}
-					</Alert>
-				</Snackbar>
-			</>
+						{this.state.buttonName}
+					</button>
+				</form>
+			</div>
 		);
 	}
 }

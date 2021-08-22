@@ -1,6 +1,7 @@
 import axios from "../services/api";
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { isAuthenticated, TOKEN_KEY } from "../services/auth";
+import { NotificationContext } from "./NotificationContext";
 
 export const ProfileContext = createContext({});
 
@@ -25,6 +26,8 @@ export function ProfileProvider({ children }) {
 	const [totalCPages, setTotalCPages] = useState(1);
 	const [currentFPage, setCurrentFPage] = useState(1);
 	const [currentCPage, setCurrentCPage] = useState(1);
+
+	const { handleNotification } = useContext(NotificationContext)
 
 	function loadUserInfos(response) {
 		const data = response.data;
@@ -90,7 +93,8 @@ export function ProfileProvider({ children }) {
 					}
 				});
 		} catch (error) {
-			// this.handleNotification("Problema no servidor", "error")
+			handleNotification("error",
+				"Problema no servidor")
 		}
 	}
 
@@ -122,7 +126,8 @@ export function ProfileProvider({ children }) {
 					}
 				});
 		} catch (error) {
-			// this.handleNotification("Problema no servidor", "error")
+			handleNotification("error", 
+				"Problema no servidor")
 		}
 	}
 
@@ -186,6 +191,7 @@ export function ProfileProvider({ children }) {
 				getFavorites,
 				setStateName,
 				addNewComment,
+				handleNotification
 			}}
 		>
 			{children}

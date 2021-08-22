@@ -3,6 +3,8 @@ import Routes from "./routes";
 
 import "./App.css";
 import "./Responsive.css";
+
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
 
 function App() {
@@ -27,9 +29,11 @@ function App() {
       <sub> A Program for His Glory </sub>
 
       <div className="content">
-        <ProfileProvider>
-          <Routes />
-        </ProfileProvider>
+        <NotificationProvider>
+          <ProfileProvider>
+            <Routes />
+          </ProfileProvider>
+        </NotificationProvider>
       </div>
 
       <footer>Developed by God through JDaniloC</footer>
