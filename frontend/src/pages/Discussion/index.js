@@ -454,18 +454,18 @@ Discussion.propTypes = {
 		state: PropTypes.shape({
 			title: PropTypes.string,
 			verse: PropTypes.string,
-			comment: PropTypes.object
-		})
+			comment: PropTypes.object,
+		}),
 	}).isRequired,
 	match: PropTypes.shape({
 		params: PropTypes.shape({
-		  abbrev: PropTypes.string.isRequired,
-		})
-	})
-}
+			abbrev: PropTypes.string.isRequired,
+		}),
+	}),
+};
 Discussion.defaultProps = {
 	location: {
-		pathname: '/discussions/gn',
-		state: undefined
-	}
-}
+		pathname: "/discussions/gn",
+		state: undefined,
+	},
+};
