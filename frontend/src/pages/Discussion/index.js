@@ -1,6 +1,8 @@
 import React, { Component, createRef } from "react";
 import NavBar from "../../components/NavBar";
 import axios from "../../services/api";
+import PropTypes from "prop-types";
+
 import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
 
 import { Pagination } from "@material-ui/lab";
@@ -443,5 +445,26 @@ export default class Discussion extends Component {
 				</Snackbar>
 			</>
 		);
+	}
+}
+Discussion.propTypes = {
+	location: PropTypes.shape({
+		pathname: PropTypes.string.isRequired,
+		state: PropTypes.shape({
+			title: PropTypes.string,
+			verse: PropTypes.string,
+			comment: PropTypes.object
+		})
+	}).isRequired,
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+		  abbrev: PropTypes.string.isRequired,
+		})
+	})
+}
+Discussion.defaultProps = {
+	location: {
+		pathname: '/discussions/gn',
+		state: undefined
 	}
 }

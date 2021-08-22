@@ -2,6 +2,7 @@ import React, { Component, createRef } from "react";
 import Snackbar from "@material-ui/core/Snackbar";
 import Alert from "@material-ui/lab/Alert";
 import axios from "../../services/api";
+import PropTypes from "prop-types";
 
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import TitleComment from "../../components/TitleComments";
@@ -444,4 +445,12 @@ export default class Chapter extends Component {
 			</>
 		);
 	}
+}
+Chapter.propTypes = {
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+		  abbrev: PropTypes.string.isRequired,
+		  number: PropTypes.number.isRequired
+		})
+	})
 }
