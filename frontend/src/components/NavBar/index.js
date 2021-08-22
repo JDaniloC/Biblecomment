@@ -75,3 +75,6 @@ export default class NavBar extends Component {
 NavBar.propTypes = {
 	changeChapter: PropTypes.func,
 };
+NavBar.defaultProps = {
+	changeChapter: (a, b) => false,
+};

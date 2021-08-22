@@ -1,10 +1,12 @@
-import React, { Component } from "react";
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
+import { ProfileContext } from "../../contexts/ProfileContext";
+
+import React, { Component } from "react";
 import axios from "../../services/api";
+import PropTypes from "prop-types";
 
 import "balloon-css";
 import "./styles.css";
-import { ProfileContext } from "../../contexts/ProfileContext";
 
 const close = require("../../assets/x.svg");
 const book = require("../../assets/book.svg");
@@ -29,7 +31,7 @@ export default class NewComment extends Component {
 	}
 
 	componentDidMount() {
-		if (typeof this.props.text !== "undefined") {
+		if (this.props.text !== "") {
 			this.setState({ texto: this.props.text });
 		}
 	}
@@ -238,3 +240,21 @@ export default class NewComment extends Component {
 		);
 	}
 }
+NewComment.propTypes = {
+	verso: PropTypes.func,
+	text: PropTypes.string,
+	number: PropTypes.number,
+	abbrev: PropTypes.string,
+	on_title: PropTypes.object,
+	close: PropTypes.func.isRequired,
+	title: PropTypes.string.isRequired,
+	post: PropTypes.bool.isRequired,
+	notification: PropTypes.func.isRequired,
+};
+NewComment.defaultProps = {
+	text: "",
+	number: 0,
+	abbrev: "",
+	verso: () => 0,
+	on_title: { selected: 0 },
+};

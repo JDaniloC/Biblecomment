@@ -5,6 +5,8 @@ import { Pagination } from "@material-ui/lab";
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import "./styles.css";
 
+const PAGE_LENGTH = 5;
+
 export default class Control extends Component {
 	constructor(props) {
 		super(props);
@@ -35,8 +37,8 @@ export default class Control extends Component {
 		this.setState({
 			users: [...this.state.users, ...users],
 		});
-		const length = Math.ceil(this.state.users.length / 5);
-		if (users.length === 5) {
+		const length = Math.ceil(this.state.users.length / PAGE_LENGTH);
+		if (users.length === PAGE_LENGTH) {
 			this.setState({ usersLength: length + 1 });
 		} else {
 			this.setState({
@@ -59,8 +61,8 @@ export default class Control extends Component {
 				}),
 			],
 		});
-		const length = Math.ceil(this.state.comments.length / 5);
-		if (comments.length === 5) {
+		const length = Math.ceil(this.state.comments.length / PAGE_LENGTH);
+		if (comments.length === PAGE_LENGTH) {
 			this.setState({ commentsLength: length + 1 });
 		} else {
 			this.setState({
@@ -78,8 +80,8 @@ export default class Control extends Component {
 		this.setState({
 			discussions: [...this.state.discussions, ...discussions],
 		});
-		const length = Math.ceil(this.state.discussions.length / 5);
-		if (discussions.length === 5) {
+		const length = Math.ceil(this.state.discussions.length / PAGE_LENGTH);
+		if (discussions.length === PAGE_LENGTH) {
 			this.setState({ discussionLength: length + 1 });
 		} else {
 			this.setState({

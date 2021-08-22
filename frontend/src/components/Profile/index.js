@@ -1,76 +1,20 @@
 import React, { Component, createRef } from "react";
-import { Loading } from "../Partials";
 import { Pagination } from "@material-ui/lab";
-import NewComment from "../../components/NewComment";
+import PropTypes from "prop-types";
 
-import "./styles.css";
 import { ProfileContext } from "../../contexts/ProfileContext";
+import NewComment from "../../components/NewComment";
+import { Loading } from "../Partials";
+import "./styles.css";
+
+const dataCollection = require("../../data/collections.json");
+const beliefs = dataCollection.beliefs;
+const states = dataCollection.states;
 
 const heartIcon = require("../../assets/heart.svg");
 const deleteIcon = require("../../assets/delete.svg");
 const editIcon = require("../../assets/edit.svg");
 const gearsIcon = require("../../assets/gears.svg");
-
-const states = [
-	"Acre",
-	"Alagoas",
-	"Amapá",
-	"Amazonas",
-	"Bahia",
-	"Ceará",
-	"Distrito Federal",
-	"Espírito Santo",
-	"Goiás",
-	"Maranhão",
-	"Mato Grosso",
-	"Mato Grosso do Sul",
-	"Minas Gerais",
-	"Pará",
-	"Paraíba",
-	"Paraná",
-	"Pernambuco",
-	"Piauí",
-	"Rio de Janeiro",
-	"Rio Grande do Norte",
-	"Rio Grande do Sul",
-	"Rondônia",
-	"Roraima",
-	"Santa Catarina",
-	"São Paulo",
-	"Sergipe",
-	"Tocantins",
-];
-
-const beliefs = [
-	"Ateu",
-	"Cético",
-	"Espírita",
-	"Budista",
-	"Candomblé",
-	"Hare Krishna",
-	"Islamismo",
-	"Judaismo",
-	"Catolicismo",
-	"Anglicana",
-	"Mórmon",
-	"Ümbanda",
-	"Testemunha de Jeová",
-	"Satanismo",
-	"Metodista",
-	"Brasil para Cristo",
-	"Congregacional",
-	"Batista",
-	"Congregação Cristã no Brasil",
-	"Universal do Reino de Deus",
-	"Internacional da Graça de Deus",
-	"Mundial do Poder de Deus",
-	"Evangelho Quadrangular",
-	"Adventista do Sétimo Dia",
-	"Igreja Luterana",
-	"Presbiteriana",
-	"Assembleia de Deus",
-	"Outro",
-];
 
 export default class Profile extends Component {
 	static contextType = ProfileContext;
@@ -376,13 +320,12 @@ export default class Profile extends Component {
 
 				<div className={this.state.editBox}>
 					<NewComment
+						post={false}
 						ref={this.editComponent}
 						title="Editar comentário"
-						post={false}
-						on_title={false}
+						text={this.state.selected}
 						close={this.closeEditComment}
 						notification={this.props.notification}
-						text={this.state.selected}
 					/>
 				</div>
 				<div className="overlay" style={{ display: this.state.blur }}></div>
@@ -390,3 +333,10 @@ export default class Profile extends Component {
 		);
 	}
 }
+Profile.propTypes = {
+	notification: PropTypes.func.isRequired,
+	closeAccount: PropTypes.func.isRequired,
+	updateAccount: PropTypes.func.isRequired,
+	deleteAccount: PropTypes.func.isRequired,
+	deleteComment: PropTypes.func.isRequired,
+};
