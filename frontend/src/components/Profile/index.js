@@ -339,4 +339,4 @@ Profile.propTypes = {
 	updateAccount: PropTypes.func.isRequired,
 	deleteAccount: PropTypes.func.isRequired,
 	deleteComment: PropTypes.func.isRequired,
-}
+};
