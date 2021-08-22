@@ -259,5 +259,5 @@ NewComment.defaultProps = {
 	number: 0,
 	abbrev: "",
 	verso: () => 0,
-	on_title: { selected: 0 }
-}
+	on_title: { selected: 0 },
+};

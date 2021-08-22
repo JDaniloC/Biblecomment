@@ -2,6 +2,7 @@ import { NotificationContext } from "../../contexts/NotificationContext";
 import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
 import NavBar from "../../components/NavBar";
 import axios from "../../services/api";
+import PropTypes from "prop-types";
 
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import React, { Component, createRef } from "react";
@@ -17,7 +18,8 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
-		let object = { title: ""}, selected = -1;
+		let object = { title: "" },
+			selected = -1;
 		if (typeof this.props.location.state !== "undefined") {
 			selected = this.props.location.state.comment.id;
 			object = this.props.location.state;
@@ -65,7 +67,7 @@ export default class Discussion extends Component {
 					if (response.data.length > 0) {
 						this.closeNewPost();
 						if (!this.alreadyInDiscussions(selected)) {
-							const [ discussion ] = response.data;
+							const [discussion] = response.data;
 							discussion.id = -discussion.id;
 							discussion.answers = JSON.parse(discussion.answers);
 
@@ -422,3 +424,24 @@ export default class Discussion extends Component {
 		);
 	}
 }
+Discussion.propTypes = {
+	location: PropTypes.shape({
+		pathname: PropTypes.string.isRequired,
+		state: PropTypes.shape({
+			title: PropTypes.string,
+			verse: PropTypes.string,
+			comment: PropTypes.object,
+		}),
+	}).isRequired,
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			abbrev: PropTypes.string.isRequired,
+		}),
+	}),
+};
+Discussion.defaultProps = {
+	location: {
+		pathname: "/discussions/gn",
+		state: undefined,
+	},
+};

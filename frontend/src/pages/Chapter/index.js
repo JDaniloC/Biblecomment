@@ -1,5 +1,6 @@
 import React, { Component, createRef } from "react";
 import axios from "../../services/api";
+import PropTypes from "prop-types";
 
 import { NotificationContext } from "../../contexts/NotificationContext";
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
@@ -432,3 +433,11 @@ export default class Chapter extends Component {
 		);
 	}
 }
+Chapter.propTypes = {
+	match: PropTypes.shape({
+		params: PropTypes.shape({
+			abbrev: PropTypes.string.isRequired,
+			number: PropTypes.number.isRequired,
+		}),
+	}),
+};
