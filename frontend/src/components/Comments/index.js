@@ -38,9 +38,9 @@ export default class Comments extends Component {
 							<li key={commentary.id}>
 								<h3 style={{ display: "flex" }}>
 									{commentary.username}
-									{commentary.tags.map((tag, index) => (
+									{commentary.tags.map((tag) => (
 										<img
-											key={index}
+											key={tag}
 											alt={tag}
 											src={this.props.imageFunction(tag)}
 											style={{ height: "1rem", margin: "0 4px" }}

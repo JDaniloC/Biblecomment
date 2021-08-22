@@ -3,6 +3,10 @@ import PropTypes from "prop-types";
 
 import "./styles.css";
 
+
+function getLikeCount(comment) {
+	return JSON.parse(comment.likes).length;
+}
 export default class TitleComment extends Component {
 	constructor(props) {
 		super(props);
@@ -18,10 +22,6 @@ export default class TitleComment extends Component {
 	dateFormat(string) {
 		const [year, month, day] = string.slice(0, 10).split("-");
 		return `${day}/${month}/${year}`;
-	}
-
-	getLikeCount(comment) {
-		return JSON.parse(comment.likes).length;
 	}
 
 	render() {
@@ -47,7 +47,7 @@ export default class TitleComment extends Component {
 							<p style={{ whiteSpace: "break-spaces" }}>{comment.text}</p>
 							<span className="comment-buttons">
 								<p>
-									Favoritado por <b>{this.getLikeCount(comment)}</b> pessoas
+									Favoritado por <b>{getLikeCount(comment)}</b> pessoas
 								</p>
 								<button onClick={() => this.props.likeFunction(comment.id)}>
 									<img src={this.props.imageFunction("heart")} alt="like" />

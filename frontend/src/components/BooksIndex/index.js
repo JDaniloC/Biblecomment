@@ -1,8 +1,9 @@
+import { ProfileContext } from "../../contexts/ProfileContext";
+import { Loading } from "../Partials";
+
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { ProfileContext } from "../../contexts/ProfileContext";
 import axios from "../../services/api";
-import { Loading } from "../Partials";
 import PropTypes from "prop-types";
 
 import "./styles.css";
@@ -63,8 +64,8 @@ export default class BooksIndex extends Component {
 	changePage(evt, chapter, number) {
 		evt.preventDefault();
 
-		if (typeof this.props.changeChapter !== "undefined") {
-			this.props.changeChapter(chapter, number);
+		const changed = this.props.changeChapter(chapter, number);
+		if (changed) {
 			this.closeChapters();
 			this.props.closeBookComponent();
 			window.history.replaceState(
@@ -171,5 +172,8 @@ export default class BooksIndex extends Component {
 	}
 }
 BooksIndex.propTypes = {
-	changeChapter: PropTypes.func,
+	changeChapter: PropTypes.func.isRequired,
+};
+BooksIndex.defaultProps = {
+	changeChapter: (a, b) => false,
 };

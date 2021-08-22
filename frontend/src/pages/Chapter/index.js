@@ -12,12 +12,12 @@ import NavBar from "../../components/NavBar";
 
 import "./styles.css";
 
-const warning = require("../../assets/warning.svg");
-const heart = require("../../assets/heart.svg");
 const chat = require("../../assets/chat.svg");
+const heart = require("../../assets/heart.svg");
+const warning = require("../../assets/warning.svg");
+const person = require("../../assets/person.svg");
 const book = require("../../assets/book.svg");
 const hand = require("../../assets/hand.svg");
-const person = require("../../assets/person.svg");
 const pen = require("../../assets/pen.svg");
 
 export default class Chapter extends Component {
@@ -38,7 +38,7 @@ export default class Chapter extends Component {
 			comments: [],
 			allComments: [],
 			titleComments: [],
-			verseAtual: { linha: null, verse: 0 },
+			currentVerse: { linha: null, verse: 0 },
 
 			aviso: false,
 			mensagem: "",
@@ -67,7 +67,7 @@ export default class Chapter extends Component {
 	}
 
 	getVerse() {
-		return this.state.verseAtual.verse;
+		return this.state.currentVerse.verse;
 	}
 
 	loadChapter(abbrev, number) {
@@ -123,6 +123,7 @@ export default class Chapter extends Component {
 			number = "0" + number;
 		}
 		this.setState({ chapterNumber: number });
+		return true;
 	}
 
 	componentDidMount() {
@@ -136,8 +137,8 @@ export default class Chapter extends Component {
 		const linha = evt.target;
 
 		if (
-			this.state.verseAtual.linha !== null &&
-			this.state.verseAtual.verse === verse
+			this.state.currentVerse.linha !== null &&
+			this.state.currentVerse.verse === verse
 		) {
 			this.closeComments(evt);
 		} else {
@@ -148,11 +149,11 @@ export default class Chapter extends Component {
 					? this.state.navClass
 					: this.state.navClass + " navHide",
 			});
-			if (this.state.verseAtual.linha !== null) {
-				var antigo = this.state.verseAtual;
+			if (this.state.currentVerse.linha !== null) {
+				var antigo = this.state.currentVerse;
 				antigo.linha.style.backgroundColor = "white";
 				this.setState({
-					verseAtual: {
+					currentVerse: {
 						linha: antigo.linha,
 						verse: antigo.verse,
 					},
@@ -160,7 +161,7 @@ export default class Chapter extends Component {
 			}
 
 			linha.style.backgroundColor = "yellow";
-			this.setState({ verseAtual: { verse, linha } });
+			this.setState({ currentVerse: { verse, linha } });
 
 			const thisComments = this.state.allComments.filter((comment) => {
 				return comment.verse === verse + 1;
@@ -175,11 +176,11 @@ export default class Chapter extends Component {
 
 	closeComments(evt) {
 		evt.preventDefault();
-		const linha = this.state.verseAtual.linha;
+		const linha = this.state.currentVerse.linha;
 		linha.style.backgroundColor = "white";
 
 		this.setState({
-			verseAtual: { linha: null, verse: 0 },
+			currentVerse: { linha: null, verse: 0 },
 			comments: [],
 			asideClass: "invisible",
 			mainClass: "main text",
@@ -418,13 +419,13 @@ export default class Chapter extends Component {
 
 				<div className={this.state.newBoxClass}>
 					<NewComment
-						title="Criar comentário"
 						post
-						on_title={this.titleComponent.current}
+						title="Criar comentário"
 						abbrev={this.abbrev}
 						number={this.number}
 						verso={this.getVerse}
 						close={this.closeNewCommentary}
+						on_title={this.titleComponent.current}
 						notification={this.handleCommentNotification}
 					/>
 				</div>

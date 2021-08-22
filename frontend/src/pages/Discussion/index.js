@@ -16,12 +16,12 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
-		let selected = -1;
-		let title = "";
+		let object = { title: ""}, selected = -1;
 		if (typeof this.props.location.state !== "undefined") {
 			selected = this.props.location.state.comment.id;
-			title = this.props.location.state.title;
+			object = this.props.location.state;
 		}
+		let { title } = object;
 
 		this.state = {
 			newPostClass: "pop-up",
@@ -29,12 +29,12 @@ export default class Discussion extends Component {
 			answersClass: "centro",
 			blur: "block",
 
-			title: title,
+			title,
 			abbrev: this.props.match.params.abbrev,
 			discussions: [],
 			answers: [],
 
-			selected: selected,
+			selected,
 			text: "",
 
 			totalPages: 2,
@@ -57,17 +57,16 @@ export default class Discussion extends Component {
 	}
 
 	componentDidMount() {
-		const abbrev = this.state.abbrev;
-		const searchBy = this.state.selected;
+		const { abbrev, selected } = this.state;
 		this.loadDiscussions(1, abbrev);
 
 		if (typeof this.props.location.state !== "undefined") {
 			try {
-				axios.get(`/discussion/${abbrev}/${searchBy}`).then((response) => {
+				axios.get(`/discussion/${abbrev}/${selected}`).then((response) => {
 					if (response.data.length > 0) {
 						this.closeNewPost();
-						if (!this.searchDiscussionId(searchBy)) {
-							const discussion = response.data[0];
+						if (!this.alreadyInDiscussions(selected)) {
+							const [ discussion ] = response.data;
 							discussion.id = -discussion.id;
 							discussion.answers = JSON.parse(discussion.answers);
 
@@ -114,12 +113,11 @@ export default class Discussion extends Component {
 		}
 	}
 
-	searchDiscussionId(id) {
-		this.state.discussions.forEach((element) => {
-			if (element.id === id) {
-				return true;
-			}
-		});
+	alreadyInDiscussions(id) {
+		for (let index = 0; index < this.state.discussions.length; index++) {
+			const discussion = this.state.discussions[index];
+			if (discussion.id === id) return true;
+		}
 		return false;
 	}
 
