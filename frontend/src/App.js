@@ -36,7 +36,7 @@ function App() {
         </NotificationProvider>
       </div>
 
-      <footer>Developed by God through JDaniloC</footer>
+      <footer> Inspired by God, written by JDaniloC </footer>
     </div>
   );
 }

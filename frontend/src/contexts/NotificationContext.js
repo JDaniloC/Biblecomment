@@ -14,7 +14,6 @@ export function NotificationProvider({ children }) {
     }
 
     function handleNotification(severity, message, data = null) {
-        console.log(severity, message);
         setSeverity(severity);
         setMessage(message);
         setIsOpen(true);

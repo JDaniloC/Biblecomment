@@ -191,28 +191,27 @@ export default class Discussion extends Component {
 
 	postNewAnswer() {
 		this.closeAnswers();
+		const selected = this.state.selected;
 		if (this.state.text !== "" && isAuthenticated()) {
 			try {
 				axios
-					.patch(`/discussion/${this.state.selected}/`, {
+					.patch(`/discussion/${selected}/`, {
 						text: this.state.text,
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (typeof response.data === "object" && response.data.answers) {
+						if (typeof response.data === "object" 
+							&& response.data.answers) {
 							const answers = JSON.parse(response.data.answers);
-							let chats = this.state.discussions;
-
-							for (let i = 0; i < chats.length; i++) {
-								if (chats[i].id === this.state.selected) {
-									chats[i].answers = answers;
-								}
-							}
-
-							this.setState({
-								discussions: chats,
+							this.setState(prevState => ({
+								discussions: prevState.map(chat => {
+									if (chat.id === selected) {
+										chat.answers = answers	
+									}
+									return chat;
+								}),
 								text: "",
-							});
+							}));
 
 							this.handleNotification("success", "Resposta enviada");
 						} else {
@@ -440,8 +439,9 @@ Discussion.propTypes = {
 	}),
 };
 Discussion.defaultProps = {
-	location: {
-		pathname: "/discussions/gn",
-		state: undefined,
+	match: {
+		params: {
+			abbrev: "gn"
+		},
 	},
 };

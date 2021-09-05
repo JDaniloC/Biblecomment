@@ -331,7 +331,6 @@ export default class Profile extends Component {
 						post={false}
 						ref={this.editComponent}
 						title="Editar comentário"
-						text={this.state.selected}
 						close={this.closeEditComment}
 						addNewComment={this.handleCommentEdit}
 					/>

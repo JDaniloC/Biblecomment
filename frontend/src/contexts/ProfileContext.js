@@ -1,7 +1,8 @@
-import axios from "../services/api";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { isAuthenticated, TOKEN_KEY } from "../services/auth";
 import { NotificationContext } from "./NotificationContext";
+import axios from "../services/api";
+import PropTypes from "prop-types";
 
 export const ProfileContext = createContext({});
 
@@ -197,4 +198,7 @@ export function ProfileProvider({ children }) {
 			{children}
 		</ProfileContext.Provider>
 	);
+}
+ProfileProvider.propTypes = {
+	children: PropTypes.node.isRequired
 }

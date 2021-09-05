@@ -31,61 +31,63 @@ export default class Control extends Component {
 		this.changeDiscussionsPage = this.changeDiscussionsPage.bind(this);
 	}
 
-	async getUsers(page = 1) {
-		const response = await axios.get("users", { params: { pages: page } });
-		const users = response.data;
-		this.setState({
-			users: [...this.state.users, ...users],
-		});
-		const length = Math.ceil(this.state.users.length / PAGE_LENGTH);
-		if (users.length === PAGE_LENGTH) {
+	async getUsers(currentPage = 1) {
+		const { data: newUsers } = await axios.get("users", 
+			{ params: { pages: currentPage } });
+		const usersCount = this.state.users.length;
+		const length = Math.ceil(usersCount / PAGE_LENGTH);
+
+		this.setState(prevState => ({
+			users: [...prevState.users, ...newUsers]
+		}))
+		if (newUsers.length === PAGE_LENGTH) {
 			this.setState({ usersLength: length + 1 });
 		} else {
 			this.setState({
 				usersLength: length,
-				usersPage: page - 1,
+				usersPage: currentPage - 1,
 			});
 		}
 	}
 
-	async getComments(page = 1) {
-		const response = await axios.get("comments", { params: { pages: page } });
-		const comments = response.data;
-		this.setState({
-			comments: [
-				...this.state.comments,
-				...comments.map((item) => {
-					item.likes = JSON.parse(item.likes);
-					item.reports = JSON.parse(item.reports);
-					return item;
-				}),
-			],
-		});
-		const length = Math.ceil(this.state.comments.length / PAGE_LENGTH);
-		if (comments.length === PAGE_LENGTH) {
+	async getComments(currentPage = 1) {
+		const { data: comments } = await axios.get("comments", 
+			{ params: { pages: currentPage } });
+		const newComments = comments.map((item) => {
+			item.likes = JSON.parse(item.likes);
+			item.reports = JSON.parse(item.reports);
+			return item;
+		})
+		const commentsCount = this.state.comments.length;
+		const length = Math.ceil(commentsCount / PAGE_LENGTH);
+
+		this.setState(prevState => ({
+			comments: [...prevState.comments, ...newComments],
+		}));
+		if (newComments.length === PAGE_LENGTH) {
 			this.setState({ commentsLength: length + 1 });
 		} else {
 			this.setState({
-				commentsPage: page - 1,
+				commentsPage: currentPage - 1,
 				commentsLength: length,
 			});
 		}
 	}
 
-	async getDiscussions(page = 1) {
-		const response = await axios.get("discussions", {
-			params: { pages: page },
-		});
-		const discussions = response.data;
-		this.setState({
-			discussions: [...this.state.discussions, ...discussions],
-		});
-		const length = Math.ceil(this.state.discussions.length / PAGE_LENGTH);
-		if (discussions.length === PAGE_LENGTH) {
+	async getDiscussions(currentPage = 1) {
+		const { data: newDiscussions } = await axios.get(
+			"discussions", { params: { pages: currentPage } });
+		const discussionsCount = this.state.discussions.length
+		const length = Math.ceil(discussionsCount / PAGE_LENGTH);
+		
+		this.setState(prevState => ({
+			discussions: [...prevState.state.discussions, ...newDiscussions],
+		}));
+		if (newDiscussions.length === PAGE_LENGTH) {
 			this.setState({ discussionLength: length + 1 });
 		} else {
 			this.setState({
-				discussionsPage: this.state.discussionsPage - 1,
+				discussionsPage: currentPage - 1,
 				discussionLength: length,
 			});
 		}
@@ -117,9 +119,11 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState({
-						users: this.state.users.filter((user) => user.email !== email),
-					});
+					this.setState(prevState => ({
+						users: prevState.users.filter(
+							user => user.email !== email
+						),
+					}));
 				}
 			});
 	}
@@ -131,11 +135,11 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState({
-						comments: this.state.comments.filter(
+					this.setState(prevState => ({
+						comments: prevState.comments.filter(
 							(comment) => comment.id !== id
 						),
-					});
+					}));
 				}
 			});
 	}
@@ -147,11 +151,11 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState({
-						discussions: this.state.discussions.filter(
+					this.setState(prevState => ({
+						discussions: prevState.discussions.filter(
 							(discussion) => discussion.id !== id
 						),
-					});
+					}));
 				}
 			});
 	}

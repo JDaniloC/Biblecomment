@@ -76,5 +76,5 @@ NavBar.propTypes = {
 	changeChapter: PropTypes.func,
 };
 NavBar.defaultProps = {
-	changeChapter: (a, b) => false,
+	changeChapter: (..._) => false,
 };

@@ -246,7 +246,7 @@ export default class NewComment extends Component {
 NewComment.propTypes = {
 	verso: PropTypes.func,
 	text: PropTypes.string,
-	number: PropTypes.number,
+	number: PropTypes.string,
 	abbrev: PropTypes.string,
 	on_title: PropTypes.object,
 	post: PropTypes.bool.isRequired,
@@ -256,7 +256,7 @@ NewComment.propTypes = {
 }
 NewComment.defaultProps = {
 	text: "",
-	number: 0,
+	number: "",
 	abbrev: "",
 	verso: () => 0,
 	on_title: { selected: 0 },
