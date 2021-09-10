@@ -87,7 +87,8 @@ export default class Chapter extends Component {
 				}
 			});
 		} catch (err) {
-			this.handleNotification("error",
+			this.handleNotification(
+				"error",
 				"Não consegui me conectar com o servidor"
 			);
 		}
@@ -116,7 +117,8 @@ export default class Chapter extends Component {
 					}
 				});
 		} catch (err) {
-			this.handleNotification("error",
+			this.handleNotification(
+				"error",
 				"Não consegui me conectar com o servidor"
 			);
 		}
@@ -295,26 +297,17 @@ export default class Chapter extends Component {
 						likes: true,
 					})
 					.then(() => {
-						this.handleNotification(
-							"success",
-							"Adicionado aos favoritos"
-						);
+						this.handleNotification("success", "Adicionado aos favoritos");
 						const found = searchLike(this.state.comments);
 						if (!found) {
 							searchLike(this.state.titleComments);
 						}
 					});
 			} catch (error) {
-				this.handleNotification(
-					"error",
-					error.toString()
-				);
+				this.handleNotification("error", error.toString());
 			}
 		} else {
-			this.handleNotification(
-				"warning",
-				"Você precisa está logado"
-			);
+			this.handleNotification("warning", "Você precisa está logado");
 		}
 	}
 
@@ -329,22 +322,13 @@ export default class Chapter extends Component {
 						reports: message,
 					})
 					.then(() => {
-						this.handleNotification(
-							"success",
-							"Comentário reportado!"
-						);
+						this.handleNotification("success", "Comentário reportado!");
 					});
 			} catch (error) {
-				this.handleNotification(
-					"error",
-					error.toString()
-				);
+				this.handleNotification("error", error.toString());
 			}
 		} else {
-			this.handleNotification(
-				"warning",
-				"Você precisa está logado"
-			);
+			this.handleNotification("warning", "Você precisa está logado");
 		}
 	}
 

@@ -14,7 +14,7 @@ const close = require("../../assets/x.svg");
 
 export default class Discussion extends Component {
 	static contextType = NotificationContext;
-	
+
 	constructor(props) {
 		super(props);
 
@@ -42,7 +42,7 @@ export default class Discussion extends Component {
 
 			totalPages: 2,
 			currentPage: 1,
-			loadedPages: [1]
+			loadedPages: [1],
 		};
 
 		this.textArea = createRef();
@@ -57,7 +57,7 @@ export default class Discussion extends Component {
 	componentDidMount() {
 		const { handleNotification } = this.context;
 		this.handleNotification = handleNotification;
-		
+
 		const { abbrev, selected } = this.state;
 		this.loadDiscussions(1, abbrev);
 

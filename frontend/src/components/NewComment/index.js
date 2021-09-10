@@ -83,10 +83,7 @@ export default class NewComment extends Component {
 							tags,
 						})
 						.then((response) => {
-							this.context.handleNotification(
-								"success",
-								"Comentário enviado!"
-							);
+							this.context.handleNotification("success", "Comentário enviado!");
 							this.props.addNewComment(response.data);
 							this.context.addNewComment(response.data);
 						});
@@ -98,24 +95,15 @@ export default class NewComment extends Component {
 							tags,
 						})
 						.then((response) => {
-							this.context.handleNotification(
-								"success",
-								"Comentário editado!"
-							);
+							this.context.handleNotification("success", "Comentário editado!");
 							this.props.addNewComment(response.data);
 						});
 				}
 			} else {
-				this.context.handleNotification(
-					"info", 
-					"Você precisa estar logado", 
-				);
+				this.context.handleNotification("info", "Você precisa estar logado");
 			}
 		} catch (error) {
-			this.context.handleNotification(
-				"error", 
-				error.toString(), 
-			);
+			this.context.handleNotification("error", error.toString());
 		}
 		this.setState({ texto: "" });
 		this.props.close(evt);
@@ -253,7 +241,7 @@ NewComment.propTypes = {
 	close: PropTypes.func.isRequired,
 	title: PropTypes.string.isRequired,
 	addNewComment: PropTypes.func.isRequired,
-}
+};
 NewComment.defaultProps = {
 	text: "",
 	number: 0,

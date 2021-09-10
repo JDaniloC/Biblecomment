@@ -27,7 +27,7 @@ export function ProfileProvider({ children }) {
 	const [currentFPage, setCurrentFPage] = useState(1);
 	const [currentCPage, setCurrentCPage] = useState(1);
 
-	const { handleNotification } = useContext(NotificationContext)
+	const { handleNotification } = useContext(NotificationContext);
 
 	function loadUserInfos(response) {
 		const data = response.data;
@@ -93,8 +93,7 @@ export function ProfileProvider({ children }) {
 					}
 				});
 		} catch (error) {
-			handleNotification("error",
-				"Problema no servidor")
+			handleNotification("error", "Problema no servidor");
 		}
 	}
 
@@ -126,8 +125,7 @@ export function ProfileProvider({ children }) {
 					}
 				});
 		} catch (error) {
-			handleNotification("error", 
-				"Problema no servidor")
+			handleNotification("error", "Problema no servidor");
 		}
 	}
 
@@ -191,7 +189,7 @@ export function ProfileProvider({ children }) {
 				getFavorites,
 				setStateName,
 				addNewComment,
-				handleNotification
+				handleNotification,
 			}}
 		>
 			{children}
