@@ -9,10 +9,10 @@ import "balloon-css";
 import "./styles.css";
 
 const close = require("../../assets/x.svg");
+const pen = require("../../assets/pen.svg");
 const book = require("../../assets/book.svg");
 const hand = require("../../assets/hand.svg");
 const person = require("../../assets/person.svg");
-const pen = require("../../assets/pen.svg");
 
 export default class NewComment extends Component {
 	static contextType = ProfileContext;
@@ -40,19 +40,17 @@ export default class NewComment extends Component {
 		evt.preventDefault();
 
 		if (this.state.nome === "") {
-			return this.props.notification(
-				"Você precisa estar logado!",
+			return this.context.handleNotification(
 				"info",
-				null
+				"Você precisa estar logado!"
 			);
 		} else if (
 			this.state.texto.length < 200 ||
 			this.state.texto.length > 1000
 		) {
-			return this.props.notification(
+			return this.context.handleNotification(
 				"O mínimo de caracteres é 200 e o máximo de 1000!",
-				"info",
-				null
+				"info"
 			);
 		}
 		const tags = [];
@@ -85,11 +83,8 @@ export default class NewComment extends Component {
 							tags,
 						})
 						.then((response) => {
-							this.props.notification(
-								"Comentário enviado!",
-								"success",
-								response.data
-							);
+							this.context.handleNotification("success", "Comentário enviado!");
+							this.props.addNewComment(response.data);
 							this.context.addNewComment(response.data);
 						});
 				} else {
@@ -100,19 +95,15 @@ export default class NewComment extends Component {
 							tags,
 						})
 						.then((response) => {
-							this.props.notification(
-								"Comentário editado!",
-								"success",
-								response.data
-							);
+							this.context.handleNotification("success", "Comentário editado!");
+							this.props.addNewComment(response.data);
 						});
 				}
 			} else {
-				this.props.notification("Você precisa estar logado", "info", null);
+				this.context.handleNotification("info", "Você precisa estar logado");
 			}
 		} catch (error) {
-			console.log(error);
-			this.props.notification("Problema na requisição", "error", null);
+			this.context.handleNotification("error", error.toString());
 		}
 		this.setState({ texto: "" });
 		this.props.close(evt);
@@ -165,7 +156,7 @@ export default class NewComment extends Component {
 								}}
 								id={`devocional${tipo}`}
 							/>
-							<img className="tag" src={hand} alt="handicon" />
+							<img className="tag" src={hand} alt="handIcon" />
 						</label>
 						<label
 							aria-label="Exegese"
@@ -181,7 +172,7 @@ export default class NewComment extends Component {
 								}}
 								id={"exegese" + tipo}
 							/>
-							<img className="tag" src={book} alt="bookicon" />
+							<img className="tag" src={book} alt="bookIcon" />
 						</label>
 						<label
 							aria-label="Inspirado"
@@ -197,7 +188,7 @@ export default class NewComment extends Component {
 								}}
 								id={"inspirado" + tipo}
 							/>
-							<img className="tag" src={pen} alt="penicon" />
+							<img className="tag" src={pen} alt="penIcon" />
 						</label>
 						<label
 							aria-label="Pessoal"
@@ -213,7 +204,7 @@ export default class NewComment extends Component {
 								}}
 								id={"pessoal" + tipo}
 							/>
-							<img className="tag" src={person} alt="personicon" />
+							<img className="tag" src={person} alt="personIcon" />
 						</label>
 					</div>
 					<textarea
@@ -246,10 +237,10 @@ NewComment.propTypes = {
 	number: PropTypes.number,
 	abbrev: PropTypes.string,
 	on_title: PropTypes.object,
+	post: PropTypes.bool.isRequired,
 	close: PropTypes.func.isRequired,
 	title: PropTypes.string.isRequired,
-	post: PropTypes.bool.isRequired,
-	notification: PropTypes.func.isRequired,
+	addNewComment: PropTypes.func.isRequired,
 };
 NewComment.defaultProps = {
 	text: "",

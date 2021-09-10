@@ -1,9 +1,8 @@
 import React, { Component, createRef } from "react";
-import Snackbar from "@material-ui/core/Snackbar";
-import Alert from "@material-ui/lab/Alert";
 import axios from "../../services/api";
 import PropTypes from "prop-types";
 
+import { NotificationContext } from "../../contexts/NotificationContext";
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import TitleComment from "../../components/TitleComments";
 import NewComment from "../../components/NewComment";
@@ -22,6 +21,8 @@ const hand = require("../../assets/hand.svg");
 const pen = require("../../assets/pen.svg");
 
 export default class Chapter extends Component {
+	static contextType = NotificationContext;
+
 	constructor(props) {
 		super(props);
 
@@ -40,10 +41,6 @@ export default class Chapter extends Component {
 			allComments: [],
 			titleComments: [],
 			currentVerse: { linha: null, verse: 0 },
-
-			aviso: false,
-			mensagem: "",
-			severidade: "",
 		};
 
 		// to parent access children's state
@@ -59,12 +56,18 @@ export default class Chapter extends Component {
 		this.handleLike = this.handleLike.bind(this);
 		this.handleReport = this.handleReport.bind(this);
 
-		this.handleNotification = this.handleNotification.bind(this);
-		this.handleCommentNotification = this.handleCommentNotification.bind(this);
-
-		this.closeAviso = this.closeAviso.bind(this);
 		this.closeComments = this.closeComments.bind(this);
 		this.closeNewCommentary = this.closeNewCommentary.bind(this);
+
+		this.addNewComment = this.addNewComment.bind(this);
+	}
+
+	componentDidMount() {
+		const { abbrev, number } = this.props.match.params;
+		const { handleNotification } = this.context;
+
+		this.loadChapter(abbrev, number);
+		this.handleNotification = handleNotification;
 	}
 
 	getVerse() {
@@ -85,8 +88,8 @@ export default class Chapter extends Component {
 			});
 		} catch (err) {
 			this.handleNotification(
-				"Não consegui me conectar com o servidor",
-				"error"
+				"error",
+				"Não consegui me conectar com o servidor"
 			);
 		}
 
@@ -115,8 +118,8 @@ export default class Chapter extends Component {
 				});
 		} catch (err) {
 			this.handleNotification(
-				"Não consegui me conectar com o servidor",
-				"error"
+				"error",
+				"Não consegui me conectar com o servidor"
 			);
 		}
 
@@ -125,12 +128,6 @@ export default class Chapter extends Component {
 		}
 		this.setState({ chapterNumber: number });
 		return true;
-	}
-
-	componentDidMount() {
-		let { abbrev, number } = this.props.match.params;
-
-		this.loadChapter(abbrev, number);
 	}
 
 	handleComments(evt, verse) {
@@ -231,31 +228,19 @@ export default class Chapter extends Component {
 		});
 	}
 
-	handleNotification(mensagem, severidade) {
-		this.setState({
-			aviso: true,
-			mensagem: mensagem,
-			severidade: severidade,
-		});
-	}
+	addNewComment(comment) {
+		if (comment.on_title) {
+			const lista = this.state.titleComments;
+			lista.push(comment);
+			this.setState({ titleComments: lista });
+		} else {
+			const lista = this.state.comments;
+			lista.push(comment);
+			this.setState({ comments: lista });
 
-	handleCommentNotification(mensagem, severidade, comment) {
-		this.handleNotification(mensagem, severidade);
-
-		if (comment !== null) {
-			if (comment.on_title) {
-				const lista = this.state.titleComments;
-				lista.push(comment);
-				this.setState({ titleComments: lista });
-			} else {
-				const lista = this.state.comments;
-				lista.push(comment);
-				this.setState({ comments: lista });
-
-				const all = this.state.allComments;
-				all.push(comment);
-				this.setState({ allComments: all });
-			}
+			const all = this.state.allComments;
+			all.push(comment);
+			this.setState({ allComments: all });
 		}
 	}
 
@@ -312,17 +297,17 @@ export default class Chapter extends Component {
 						likes: true,
 					})
 					.then(() => {
-						this.handleNotification("Adicionado aos favoritos", "success");
+						this.handleNotification("success", "Adicionado aos favoritos");
 						const found = searchLike(this.state.comments);
 						if (!found) {
 							searchLike(this.state.titleComments);
 						}
 					});
 			} catch (error) {
-				this.handleNotification("Problema na requisição", "error");
+				this.handleNotification("error", error.toString());
 			}
 		} else {
-			this.handleNotification("Você precisa está logado", "warning");
+			this.handleNotification("warning", "Você precisa está logado");
 		}
 	}
 
@@ -337,13 +322,13 @@ export default class Chapter extends Component {
 						reports: message,
 					})
 					.then(() => {
-						this.handleNotification("Comentário reportado!", "success");
+						this.handleNotification("success", "Comentário reportado!");
 					});
 			} catch (error) {
-				this.handleNotification("Problema na requisição", "error");
+				this.handleNotification("error", error.toString());
 			}
 		} else {
-			this.handleNotification("Você precisa está logado", "warning");
+			this.handleNotification("warning", "Você precisa está logado");
 		}
 	}
 
@@ -356,10 +341,6 @@ export default class Chapter extends Component {
 				comment,
 			},
 		});
-	}
-
-	closeAviso() {
-		this.setState({ aviso: false });
 	}
 
 	render() {
@@ -426,22 +407,12 @@ export default class Chapter extends Component {
 						number={this.number}
 						verso={this.getVerse}
 						close={this.closeNewCommentary}
+						addNewComment={this.addNewComment}
 						on_title={this.titleComponent.current}
-						notification={this.handleCommentNotification}
 					/>
 				</div>
 
 				<div className="overlay" style={{ display: this.state.blur }} />
-
-				<Snackbar
-					open={this.state.aviso}
-					autoHideDuration={2000}
-					onClose={this.closeAviso}
-				>
-					<Alert onClose={this.closeAviso} severity={this.state.severidade}>
-						{this.state.mensagem}
-					</Alert>
-				</Snackbar>
 			</>
 		);
 	}

@@ -26,17 +26,19 @@ export default class Profile extends Component {
 			perfilClass: "invisible",
 			editBox: "invisible",
 			blur: "none",
+			selected: 0,
 			perfilDisplay: "contents",
 			configDisplay: "none",
 			buttonDisplay: "block",
 		};
 
 		this.editComponent = createRef();
-		this.closeEditComment = this.closeEditComment.bind(this);
-		this.changeCommentPage = this.changeCommentPage.bind(this);
-		this.changeFavoritePage = this.changeFavoritePage.bind(this);
 		this.closeAccount = this.closeAccount.bind(this);
 		this.handleConfig = this.handleConfig.bind(this);
+		this.closeEditComment = this.closeEditComment.bind(this);
+		this.handleCommentEdit = this.handleCommentEdit.bind(this);
+		this.changeCommentPage = this.changeCommentPage.bind(this);
+		this.changeFavoritePage = this.changeFavoritePage.bind(this);
 	}
 
 	changeFavoritePage(_, page) {
@@ -61,11 +63,16 @@ export default class Profile extends Component {
 		return array.slice(inicio, final);
 	}
 
+	handleCommentEdit(comment) {
+		this.context.commentaries[this.state.selected].text = comment.text;
+	}
 	editComment(identificador) {
 		let selected = "";
-		this.context.commentaries.forEach((element) => {
+		let index = 0;
+		this.context.commentaries.forEach((element, i) => {
 			if (element.id === identificador) {
 				selected = element.text;
+				index = i;
 			}
 		});
 		this.editComponent.current.setState({
@@ -74,6 +81,7 @@ export default class Profile extends Component {
 		});
 
 		this.setState({
+			selected: index,
 			blur: "block",
 			editBox: "visible centro",
 		});
@@ -325,7 +333,7 @@ export default class Profile extends Component {
 						title="Editar comentário"
 						text={this.state.selected}
 						close={this.closeEditComment}
-						notification={this.props.notification}
+						addNewComment={this.handleCommentEdit}
 					/>
 				</div>
 				<div className="overlay" style={{ display: this.state.blur }}></div>
@@ -334,7 +342,6 @@ export default class Profile extends Component {
 	}
 }
 Profile.propTypes = {
-	notification: PropTypes.func.isRequired,
 	closeAccount: PropTypes.func.isRequired,
 	updateAccount: PropTypes.func.isRequired,
 	deleteAccount: PropTypes.func.isRequired,

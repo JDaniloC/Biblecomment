@@ -1,20 +1,20 @@
-import React, { Component, createRef } from "react";
+import { NotificationContext } from "../../contexts/NotificationContext";
+import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
 import NavBar from "../../components/NavBar";
 import axios from "../../services/api";
 import PropTypes from "prop-types";
 
-import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
-
-import { Pagination } from "@material-ui/lab";
-import Snackbar from "@material-ui/core/Snackbar";
-import Alert from "@material-ui/lab/Alert";
 import MDEditor, { commands } from "@uiw/react-md-editor";
+import React, { Component, createRef } from "react";
+import { Pagination } from "@material-ui/lab";
 
 import "./styles.css";
 
 const close = require("../../assets/x.svg");
 
 export default class Discussion extends Component {
+	static contextType = NotificationContext;
+
 	constructor(props) {
 		super(props);
 
@@ -43,15 +43,10 @@ export default class Discussion extends Component {
 			totalPages: 2,
 			currentPage: 1,
 			loadedPages: [1],
-
-			aviso: false,
-			severidade: "success",
-			mensagem: "",
 		};
 
 		this.textArea = createRef();
 
-		this.closeAviso = this.closeAviso.bind(this);
 		this.closeNewPost = this.closeNewPost.bind(this);
 		this.closeAnswers = this.closeAnswers.bind(this);
 		this.changeText = this.changeText.bind(this);
@@ -60,6 +55,9 @@ export default class Discussion extends Component {
 	}
 
 	componentDidMount() {
+		const { handleNotification } = this.context;
+		this.handleNotification = handleNotification;
+
 		const { abbrev, selected } = this.state;
 		this.loadDiscussions(1, abbrev);
 
@@ -79,8 +77,8 @@ export default class Discussion extends Component {
 						}
 					}
 				});
-			} catch (err) {
-				this.handleNotification(err, "error");
+			} catch (error) {
+				this.handleNotification("error", error.toString());
 			}
 		}
 	}
@@ -108,11 +106,11 @@ export default class Discussion extends Component {
 						}));
 					}
 				} else {
-					this.handleNotification("Algo deu errado", "warning");
+					this.handleNotification("warning", "Algo deu errado");
 				}
 			});
-		} catch (err) {
-			this.handleNotification(err, "error");
+		} catch (error) {
+			this.handleNotification("error", error.toString());
 		}
 	}
 
@@ -216,16 +214,16 @@ export default class Discussion extends Component {
 								text: "",
 							});
 
-							this.handleNotification("Resposta enviada", "success");
+							this.handleNotification("success", "Resposta enviada");
 						} else {
-							this.handleNotification("Algo deu errado", "warning");
+							this.handleNotification("warning", "Algo deu errado");
 						}
 					});
-			} catch (err) {
-				this.handleNotification(err, "error");
+			} catch (error) {
+				this.handleNotification("error", error.toString());
 			}
 		} else if (!isAuthenticated()) {
-			this.handleNotification("Você precisa estar logado", "info");
+			this.handleNotification("info", "Você precisa estar logado");
 		}
 	}
 
@@ -249,18 +247,6 @@ export default class Discussion extends Component {
 		var final = inicio + 5;
 
 		return this.state.discussions.slice(inicio, final);
-	}
-
-	handleNotification(mensagem, severidade) {
-		this.setState({
-			aviso: true,
-			mensagem: mensagem,
-			severidade: severidade,
-		});
-	}
-
-	closeAviso() {
-		this.setState({ aviso: false });
 	}
 
 	render() {
@@ -319,10 +305,10 @@ export default class Discussion extends Component {
 						<Pagination
 							showFirstButton
 							showLastButton
-							count={this.state.totalPages}
 							size="small"
-							page={this.state.currentPage}
 							shape="rounded"
+							count={this.state.totalPages}
+							page={this.state.currentPage}
 							onChange={this.handlePaginate}
 						/>
 					</div>
@@ -434,16 +420,6 @@ export default class Discussion extends Component {
 				</div>
 
 				<div className="overlay" style={{ display: this.state.blur }} />
-
-				<Snackbar
-					open={this.state.aviso}
-					autoHideDuration={2000}
-					onClose={this.closeAviso}
-				>
-					<Alert onClose={this.closeAviso} severity={this.state.severidade}>
-						{this.state.mensagem}
-					</Alert>
-				</Snackbar>
 			</>
 		);
 	}
