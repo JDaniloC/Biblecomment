@@ -6,38 +6,31 @@ export const NotificationContext = createContext({});
 
 export function NotificationProvider({ children }) {
 	const [message, setMessage] = useState("");
-    const [isOpen, setIsOpen] = useState(false);
-    const [severity, setSeverity] = useState("");
+	const [isOpen, setIsOpen] = useState(false);
+	const [severity, setSeverity] = useState("");
 
-    function closeFunction() {
-        setIsOpen(false);
-    }
+	function closeFunction() {
+		setIsOpen(false);
+	}
 
-    function handleNotification(severity, message, data = null) {
-        setSeverity(severity);
-        setMessage(message);
-        setIsOpen(true);
-    }
+	function handleNotification(severity, message, data = null) {
+		setSeverity(severity);
+		setMessage(message);
+		setIsOpen(true);
+	}
 
 	return (
 		<NotificationContext.Provider
 			value={{
-				handleNotification
+				handleNotification,
 			}}
 		>
 			{children}
-            <Snackbar
-                open={isOpen}
-                autoHideDuration={2000}
-                onClose={closeFunction}
-            >
-                <Alert
-                    onClose={closeFunction}
-                    severity={severity}
-                >
-                    {message}
-                </Alert>
-            </Snackbar>
+			<Snackbar open={isOpen} autoHideDuration={2000} onClose={closeFunction}>
+				<Alert onClose={closeFunction} severity={severity}>
+					{message}
+				</Alert>
+			</Snackbar>
 		</NotificationContext.Provider>
 	);
 }

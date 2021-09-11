@@ -14,7 +14,7 @@ const close = require("../../assets/x.svg");
 
 export default class Discussion extends Component {
 	static contextType = NotificationContext;
-	
+
 	constructor(props) {
 		super(props);
 
@@ -42,7 +42,7 @@ export default class Discussion extends Component {
 
 			totalPages: 2,
 			currentPage: 1,
-			loadedPages: [1]
+			loadedPages: [1],
 		};
 
 		this.textArea = createRef();
@@ -57,7 +57,7 @@ export default class Discussion extends Component {
 	componentDidMount() {
 		const { handleNotification } = this.context;
 		this.handleNotification = handleNotification;
-		
+
 		const { abbrev, selected } = this.state;
 		this.loadDiscussions(1, abbrev);
 
@@ -200,13 +200,12 @@ export default class Discussion extends Component {
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (typeof response.data === "object" 
-							&& response.data.answers) {
+						if (typeof response.data === "object" && response.data.answers) {
 							const answers = JSON.parse(response.data.answers);
-							this.setState(prevState => ({
-								discussions: prevState.map(chat => {
+							this.setState((prevState) => ({
+								discussions: prevState.map((chat) => {
 									if (chat.id === selected) {
-										chat.answers = answers	
+										chat.answers = answers;
 									}
 									return chat;
 								}),
@@ -441,7 +440,7 @@ Discussion.propTypes = {
 Discussion.defaultProps = {
 	match: {
 		params: {
-			abbrev: "gn"
+			abbrev: "gn",
 		},
 	},
 };

@@ -32,14 +32,15 @@ export default class Control extends Component {
 	}
 
 	async getUsers(currentPage = 1) {
-		const { data: newUsers } = await axios.get("users", 
-			{ params: { pages: currentPage } });
+		const { data: newUsers } = await axios.get("users", {
+			params: { pages: currentPage },
+		});
 		const usersCount = this.state.users.length;
 		const length = Math.ceil(usersCount / PAGE_LENGTH);
 
-		this.setState(prevState => ({
-			users: [...prevState.users, ...newUsers]
-		}))
+		this.setState((prevState) => ({
+			users: [...prevState.users, ...newUsers],
+		}));
 		if (newUsers.length === PAGE_LENGTH) {
 			this.setState({ usersLength: length + 1 });
 		} else {
@@ -51,17 +52,18 @@ export default class Control extends Component {
 	}
 
 	async getComments(currentPage = 1) {
-		const { data: comments } = await axios.get("comments", 
-			{ params: { pages: currentPage } });
+		const { data: comments } = await axios.get("comments", {
+			params: { pages: currentPage },
+		});
 		const newComments = comments.map((item) => {
 			item.likes = JSON.parse(item.likes);
 			item.reports = JSON.parse(item.reports);
 			return item;
-		})
+		});
 		const commentsCount = this.state.comments.length;
 		const length = Math.ceil(commentsCount / PAGE_LENGTH);
 
-		this.setState(prevState => ({
+		this.setState((prevState) => ({
 			comments: [...prevState.comments, ...newComments],
 		}));
 		if (newComments.length === PAGE_LENGTH) {
@@ -75,12 +77,13 @@ export default class Control extends Component {
 	}
 
 	async getDiscussions(currentPage = 1) {
-		const { data: newDiscussions } = await axios.get(
-			"discussions", { params: { pages: currentPage } });
-		const discussionsCount = this.state.discussions.length
+		const { data: newDiscussions } = await axios.get("discussions", {
+			params: { pages: currentPage },
+		});
+		const discussionsCount = this.state.discussions.length;
 		const length = Math.ceil(discussionsCount / PAGE_LENGTH);
-		
-		this.setState(prevState => ({
+
+		this.setState((prevState) => ({
 			discussions: [...prevState.state.discussions, ...newDiscussions],
 		}));
 		if (newDiscussions.length === PAGE_LENGTH) {
@@ -119,10 +122,8 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState(prevState => ({
-						users: prevState.users.filter(
-							user => user.email !== email
-						),
+					this.setState((prevState) => ({
+						users: prevState.users.filter((user) => user.email !== email),
 					}));
 				}
 			});
@@ -135,10 +136,8 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState(prevState => ({
-						comments: prevState.comments.filter(
-							(comment) => comment.id !== id
-						),
+					this.setState((prevState) => ({
+						comments: prevState.comments.filter((comment) => comment.id !== id),
 					}));
 				}
 			});
@@ -151,7 +150,7 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState(prevState => ({
+					this.setState((prevState) => ({
 						discussions: prevState.discussions.filter(
 							(discussion) => discussion.id !== id
 						),
