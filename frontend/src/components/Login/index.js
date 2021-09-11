@@ -35,13 +35,13 @@ export default class Login extends Component {
 	}
 
 	componentDidMount() {
-		const { 
+		const {
 			setFormClass,
-			setFavorites, 
-			loadUserInfos, 
-			setCommentaries, 
-			handleNotification
-		} =this.context;
+			setFavorites,
+			loadUserInfos,
+			setCommentaries,
+			handleNotification,
+		} = this.context;
 
 		this.setFavorites = setFavorites;
 		this.setFormClass = setFormClass;
@@ -220,10 +220,7 @@ export default class Login extends Component {
 					updateAccount={this.updateAccount}
 					deleteAccount={this.deleteAccount}
 				/>
-				<form
-					className={this.context.formClass}
-					onSubmit={this.handleForm}
-				>
+				<form className={this.context.formClass} onSubmit={this.handleForm}>
 					<input
 						type="email"
 						name="email"
