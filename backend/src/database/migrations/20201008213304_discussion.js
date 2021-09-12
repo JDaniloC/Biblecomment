@@ -1,7 +1,7 @@
 exports.up = function (knex) {
   return knex.schema
     .dropTableIfExists("discussions")
-    .createTable("discussions", function (table) {
+    .createTable("discussions", (table) => {
       table.increments();
 
       table.string("book_abbrev");

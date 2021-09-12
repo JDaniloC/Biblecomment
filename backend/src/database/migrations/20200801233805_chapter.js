@@ -1,7 +1,7 @@
 exports.up = function (knex) {
   return knex.schema
     .dropTableIfExists("chapters")
-    .createTable("chapters", function (table) {
+    .createTable("chapters", (table) => {
       table.increments("id");
 
       table.string("book_abbrev");

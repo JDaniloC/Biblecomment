@@ -1,7 +1,7 @@
 exports.up = function (knex) {
   return knex.schema
     .dropTableIfExists("users")
-    .createTable("users", function (table) {
+    .createTable("users", (table) => {
       table.string("email").primary();
       table.string("password").notNullable();
       table.string("name").notNullable().unique();

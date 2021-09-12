@@ -46,7 +46,7 @@ module.exports = {
 
 			return response.json(book);
 		} else {
-			response.json({ error: "insuficient params: abbrev" });
+			return response.json({ error: "insufficient params: abbrev" });
 		}
 	},
 };

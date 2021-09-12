@@ -1,5 +1,7 @@
 const connection = require("../database/connection");
 
+const PAGE_LENGTH = 5;
+
 module.exports = {
 	async index(request, response) {
 		let { abbrev } = request.params;
@@ -11,14 +13,13 @@ module.exports = {
 		if (book) {
 			const discussions = await connection("discussions")
 				.where("book_abbrev", abbrev)
-				.limit(5)
-				.offset((pages - 1) * 5)
+				.limit(PAGE_LENGTH)
+				.offset((pages - 1) * PAGE_LENGTH)
 				.select("*");
 
 			return response.json(discussions);
-		} else {
-			return response.json([]);
 		}
+		return response.json([]);
 	},
 
 	async show(request, response) {
@@ -35,9 +36,8 @@ module.exports = {
 				.select("*");
 
 			return response.json(discussion);
-		} else {
-			return response.json([]);
 		}
+		return response.json([]);
 	},
 
 	async store(request, response) {
@@ -49,8 +49,7 @@ module.exports = {
 		if (
 			[comment_id, token, verse_reference, verse_text, question].some(
 				(element) => typeof element === "undefined"
-			) ||
-			question === ""
+			) || question === ""
 		) {
 			return response.json({
 				error:
@@ -95,9 +94,8 @@ module.exports = {
 				question,
 				answers: JSON.stringify([]),
 			});
-		} else {
-			return response.json({ error: "Book/Comment don't exist" });
 		}
+		return response.json({ error: "Book/Comment don't exist" });
 	},
 
 	async update(request, response) {
@@ -140,9 +138,8 @@ module.exports = {
 				text,
 				answers,
 			});
-		} else {
-			return response.json({ Unauthorized: "Você precisa estar logado" });
 		}
+		return response.json({ Unauthorized: "Você precisa estar logado" });
 	},
 
 	async delete(request, response) {
@@ -150,7 +147,7 @@ module.exports = {
 		const { token } = request.body;
 
 		if (typeof token === "undefined") {
-			return response.json({ msg: "insulficient body: token" });
+			return response.json({ msg: "insufficient body: token" });
 		}
 
 		const user = await connection("users")
@@ -171,8 +168,7 @@ module.exports = {
 				.delete();
 
 			return response.json(deletedDiscussion);
-		} else {
-			return response.json({ msg: "Not authorized" });
 		}
+		return response.json({ msg: "Not authorized" });
 	},
 };

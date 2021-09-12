@@ -29,11 +29,11 @@ module.exports = {
 			});
 
 			return response.json({ msg: "Usuário criado com sucesso" });
-		} else {
-			return response.json({
-				error: "E-mail ou nome de usuário já cadastrado",
-			});
 		}
+
+		return response.json({
+			error: "E-mail ou nome de usuário já cadastrado",
+		});
 	},
 
 	async login(request, response) {
@@ -48,12 +48,13 @@ module.exports = {
 		const user = await connection("users")
 			.where("email", email.toLowerCase())
 			.first();
+		if (user) {
+			return response.json(
+				user.password === md5(password) ? 
+					user : { error: "Senha incorreta" })
 
-		return user
-			? response.json(
-					user.password === md5(password) ? user : { error: "Senha incorreta" }
-			  )
-			: response.json({ error: "E-mail não cadastrado" });
+		}
+		return response.json({ error: "E-mail não cadastrado" });
 	},
 
 	async show(request, response) {

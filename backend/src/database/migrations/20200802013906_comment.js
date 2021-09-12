@@ -1,7 +1,7 @@
 exports.up = function (knex) {
   return knex.schema
     .dropTableIfExists("comments")
-    .createTable("comments", function (table) {
+    .createTable("comments", (table) => {
       table.increments();
 
       table.integer("chapter_id").unsigned();

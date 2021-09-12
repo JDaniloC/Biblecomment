@@ -1,5 +1,7 @@
 const connection = require("../database/connection");
 
+const CREATED_STATUS = 201;
+
 module.exports = {
 	async saveComments(request, response) {
 		return response.json(await connection("comments"));
@@ -9,7 +11,7 @@ module.exports = {
 		for (const comment of comments) {
 			connection("comments").insert(comment);
 		}
-		return response.status(201).json({});
+		return response.status(CREATED_STATUS).json({});
 	},
 	async saveUsers(request, response) {
 		return response.json(await connection("users"));
@@ -19,7 +21,7 @@ module.exports = {
 		for (const user of users) {
 			connection("users").insert(user);
 		}
-		return response.status(201).json({});
+		return response.status(CREATED_STATUS).json({});
 	},
 	async saveDiscussions(request, response) {
 		return response.json(await connection("discussions"));
@@ -29,6 +31,6 @@ module.exports = {
 		for (const discussion of discussions) {
 			connection("discussions").insert(discussion);
 		}
-		return response.status(201).json({});
+		return response.status(CREATED_STATUS).json({});
 	},
 };
