@@ -12,7 +12,7 @@ module.exports = {
 			});
 		}
 
-		var exists = await connection("users")
+		const exists = await connection("users")
 			.where("email", email)
 			.orWhere("name", name)
 			.first();

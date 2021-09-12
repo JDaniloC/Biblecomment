@@ -76,5 +76,6 @@ NavBar.propTypes = {
 	changeChapter: PropTypes.func,
 };
 NavBar.defaultProps = {
-	changeChapter: (..._) => false,
+	// eslint-disable-next-line
+	changeChapter: (...[]) => false,
 };

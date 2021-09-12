@@ -22,7 +22,8 @@ module.exports = {
 	},
 
 	async show(request, response) {
-		let { abbrev, id } = request.params;
+		const { id } = request.params;
+		let { abbrev } = request.params;
 		abbrev = abbrev.toLocaleLowerCase();
 
 		const book = await connection("books").where("abbrev", abbrev).first();
@@ -100,8 +101,8 @@ module.exports = {
 	},
 
 	async update(request, response) {
+		const { token, text } = request.body;
 		const { id } = request.params;
-		let { token, text } = request.body;
 
 		if (typeof token === "undefined" || typeof text === "undefined") {
 			return response.json({

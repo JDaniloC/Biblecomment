@@ -61,7 +61,7 @@ module.exports = {
 			.select("id", "book_abbrev", "number");
 
 		if (chapter) {
-			var username = "Visitante";
+			let username = "Visitante";
 			const user = await connection("users").where("token", token).first();
 			if (user) {
 				username = user.name;
@@ -127,7 +127,8 @@ module.exports = {
 
 	async update(request, response) {
 		const { id } = request.params;
-		let { token, text, tags, likes, reports } = request.body;
+		const { token } = request.body;
+		let { text, tags, likes, reports } = request.body;
 
 		if (typeof token === "undefined") {
 			return response.json({

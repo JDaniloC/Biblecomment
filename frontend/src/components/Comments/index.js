@@ -22,6 +22,25 @@ export default class Comments extends Component {
 		return `${day}/${month}/${year}`;
 	}
 
+	handleLike(evt) {
+		const id = evt.target.getAttribute("data-id");
+		this.props.likeFunction(parseInt(id));
+	}	
+	
+	handleReport(evt) {
+		const id = evt.target.getAttribute("data-id");
+		this.props.reportFunction(parseInt(id));
+	}
+
+	handleChat(evt) {
+		const comment_reference = evt.target.getAttribute("data-reference");
+		const comment_id = parseInt(evt.target.getAttribute("data-id"));
+		const comment_text = evt.target.getAttribute("data-text");
+
+		this.props.goToDiscussion(comment_id, 
+			comment_text, comment_reference);
+	}
+
 	render() {
 		return (
 			<div className="side">
@@ -40,8 +59,7 @@ export default class Comments extends Component {
 									{commentary.username}
 									{commentary.tags.map((tag) => (
 										<img
-											key={tag}
-											alt={tag}
+											key={tag} alt={tag}
 											src={this.props.imageFunction(tag)}
 											style={{ height: "1rem", margin: "0 4px" }}
 										/>
@@ -63,17 +81,22 @@ export default class Comments extends Component {
 											<b>{JSON.parse(commentary.likes).length}</b> pessoas{" "}
 										</p>
 										<button
-											onClick={() => this.props.likeFunction(commentary.id)}
+											onClick={this.handleLike}
+											data-id = {commentary.id}
 										>
 											<img src={this.props.imageFunction("heart")} alt="like" />
 										</button>
 										<button
-											onClick={() => this.props.goToDiscussion(commentary)}
+											onClick={this.handleChat}
+											data-id = {commentary.id}
+											data-text = {commentary.verse}
+											data-reference = {commentary.book_reference}
 										>
 											<img src={this.props.imageFunction("chat")} alt="chat" />
 										</button>
 										<button
-											onClick={() => this.props.reportFunction(commentary.id)}
+											data-id = {commentary.id}
+											onClick={this.handleReport}
 										>
 											<img
 												src={this.props.imageFunction("warning")}

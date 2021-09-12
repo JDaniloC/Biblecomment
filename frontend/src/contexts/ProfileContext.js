@@ -30,9 +30,7 @@ export function ProfileProvider({ children }) {
 
 	const { handleNotification } = useContext(NotificationContext)
 
-	function loadUserInfos(response) {
-		const data = response.data;
-
+	function loadUserInfos({ data }) {
 		const { email: currentEmail, name: currentName } = data;
 		const currentCommentsCount = data.total_comments;
 		const currentCommented = JSON.parse(data.chapters_commented);
@@ -41,7 +39,7 @@ export function ProfileProvider({ children }) {
 		const currentStateName = data.state !== null ? data.state : "";
 
 		let currentChaptersCount = 0;
-		for (var book in currentCommented) {
+		for (const book in currentCommented) {
 			currentChaptersCount += currentCommented[book].length;
 		}
 
@@ -62,7 +60,7 @@ export function ProfileProvider({ children }) {
 		setCommentaries([...commentaries, comment]);
 		setCommentsCount(commentsCount + 1);
 
-		let length = Math.ceil((commentaries.length + 1) / 5);
+		const length = Math.ceil((commentaries.length + 1) / 5);
 		setTotalCPages(length);
 	}
 
@@ -76,9 +74,9 @@ export function ProfileProvider({ children }) {
 					headers: { name },
 					params: { pages: Math.ceil((page * 5) / 50) },
 				})
-				.then((response) => {
-					if (typeof response.data.comments !== "undefined") {
-						const comments = response.data.comments;
+				.then(({ data }) => {
+					const { comments } = data;
+					if (typeof comments !== "undefined") {
 						const newResult = [...commentaries, ...comments];
 						setCommentaries(newResult);
 
@@ -139,7 +137,7 @@ export function ProfileProvider({ children }) {
 					headers: { token: token },
 				})
 				.then((response) => {
-					let hasError = response.data.error;
+					const hasError = response.data.error;
 					if (!hasError) {
 						loadUserInfos(response);
 					}
@@ -180,10 +178,11 @@ export function ProfileProvider({ children }) {
 				formClass,
 				commented,
 				booksCount,
-				loadUserInfos,
-				getComments,
-				setCommentaries,
+				setName,
 				setBelief,
+				getComments,
+				loadUserInfos,
+				setCommentaries,
 				setPerfilClass,
 				setFavorites,
 				setFormClass,

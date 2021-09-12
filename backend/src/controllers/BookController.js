@@ -18,7 +18,7 @@ module.exports = {
 			});
 		}
 
-		var exists = await connection("books").where("abbrev", abbrev).first();
+		const exists = await connection("books").where("abbrev", abbrev).first();
 
 		if (!exists) {
 			const book = await connection("books").insert({

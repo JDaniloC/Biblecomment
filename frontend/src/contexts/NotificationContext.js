@@ -1,6 +1,7 @@
 import React, { createContext, useState } from "react";
 import Snackbar from "@material-ui/core/Snackbar";
 import { Alert } from "@material-ui/lab";
+import PropTypes from "prop-types";
 
 export const NotificationContext = createContext({});
 
@@ -9,13 +10,13 @@ export function NotificationProvider({ children }) {
     const [isOpen, setIsOpen] = useState(false);
     const [severity, setSeverity] = useState("");
 
-    function closeFunction() {
+    const _closeFunction = () => {
         setIsOpen(false);
     }
 
-    function handleNotification(severity, message, data = null) {
-        setSeverity(severity);
-        setMessage(message);
+    function handleNotification(newSeverity, newMessage) {
+        setSeverity(newSeverity);
+        setMessage(newMessage);
         setIsOpen(true);
     }
 
@@ -29,10 +30,10 @@ export function NotificationProvider({ children }) {
             <Snackbar
                 open={isOpen}
                 autoHideDuration={2000}
-                onClose={closeFunction}
+                onClose={_closeFunction}
             >
                 <Alert
-                    onClose={closeFunction}
+                    onClose={_closeFunction}
                     severity={severity}
                 >
                     {message}
@@ -40,4 +41,8 @@ export function NotificationProvider({ children }) {
             </Snackbar>
 		</NotificationContext.Provider>
 	);
+}
+
+NotificationProvider.propTypes = {
+    children: PropTypes.node.isRequired,
 }

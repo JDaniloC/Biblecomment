@@ -208,6 +208,10 @@ export default class Login extends Component {
 	closeAccount() {
 		logout();
 		this.setFormClass("");
+		this.setCommentaries([]);
+		this.context.setName("");
+		this.context.setCurrentCPage(1);
+		this.context.setCurrentFPage(1);
 	}
 
 	render() {

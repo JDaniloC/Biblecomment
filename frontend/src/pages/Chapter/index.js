@@ -322,13 +322,15 @@ export default class Chapter extends Component {
 		}
 	}
 
-	goToDiscussion(comment) {
+	goToDiscussion(comment_id, comment_text, comment_reference) {
+		const { abbrev } = this.props.match.params;
 		this.props.history.push({
-			pathname: `/discussion/${this.props.match.params.abbrev}`,
+			pathname: `/discussion/${abbrev}`,
 			state: {
 				title: this.state.titleName,
-				verse: comment.text,
-				comment,
+				comment_id: parseInt(comment_id),
+				comment_text,
+				comment_reference
 			},
 		});
 	}

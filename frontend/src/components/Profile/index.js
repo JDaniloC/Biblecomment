@@ -57,8 +57,8 @@ export default class Profile extends Component {
 			page = this.context.currentCPage;
 			array = this.context.commentaries;
 		}
-		var inicio = (page - 1) * 5;
-		var final = inicio + 5;
+		const inicio = (page - 1) * 5;
+		const final = inicio + 5;
 
 		return array.slice(inicio, final);
 	}
