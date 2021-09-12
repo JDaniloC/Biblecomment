@@ -36,7 +36,7 @@ module.exports = {
 				number,
 			});
 			return response.json(chapter);
-		} 
+		}
 		return response.json({ error: "this books doesn't exists" });
 	},
 
@@ -55,8 +55,12 @@ module.exports = {
 				"chapters.verses"
 			);
 
-		return response.json(chapter ? chapter : {
-			 error: "this book doesn't exists" }
+		return response.json(
+			chapter
+				? chapter
+				: {
+						error: "this book doesn't exists",
+				  }
 		);
 	},
 
@@ -79,7 +83,7 @@ module.exports = {
 				});
 
 			return response.json(verses);
-		} 
+		}
 		return response.json({ error: "this books doesn't exists" });
 	},
 };

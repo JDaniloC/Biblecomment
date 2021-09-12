@@ -19,17 +19,13 @@ export default class TitleComment extends Component {
 	constructor(props) {
 		super(props);
 
-		const {
-			handleNewComment,
-			likeFunction,
-			reportFunction,
-			goToDiscussion
-		} = this.props;
+		const { handleNewComment, likeFunction, reportFunction, goToDiscussion } =
+			this.props;
 
-		this.likeFunction = likeFunction
-		this.reportFunction = reportFunction
-		this.goToDiscussion = goToDiscussion
-		this.handleNewComment = handleNewComment
+		this.likeFunction = likeFunction;
+		this.reportFunction = reportFunction;
+		this.goToDiscussion = goToDiscussion;
+		this.handleNewComment = handleNewComment;
 
 		this.showNewComment = this.showNewComment.bind(this);
 		this.selected = false;
@@ -41,8 +37,7 @@ export default class TitleComment extends Component {
 
 	dateFormat(string) {
 		const DATE_LENGTH = 10;
-		const [year, month, day] = string.slice(
-			0, DATE_LENGTH).split("-");
+		const [year, month, day] = string.slice(0, DATE_LENGTH).split("-");
 		return `${day}/${month}/${year}`;
 	}
 
@@ -78,7 +73,8 @@ export default class TitleComment extends Component {
 									<img
 										style={{ marginTop: 0 }}
 										src={imageFunction(tag)}
-										key={tag} alt={tag}
+										key={tag}
+										alt={tag}
 										className="tag"
 									/>
 								))}
@@ -90,15 +86,15 @@ export default class TitleComment extends Component {
 								<p>
 									Favoritado por <b>{getLikeCount(comment)}</b> pessoas
 								</p>
-								<button 
-									type = "button"
-									onClick={this.handleLike} 
+								<button
+									type="button"
+									onClick={this.handleLike}
 									data-id={comment.id}
 								>
 									<img src={imageFunction("heart")} alt="like" />
 								</button>
 								<button
-									type = "button"
+									type="button"
 									data-id={comment.id}
 									data-text={comment.verse}
 									onClick={this.handleChat}
@@ -106,9 +102,9 @@ export default class TitleComment extends Component {
 								>
 									<img src={imageFunction("chat")} alt="chat" />
 								</button>
-								<button 
-									type = "button"
-									data-id={comment.id} 
+								<button
+									type="button"
+									data-id={comment.id}
 									onClick={this.handleReport}
 								>
 									<img src={imageFunction("warning")} alt="report" />
@@ -124,11 +120,7 @@ export default class TitleComment extends Component {
 						alignItems: "center",
 					}}
 				>
-					<button 
-						type = "button"
-						className="entry" 
-						onClick={this.showNewComment}
-					>
+					<button type="button" className="entry" onClick={this.showNewComment}>
 						Comentar
 					</button>
 				</div>

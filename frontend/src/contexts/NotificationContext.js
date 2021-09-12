@@ -13,7 +13,7 @@ export function NotificationProvider({ children }) {
 
 	function _closeFunction() {
 		setIsOpen(false);
-	};
+	}
 
 	function handleNotification(newSeverity, newMessage) {
 		setSeverity(newSeverity);

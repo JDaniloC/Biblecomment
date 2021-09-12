@@ -241,13 +241,13 @@ export default class Help extends Component {
 									<p>
 										Favoritado por <b>10</b> pessoas
 									</p>
-									<button type = "button">
+									<button type="button">
 										<img src={heart} alt="like" />
 									</button>
-									<button type = "button">
+									<button type="button">
 										<img src={chat} alt="chat" />
 									</button>
-									<button type = "button">
+									<button type="button">
 										<img src={warning} alt="report" />
 									</button>
 								</span>

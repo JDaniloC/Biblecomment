@@ -1,86 +1,86 @@
 @media (min-width: 850px) {
-  .pop-up {
-    min-width: 500px;
-  }
+	.pop-up {
+		min-width: 500px;
+	}
 }
 
 @media (max-width: 1650px) {
-  aside.visible {
-    width: 500px;
-  }
+	aside.visible {
+		width: 500px;
+	}
 }
 
 @media (max-width: 1000px) {
-  .main.comment {
-    position: relative;
-  }
-  aside.visible {
-    top: auto;
-    width: auto;
-  }
-  .content {
-    margin: 20px 0;
-  }
-  .logo-container {
-    max-width: 90vw;
-  }
-  .help-component > section {
-    flex-direction: column;
-  }
-  .help-component > section > div {
-    margin: 1em 0;
-  }
+	.main.comment {
+		position: relative;
+	}
+	aside.visible {
+		top: auto;
+		width: auto;
+	}
+	.content {
+		margin: 20px 0;
+	}
+	.logo-container {
+		max-width: 90vw;
+	}
+	.help-component > section {
+		flex-direction: column;
+	}
+	.help-component > section > div {
+		margin: 1em 0;
+	}
 }
 
 @media (max-width: 800px) {
-  .main.comment {
-    display: none;
-  }
-  .main.text {
-    margin: 0 10px;
-  }
-  aside.invisible {
-    display: none;
-  }
-  aside.visible {
-    width: 95%;
-  }
-  .pop-up {
-    width: 90%;
-    padding: 20px 0;
-  }
-  .chapter-container {
-    margin-left: 0;
-  }
-  .navHide {
-    display: none;
-  }
+	.main.comment {
+		display: none;
+	}
+	.main.text {
+		margin: 0 10px;
+	}
+	aside.invisible {
+		display: none;
+	}
+	aside.visible {
+		width: 95%;
+	}
+	.pop-up {
+		width: 90%;
+		padding: 20px 0;
+	}
+	.chapter-container {
+		margin-left: 0;
+	}
+	.navHide {
+		display: none;
+	}
 }
 
 @media (max-width: 600px) {
-  .container {
-    width: 100vw;
-  }
-  main.control div.control-container {
-    max-width: 100vw;
-  }
-  main.control div.control-container > ul {
-    max-width: 100%;
-  }
+	.container {
+		width: 100vw;
+	}
+	main.control div.control-container {
+		max-width: 100vw;
+	}
+	main.control div.control-container > ul {
+		max-width: 100%;
+	}
 }
 
 @media (max-height: 500px) {
-  .pop-up {
-    margin-top: 0;
-  }
+	.pop-up {
+		margin-top: 0;
+	}
 }
 
 @media (max-width: 400px) {
-  .logo-container p {
-    font-size: large;
-  }
-  .login-container form,
-  .login-container form section {
-    width: 100%;
-  }
+	.logo-container p {
+		font-size: large;
+	}
+	.login-container form,
+	.login-container form section {
+		width: 100%;
+	}
 }
