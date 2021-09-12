@@ -25,10 +25,7 @@ module.exports = {
 				title,
 				abbrev,
 				length,
-				created_at: new Date()
-					.toISOString()
-					.replace("Z", "")
-					.replace("T", " "),
+				created_at: new Date().toISOString().replace("Z", "").replace("T", " "),
 			});
 
 			return response.json(book);

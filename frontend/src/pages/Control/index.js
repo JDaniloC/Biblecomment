@@ -29,7 +29,7 @@ export default class Control extends Component {
 		this.changeUsersPage = this.changeUsersPage.bind(this);
 		this.changeCommentPage = this.changeCommentPage.bind(this);
 		this.changeDiscussionsPage = this.changeDiscussionsPage.bind(this);
-		
+
 		this.handleLoadUsers = this.handleLoadUsers.bind(this);
 		this.handleLoadComments = this.handleLoadComments.bind(this);
 		this.handleLoadDiscussion = this.handleLoadDiscussion.bind(this);
@@ -37,15 +37,16 @@ export default class Control extends Component {
 
 	async getUsers(currentPage = 1) {
 		const { users } = this.state;
-		const { data: newUsers } = await axios.get("users", 
-			{ params: { pages: currentPage } });
-		
+		const { data: newUsers } = await axios.get("users", {
+			params: { pages: currentPage },
+		});
+
 		const usersSum = users.length + newUsers.length;
 		const newTotal = Math.ceil(usersSum / PAGE_LENGTH);
 
-		this.setState(prevState => ({
-			users: [...prevState.users, ...newUsers]
-		}))
+		this.setState((prevState) => ({
+			users: [...prevState.users, ...newUsers],
+		}));
 
 		if (newUsers.length === PAGE_LENGTH) {
 			this.setState({ usersPagesTotal: newTotal + 1 });
@@ -60,13 +61,14 @@ export default class Control extends Component {
 	async getComments(currentPage = 1) {
 		const { comments } = this.state;
 
-		const { data: dataComments } = await axios.get("comments", 
-			{ params: { pages: currentPage } });
+		const { data: dataComments } = await axios.get("comments", {
+			params: { pages: currentPage },
+		});
 		const newComments = dataComments.map((item) => {
 			item.likes = JSON.parse(item.likes);
 			item.reports = JSON.parse(item.reports);
 			return item;
-		})
+		});
 		const commentsSum = comments.length + newComments.length;
 		const newTotal = Math.ceil(commentsSum / PAGE_LENGTH);
 
@@ -86,13 +88,14 @@ export default class Control extends Component {
 	async getDiscussions(currentPage = 1) {
 		const { discussions } = this.state;
 
-		const { data: newDiscussions } = await axios.get(
-			"discussions", { params: { pages: currentPage } });
-		
+		const { data: newDiscussions } = await axios.get("discussions", {
+			params: { pages: currentPage },
+		});
+
 		const discussionSum = discussions.length + newDiscussions.length;
 		const newTotal = Math.ceil(discussionSum / PAGE_LENGTH);
 
-		this.setState(prevState => ({
+		this.setState((prevState) => ({
 			discussions: [...prevState.discussions, ...newDiscussions],
 		}));
 		if (newDiscussions.length === PAGE_LENGTH) {
@@ -125,7 +128,7 @@ export default class Control extends Component {
 	}
 
 	async deleteAccount(evt) {
-		const email = evt.target.getAttribute('data-email');
+		const email = evt.target.getAttribute("data-email");
 		await axios
 			.delete("users", {
 				data: { token: localStorage.getItem(TOKEN_KEY), email },
@@ -140,7 +143,7 @@ export default class Control extends Component {
 	}
 
 	async deleteComment(evt) {
-		const id = evt.target.getAttribute('data-id');
+		const id = evt.target.getAttribute("data-id");
 		await axios
 			.delete(`comments/${id}`, {
 				headers: { token: localStorage.getItem(TOKEN_KEY) },
@@ -155,7 +158,7 @@ export default class Control extends Component {
 	}
 
 	async deleteDiscussion(evt) {
-		const id = evt.target.getAttribute('data-id');
+		const id = evt.target.getAttribute("data-id");
 		await axios
 			.delete(`discussion/${id}`, {
 				data: { token: localStorage.getItem(TOKEN_KEY) },
@@ -240,7 +243,7 @@ export default class Control extends Component {
 												style={{
 													backgroundColor: "#FF4030",
 												}}
-												data-email = {user.email}
+												data-email={user.email}
 												onClick={this.deleteAccount}
 											>
 												Deletar
@@ -250,9 +253,7 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button className="load-btn"
-								onClick={this.handleLoadUsers}
-							>
+							<button className="load-btn" onClick={this.handleLoadUsers}>
 								Carregar
 							</button>
 						)}
@@ -302,7 +303,7 @@ export default class Control extends Component {
 												style={{
 													backgroundColor: "#FF4030",
 												}}
-												data-id = {comment.id}
+												data-id={comment.id}
 												onClick={this.deleteComment}
 											>
 												Deletar
@@ -312,9 +313,7 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button className="load-btn"
-								onClick={this.handleLoadComments}
-							>
+							<button className="load-btn" onClick={this.handleLoadComments}>
 								Carregar
 							</button>
 						)}
@@ -357,7 +356,7 @@ export default class Control extends Component {
 												style={{
 													backgroundColor: "#FF4030",
 												}}
-												data-id = {discussion.id}
+												data-id={discussion.id}
 												onClick={this.deleteDiscussion}
 											>
 												Deletar
@@ -367,9 +366,7 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button className="load-btn"
-								onClick={this.handleLoadDiscussion}
-							>
+							<button className="load-btn" onClick={this.handleLoadDiscussion}>
 								Carregar
 							</button>
 						)}

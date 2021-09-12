@@ -314,7 +314,7 @@ export default class Chapter extends Component {
 				title: this.state.titleName,
 				comment_id: parseInt(comment_id),
 				comment_text,
-				comment_reference
+				comment_reference,
 			},
 		});
 	}

@@ -18,10 +18,8 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
-		const { 
-			title, comment_reference,
-			comment_id, comment_text, 
-		} = this.props.location.state;
+		const { title, comment_reference, comment_id, comment_text } =
+			this.props.location.state;
 
 		const { abbrev } = this.props.match.params;
 
@@ -155,8 +153,9 @@ export default class Discussion extends Component {
 		this.closeNewPost();
 		if (this.state.text !== "" && isAuthenticated()) {
 			try {
-				const [abbrev, verse_reference] = this.state.comment_reference.split(" ");
-				const verseText = this.state.comment_text
+				const [abbrev, verse_reference] =
+					this.state.comment_reference.split(" ");
+				const verseText = this.state.comment_text;
 
 				axios
 					.post(`/discussion/${abbrev}/`, {
@@ -170,7 +169,8 @@ export default class Discussion extends Component {
 						if (typeof response.data === "object" && response.data.question) {
 							response.data.answers = [];
 
-							this.setState((prev) => ({ text: "",
+							this.setState((prev) => ({
+								text: "",
 								discussions: [response.data, ...prev.discussions],
 							}));
 							this.handleNotification("Postado!", "success");
@@ -380,9 +380,7 @@ export default class Discussion extends Component {
 								</button>
 							</div>
 
-							<p className="verse-text">
-								{this.state.comment_text}
-							</p>
+							<p className="verse-text">{this.state.comment_text}</p>
 
 							<div className="reply-area">
 								<div

@@ -25,8 +25,8 @@ export default class Comments extends Component {
 	handleLike(evt) {
 		const id = evt.target.getAttribute("data-id");
 		this.props.likeFunction(parseInt(id));
-	}	
-	
+	}
+
 	handleReport(evt) {
 		const id = evt.target.getAttribute("data-id");
 		this.props.reportFunction(parseInt(id));
@@ -37,8 +37,7 @@ export default class Comments extends Component {
 		const comment_id = parseInt(evt.target.getAttribute("data-id"));
 		const comment_text = evt.target.getAttribute("data-text");
 
-		this.props.goToDiscussion(comment_id, 
-			comment_text, comment_reference);
+		this.props.goToDiscussion(comment_id, comment_text, comment_reference);
 	}
 
 	render() {
@@ -59,7 +58,8 @@ export default class Comments extends Component {
 									{commentary.username}
 									{commentary.tags.map((tag) => (
 										<img
-											key={tag} alt={tag}
+											key={tag}
+											alt={tag}
 											src={this.props.imageFunction(tag)}
 											style={{ height: "1rem", margin: "0 4px" }}
 										/>
@@ -78,24 +78,18 @@ export default class Comments extends Component {
 											Favoritado por{" "}
 											<b>{JSON.parse(commentary.likes).length}</b> pessoas{" "}
 										</p>
-										<button
-											onClick={this.handleLike}
-											data-id = {commentary.id}
-										>
+										<button onClick={this.handleLike} data-id={commentary.id}>
 											<img src={this.props.imageFunction("heart")} alt="like" />
 										</button>
 										<button
 											onClick={this.handleChat}
-											data-id = {commentary.id}
-											data-text = {commentary.verse}
-											data-reference = {commentary.book_reference}
+											data-id={commentary.id}
+											data-text={commentary.verse}
+											data-reference={commentary.book_reference}
 										>
 											<img src={this.props.imageFunction("chat")} alt="chat" />
 										</button>
-										<button
-											data-id = {commentary.id}
-											onClick={this.handleReport}
-										>
+										<button data-id={commentary.id} onClick={this.handleReport}>
 											<img
 												src={this.props.imageFunction("warning")}
 												alt="report"
