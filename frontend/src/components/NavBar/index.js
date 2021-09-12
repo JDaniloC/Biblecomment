@@ -14,7 +14,7 @@ export default class NavBar extends Component {
 	static defaultProps = {
 		// eslint-disable-next-line
 		changeChapter: (...[]) => false,
-	};	
+	};
 
 	constructor(props) {
 		super(props);

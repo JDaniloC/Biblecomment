@@ -176,13 +176,13 @@ export default class Control extends Component {
 	}
 
 	calculatePagination(type) {
-		const { 
-			users, 
+		const {
+			users,
 			usersPage,
-			comments, 
-			commentsPage, 
+			comments,
+			commentsPage,
 			discussions,
-			discussionsPage, 
+			discussionsPage,
 		} = this.state;
 		let page = 0;
 		let array = [];
@@ -227,14 +227,14 @@ export default class Control extends Component {
 	}
 
 	render() {
-		const { 
+		const {
 			authorized,
 			usersPage,
 			commentsPage,
 			discussionsPage,
 			usersTotalPages,
 			commentsTotalPages,
-			discussionsTotalPages 
+			discussionsTotalPages,
 		} = this.state;
 
 		return authorized ? (
@@ -263,7 +263,7 @@ export default class Control extends Component {
 										<p> Total Comments: {user.total_comments} </p>
 										<div className="config-buttons">
 											<button
-												type = "button"
+												type="button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
@@ -277,9 +277,9 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button 
-								type = "button"
-								className="load-btn" 
+							<button
+								type="button"
+								className="load-btn"
 								onClick={this.handleLoadUsers}
 							>
 								Carregar
@@ -328,7 +328,7 @@ export default class Control extends Component {
 
 										<div className="config-buttons">
 											<button
-												type = "button"
+												type="button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
@@ -342,9 +342,9 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button 
-								type = "button"
-								className="load-btn" 
+							<button
+								type="button"
+								className="load-btn"
 								onClick={this.handleLoadComments}
 							>
 								Carregar
@@ -386,7 +386,7 @@ export default class Control extends Component {
 
 										<div className="config-buttons">
 											<button
-												type = "button"
+												type="button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
@@ -400,9 +400,9 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button 
-								type = "button"
-								className="load-btn" 
+							<button
+								type="button"
+								className="load-btn"
 								onClick={this.handleLoadDiscussion}
 							>
 								Carregar

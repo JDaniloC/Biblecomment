@@ -50,9 +50,8 @@ module.exports = {
 			.first();
 		if (user) {
 			return response.json(
-				user.password === md5(password) ? 
-					user : { error: "Senha incorreta" })
-
+				user.password === md5(password) ? user : { error: "Senha incorreta" }
+			);
 		}
 		return response.json({ error: "E-mail não cadastrado" });
 	},

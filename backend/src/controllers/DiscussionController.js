@@ -49,7 +49,8 @@ module.exports = {
 		if (
 			[comment_id, token, verse_reference, verse_text, question].some(
 				(element) => typeof element === "undefined"
-			) || question === ""
+			) ||
+			question === ""
 		) {
 			return response.json({
 				error:

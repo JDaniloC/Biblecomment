@@ -19,17 +19,13 @@ export default class Comments extends Component {
 	constructor(props) {
 		super(props);
 
-		const {
-			handleNewComment,
-			likeFunction,
-			reportFunction,
-			goToDiscussion,
-		} = this.props;
+		const { handleNewComment, likeFunction, reportFunction, goToDiscussion } =
+			this.props;
 
-		this.likeFunction = likeFunction
-		this.reportFunction = reportFunction
-		this.goToDiscussion = goToDiscussion
-		this.handleNewComment = handleNewComment
+		this.likeFunction = likeFunction;
+		this.reportFunction = reportFunction;
+		this.goToDiscussion = goToDiscussion;
+		this.handleNewComment = handleNewComment;
 
 		this.selected = false;
 		this.showNewComment = this.showNewComment.bind(this);
@@ -42,8 +38,7 @@ export default class Comments extends Component {
 
 	dateFormat(string) {
 		const DATE_LENGTH = 10;
-		const [year, month, day] = string.slice(
-			0, DATE_LENGTH).split("-");
+		const [year, month, day] = string.slice(0, DATE_LENGTH).split("-");
 		return `${day}/${month}/${year}`;
 	}
 
@@ -72,10 +67,7 @@ export default class Comments extends Component {
 			<div className="side">
 				<div className="top">
 					<h2 style={{ alignSelf: "center" }}> Comentários </h2>
-					<button 
-						type = "button"
-						onClick={closeFunction}
-					>
+					<button type="button" onClick={closeFunction}>
 						<img src={close} alt="Fechar" />
 					</button>
 				</div>
@@ -108,15 +100,15 @@ export default class Comments extends Component {
 											Favoritado por{" "}
 											<b>{JSON.parse(commentary.likes).length}</b> pessoas{" "}
 										</p>
-										<button 
-											type = "button"
-											onClick={this.handleLike} 
+										<button
+											type="button"
+											onClick={this.handleLike}
 											data-id={commentary.id}
 										>
 											<img src={imageFunction("heart")} alt="like" />
 										</button>
 										<button
-											type = "button"
+											type="button"
 											data-id={commentary.id}
 											onClick={this.handleChat}
 											data-text={commentary.verse}
@@ -124,15 +116,12 @@ export default class Comments extends Component {
 										>
 											<img src={imageFunction("chat")} alt="chat" />
 										</button>
-										<button 
-											type = "button"
-											data-id={commentary.id} 
+										<button
+											type="button"
+											data-id={commentary.id}
 											onClick={this.handleReport}
 										>
-											<img
-												src={imageFunction("warning")}
-												alt="report"
-											/>
+											<img src={imageFunction("warning")} alt="report" />
 										</button>
 									</span>
 								</div>
@@ -153,11 +142,7 @@ export default class Comments extends Component {
 						width: "100%",
 					}}
 				>
-					<button 
-						type = "button"
-						className="entry" 
-						onClick={this.showNewComment}
-					>
+					<button type="button" className="entry" onClick={this.showNewComment}>
 						Comentar
 					</button>
 				</div>
@@ -165,4 +150,3 @@ export default class Comments extends Component {
 		);
 	}
 }
-
