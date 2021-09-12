@@ -16,7 +16,7 @@ To capture the bible chapters in ARA version, was used Selenium and [BibleAPI](h
 
 ### How to use
 
-First, you need to install the requirements (seleniuma and requests).
+First, you need to install the requirements (selenium and requests).
 
 ```bash
 cd scrapy

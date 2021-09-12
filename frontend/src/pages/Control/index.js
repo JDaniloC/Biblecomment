@@ -1,9 +1,10 @@
-import React, { Component } from "react";
-import axios from "../../services/api";
-import { Pagination } from "@material-ui/lab";
-
-import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import "./styles.css";
+
+import React, { Component } from "react";
+import { Pagination } from "@material-ui/lab";
+import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
+
+import axios from "../../services/api";
 
 const PAGE_LENGTH = 5;
 
@@ -17,76 +18,93 @@ export default class Control extends Component {
 			users: [],
 			discussions: [],
 
-			usersLength: 0,
-			commentsLength: 0,
+			usersTotalPages: 0,
+			commentsTotalPages: 0,
 
 			commentsPage: 1,
 			usersPage: 1,
-			discussionLength: 0,
+			discussionsTotalPages: 0,
 			discussionsPage: 1,
 		};
 
 		this.changeUsersPage = this.changeUsersPage.bind(this);
 		this.changeCommentPage = this.changeCommentPage.bind(this);
 		this.changeDiscussionsPage = this.changeDiscussionsPage.bind(this);
+
+		this.handleLoadUsers = this.handleLoadUsers.bind(this);
+		this.handleLoadComments = this.handleLoadComments.bind(this);
+		this.handleLoadDiscussion = this.handleLoadDiscussion.bind(this);
 	}
 
-	async getUsers(page = 1) {
-		const response = await axios.get("users", { params: { pages: page } });
-		const users = response.data;
-		this.setState({
-			users: [...this.state.users, ...users],
+	async getUsers(currentPage = 1) {
+		const { users } = this.state;
+		const { data: newUsers } = await axios.get("users", {
+			params: { pages: currentPage },
 		});
-		const length = Math.ceil(this.state.users.length / PAGE_LENGTH);
-		if (users.length === PAGE_LENGTH) {
-			this.setState({ usersLength: length + 1 });
+
+		const usersSum = users.length + newUsers.length;
+		const newTotal = Math.ceil(usersSum / PAGE_LENGTH);
+
+		this.setState((prevState) => ({
+			users: [...prevState.users, ...newUsers],
+		}));
+
+		if (newUsers.length === PAGE_LENGTH) {
+			this.setState({ usersTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				usersLength: length,
-				usersPage: page - 1,
+				usersTotalPages: newTotal,
+				usersPage: currentPage - 1,
 			});
 		}
 	}
 
-	async getComments(page = 1) {
-		const response = await axios.get("comments", { params: { pages: page } });
-		const comments = response.data;
-		this.setState({
-			comments: [
-				...this.state.comments,
-				...comments.map((item) => {
-					item.likes = JSON.parse(item.likes);
-					item.reports = JSON.parse(item.reports);
-					return item;
-				}),
-			],
+	async getComments(currentPage = 1) {
+		const { comments } = this.state;
+
+		const { data: dataComments } = await axios.get("comments", {
+			params: { pages: currentPage },
 		});
-		const length = Math.ceil(this.state.comments.length / PAGE_LENGTH);
-		if (comments.length === PAGE_LENGTH) {
-			this.setState({ commentsLength: length + 1 });
+		const newComments = dataComments.map((item) => {
+			item.likes = JSON.parse(item.likes);
+			item.reports = JSON.parse(item.reports);
+			return item;
+		});
+		const commentsSum = comments.length + newComments.length;
+		const newTotal = Math.ceil(commentsSum / PAGE_LENGTH);
+
+		this.setState((prevState) => ({
+			comments: [...prevState.comments, ...newComments],
+		}));
+		if (newComments.length === PAGE_LENGTH) {
+			this.setState({ commentsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				commentsPage: page - 1,
-				commentsLength: length,
+				commentsPage: currentPage - 1,
+				commentsTotalPages: newTotal,
 			});
 		}
 	}
 
-	async getDiscussions(page = 1) {
-		const response = await axios.get("discussions", {
-			params: { pages: page },
+	async getDiscussions(currentPage = 1) {
+		const { discussions } = this.state;
+
+		const { data: newDiscussions } = await axios.get("discussions", {
+			params: { pages: currentPage },
 		});
-		const discussions = response.data;
-		this.setState({
-			discussions: [...this.state.discussions, ...discussions],
-		});
-		const length = Math.ceil(this.state.discussions.length / PAGE_LENGTH);
-		if (discussions.length === PAGE_LENGTH) {
-			this.setState({ discussionLength: length + 1 });
+
+		const discussionSum = discussions.length + newDiscussions.length;
+		const newTotal = Math.ceil(discussionSum / PAGE_LENGTH);
+
+		this.setState((prevState) => ({
+			discussions: [...prevState.discussions, ...newDiscussions],
+		}));
+		if (newDiscussions.length === PAGE_LENGTH) {
+			this.setState({ discussionsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				discussionsPage: this.state.discussionsPage - 1,
-				discussionLength: length,
+				discussionsPage: currentPage - 1,
+				discussionsTotalPages: newTotal,
 			});
 		}
 	}
@@ -110,80 +128,81 @@ export default class Control extends Component {
 		}
 	}
 
-	async deleteAccount(email) {
+	async deleteAccount(evt) {
+		const email = evt.target.getAttribute("data-email");
 		await axios
 			.delete("users", {
 				data: { token: localStorage.getItem(TOKEN_KEY), email },
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState({
-						users: this.state.users.filter((user) => user.email !== email),
-					});
+					this.setState((prevState) => ({
+						users: prevState.users.filter((user) => user.email !== email),
+					}));
 				}
 			});
 	}
 
-	async deleteComment(id) {
+	async deleteComment(evt) {
+		const id = evt.target.getAttribute("data-id");
 		await axios
 			.delete(`comments/${id}`, {
 				headers: { token: localStorage.getItem(TOKEN_KEY) },
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState({
-						comments: this.state.comments.filter(
-							(comment) => comment.id !== id
-						),
-					});
+					this.setState((prevState) => ({
+						comments: prevState.comments.filter((comment) => comment.id !== id),
+					}));
 				}
 			});
 	}
 
-	async deleteDiscussion(id) {
+	async deleteDiscussion(evt) {
+		const id = evt.target.getAttribute("data-id");
 		await axios
 			.delete(`discussion/${id}`, {
 				data: { token: localStorage.getItem(TOKEN_KEY) },
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState({
-						discussions: this.state.discussions.filter(
+					this.setState((prevState) => ({
+						discussions: prevState.discussions.filter(
 							(discussion) => discussion.id !== id
 						),
-					});
+					}));
 				}
 			});
 	}
 
 	calculatePagination(type) {
+		const {
+			users,
+			usersPage,
+			comments,
+			commentsPage,
+			discussions,
+			discussionsPage,
+		} = this.state;
 		let page = 0;
 		let array = [];
+
 		if (type === "users") {
-			page = this.state.usersPage;
-			array = this.state.users;
+			page = usersPage;
+			array = users;
 		} else if (type === "comments") {
-			page = this.state.commentsPage;
-			array = this.state.comments;
+			page = commentsPage;
+			array = comments;
 		} else {
-			page = this.state.discussionsPage;
-			array = this.state.discussions;
+			page = discussionsPage;
+			array = discussions;
 		}
-		var inicio = (page - 1) * 5;
-		var final = inicio + 5;
+		const inicio = (page - 1) * PAGE_LENGTH;
+		const final = inicio + PAGE_LENGTH;
 
 		return array.slice(inicio, final);
 	}
 
-	loadPagination(type) {
-		if (type === "users") {
-			this.getUsers(this.state.usersPage);
-		} else if (type === "comments") {
-			this.getComments(this.state.commentsPage);
-		} else {
-			this.getDiscussions(this.state.discussionsPage);
-		}
-	}
 	changeUsersPage(_, page) {
 		this.setState({ usersPage: page });
 	}
@@ -194,8 +213,31 @@ export default class Control extends Component {
 		this.setState({ discussionsPage: page });
 	}
 
+	handleLoadUsers() {
+		const { usersPage } = this.state;
+		this.getUsers(usersPage);
+	}
+	handleLoadComments() {
+		const { commentsPage } = this.state;
+		this.getComments(commentsPage);
+	}
+	handleLoadDiscussion() {
+		const { discussionsPage } = this.state;
+		this.getDiscussions(discussionsPage);
+	}
+
 	render() {
-		return this.state.authorized ? (
+		const {
+			authorized,
+			usersPage,
+			commentsPage,
+			discussionsPage,
+			usersTotalPages,
+			commentsTotalPages,
+			discussionsTotalPages,
+		} = this.state;
+
+		return authorized ? (
 			<main className="control">
 				<h1> Painel de Controle </h1>
 
@@ -221,10 +263,12 @@ export default class Control extends Component {
 										<p> Total Comments: {user.total_comments} </p>
 										<div className="config-buttons">
 											<button
+												type="button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
-												onClick={() => this.deleteAccount(user.email)}
+												data-email={user.email}
+												onClick={this.deleteAccount}
 											>
 												Deletar
 											</button>
@@ -234,8 +278,9 @@ export default class Control extends Component {
 							))
 						) : (
 							<button
+								type="button"
 								className="load-btn"
-								onClick={() => this.loadPagination("users")}
+								onClick={this.handleLoadUsers}
 							>
 								Carregar
 							</button>
@@ -245,9 +290,9 @@ export default class Control extends Component {
 							showLastButton
 							size="small"
 							shape="rounded"
-							page={this.state.usersPage}
-							count={this.state.usersLength}
+							page={usersPage}
 							onChange={this.changeUsersPage}
+							count={usersTotalPages}
 						/>
 					</ul>
 					<ul>
@@ -283,10 +328,12 @@ export default class Control extends Component {
 
 										<div className="config-buttons">
 											<button
+												type="button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
-												onClick={() => this.deleteComment(comment.id)}
+												data-id={comment.id}
+												onClick={this.deleteComment}
 											>
 												Deletar
 											</button>
@@ -296,8 +343,9 @@ export default class Control extends Component {
 							))
 						) : (
 							<button
+								type="button"
 								className="load-btn"
-								onClick={() => this.loadPagination("comments")}
+								onClick={this.handleLoadComments}
 							>
 								Carregar
 							</button>
@@ -307,8 +355,8 @@ export default class Control extends Component {
 							showLastButton
 							size="small"
 							shape="rounded"
-							page={this.state.commentsPage}
-							count={this.state.commentsLength}
+							page={commentsPage}
+							count={commentsTotalPages}
 							onChange={this.changeCommentPage}
 						/>
 					</ul>
@@ -338,10 +386,12 @@ export default class Control extends Component {
 
 										<div className="config-buttons">
 											<button
+												type="button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
-												onClick={() => this.deleteDiscussion(discussion.id)}
+												data-id={discussion.id}
+												onClick={this.deleteDiscussion}
 											>
 												Deletar
 											</button>
@@ -351,8 +401,9 @@ export default class Control extends Component {
 							))
 						) : (
 							<button
+								type="button"
 								className="load-btn"
-								onClick={() => this.loadPagination("discussion")}
+								onClick={this.handleLoadDiscussion}
 							>
 								Carregar
 							</button>
@@ -362,8 +413,8 @@ export default class Control extends Component {
 							showLastButton
 							size="small"
 							shape="rounded"
-							page={this.state.discussionsPage}
-							count={this.state.discussionLength}
+							page={discussionsPage}
+							count={discussionsTotalPages}
 							onChange={this.changeDiscussionsPage}
 						/>
 					</ul>

@@ -1,5 +1,7 @@
 const connection = require("../database/connection");
 
+const PAGE_LENGTH = 5;
+
 module.exports = {
 	async index(request, response) {
 		let { abbrev } = request.params;
@@ -11,18 +13,18 @@ module.exports = {
 		if (book) {
 			const discussions = await connection("discussions")
 				.where("book_abbrev", abbrev)
-				.limit(5)
-				.offset((pages - 1) * 5)
+				.limit(PAGE_LENGTH)
+				.offset((pages - 1) * PAGE_LENGTH)
 				.select("*");
 
 			return response.json(discussions);
-		} else {
-			return response.json([]);
 		}
+		return response.json([]);
 	},
 
 	async show(request, response) {
-		let { abbrev, id } = request.params;
+		const { id } = request.params;
+		let { abbrev } = request.params;
 		abbrev = abbrev.toLocaleLowerCase();
 
 		const book = await connection("books").where("abbrev", abbrev).first();
@@ -34,9 +36,8 @@ module.exports = {
 				.select("*");
 
 			return response.json(discussion);
-		} else {
-			return response.json([]);
 		}
+		return response.json([]);
 	},
 
 	async store(request, response) {
@@ -94,14 +95,13 @@ module.exports = {
 				question,
 				answers: JSON.stringify([]),
 			});
-		} else {
-			return response.json({ error: "Book/Comment don't exist" });
 		}
+		return response.json({ error: "Book/Comment don't exist" });
 	},
 
 	async update(request, response) {
+		const { token, text } = request.body;
 		const { id } = request.params;
-		let { token, text } = request.body;
 
 		if (typeof token === "undefined" || typeof text === "undefined") {
 			return response.json({
@@ -139,9 +139,8 @@ module.exports = {
 				text,
 				answers,
 			});
-		} else {
-			return response.json({ Unauthorized: "Você precisa estar logado" });
 		}
+		return response.json({ Unauthorized: "Você precisa estar logado" });
 	},
 
 	async delete(request, response) {
@@ -149,7 +148,7 @@ module.exports = {
 		const { token } = request.body;
 
 		if (typeof token === "undefined") {
-			return response.json({ msg: "insulficient body: token" });
+			return response.json({ msg: "insufficient body: token" });
 		}
 
 		const user = await connection("users")
@@ -170,8 +169,7 @@ module.exports = {
 				.delete();
 
 			return response.json(deletedDiscussion);
-		} else {
-			return response.json({ msg: "Not authorized" });
 		}
+		return response.json({ msg: "Not authorized" });
 	},
 };

@@ -1,5 +1,8 @@
 const connection = require("../database/connection");
 
+const UNAUTHORIZED_STATUS = 401;
+const BAD_REQUEST_STATUS = 400;
+
 module.exports = {
 	async index(request, response) {
 		const { abbrev, number } = request.params;
@@ -61,7 +64,7 @@ module.exports = {
 			.select("id", "book_abbrev", "number");
 
 		if (chapter) {
-			var username = "Visitante";
+			let username = "Visitante";
 			const user = await connection("users").where("token", token).first();
 			if (user) {
 				username = user.name;
@@ -127,7 +130,8 @@ module.exports = {
 
 	async update(request, response) {
 		const { id } = request.params;
-		let { token, text, tags, likes, reports } = request.body;
+		const { token } = request.body;
+		let { text, tags, likes, reports } = request.body;
 
 		if (typeof token === "undefined") {
 			return response.json({
@@ -187,7 +191,7 @@ module.exports = {
 
 		if (typeof token === "undefined") {
 			return response
-				.status(400)
+				.status(BAD_REQUEST_STATUS)
 				.json({ BadRequest: "It's missing the header token" });
 		}
 
@@ -198,7 +202,7 @@ module.exports = {
 
 		if (user.length === 0) {
 			return response
-				.status(401)
+				.status(UNAUTHORIZED_STATUS)
 				.json({ Unauthorized: "Você precisa estar logado" });
 		}
 
@@ -218,7 +222,7 @@ module.exports = {
 			return response.json(comment);
 		} else {
 			return response
-				.status(401)
+				.status(UNAUTHORIZED_STATUS)
 				.json({ Unauthorized: "Comentário não correspondente ao usuário" });
 		}
 	},

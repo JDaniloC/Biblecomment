@@ -18,13 +18,10 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
-		let object = { title: "" },
-			selected = -1;
-		if (typeof this.props.location.state !== "undefined") {
-			selected = this.props.location.state.comment.id;
-			object = this.props.location.state;
-		}
-		let { title } = object;
+		const { title, comment_reference, comment_id, comment_text } =
+			this.props.location.state;
+
+		const { abbrev } = this.props.match.params;
 
 		this.state = {
 			newPostClass: "pop-up",
@@ -33,11 +30,13 @@ export default class Discussion extends Component {
 			blur: "block",
 
 			title,
-			abbrev: this.props.match.params.abbrev,
+			abbrev,
 			discussions: [],
 			answers: [],
 
-			selected,
+			selected: comment_id,
+			comment_reference,
+			comment_text,
 			text: "",
 
 			totalPages: 2,
@@ -154,17 +153,15 @@ export default class Discussion extends Component {
 		this.closeNewPost();
 		if (this.state.text !== "" && isAuthenticated()) {
 			try {
-				const references =
-					this.props.location.state.comment.book_reference.split(" ");
-				const abbrev = references[0];
-				const verse_reference = references[1];
-				const verse = this.props.location.state.verse;
+				const [abbrev, verse_reference] =
+					this.state.comment_reference.split(" ");
+				const verseText = this.state.comment_text;
 
 				axios
 					.post(`/discussion/${abbrev}/`, {
 						comment_id: this.state.selected,
 						verse_reference,
-						verse_text: verse,
+						verse_text: verseText,
 						question: this.state.text,
 						token: localStorage.getItem(TOKEN_KEY),
 					})
@@ -173,8 +170,8 @@ export default class Discussion extends Component {
 							response.data.answers = [];
 
 							this.setState((prev) => ({
-								discussions: [response.data, ...prev.discussions],
 								text: "",
+								discussions: [response.data, ...prev.discussions],
 							}));
 							this.handleNotification("Postado!", "success");
 						} else {
@@ -191,28 +188,26 @@ export default class Discussion extends Component {
 
 	postNewAnswer() {
 		this.closeAnswers();
+		const selected = this.state.selected;
 		if (this.state.text !== "" && isAuthenticated()) {
 			try {
 				axios
-					.patch(`/discussion/${this.state.selected}/`, {
+					.patch(`/discussion/${selected}/`, {
 						text: this.state.text,
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
 						if (typeof response.data === "object" && response.data.answers) {
 							const answers = JSON.parse(response.data.answers);
-							let chats = this.state.discussions;
-
-							for (let i = 0; i < chats.length; i++) {
-								if (chats[i].id === this.state.selected) {
-									chats[i].answers = answers;
-								}
-							}
-
-							this.setState({
-								discussions: chats,
+							this.setState((prevState) => ({
+								discussions: prevState.map((chat) => {
+									if (chat.id === selected) {
+										chat.answers = answers;
+									}
+									return chat;
+								}),
 								text: "",
-							});
+							}));
 
 							this.handleNotification("success", "Resposta enviada");
 						} else {
@@ -385,9 +380,7 @@ export default class Discussion extends Component {
 								</button>
 							</div>
 
-							<p className="verse-text">
-								{this.props.location.state.comment.text}
-							</p>
+							<p className="verse-text">{this.state.comment_text}</p>
 
 							<div className="reply-area">
 								<div
@@ -440,8 +433,9 @@ Discussion.propTypes = {
 	}),
 };
 Discussion.defaultProps = {
-	location: {
-		pathname: "/discussions/gn",
-		state: undefined,
+	match: {
+		params: {
+			abbrev: "gn",
+		},
 	},
 };

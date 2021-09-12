@@ -1,13 +1,15 @@
 const connection = require("../database/connection");
 
+const PAGE_LENGTH = 5;
+
 module.exports = {
 	async index(request, response) {
 		const { pages = 1 } = request.query;
 
 		const users = await connection("users")
 			.orderBy("created_at", "desc")
-			.limit(5)
-			.offset((pages - 1) * 5)
+			.limit(PAGE_LENGTH)
+			.offset((pages - 1) * PAGE_LENGTH)
 			.select(
 				"email",
 				"name",

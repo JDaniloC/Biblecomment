@@ -1,13 +1,21 @@
+import "./styles.css";
+
 import React, { Component, createRef } from "react";
 import { Link } from "react-router-dom";
-import PropTypes from "prop-types";
 
 import BooksIndex from "../BooksIndex";
 import Login from "../Login";
-
-import "./styles.css";
+import PropTypes from "prop-types";
 
 export default class NavBar extends Component {
+	static propTypes = {
+		changeChapter: PropTypes.func,
+	};
+	static defaultProps = {
+		// eslint-disable-next-line
+		changeChapter: (...[]) => false,
+	};
+
 	constructor(props) {
 		super(props);
 
@@ -71,10 +79,3 @@ export default class NavBar extends Component {
 		);
 	}
 }
-
-NavBar.propTypes = {
-	changeChapter: PropTypes.func,
-};
-NavBar.defaultProps = {
-	changeChapter: (a, b) => false,
-};

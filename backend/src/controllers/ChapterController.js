@@ -1,12 +1,14 @@
 const connection = require("../database/connection");
 
+const PAGE_LENGTH = 5;
+
 module.exports = {
 	async index(request, response) {
 		const { pages = 1 } = request.query;
 
 		const chapters = await connection("chapters")
-			.limit(5)
-			.offset((pages - 1) * 5)
+			.limit(PAGE_LENGTH)
+			.offset((pages - 1) * PAGE_LENGTH)
 			.select("number", "verses");
 
 		return response.json(chapters);
@@ -34,9 +36,8 @@ module.exports = {
 				number,
 			});
 			return response.json(chapter);
-		} else {
-			return response.json({ error: "this books doesn't exists" });
 		}
+		return response.json({ error: "this books doesn't exists" });
 	},
 
 	async show(request, response) {
@@ -55,7 +56,11 @@ module.exports = {
 			);
 
 		return response.json(
-			chapter ? chapter : { error: "this book doesn't exists" }
+			chapter
+				? chapter
+				: {
+						error: "this book doesn't exists",
+				  }
 		);
 	},
 
@@ -78,8 +83,7 @@ module.exports = {
 				});
 
 			return response.json(verses);
-		} else {
-			return response.json({ error: "this books doesn't exists" });
 		}
+		return response.json({ error: "this books doesn't exists" });
 	},
 };

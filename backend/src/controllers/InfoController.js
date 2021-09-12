@@ -1,13 +1,16 @@
 const connection = require("../database/connection");
 
+const PAGE_LENGTH = 5;
+const COMMENTS_AMOUNT = 50;
+
 module.exports = {
 	async getComments(request, response) {
 		const { pages = 1 } = request.query;
 
 		const comments = await connection("comments")
 			.orderBy("created_at", "desc")
-			.limit(5)
-			.offset((pages - 1) * 5)
+			.limit(PAGE_LENGTH)
+			.offset((pages - 1) * PAGE_LENGTH)
 			.select("*");
 
 		return response.json(comments);
@@ -18,8 +21,8 @@ module.exports = {
 
 		const discussions = await connection("discussions")
 			.orderBy("id", "desc")
-			.limit(5)
-			.offset((pages - 1) * 5)
+			.limit(PAGE_LENGTH)
+			.offset((pages - 1) * PAGE_LENGTH)
 			.select("*");
 
 		return response.json(discussions);
@@ -34,8 +37,8 @@ module.exports = {
 		}
 		const comments = await connection("comments")
 			.where("username", name)
-			.limit(50)
-			.offset((pages - 1) * 50);
+			.limit(COMMENTS_AMOUNT)
+			.offset((pages - 1) * COMMENTS_AMOUNT);
 
 		return response.json({ comments });
 	},
@@ -52,8 +55,8 @@ module.exports = {
             SELECT * 
             FROM json_each(comments.likes), comments
             WHERE json_each.value LIKE "${name}"
-            LIMIT 50
-            OFFSET (${pages} - 1) * 50
+            LIMIT ${COMMENTS_AMOUNT}
+            OFFSET (${pages} - 1) * ${COMMENTS_AMOUNT}
         `);
 
 		return response.json({ favorites });

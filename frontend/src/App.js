@@ -1,13 +1,13 @@
-import React, { useEffect } from "react";
-import Routes from "./routes";
-
 import "./App.css";
 import "./Responsive.css";
 
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
 
-function App() {
+import React, { useEffect } from "react";
+import Routes from "./routes";
+
+export default function App() {
 	useEffect(() => {
 		const usesDarkMode =
 			window.matchMedia("(prefers-color-scheme: dark)").matches || false;
@@ -36,9 +36,7 @@ function App() {
 				</NotificationProvider>
 			</div>
 
-			<footer>Developed by God through JDaniloC</footer>
+			<footer> Inspired by God, written by JDaniloC </footer>
 		</div>
 	);
 }
-
-export default App;

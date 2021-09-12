@@ -1,3 +1,5 @@
+import "./styles.css";
+
 import React, { Component, createRef } from "react";
 import axios from "../../services/api";
 import PropTypes from "prop-types";
@@ -9,8 +11,6 @@ import NewComment from "../../components/NewComment";
 import { Loading } from "../../components/Partials";
 import Comments from "../../components/Comments";
 import NavBar from "../../components/NavBar";
-
-import "./styles.css";
 
 const chat = require("../../assets/chat.svg");
 const heart = require("../../assets/heart.svg");
@@ -40,7 +40,7 @@ export default class Chapter extends Component {
 			comments: [],
 			allComments: [],
 			titleComments: [],
-			currentVerse: { linha: null, verse: 0 },
+			currentVerse: -1,
 		};
 
 		// to parent access children's state
@@ -59,6 +59,7 @@ export default class Chapter extends Component {
 		this.closeComments = this.closeComments.bind(this);
 		this.closeNewCommentary = this.closeNewCommentary.bind(this);
 
+		this.handleComments = this.handleComments.bind(this);
 		this.addNewComment = this.addNewComment.bind(this);
 	}
 
@@ -71,7 +72,7 @@ export default class Chapter extends Component {
 	}
 
 	getVerse() {
-		return this.state.currentVerse.verse;
+		return this.state.currentVerse;
 	}
 
 	loadChapter(abbrev, number) {
@@ -112,8 +113,10 @@ export default class Chapter extends Component {
 							}
 						}
 
-						this.setState({ allComments: comments });
-						this.setState({ titleComments: titleComments });
+						this.setState({
+							allComments: comments,
+							titleComments: titleComments,
+						});
 					}
 				});
 		} catch (err) {
@@ -130,55 +133,30 @@ export default class Chapter extends Component {
 		return true;
 	}
 
-	handleComments(evt, verse) {
-		evt.preventDefault();
-		const linha = evt.target;
+	handleComments(event) {
+		const target = event.target;
+		const numberVerse = parseInt(target.getAttribute("data-index"));
 
-		if (
-			this.state.currentVerse.linha !== null &&
-			this.state.currentVerse.verse === verse
-		) {
-			this.closeComments(evt);
+		if (this.state.currentVerse === numberVerse) {
+			this.closeComments(event);
 		} else {
-			this.setState({
+			this.setState((prevState) => ({
 				asideClass: "visible",
 				mainClass: "main comment",
-				navClass: this.state.navClass.includes("navHide")
-					? this.state.navClass
-					: this.state.navClass + " navHide",
-			});
-			if (this.state.currentVerse.linha !== null) {
-				var antigo = this.state.currentVerse;
-				antigo.linha.style.backgroundColor = "white";
-				this.setState({
-					currentVerse: {
-						linha: antigo.linha,
-						verse: antigo.verse,
-					},
-				});
-			}
-
-			linha.style.backgroundColor = "yellow";
-			this.setState({ currentVerse: { verse, linha } });
-
-			const thisComments = this.state.allComments.filter((comment) => {
-				return comment.verse === verse + 1;
-			});
-			if (thisComments.length > 0) {
-				this.setState({ comments: thisComments });
-			} else {
-				this.setState({ comments: [] });
-			}
+				navClass: prevState.navClass.includes("navHide")
+					? prevState.navClass
+					: prevState.navClass + " navHide",
+				comments: prevState.allComments.filter(
+					(comment) => comment.verse === numberVerse + 1
+				),
+				currentVerse: numberVerse,
+			}));
 		}
 	}
 
-	closeComments(evt) {
-		evt.preventDefault();
-		const linha = this.state.currentVerse.linha;
-		linha.style.backgroundColor = "white";
-
+	closeComments() {
 		this.setState({
-			currentVerse: { linha: null, verse: 0 },
+			currentVerse: -1,
 			comments: [],
 			asideClass: "invisible",
 			mainClass: "main text",
@@ -223,24 +201,21 @@ export default class Chapter extends Component {
 
 		this.setState({
 			blur: "none",
-			newBoxClass: "invisible",
 			navClass: "visible",
+			newBoxClass: "invisible",
 		});
 	}
 
 	addNewComment(comment) {
 		if (comment.on_title) {
-			const lista = this.state.titleComments;
-			lista.push(comment);
-			this.setState({ titleComments: lista });
+			this.setState((prevState) => ({
+				titleComments: [...prevState.titleComments, comment],
+			}));
 		} else {
-			const lista = this.state.comments;
-			lista.push(comment);
-			this.setState({ comments: lista });
-
-			const all = this.state.allComments;
-			all.push(comment);
-			this.setState({ allComments: all });
+			this.setState((prevState) => ({
+				comments: [...prevState.comments, comment],
+				allComments: [...prevState.allComments, comment],
+			}));
 		}
 	}
 
@@ -289,11 +264,10 @@ export default class Chapter extends Component {
 			return commentFound;
 		}
 		if (isAuthenticated()) {
-			var token = localStorage.getItem(TOKEN_KEY);
 			try {
 				axios
 					.patch(`comments/${identificador}`, {
-						token,
+						token: localStorage.getItem(TOKEN_KEY),
 						likes: true,
 					})
 					.then(() => {
@@ -332,13 +306,15 @@ export default class Chapter extends Component {
 		}
 	}
 
-	goToDiscussion(comment) {
+	goToDiscussion(comment_id, comment_text, comment_reference) {
+		const { abbrev } = this.props.match.params;
 		this.props.history.push({
-			pathname: `/discussion/${this.props.match.params.abbrev}`,
+			pathname: `/discussion/${abbrev}`,
 			state: {
 				title: this.state.titleName,
-				verse: comment.text,
-				comment,
+				comment_id: parseInt(comment_id),
+				comment_text,
+				comment_reference,
 			},
 		});
 	}
@@ -372,8 +348,15 @@ export default class Chapter extends Component {
 									<li key={verse}>
 										<sup> {index + 1} </sup>
 										<p
-											style={{ display: "inline" }}
-											onClick={(evt) => this.handleComments(evt, index)}
+											data-index={index}
+											style={{
+												display: "inline",
+												backgroundColor:
+													index === this.state.currentVerse
+														? "yellow"
+														: "white",
+											}}
+											onClick={this.handleComments}
 										>
 											{verse}
 										</p>
@@ -421,7 +404,8 @@ Chapter.propTypes = {
 	match: PropTypes.shape({
 		params: PropTypes.shape({
 			abbrev: PropTypes.string.isRequired,
-			number: PropTypes.number.isRequired,
+			number: PropTypes.string.isRequired,
 		}),
 	}),
+	history: History,
 };

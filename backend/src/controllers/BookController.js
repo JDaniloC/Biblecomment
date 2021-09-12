@@ -18,17 +18,14 @@ module.exports = {
 			});
 		}
 
-		var exists = await connection("books").where("abbrev", abbrev).first();
+		const exists = await connection("books").where("abbrev", abbrev).first();
 
 		if (!exists) {
 			const book = await connection("books").insert({
 				title,
 				abbrev,
 				length,
-				created_at: new Date()
-					.toISOString()
-					.replace("Z", "")
-					.replace("T", " "),
+				created_at: new Date().toISOString().replace("Z", "").replace("T", " "),
 			});
 
 			return response.json(book);
@@ -49,7 +46,7 @@ module.exports = {
 
 			return response.json(book);
 		} else {
-			response.json({ error: "insuficient params: abbrev" });
+			return response.json({ error: "insufficient params: abbrev" });
 		}
 	},
 };
