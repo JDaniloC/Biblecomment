@@ -1,7 +1,8 @@
-import React, { createContext, useState } from "react";
-import Snackbar from "@material-ui/core/Snackbar";
 import { Alert } from "@material-ui/lab";
+import React, { createContext, useState } from "react";
+
 import PropTypes from "prop-types";
+import Snackbar from "@material-ui/core/Snackbar";
 
 export const NotificationContext = createContext({});
 
@@ -10,7 +11,7 @@ export function NotificationProvider({ children }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [severity, setSeverity] = useState("");
 
-	const _closeFunction = () => {
+	function _closeFunction() {
 		setIsOpen(false);
 	};
 

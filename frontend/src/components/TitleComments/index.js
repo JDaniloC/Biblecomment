@@ -1,61 +1,85 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-
 import "./styles.css";
+
+import PropTypes from "prop-types";
+import React, { Component } from "react";
 
 function getLikeCount(comment) {
 	return JSON.parse(comment.likes).length;
 }
 export default class TitleComment extends Component {
+	static propTypes = {
+		comments: PropTypes.array.isRequired,
+		imageFunction: PropTypes.func.isRequired,
+		likeFunction: PropTypes.func.isRequired,
+		goToDiscussion: PropTypes.func.isRequired,
+		reportFunction: PropTypes.func.isRequired,
+		handleNewComment: PropTypes.func.isRequired,
+	};
+
 	constructor(props) {
 		super(props);
+
+		const {
+			handleNewComment,
+			likeFunction,
+			reportFunction,
+			goToDiscussion
+		} = this.props;
+
+		this.likeFunction = likeFunction
+		this.reportFunction = reportFunction
+		this.goToDiscussion = goToDiscussion
+		this.handleNewComment = handleNewComment
 
 		this.showNewComment = this.showNewComment.bind(this);
 		this.selected = false;
 	}
 	showNewComment(evt) {
 		this.selected = true;
-		this.props.handleNewComment(evt);
+		this.handleNewComment(evt);
 	}
 
 	dateFormat(string) {
-		const [year, month, day] = string.slice(0, 10).split("-");
+		const DATE_LENGTH = 10;
+		const [year, month, day] = string.slice(
+			0, DATE_LENGTH).split("-");
 		return `${day}/${month}/${year}`;
 	}
 
 	handleLike(evt) {
 		const id = evt.target.getAttribute("data-id");
-		this.props.likeFunction(parseInt(id));
+		this.likeFunction(parseInt(id, 10));
 	}
 
 	handleReport(evt) {
 		const id = evt.target.getAttribute("data-id");
-		this.props.reportFunction(parseInt(id));
+		this.reportFunction(parseInt(id, 10));
 	}
 
 	handleChat(evt) {
 		const comment_reference = evt.target.getAttribute("data-reference");
-		const comment_id = parseInt(evt.target.getAttribute("data-id"));
+		const comment_id = parseInt(evt.target.getAttribute("data-id"), 10);
 		const comment_text = evt.target.getAttribute("data-text");
 
-		this.props.goToDiscussion(comment_id, comment_text, comment_reference);
+		this.goToDiscussion(comment_id, comment_text, comment_reference);
 	}
 
 	render() {
+		const { comments, imageFunction } = this.props;
+
 		return (
 			<div className="title-comments">
 				<ul>
-					{this.props.comments.map((comment) => (
+					{comments.map((comment) => (
 						<li key={comment.id}>
 							<h3>
 								{comment.username}
 								{comment.tags.map((tag) => (
 									<img
-										key={tag}
 										style={{ marginTop: 0 }}
-										src={this.props.imageFunction(tag)}
+										src={imageFunction(tag)}
+										key={tag} alt={tag}
 										className="tag"
-										alt={tag}
 									/>
 								))}
 
@@ -66,19 +90,28 @@ export default class TitleComment extends Component {
 								<p>
 									Favoritado por <b>{getLikeCount(comment)}</b> pessoas
 								</p>
-								<button onClick={this.handleLike} data-id={comment.id}>
-									<img src={this.props.imageFunction("heart")} alt="like" />
+								<button 
+									type = "button"
+									onClick={this.handleLike} 
+									data-id={comment.id}
+								>
+									<img src={imageFunction("heart")} alt="like" />
 								</button>
 								<button
-									onClick={this.handleChat}
+									type = "button"
 									data-id={comment.id}
 									data-text={comment.verse}
+									onClick={this.handleChat}
 									data-reference={comment.book_reference}
 								>
-									<img src={this.props.imageFunction("chat")} alt="chat" />
+									<img src={imageFunction("chat")} alt="chat" />
 								</button>
-								<button data-id={comment.id} onClick={this.handleReport}>
-									<img src={this.props.imageFunction("warning")} alt="report" />
+								<button 
+									type = "button"
+									data-id={comment.id} 
+									onClick={this.handleReport}
+								>
+									<img src={imageFunction("warning")} alt="report" />
 								</button>
 							</span>
 						</li>
@@ -91,7 +124,11 @@ export default class TitleComment extends Component {
 						alignItems: "center",
 					}}
 				>
-					<button className="entry" onClick={this.showNewComment}>
+					<button 
+						type = "button"
+						className="entry" 
+						onClick={this.showNewComment}
+					>
 						Comentar
 					</button>
 				</div>
@@ -99,11 +136,3 @@ export default class TitleComment extends Component {
 		);
 	}
 }
-TitleComment.propTypes = {
-	comments: PropTypes.array.isRequired,
-	imageFunction: PropTypes.func.isRequired,
-	likeFunction: PropTypes.func.isRequired,
-	goToDiscussion: PropTypes.func.isRequired,
-	reportFunction: PropTypes.func.isRequired,
-	handleNewComment: PropTypes.func.isRequired,
-};

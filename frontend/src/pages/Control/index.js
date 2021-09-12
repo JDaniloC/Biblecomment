@@ -1,9 +1,10 @@
-import React, { Component } from "react";
-import axios from "../../services/api";
-import { Pagination } from "@material-ui/lab";
-
-import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import "./styles.css";
+
+import React, { Component } from "react";
+import { Pagination } from "@material-ui/lab";
+import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
+
+import axios from "../../services/api";
 
 const PAGE_LENGTH = 5;
 
@@ -17,12 +18,12 @@ export default class Control extends Component {
 			users: [],
 			discussions: [],
 
-			usersPagesTotal: 0,
-			commentsLength: 0,
+			usersTotalPages: 0,
+			commentsTotalPages: 0,
 
 			commentsPage: 1,
 			usersPage: 1,
-			discussionLength: 0,
+			discussionsTotalPages: 0,
 			discussionsPage: 1,
 		};
 
@@ -49,10 +50,10 @@ export default class Control extends Component {
 		}));
 
 		if (newUsers.length === PAGE_LENGTH) {
-			this.setState({ usersPagesTotal: newTotal + 1 });
+			this.setState({ usersTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				usersPagesTotal: newTotal,
+				usersTotalPages: newTotal,
 				usersPage: currentPage - 1,
 			});
 		}
@@ -76,11 +77,11 @@ export default class Control extends Component {
 			comments: [...prevState.comments, ...newComments],
 		}));
 		if (newComments.length === PAGE_LENGTH) {
-			this.setState({ commentsLength: newTotal + 1 });
+			this.setState({ commentsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
 				commentsPage: currentPage - 1,
-				commentsLength: newTotal,
+				commentsTotalPages: newTotal,
 			});
 		}
 	}
@@ -99,11 +100,11 @@ export default class Control extends Component {
 			discussions: [...prevState.discussions, ...newDiscussions],
 		}));
 		if (newDiscussions.length === PAGE_LENGTH) {
-			this.setState({ discussionLength: newTotal + 1 });
+			this.setState({ discussionsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
 				discussionsPage: currentPage - 1,
-				discussionLength: newTotal,
+				discussionsTotalPages: newTotal,
 			});
 		}
 	}
@@ -175,17 +176,26 @@ export default class Control extends Component {
 	}
 
 	calculatePagination(type) {
+		const { 
+			users, 
+			usersPage,
+			comments, 
+			commentsPage, 
+			discussions,
+			discussionsPage, 
+		} = this.state;
 		let page = 0;
 		let array = [];
+
 		if (type === "users") {
-			page = this.state.usersPage;
-			array = this.state.users;
+			page = usersPage;
+			array = users;
 		} else if (type === "comments") {
-			page = this.state.commentsPage;
-			array = this.state.comments;
+			page = commentsPage;
+			array = comments;
 		} else {
-			page = this.state.discussionsPage;
-			array = this.state.discussions;
+			page = discussionsPage;
+			array = discussions;
 		}
 		const inicio = (page - 1) * PAGE_LENGTH;
 		const final = inicio + PAGE_LENGTH;
@@ -204,17 +214,30 @@ export default class Control extends Component {
 	}
 
 	handleLoadUsers() {
-		this.getUsers(this.state.usersPage);
+		const { usersPage } = this.state;
+		this.getUsers(usersPage);
 	}
 	handleLoadComments() {
-		this.getComments(this.state.commentsPage);
+		const { commentsPage } = this.state;
+		this.getComments(commentsPage);
 	}
 	handleLoadDiscussion() {
-		this.getDiscussions(this.state.discussionsPage);
+		const { discussionsPage } = this.state;
+		this.getDiscussions(discussionsPage);
 	}
 
 	render() {
-		return this.state.authorized ? (
+		const { 
+			authorized,
+			usersPage,
+			commentsPage,
+			discussionsPage,
+			usersTotalPages,
+			commentsTotalPages,
+			discussionsTotalPages 
+		} = this.state;
+
+		return authorized ? (
 			<main className="control">
 				<h1> Painel de Controle </h1>
 
@@ -240,6 +263,7 @@ export default class Control extends Component {
 										<p> Total Comments: {user.total_comments} </p>
 										<div className="config-buttons">
 											<button
+												type = "button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
@@ -253,7 +277,11 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button className="load-btn" onClick={this.handleLoadUsers}>
+							<button 
+								type = "button"
+								className="load-btn" 
+								onClick={this.handleLoadUsers}
+							>
 								Carregar
 							</button>
 						)}
@@ -262,9 +290,9 @@ export default class Control extends Component {
 							showLastButton
 							size="small"
 							shape="rounded"
-							page={this.state.usersPage}
+							page={usersPage}
 							onChange={this.changeUsersPage}
-							count={this.state.usersPagesTotal}
+							count={usersTotalPages}
 						/>
 					</ul>
 					<ul>
@@ -300,6 +328,7 @@ export default class Control extends Component {
 
 										<div className="config-buttons">
 											<button
+												type = "button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
@@ -313,7 +342,11 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button className="load-btn" onClick={this.handleLoadComments}>
+							<button 
+								type = "button"
+								className="load-btn" 
+								onClick={this.handleLoadComments}
+							>
 								Carregar
 							</button>
 						)}
@@ -322,8 +355,8 @@ export default class Control extends Component {
 							showLastButton
 							size="small"
 							shape="rounded"
-							page={this.state.commentsPage}
-							count={this.state.commentsLength}
+							page={commentsPage}
+							count={commentsTotalPages}
 							onChange={this.changeCommentPage}
 						/>
 					</ul>
@@ -353,6 +386,7 @@ export default class Control extends Component {
 
 										<div className="config-buttons">
 											<button
+												type = "button"
 												style={{
 													backgroundColor: "#FF4030",
 												}}
@@ -366,7 +400,11 @@ export default class Control extends Component {
 								</li>
 							))
 						) : (
-							<button className="load-btn" onClick={this.handleLoadDiscussion}>
+							<button 
+								type = "button"
+								className="load-btn" 
+								onClick={this.handleLoadDiscussion}
+							>
 								Carregar
 							</button>
 						)}
@@ -375,8 +413,8 @@ export default class Control extends Component {
 							showLastButton
 							size="small"
 							shape="rounded"
-							page={this.state.discussionsPage}
-							count={this.state.discussionLength}
+							page={discussionsPage}
+							count={discussionsTotalPages}
 							onChange={this.changeDiscussionsPage}
 						/>
 					</ul>

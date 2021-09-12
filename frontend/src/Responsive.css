@@ -24,20 +24,6 @@
   .logo-container {
     max-width: 90vw;
   }
-  .side {
-    position: relative;
-    right: 1px;
-    min-width: 300px;
-    margin: 0 10px;
-    height: auto;
-    max-height: 25%;
-  }
-  .panel {
-    flex-direction: column;
-    width: 100%;
-    align-items: center;
-    margin-top: 0;
-  }
   .help-component > section {
     flex-direction: column;
   }
@@ -58,11 +44,6 @@
   }
   aside.visible {
     width: 95%;
-  }
-  .side {
-    position: fixed;
-    width: inherit;
-    max-height: 70%;
   }
   .pop-up {
     width: 90%;

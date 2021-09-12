@@ -1,3 +1,5 @@
+import "./styles.css";
+
 import React, { Component, createRef } from "react";
 import axios from "../../services/api";
 import PropTypes from "prop-types";
@@ -9,8 +11,6 @@ import NewComment from "../../components/NewComment";
 import { Loading } from "../../components/Partials";
 import Comments from "../../components/Comments";
 import NavBar from "../../components/NavBar";
-
-import "./styles.css";
 
 const chat = require("../../assets/chat.svg");
 const heart = require("../../assets/heart.svg");

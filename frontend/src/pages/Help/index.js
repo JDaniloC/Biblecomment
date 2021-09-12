@@ -1,6 +1,7 @@
+import "./styles.css";
+
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import "./styles.css";
 
 const backArrow = require("../../assets/backArrow.svg");
 
@@ -240,13 +241,13 @@ export default class Help extends Component {
 									<p>
 										Favoritado por <b>10</b> pessoas
 									</p>
-									<button>
+									<button type = "button">
 										<img src={heart} alt="like" />
 									</button>
-									<button>
+									<button type = "button">
 										<img src={chat} alt="chat" />
 									</button>
-									<button>
+									<button type = "button">
 										<img src={warning} alt="report" />
 									</button>
 								</span>

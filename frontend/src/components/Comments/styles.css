@@ -13,6 +13,23 @@
 	max-height: 77%;
 	box-shadow: 0px 0px 15px rgb(0 0 0 / 20%);
 }
+@media (max-width: 1000px) {
+	.side {
+		position: relative;
+		right: 1px;
+		min-width: 300px;
+		margin: 0 10px;
+		height: auto;
+		max-height: 25%;
+	}
+}
+@media (max-width: 800px) {
+	.side {
+		position: fixed;
+		width: inherit;
+		max-height: 70%;
+	}
+}
 
 .user-comment {
 	display: flex;
@@ -24,8 +41,8 @@
 	white-space: break-spaces;
 	font-size: 14px;
 	line-height: 18px;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-		Arial, sans-serif;
+	font-family: -apple-system, BlinkMacSystemFont, 
+		"Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 span.comment-buttons {
