@@ -77,13 +77,13 @@ export default class Profile extends Component {
 		});
 		this.editComponent.current.setState({
 			texto: selected,
-			comment_id: identificador
+			comment_id: identificador,
 		});
 
 		this.setState({
 			selected: index,
 			blur: "block",
-			editBox: "visible centro"
+			editBox: "visible centro",
 		});
 	}
 	closeEditComment(evt) {

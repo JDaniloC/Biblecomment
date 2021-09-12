@@ -71,9 +71,7 @@ export default class Comments extends Component {
 								</label>
 								<input type="checkbox" id={commentary.id} />
 								<div className="user-comment">
-									<p>
-										{commentary.text}
-									</p>
+									<p>{commentary.text}</p>
 									<span className="comment-buttons">
 										<p>
 											{" "}

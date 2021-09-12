@@ -70,7 +70,7 @@ export default class Control extends Component {
 		const commentsSum = comments.length + newComments.length;
 		const newTotal = Math.ceil(commentsSum / PAGE_LENGTH);
 
-		this.setState(prevState => ({
+		this.setState((prevState) => ({
 			comments: [...prevState.comments, ...newComments],
 		}));
 		if (newComments.length === PAGE_LENGTH) {
@@ -132,10 +132,8 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState(prevState => ({
-						users: prevState.users.filter(
-							user => user.email !== email
-						),
+					this.setState((prevState) => ({
+						users: prevState.users.filter((user) => user.email !== email),
 					}));
 				}
 			});
@@ -149,10 +147,8 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState(prevState => ({
-						comments: prevState.comments.filter(
-							(comment) => comment.id !== id
-						),
+					this.setState((prevState) => ({
+						comments: prevState.comments.filter((comment) => comment.id !== id),
 					}));
 				}
 			});
@@ -166,7 +162,7 @@ export default class Control extends Component {
 			})
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
-					this.setState(prevState => ({
+					this.setState((prevState) => ({
 						discussions: prevState.discussions.filter(
 							(discussion) => discussion.id !== id
 						),

@@ -7,8 +7,8 @@ export const NotificationContext = createContext({});
 
 export function NotificationProvider({ children }) {
 	const [message, setMessage] = useState("");
-    const [isOpen, setIsOpen] = useState(false);
-    const [severity, setSeverity] = useState("");
+	const [isOpen, setIsOpen] = useState(false);
+	const [severity, setSeverity] = useState("");
 
     const _closeFunction = () => {
         setIsOpen(false);
@@ -23,7 +23,7 @@ export function NotificationProvider({ children }) {
 	return (
 		<NotificationContext.Provider
 			value={{
-				handleNotification
+				handleNotification,
 			}}
 		>
 			{children}

@@ -88,7 +88,8 @@ export default class Chapter extends Component {
 				}
 			});
 		} catch (err) {
-			this.handleNotification("error",
+			this.handleNotification(
+				"error",
 				"Não consegui me conectar com o servidor"
 			);
 		}
@@ -112,14 +113,15 @@ export default class Chapter extends Component {
 							}
 						}
 
-						this.setState({ 
+						this.setState({
 							allComments: comments,
-							titleComments: titleComments
+							titleComments: titleComments,
 						});
 					}
 				});
 		} catch (err) {
-			this.handleNotification("error",
+			this.handleNotification(
+				"error",
 				"Não consegui me conectar com o servidor"
 			);
 		}
@@ -138,16 +140,16 @@ export default class Chapter extends Component {
 		if (this.state.currentVerse === numberVerse) {
 			this.closeComments(event);
 		} else {
-			this.setState(prevState => ({ 
+			this.setState((prevState) => ({
 				asideClass: "visible",
 				mainClass: "main comment",
 				navClass: prevState.navClass.includes("navHide")
 					? prevState.navClass
 					: prevState.navClass + " navHide",
-				comments: prevState.allComments.filter(comment => (
-					comment.verse === numberVerse + 1
-				)),
-				currentVerse: numberVerse
+				comments: prevState.allComments.filter(
+					(comment) => comment.verse === numberVerse + 1
+				),
+				currentVerse: numberVerse,
 			}));
 		}
 	}
@@ -206,13 +208,13 @@ export default class Chapter extends Component {
 
 	addNewComment(comment) {
 		if (comment.on_title) {
-			this.setState(prevState => ({
+			this.setState((prevState) => ({
 				titleComments: [...prevState.titleComments, comment],
 			}));
 		} else {
-			this.setState(prevState => ({ 
+			this.setState((prevState) => ({
 				comments: [...prevState.comments, comment],
-				allComments: [...prevState.allComments, comment] 
+				allComments: [...prevState.allComments, comment],
 			}));
 		}
 	}
@@ -269,26 +271,17 @@ export default class Chapter extends Component {
 						likes: true,
 					})
 					.then(() => {
-						this.handleNotification(
-							"success",
-							"Adicionado aos favoritos"
-						);
+						this.handleNotification("success", "Adicionado aos favoritos");
 						const found = searchLike(this.state.comments);
 						if (!found) {
 							searchLike(this.state.titleComments);
 						}
 					});
 			} catch (error) {
-				this.handleNotification(
-					"error",
-					error.toString()
-				);
+				this.handleNotification("error", error.toString());
 			}
 		} else {
-			this.handleNotification(
-				"warning",
-				"Você precisa está logado"
-			);
+			this.handleNotification("warning", "Você precisa está logado");
 		}
 	}
 
@@ -303,22 +296,13 @@ export default class Chapter extends Component {
 						reports: message,
 					})
 					.then(() => {
-						this.handleNotification(
-							"success",
-							"Comentário reportado!"
-						);
+						this.handleNotification("success", "Comentário reportado!");
 					});
 			} catch (error) {
-				this.handleNotification(
-					"error",
-					error.toString()
-				);
+				this.handleNotification("error", error.toString());
 			}
 		} else {
-			this.handleNotification(
-				"warning",
-				"Você precisa está logado"
-			);
+			this.handleNotification("warning", "Você precisa está logado");
 		}
 	}
 
@@ -363,12 +347,14 @@ export default class Chapter extends Component {
 								this.state.verses.map((verse, index) => (
 									<li key={verse}>
 										<sup> {index + 1} </sup>
-										<p	data-index = {index}
-											style={{ 
+										<p
+											data-index={index}
+											style={{
 												display: "inline",
-												backgroundColor: (
+												backgroundColor:
 													index === this.state.currentVerse
-												) ? "yellow" : "white"
+														? "yellow"
+														: "white",
 											}}
 											onClick={this.handleComments}
 										>
@@ -421,5 +407,5 @@ Chapter.propTypes = {
 			number: PropTypes.string.isRequired,
 		}),
 	}),
-	history: History
+	history: History,
 };
