@@ -13,7 +13,6 @@
   <img src = "https://api.netlify.com/api/v1/badges/39368106-a270-4767-9045-e217a6256136/deploy-status"/>
 </p>
 
-
 <p align="center">
   <img alt="ADM" src=".github/index.png">
 </p>
