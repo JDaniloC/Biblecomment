@@ -1,9 +1,8 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { TOKEN_KEY, isAuthenticated } from "../services/auth";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { NotificationContext } from "./NotificationContext";
+import { isAuthenticated, TOKEN_KEY } from "../services/auth";
 
 import PropTypes from "prop-types";
-import React from "react";
 import axios from "../services/api";
 
 export const ProfileContext = createContext({});

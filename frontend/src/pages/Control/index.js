@@ -1,10 +1,9 @@
 import "./styles.css";
 
-import { Component } from "react";
+import React, { Component } from "react";
 import { Pagination } from "@material-ui/lab";
 import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
 
-import React from "react";
 import axios from "../../services/api";
 
 const PAGE_LENGTH = 5;
