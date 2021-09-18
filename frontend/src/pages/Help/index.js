@@ -14,7 +14,9 @@ const warning = require("../../assets/warning.svg");
 const heart = require("../../assets/heart.svg");
 const chat = require("../../assets/chat.svg");
 
-const handleNothing = (e) => {e.preventDefault()}
+const handleNothing = (e) => {
+	e.preventDefault();
+};
 
 export default class Help extends Component {
 	render() {
@@ -103,7 +105,7 @@ export default class Help extends Component {
 						</p>
 					</div>
 					<div style={{ width: "100%", minWidth: "300px" }}>
-						<div className="login-container" onSubmit = {handleNothing}>
+						<div className="login-container" onSubmit={handleNothing}>
 							<form style={{ width: "100%" }}>
 								<input type="email" disabled placeholder="E-mail" />
 								<input type="text" disabled placeholder="Nome de usuário" />
@@ -151,45 +153,25 @@ export default class Help extends Component {
 					<div>
 						<h2> O que significa cada tipo de comentário? </h2>
 						<div>
-							<input
-								type="checkbox"
-								name="hand"
-								id="devocional"
-								checked
-							/>
+							<input type="checkbox" name="hand" id="devocional" checked />
 							<img className="tag" src={hand} alt="handIcon" />
 							Comentário devocional, indica um ensinamento extraído do texto,
 							trazendo uma aplicação prática para a vida.
 						</div>
 						<div>
-							<input
-								type="checkbox"
-								name="book"
-								id="exegese"
-								checked
-							/>
+							<input type="checkbox" name="book" id="exegese" checked />
 							<img className="tag" src={book} alt="bookIcon" />
 							Comentário exegético, indica um comentário que é necessário estudo
 							da língua original, cultura, curiosidades e teólogos.
 						</div>
 						<div>
-							<input
-								type="checkbox"
-								name="person"
-								id="pessoal"
-								checked
-							/>
+							<input type="checkbox" name="person" id="pessoal" checked />
 							<img className="tag" src={person} alt="personIcon" />
 							Comentário pessoal, feito caso o verso tenha tocado a pessoa em
 							algum momento na vida, e queira relatar para os demais.
 						</div>
 						<div>
-							<input
-								type="checkbox"
-								name="pen"
-								id="inspirado"
-								checked
-							/>
+							<input type="checkbox" name="pen" id="inspirado" checked />
 							<img className="tag" src={pen} alt="penIcon" />
 							Comentário inspirado, indica comentários de algum profeta
 							inspirado, canônico ou não.

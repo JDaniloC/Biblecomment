@@ -19,7 +19,7 @@ module.exports = {
 				.select("*");
 
 			return response.json(comments);
-		} 
+		}
 		return response.json({ error: "chapter not found" });
 	},
 
@@ -165,7 +165,10 @@ module.exports = {
 			}
 
 			await connection("comments").where("id", id).first().update({
-				text, tags, likes, reports
+				text,
+				tags,
+				likes,
+				reports,
 			});
 
 			return response.json({

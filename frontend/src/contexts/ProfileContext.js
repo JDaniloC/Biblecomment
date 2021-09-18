@@ -132,14 +132,12 @@ export function ProfileProvider({ children }) {
 
 	useEffect(() => {
 		async function getUserInfos(token) {
-			await axios
-				.get("session", { headers: { token } })
-				.then((response) => {
-					const hasError = response.data.error;
-					if (!hasError) {
-						loadUserInfos(response);
-					}
-				});
+			await axios.get("session", { headers: { token } }).then((response) => {
+				const hasError = response.data.error;
+				if (!hasError) {
+					loadUserInfos(response);
+				}
+			});
 		}
 
 		if (isAuthenticated()) {

@@ -313,7 +313,7 @@ export default class Control extends Component {
 										<p> Denúncias: {comment.reports.length}</p>
 										<p> Favoritos: {comment.likes.length}</p>
 
-										{comment.reports.length > 0 && 
+										{comment.reports.length > 0 && (
 											<ul style={{ width: "100%" }}>
 												<h4> Denúncias </h4>
 												{comment.reports.map((report) => (
@@ -323,7 +323,7 @@ export default class Control extends Component {
 													</li>
 												))}
 											</ul>
-										}
+										)}
 
 										<div className="config-buttons">
 											<button
