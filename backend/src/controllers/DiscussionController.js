@@ -124,10 +124,7 @@ module.exports = {
 			}
 
 			const prevAnswers = JSON.parse(discussion.answers);
-			prevAnswers.push({
-				name: user.name,
-				text: text,
-			});
+			prevAnswers.push({ name: user.name, text });
 			const answers = JSON.stringify(prevAnswers);
 
 			await connection("discussions").where("id", id).first().update({

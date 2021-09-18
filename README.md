@@ -1,6 +1,17 @@
-# [Bible Comment](https://biblecomment.com.br)
+<p align="center">
+  <img src=".github/title.png">
+</p>
 
-A web site to share comments about bible versicles.
+> A web site to read and share comments about bible versicles.
+> Over +500 comments in +150 chapters.
+
+<p align = "center">
+  <img src="https://img.shields.io/badge/-Python-black?style=flat&logo=python"/>
+  <img src="https://img.shields.io/badge/-React-black?style=flat&logo=react"/>
+  </br>
+  <img src = "https://deepsource.io/gh/JDaniloC/Biblecomment.svg/?label=resolved+issues&token=FYMaOHvBGRHQpqm0Yr6vJvji"/>
+  <img src = "https://api.netlify.com/api/v1/badges/39368106-a270-4767-9045-e217a6256136/deploy-status"/>
+</p>
 
 <p align="center">
   <img alt="ADM" src=".github/index.png">
@@ -72,3 +83,7 @@ In the same directory you can run the developer server using:
 ```bash
 yarn start
 ```
+
+---
+
+A Program ~~Violin~~ for His Glory ~ Jennifer Jeon <3

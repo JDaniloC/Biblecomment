@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { isAuthenticated, TOKEN_KEY } from "../services/auth";
 import { NotificationContext } from "./NotificationContext";
-import axios from "../services/api";
+import { isAuthenticated, TOKEN_KEY } from "../services/auth";
+
 import PropTypes from "prop-types";
+import axios from "../services/api";
 
 export const ProfileContext = createContext({});
 
@@ -130,16 +131,12 @@ export function ProfileProvider({ children }) {
 
 	useEffect(() => {
 		async function getUserInfos(token) {
-			await axios
-				.get("session", {
-					headers: { token: token },
-				})
-				.then((response) => {
-					const hasError = response.data.error;
-					if (!hasError) {
-						loadUserInfos(response);
-					}
-				});
+			await axios.get("session", { headers: { token } }).then((response) => {
+				const hasError = response.data.error;
+				if (!hasError) {
+					loadUserInfos(response);
+				}
+			});
 		}
 
 		if (isAuthenticated()) {
