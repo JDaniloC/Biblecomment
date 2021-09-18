@@ -1,9 +1,10 @@
 import "./styles.css";
 
-import React, { Component } from "react";
+import { Component } from "react";
 import { Pagination } from "@material-ui/lab";
-import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
+import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
 
+import React from "react";
 import axios from "../../services/api";
 
 const PAGE_LENGTH = 5;
@@ -27,9 +28,9 @@ export default class Control extends Component {
 			discussionsPage: 1,
 		};
 
-		this.changeUsersPage = this.changeUsersPage.bind(this);
-		this.changeCommentPage = this.changeCommentPage.bind(this);
-		this.changeDiscussionsPage = this.changeDiscussionsPage.bind(this);
+		this.handleUsersPage = this.handleUsersPage.bind(this);
+		this.handleCommentsPage = this.handleCommentsPage.bind(this);
+		this.handleDiscussionsPage = this.handleDiscussionsPage.bind(this);
 
 		this.handleLoadUsers = this.handleLoadUsers.bind(this);
 		this.handleLoadComments = this.handleLoadComments.bind(this);
@@ -112,7 +113,7 @@ export default class Control extends Component {
 	componentDidMount() {
 		function getUser(token) {
 			return axios.get("session", {
-				headers: { token: token },
+				headers: { token },
 			});
 		}
 
@@ -128,7 +129,7 @@ export default class Control extends Component {
 		}
 	}
 
-	async deleteAccount(evt) {
+	async handleDeleteAccount(evt) {
 		const email = evt.target.getAttribute("data-email");
 		await axios
 			.delete("users", {
@@ -143,7 +144,7 @@ export default class Control extends Component {
 			});
 	}
 
-	async deleteComment(evt) {
+	async handleDeleteComment(evt) {
 		const id = evt.target.getAttribute("data-id");
 		await axios
 			.delete(`comments/${id}`, {
@@ -158,7 +159,7 @@ export default class Control extends Component {
 			});
 	}
 
-	async deleteDiscussion(evt) {
+	async handleDeleteDiscussion(evt) {
 		const id = evt.target.getAttribute("data-id");
 		await axios
 			.delete(`discussion/${id}`, {
@@ -203,13 +204,13 @@ export default class Control extends Component {
 		return array.slice(inicio, final);
 	}
 
-	changeUsersPage(_, page) {
+	handleUsersPage(_, page) {
 		this.setState({ usersPage: page });
 	}
-	changeCommentPage(_, page) {
+	handleCommentsPage(_, page) {
 		this.setState({ commentsPage: page });
 	}
-	changeDiscussionsPage(_, page) {
+	handleDiscussionsPage(_, page) {
 		this.setState({ discussionsPage: page });
 	}
 
@@ -268,7 +269,7 @@ export default class Control extends Component {
 													backgroundColor: "#FF4030",
 												}}
 												data-email={user.email}
-												onClick={this.deleteAccount}
+												onClick={this.handleDeleteAccount}
 											>
 												Deletar
 											</button>
@@ -291,7 +292,7 @@ export default class Control extends Component {
 							size="small"
 							shape="rounded"
 							page={usersPage}
-							onChange={this.changeUsersPage}
+							onChange={this.handleUsersPage}
 							count={usersTotalPages}
 						/>
 					</ul>
@@ -312,7 +313,7 @@ export default class Control extends Component {
 										<p> Denúncias: {comment.reports.length}</p>
 										<p> Favoritos: {comment.likes.length}</p>
 
-										{comment.reports.length > 0 ? (
+										{comment.reports.length > 0 && 
 											<ul style={{ width: "100%" }}>
 												<h4> Denúncias </h4>
 												{comment.reports.map((report) => (
@@ -322,9 +323,7 @@ export default class Control extends Component {
 													</li>
 												))}
 											</ul>
-										) : (
-											<></>
-										)}
+										}
 
 										<div className="config-buttons">
 											<button
@@ -333,7 +332,7 @@ export default class Control extends Component {
 													backgroundColor: "#FF4030",
 												}}
 												data-id={comment.id}
-												onClick={this.deleteComment}
+												onClick={this.handleDeleteComment}
 											>
 												Deletar
 											</button>
@@ -357,7 +356,7 @@ export default class Control extends Component {
 							shape="rounded"
 							page={commentsPage}
 							count={commentsTotalPages}
-							onChange={this.changeCommentPage}
+							onChange={this.handleCommentsPage}
 						/>
 					</ul>
 					<ul>
@@ -391,7 +390,7 @@ export default class Control extends Component {
 													backgroundColor: "#FF4030",
 												}}
 												data-id={discussion.id}
-												onClick={this.deleteDiscussion}
+												onClick={this.handleDeleteDiscussion}
 											>
 												Deletar
 											</button>
@@ -415,7 +414,7 @@ export default class Control extends Component {
 							shape="rounded"
 							page={discussionsPage}
 							count={discussionsTotalPages}
-							onChange={this.changeDiscussionsPage}
+							onChange={this.handleDiscussionsPage}
 						/>
 					</ul>
 				</div>

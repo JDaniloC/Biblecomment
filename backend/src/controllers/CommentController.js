@@ -19,9 +19,8 @@ module.exports = {
 				.select("*");
 
 			return response.json(comments);
-		} else {
-			return response.json({ error: "chapter not found" });
-		}
+		} 
+		return response.json({ error: "chapter not found" });
 	},
 
 	async show(request, response) {
@@ -123,9 +122,8 @@ module.exports = {
 				book_reference: `${book_abbrev} ${number}:${verse}`,
 				created_at,
 			});
-		} else {
-			return response.json({ error: "Chapter doesn't exists" });
 		}
+		return response.json({ error: "Chapter doesn't exists" });
 	},
 
 	async update(request, response) {
@@ -150,28 +148,24 @@ module.exports = {
 
 			text = typeof text !== "undefined" ? text : comment.text;
 			tags = typeof tags !== "undefined" ? JSON.stringify(tags) : comment.tags;
-			let aux;
 			if (typeof likes !== "undefined") {
-				aux = JSON.parse(comment.likes);
-				if (aux.indexOf(user[0].name) === -1) {
-					aux.push(user[0].name);
+				const likeList = JSON.parse(comment.likes);
+				if (likeList.indexOf(user[0].name) === -1) {
+					likeList.push(user[0].name);
 				}
-				likes = JSON.stringify(aux);
+				likes = JSON.stringify(likeList);
 			}
 			if (typeof reports !== "undefined") {
-				aux = JSON.parse(comment.reports);
-				aux.push({
+				const reportList = JSON.parse(comment.reports);
+				reportList.push({
 					user: user[0].name,
 					msg: reports,
 				});
-				reports = JSON.stringify(aux);
+				reports = JSON.stringify(reportList);
 			}
 
 			await connection("comments").where("id", id).first().update({
-				text: text,
-				tags: tags,
-				likes: likes,
-				reports: reports,
+				text, tags, likes, reports
 			});
 
 			return response.json({
@@ -180,9 +174,8 @@ module.exports = {
 				likes,
 				reports,
 			});
-		} else {
-			return response.json({ Unauthorized: "Você precisa estar logado" });
 		}
+		return response.json({ Unauthorized: "Você precisa estar logado" });
 	},
 
 	async destroy(request, response) {
@@ -220,10 +213,9 @@ module.exports = {
 				.first()
 				.decrement("total_comments", 1);
 			return response.json(comment);
-		} else {
-			return response
-				.status(UNAUTHORIZED_STATUS)
-				.json({ Unauthorized: "Comentário não correspondente ao usuário" });
 		}
+		return response
+			.status(UNAUTHORIZED_STATUS)
+			.json({ Unauthorized: "Comentário não correspondente ao usuário" });
 	},
 };

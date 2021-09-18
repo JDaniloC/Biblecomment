@@ -14,11 +14,9 @@ const warning = require("../../assets/warning.svg");
 const heart = require("../../assets/heart.svg");
 const chat = require("../../assets/chat.svg");
 
-export default class Help extends Component {
-	foo(e) {
-		e.preventDefault();
-	}
+const handleNothing = (e) => {e.preventDefault()}
 
+export default class Help extends Component {
 	render() {
 		return (
 			<div className="help-component">
@@ -43,7 +41,7 @@ export default class Help extends Component {
 						</p>
 						<h2> Como posso participar? </h2>
 						<p>
-							Assim como o projeto
+							Assim como o projeto&nbsp;
 							<a href="https://reavivadosporsuapalavra.org/">
 								reavivados por sua palavra
 							</a>
@@ -68,7 +66,7 @@ export default class Help extends Component {
 						<p>
 							Divulgando o projeto para amigos e familiares, para que mais
 							pessoas sejam edificadas. Encontrando e relatando <b>problemas</b>
-							, oferecendo sugestões ou contribuindo diretamente no
+							, oferecendo sugestões ou contribuindo diretamente no&nbsp;
 							<a href="https://github.com/JDaniloC/Biblecomment">
 								código do projeto
 							</a>
@@ -105,8 +103,8 @@ export default class Help extends Component {
 						</p>
 					</div>
 					<div style={{ width: "100%", minWidth: "300px" }}>
-						<div className="login-container">
-							<form style={{ width: "100%" }} onSubmit={this.foo}>
+						<div className="login-container" onSubmit = {handleNothing}>
+							<form style={{ width: "100%" }}>
 								<input type="email" disabled placeholder="E-mail" />
 								<input type="text" disabled placeholder="Nome de usuário" />
 								<input type="password" disabled placeholder="Senha" />
@@ -158,7 +156,6 @@ export default class Help extends Component {
 								name="hand"
 								id="devocional"
 								checked
-								onChange={this.foo}
 							/>
 							<img className="tag" src={hand} alt="handIcon" />
 							Comentário devocional, indica um ensinamento extraído do texto,
@@ -170,7 +167,6 @@ export default class Help extends Component {
 								name="book"
 								id="exegese"
 								checked
-								onChange={this.foo}
 							/>
 							<img className="tag" src={book} alt="bookIcon" />
 							Comentário exegético, indica um comentário que é necessário estudo
@@ -182,7 +178,6 @@ export default class Help extends Component {
 								name="person"
 								id="pessoal"
 								checked
-								onChange={this.foo}
 							/>
 							<img className="tag" src={person} alt="personIcon" />
 							Comentário pessoal, feito caso o verso tenha tocado a pessoa em
@@ -194,7 +189,6 @@ export default class Help extends Component {
 								name="pen"
 								id="inspirado"
 								checked
-								onChange={this.foo}
 							/>
 							<img className="tag" src={pen} alt="penIcon" />
 							Comentário inspirado, indica comentários de algum profeta
@@ -210,7 +204,7 @@ export default class Help extends Component {
 						}}
 					>
 						<ul className="commentaries" style={{ fontSize: 14 }}>
-							<input type="checkbox" checked onChange={this.foo} />
+							<input type="checkbox" checked />
 							<div className="user-comment">
 								<p
 									style={{

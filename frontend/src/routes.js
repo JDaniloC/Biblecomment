@@ -1,11 +1,11 @@
-import { Route, BrowserRouter, Switch } from "react-router-dom";
-import React from "react";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
 
 import Chapter from "./pages/Chapter";
 import Control from "./pages/Control";
 import Discussion from "./pages/Discussion";
 import Help from "./pages/Help";
 import Main from "./pages/Main";
+import React from "react";
 
 export default function Routes() {
 	return (

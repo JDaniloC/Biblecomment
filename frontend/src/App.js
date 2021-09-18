@@ -3,8 +3,9 @@ import "./Responsive.css";
 
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
+import { useEffect } from "react";
 
-import React, { useEffect } from "react";
+import React from "react";
 import Routes from "./routes";
 
 export default function App() {

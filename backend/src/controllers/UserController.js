@@ -74,8 +74,7 @@ module.exports = {
 			return response.json(
 				await connection("users").where("email", email).first().delete()
 			);
-		} else {
-			return response.json({ msg: "Not authorized" });
 		}
+		return response.json({ msg: "Not authorized" });
 	},
 };
