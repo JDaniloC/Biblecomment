@@ -14,7 +14,9 @@ const warning = require("../../assets/warning.svg");
 const heart = require("../../assets/heart.svg");
 const chat = require("../../assets/chat.svg");
 
-const handleNothing = (e) => {e.preventDefault()}
+const handleNothing = (e) => {
+	e.preventDefault();
+};
 
 export default function Help (){
 	return (
