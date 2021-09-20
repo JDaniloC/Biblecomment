@@ -1,14 +1,13 @@
 import { ProfileContext } from "../../contexts/ProfileContext";
 import { Loading } from "../Partials";
 
+import closeImg from "../../assets/x.svg";
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
 import axios from "../../services/api";
 import PropTypes from "prop-types";
 
 import "./styles.css";
-
-const close = require("../../assets/x.svg");
 
 export default class BooksIndex extends Component {
 	static contextType = ProfileContext;
@@ -137,7 +136,7 @@ export default class BooksIndex extends Component {
 						<div className="top" style={{ justifyContent: "space-between" }}>
 							<h2 style={{ alignSelf: "center" }}>Escolha o capítulo</h2>
 							<button onClick={() => this.closeChapters()}>
-								<img src={close} alt="Fechar" />
+								<img src={closeImg} alt="Fechar" />
 							</button>
 						</div>
 

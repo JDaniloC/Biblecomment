@@ -1,17 +1,17 @@
 {
-  "name": "BibleComment",
-  "version": "1.0.0",
-  "description": "A bible comment app",
-  "main": "index.js",
-  "author": "JDaniloC",
-  "license": "MIT",
-  "scripts": {
-    "start": "yarn --cwd backend start",
-    "heroku-postbuild": "npm install yarn && cd backend && yarn -i"
-  },
-  "engines": {
-    "node": "12.x"
-  },
-  "repository": "https://github.com/JDaniloC/Individual-Community-Bible.git",
-  "private": false
+	"name": "BibleComment",
+	"version": "1.0.0",
+	"description": "A bible comment app",
+	"main": "index.js",
+	"author": "JDaniloC",
+	"license": "MIT",
+	"scripts": {
+		"start": "yarn --cwd backend start",
+		"heroku-postbuild": "npm install yarn && cd backend && yarn -i"
+	},
+	"engines": {
+		"node": "14.x"
+	},
+	"repository": "https://github.com/JDaniloC/Individual-Community-Bible.git",
+	"private": false
 }

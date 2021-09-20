@@ -12,13 +12,13 @@ import { Loading } from "../../components/Partials";
 import Comments from "../../components/Comments";
 import NavBar from "../../components/NavBar";
 
-const chat = require("../../assets/chat.svg");
-const heart = require("../../assets/heart.svg");
-const warning = require("../../assets/warning.svg");
-const person = require("../../assets/person.svg");
-const book = require("../../assets/book.svg");
-const hand = require("../../assets/hand.svg");
-const pen = require("../../assets/pen.svg");
+import bookIcon from "../../assets/book.svg";
+import chatIcon from "../../assets/chat.svg";
+import handIcon from "../../assets/hand.svg";
+import heartIcon from "../../assets/heart.svg";
+import penIcon from "../../assets/pen.svg";
+import personIcon from "../../assets/person.svg";
+import warningIcon from "../../assets/warning.svg";
 
 export default class Chapter extends Component {
 	static contextType = NotificationContext;
@@ -177,19 +177,19 @@ export default class Chapter extends Component {
 	getImage(tag) {
 		switch (tag) {
 			case "heart":
-				return heart;
+				return heartIcon;
 			case "warning":
-				return warning;
+				return warningIcon;
 			case "chat":
-				return chat;
+				return chatIcon;
 			case "devocional":
-				return hand;
+				return handIcon;
 			case "inspirado":
-				return pen;
+				return penIcon;
 			case "pessoal":
-				return person;
+				return personIcon;
 			default:
-				return book;
+				return bookIcon;
 		}
 	}
 

@@ -1,20 +1,20 @@
 import React, { Component, createRef } from "react";
-import { Pagination } from "@material-ui/lab";
-import PropTypes from "prop-types";
-
-import { ProfileContext } from "../../contexts/ProfileContext";
-import NewComment from "../../components/NewComment";
 import { Loading } from "../Partials";
+import { Pagination } from "@material-ui/lab";
+import { ProfileContext } from "../../contexts/ProfileContext";
+
+import deleteIcon from "../../assets/delete.svg";
+import editIcon from "../../assets/edit.svg";
+import gearsIcon from "../../assets/gears.svg";
+import heartIcon from "../../assets/heart.svg";
+import PropTypes from "prop-types";
+import NewComment from "../../components/NewComment";
+
 import "./styles.css";
 
 const dataCollection = require("../../data/collections.json");
 const beliefs = dataCollection.beliefs;
 const states = dataCollection.states;
-
-const heartIcon = require("../../assets/heart.svg");
-const deleteIcon = require("../../assets/delete.svg");
-const editIcon = require("../../assets/edit.svg");
-const gearsIcon = require("../../assets/gears.svg");
 
 export default class Profile extends Component {
 	static contextType = ProfileContext;

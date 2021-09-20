@@ -2,17 +2,18 @@ import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import { ProfileContext } from "../../contexts/ProfileContext";
 
 import React, { Component } from "react";
+
 import axios from "../../services/api";
+import bookImg from "../../assets/book.svg";
+import closeImg from "../../assets/x.svg";
+import handImg from "../../assets/hand.svg";
+import penImg from "../../assets/pen.svg";
+import personImg from "../../assets/person.svg";
+
 import PropTypes from "prop-types";
 
 import "balloon-css";
 import "./styles.css";
-
-const close = require("../../assets/x.svg");
-const pen = require("../../assets/pen.svg");
-const book = require("../../assets/book.svg");
-const hand = require("../../assets/hand.svg");
-const person = require("../../assets/person.svg");
 
 export default class NewComment extends Component {
 	static contextType = ProfileContext;
@@ -135,7 +136,7 @@ export default class NewComment extends Component {
 				<div className="top">
 					<h2 style={{ alignSelf: "center" }}>{this.props.title}</h2>
 					<button onClick={this.props.close}>
-						<img src={close} alt="Fechar" />
+						<img src={closeImg} alt="Fechar" />
 					</button>
 				</div>
 
@@ -156,7 +157,7 @@ export default class NewComment extends Component {
 								}}
 								id={`devocional${tipo}`}
 							/>
-							<img className="tag" src={hand} alt="handIcon" />
+							<img className="tag" src={handImg} alt="handIcon" />
 						</label>
 						<label
 							aria-label="Exegese"
@@ -172,7 +173,7 @@ export default class NewComment extends Component {
 								}}
 								id={"exegese" + tipo}
 							/>
-							<img className="tag" src={book} alt="bookIcon" />
+							<img className="tag" src={bookImg} alt="bookIcon" />
 						</label>
 						<label
 							aria-label="Inspirado"
@@ -188,7 +189,7 @@ export default class NewComment extends Component {
 								}}
 								id={"inspirado" + tipo}
 							/>
-							<img className="tag" src={pen} alt="penIcon" />
+							<img className="tag" src={penImg} alt="penIcon" />
 						</label>
 						<label
 							aria-label="Pessoal"
@@ -204,7 +205,7 @@ export default class NewComment extends Component {
 								}}
 								id={"pessoal" + tipo}
 							/>
-							<img className="tag" src={person} alt="personIcon" />
+							<img className="tag" src={personImg} alt="personIcon" />
 						</label>
 					</div>
 					<textarea
