@@ -37,12 +37,11 @@ export default class Control extends Component {
 	}
 
 	shouldComponentUpdate(nextProperties, nextState) {
-		if (this.state !== nextState ||
-			this.props !== nextProperties) {
+		if (this.state !== nextState || this.props !== nextProperties) {
 			return true;
 		}
-        return false;
-    }
+		return false;
+	}
 
 	async getUsers(currentPage = 1) {
 		const { users } = this.state;

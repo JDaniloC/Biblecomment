@@ -9,8 +9,8 @@ import React, { Component } from "react";
 
 export default class Main extends Component {
 	shouldComponentUpdate() {
-        return false;
-    }
+		return false;
+	}
 
 	render() {
 		return (
