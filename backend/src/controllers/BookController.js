@@ -29,9 +29,8 @@ module.exports = {
 			});
 
 			return response.json(book);
-		} else {
-			return response.json(exists);
 		}
+		return response.json(exists);
 	},
 
 	async show(request, response) {
@@ -45,8 +44,7 @@ module.exports = {
 				.select("number", "verses");
 
 			return response.json(book);
-		} else {
-			return response.json({ error: "insufficient params: abbrev" });
 		}
+		return response.json({ error: "insufficient params: abbrev" });
 	},
 };

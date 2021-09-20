@@ -3,18 +3,21 @@ import "./styles.css";
 import { HelpButton } from "../../components/Partials";
 
 import BooksIndex from "../../components/BooksIndex";
+import logoImg from "../../assets/logo.png";
 import Login from "../../components/Login";
 import React, { Component } from "react";
 
-const logo = require("../../assets/logo.png");
-
 export default class Main extends Component {
+	shouldComponentUpdate() {
+        return false;
+    }
+
 	render() {
 		return (
 			<div className="panel">
 				<HelpButton />
 				<div className="logo-container">
-					<img src={logo} alt="logo" />
+					<img src={logoImg} alt="logo" />
 					<p>
 						Compartilhe a mensagem de Deus <br /> com seus irmãos
 					</p>

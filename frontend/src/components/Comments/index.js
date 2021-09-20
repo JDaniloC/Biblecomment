@@ -1,9 +1,8 @@
 import "./styles.css";
 
+import closeImg from "../../assets/x.svg";
 import PropTypes from "prop-types";
 import React, { Component } from "react";
-
-const close = require("../../assets/x.svg");
 
 export default class Comments extends Component {
 	static propTypes = {
@@ -68,7 +67,7 @@ export default class Comments extends Component {
 				<div className="top">
 					<h2 style={{ alignSelf: "center" }}> Comentários </h2>
 					<button type="button" onClick={closeFunction}>
-						<img src={close} alt="Fechar" />
+						<img src={closeImg} alt="Fechar" />
 					</button>
 				</div>
 

@@ -36,6 +36,14 @@ export default class Control extends Component {
 		this.handleLoadDiscussion = this.handleLoadDiscussion.bind(this);
 	}
 
+	shouldComponentUpdate(nextProperties, nextState) {
+		if (this.state !== nextState ||
+			this.props !== nextProperties) {
+			return true;
+		}
+        return false;
+    }
+
 	async getUsers(currentPage = 1) {
 		const { users } = this.state;
 		const { data: newUsers } = await axios.get("users", {

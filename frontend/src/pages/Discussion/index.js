@@ -1,16 +1,15 @@
-import { NotificationContext } from "../../contexts/NotificationContext";
-import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
-import NavBar from "../../components/NavBar";
-import axios from "../../services/api";
-import PropTypes from "prop-types";
-
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import React, { Component, createRef } from "react";
 import { Pagination } from "@material-ui/lab";
+import { NotificationContext } from "../../contexts/NotificationContext";
+import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
+
+import axios from "../../services/api";
+import closeImg from "../../assets/x.svg";
+import NavBar from "../../components/NavBar";
+import PropTypes from "prop-types";
 
 import "./styles.css";
-
-const close = require("../../assets/x.svg");
 
 export default class Discussion extends Component {
 	static contextType = NotificationContext;
@@ -320,7 +319,7 @@ export default class Discussion extends Component {
 						<div className="top">
 							<h1 style={{ marginLeft: "1em" }}> Respostas </h1>
 							<button onClick={this.closeAnswers}>
-								<img src={close} alt="Fechar" />
+								<img src={closeImg} alt="Fechar" />
 							</button>
 						</div>
 
@@ -376,7 +375,7 @@ export default class Discussion extends Component {
 							<div className="top">
 								<h1 style={{ marginLeft: "1em" }}>Postar novo ponto</h1>
 								<button onClick={this.closeNewPost}>
-									<img src={close} alt="Fechar" />
+									<img src={closeImg} alt="Fechar" />
 								</button>
 							</div>
 
