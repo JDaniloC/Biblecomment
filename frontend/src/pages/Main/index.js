@@ -16,7 +16,7 @@ export default function Main() {
 				<p>
 					Compartilhe a mensagem de Deus <br /> com seus irmãos
 				</p>
-				<Login/>
+				<Login />
 			</div>
 			<BooksIndex />
 		</div>
