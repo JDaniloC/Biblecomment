@@ -1,49 +1,49 @@
 @import url("https://fonts.googleapis.com/css2?family=Karla:ital@1&display=swap");
 .help-component {
-  font-size: 20px;
-  font-family: "Karla", sans-serif;
+	font-size: 20px;
+	font-family: "Karla", sans-serif;
 }
 .help-component > section {
-  display: flex;
-  padding: 1em;
-  margin: 0.5em 0;
-  background-color: #fff;
+	display: flex;
+	padding: 1em;
+	margin: 0.5em 0;
+	background-color: #fff;
 }
 .help-component > section > div {
-  margin: 1em;
+	margin: 1em;
 }
 .help-component > section div > p {
-  text-indent: 20px;
+	text-indent: 20px;
 }
 .help-component b,
 .help-component div > h2 {
-  transition: background-color 0.5s ease-out;
+	transition: background-color 0.5s ease-out;
 }
 .help-component b:hover,
 .help-component div > h2:hover {
-  background-color: yellow;
+	background-color: yellow;
 }
 
 .help-component section#what-comment div > div {
-  display: flex;
-  align-items: flex-start;
+	display: flex;
+	align-items: flex-start;
 }
 .help-component section#what-comment div > div img {
-  margin-right: 10px;
+	margin-right: 10px;
 }
 
 .help-component form input[type="submit"] {
-  animation: click 2s infinite;
+	animation: click 2s infinite;
 }
 
 @keyframes click {
-  0% {
-    transform: scale(0.9);
-  }
-  50% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(0.9);
-  }
+	0% {
+		transform: scale(0.9);
+	}
+	50% {
+		transform: scale(1);
+	}
+	100% {
+		transform: scale(0.9);
+	}
 }

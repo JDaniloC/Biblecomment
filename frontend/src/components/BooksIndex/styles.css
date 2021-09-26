@@ -1,69 +1,69 @@
 .books-container {
-  display: flex;
-  flex-direction: column;
-  margin: 1em 2em;
-  max-width: 85vw;
-  align-items: center;
+	display: flex;
+	flex-direction: column;
+	margin: 1em 2em;
+	max-width: 85vw;
+	align-items: center;
 }
 
 .books {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  max-width: 55em;
-  margin: 1em 0;
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	max-width: 55em;
+	margin: 1em 0;
 }
 
 .books li {
-  flex: 1 0 30%;
-  flex-grow: 1;
-  padding: 10px;
-  margin: 0.3%;
-  color: #000;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  background-color: #dadce2;
-  border-radius: 4px;
+	flex: 1 0 30%;
+	flex-grow: 1;
+	padding: 10px;
+	margin: 0.3%;
+	color: #000;
+	font-weight: 700;
+	text-align: center;
+	cursor: pointer;
+	background-color: #dadce2;
+	border-radius: 4px;
 }
 
 .chapters-container {
-  background-color: white;
+	background-color: white;
 
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 
-  width: fit-content;
-  max-width: min(700px, 80vw);
-  height: fit-content;
-  padding: 20px;
-  margin: 5% auto;
-  border-radius: 3px;
-  min-width: 300px;
+	width: fit-content;
+	max-width: min(700px, 80vw);
+	height: fit-content;
+	padding: 20px;
+	margin: 5% auto;
+	border-radius: 3px;
+	min-width: 300px;
 }
 
 .chapters-container a {
-  flex: 1 0 20%;
-  flex-grow: 1;
-  padding: 10px;
-  color: #777;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  text-decoration: none;
-  border: 0.1px solid rgba(0, 0, 0, 0.2);
+	flex: 1 0 20%;
+	flex-grow: 1;
+	padding: 10px;
+	color: #777;
+	font-weight: 700;
+	text-align: center;
+	cursor: pointer;
+	text-decoration: none;
+	border: 0.1px solid rgba(0, 0, 0, 0.2);
 }
 
 .chapters-container ul {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
 
-  margin-top: 20px;
-  width: -webkit-fill-available;
+	margin-top: 20px;
+	width: -webkit-fill-available;
 }
 
 .chapters-container ul li:hover {
-  opacity: 0.9;
+	opacity: 0.9;
 }
