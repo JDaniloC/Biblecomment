@@ -19,7 +19,7 @@ export default function App() {
 			document.head.append(darkSchemeIcon);
 		} else {
 			document.head.append(lightSchemeIcon);
-			darkSchemeIcon.remove();
+			if (darkSchemeIcon !== null) darkSchemeIcon.remove();
 		}
 	}, []);
 
@@ -36,7 +36,9 @@ export default function App() {
 				</NotificationProvider>
 			</div>
 
-			<footer> Inspired by God, written by JDaniloC </footer>
+			<footer> 
+				Inspired by God, written by JDaniloC 
+			</footer>
 		</div>
 	);
 }
