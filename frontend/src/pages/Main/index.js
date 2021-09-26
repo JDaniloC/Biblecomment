@@ -7,6 +7,7 @@ import logoImg from "../../assets/logo.png";
 import Login from "../../components/Login";
 import React from "react";
 
+// [2, { "max": 3 }]
 export default function Main() {
 	return (
 		<div className="panel">
