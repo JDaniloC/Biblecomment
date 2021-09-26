@@ -36,9 +36,7 @@ export default function App() {
 				</NotificationProvider>
 			</div>
 
-			<footer> 
-				Inspired by God, written by JDaniloC 
-			</footer>
+			<footer>Inspired by God, written by JDaniloC</footer>
 		</div>
 	);
 }
