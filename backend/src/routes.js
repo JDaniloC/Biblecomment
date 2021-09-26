@@ -35,12 +35,12 @@ routes.patch("/books/:abbrev/chapters/:number", ChapterController.update);
 
 routes.get("/books/:abbrev/chapters/:number/comments", CommentController.index);
 routes.get(
-  "/books/:abbrev/chapters/:number/comments/:verse",
-  CommentController.show
+	"/books/:abbrev/chapters/:number/comments/:verse",
+	CommentController.show
 );
 routes.post(
-  "/books/:abbrev/chapters/:number/comments/:verse",
-  CommentController.store
+	"/books/:abbrev/chapters/:number/comments/:verse",
+	CommentController.store
 );
 routes.patch("/comments/:id", CommentController.update);
 routes.delete("/comments/:id", CommentController.destroy);
