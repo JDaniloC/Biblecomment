@@ -1,68 +1,71 @@
-import { ProfileContext } from "../../contexts/ProfileContext";
-import { Loading } from "../Partials";
+import { ProfileContext } from "contexts/ProfileContext";
+import { Loading } from "components/Partials";
 
-import closeImg from "../../assets/x.svg";
 import React, { Component } from "react";
-import { Link } from "react-router-dom";
-import axios from "../../services/api";
+
+import axios from "services/api";
+import ChapterChooser from "./ChapterChooser";
 import PropTypes from "prop-types";
 
-import "./styles.css";
+import styles from "./BooksIndex.module.css";
 
 export default class BooksIndex extends Component {
 	static contextType = ProfileContext;
-
+	static propTypes = {
+		changeChapter: PropTypes.func,
+		closeBookComponent: PropTypes.func
+	};
+	static defaultProps = {
+		changeChapter: (a, b) => a && b && false,
+		closeBookComponent: () => {}
+	};
+	
 	constructor(props) {
 		super(props);
 
 		this.state = {
 			books: [],
-			numbers: [],
-			selected: { abbrev: "", max: 0 },
-			blur: "none",
-			chapters: "invisible",
+			selectedAbbrev: "",
+			blurDisplay: "none",
+			selectedChapterLength: 0,
+			chapterContainerClass: "invisible",
 		};
+
+		this.closeChapters = this.closeChapters.bind(this);
+		this.handleChangePage = this.handleChangePage.bind(this);
+		this.showChapterNumbers = this.showChapterNumbers.bind(this);
 	}
 
 	componentDidMount() {
-		try {
-			axios.get("books").then((response) => {
-				if (typeof response.data === "object") {
-					this.setState({ books: response.data });
-				}
-			});
-		} catch (err) {
-			console.log("Problema no servidor: ", String(err));
-		}
-
-		let number_list = [];
-		for (let i = 1; i <= 150; i++) {
-			number_list.push(i);
-		}
-		this.setState({ numbers: number_list });
+		axios.get("books").then((response) => {
+			if (typeof response.data === "object") {
+				this.setState({ books: response.data });
+			}
+		}).catch((error) => {
+			this.context.handleNotification("error", 
+				`Problema no servidor: ${String(error)}`)
+		});
 	}
 
-	showChapterNumbers(abbrev, max) {
+	showChapterNumbers(event) {
+		const abbrev = event.target.getAttribute("data-abbrev");
+		const max = event.target.getAttribute("data-length");
 		this.setState({
-			selected: {
-				abbrev: abbrev,
-				max: max,
-			},
-			chapters: "visible centro",
-			blur: "block",
+			blurDisplay: "block",
+			selectedAbbrev: abbrev,
+			selectedChapterLength: Number(max),
+			chapterContainerClass: "visible centro",
 		});
 	}
 
 	closeChapters() {
 		this.setState({
-			chapters: "invisible",
-			blur: "none",
+			blurDisplay: "none",
+			chapterContainerClass: "invisible",
 		});
 	}
 
-	changePage(evt, chapter, number) {
-		evt.preventDefault();
-
+	handleChangePage(chapter, number) {
 		const changed = this.props.changeChapter(chapter, number);
 		if (changed) {
 			this.closeChapters();
@@ -84,95 +87,53 @@ export default class BooksIndex extends Component {
 		return 0;
 	}
 
-	chapterCommented(book, chapter) {
-		const commented = this.context.commented;
-		if (book in commented && commented[book].indexOf(String(chapter)) !== -1) {
-			return true;
-		}
-		return false;
-	}
-
 	render() {
 		return (
-			<div className="books-container">
+			<div className={styles.booksContainer}>
 				<h2> Escolha a meditação de hoje </h2>
-				<ul className="books">
+				<ul className={styles.books}>
 					{this.state.books.length > 0 ? (
 						this.state.books.map((book) => (
 							<li
 								style={{
-									background: `linear-gradient(to right, lightgreen ${this.bookCommented(
+									background: `linear-gradient(to right, 
+									lightgreen ${this.bookCommented(
 										book.abbrev,
 										book.length
 									)}%,  #DADCE2 0%)`,
 								}}
 								key={book.abbrev}
-								onClick={() =>
-									this.showChapterNumbers(book.abbrev, book.length)
-								}
+								data-length = {book.length}
+								data-abbrev = {book.abbrev}
+								onClick={this.showChapterNumbers}
 							>
 								{book.title}
 							</li>
 						))
 					) : (
-						<div style={{ textAlign: "center" }}>
+						<div>
 							<Loading />
-							<p style={{ marginTop: "1em" }}>
-								Este carregamento pode demorar 1-2min.
-							</p>
+							<p> Este carregamento pode demorar 1-2min. </p>
 							<p> Este site só permite visualização. </p>
 							<p> Toda interação não ficará salva, pois </p>
 							<p> o servidor está congelado. </p>
 						</div>
 					)}
 				</ul>
-				<div
-					className={this.state.chapters}
-					style={{
-						alignItems: "baseline",
-					}}
-				>
-					<div className="chapters-container">
-						<div className="top" style={{ justifyContent: "space-between" }}>
-							<h2 style={{ alignSelf: "center" }}>Escolha o capítulo</h2>
-							<button onClick={() => this.closeChapters()}>
-								<img src={closeImg} alt="Fechar" />
-							</button>
-						</div>
-
-						<ul>
-							{this.state.numbers
-								.slice(0, this.state.selected.max)
-								.map((chapter) => (
-									<Link
-										style={{
-											backgroundColor: this.chapterCommented(
-												this.state.selected.abbrev,
-												chapter
-											)
-												? "lightgreen"
-												: "white",
-										}}
-										key={chapter}
-										to={`/verses/${this.state.selected.abbrev}/${chapter}`}
-										onMouseDown={(evt) => {
-											this.changePage(evt, this.state.selected.abbrev, chapter);
-										}}
-									>
-										{chapter}
-									</Link>
-								))}
-						</ul>
-					</div>
+				<div id = {styles.chapterChooserContainer}
+					className={this.state.chapterContainerClass}>
+					<ChapterChooser
+						handleChangePage = {this.handleChangePage}
+						closeChapters = {this.closeChapters}
+						abbrev = {this.state.selectedAbbrev}
+						chapterLength = {this.state.selectedChapterLength}
+					/>
 				</div>
-				<div className="overlay" style={{ display: this.state.blur }}></div>
+				<div 
+					className="overlay" 
+					style={{ display: this.state.blurDisplay }}
+				></div>
 			</div>
 		);
 	}
 }
-BooksIndex.propTypes = {
-	changeChapter: PropTypes.func.isRequired,
-};
-BooksIndex.defaultProps = {
-	changeChapter: (a, b) => false,
-};

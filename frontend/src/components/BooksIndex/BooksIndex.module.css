@@ -1,0 +1,36 @@
+.booksContainer {
+	display: flex;
+	flex-direction: column;
+	margin: 1em 2em;
+	max-width: 85vw;
+	align-items: center;
+}
+#chapterChooserContainer {
+	align-items: baseline;
+}
+.books {
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	max-width: 55em;
+	margin: 1em 0;
+}
+
+.books li {
+	flex: 1 0 30%;
+	flex-grow: 1;
+	padding: 10px;
+	margin: 0.3%;
+	color: #000;
+	font-weight: 700;
+	text-align: center;
+	cursor: pointer;
+	background-color: #dadce2;
+	border-radius: 4px;
+}
+.books div {
+	text-align: center;
+}
+.books div p:nth-child(2) {
+	margin-top: 1em;
+}

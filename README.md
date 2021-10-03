@@ -23,7 +23,7 @@ I usually make notes in the bible in order to remember important aspects for und
 
 ## Webscrapping using Python
 
-To capture the bible chapters in ARA version, was used Selenium and [BibleAPI](https://bibleapi.co/) to make a script that returns a json file with the versicles from [biblia.com.br](http://biblia.com.br/).
+To capture the bible chapters in ARA version, was used Selenium and [BibleAPI](https://www.abibliadigital.com.br/) to make a script that returns a json file with the versicles from [biblia.com.br](http://biblia.com.br/).
 
 ### How to use
 
@@ -34,7 +34,7 @@ cd scrapy
 pip install -r requirements
 ```
 
-You need a token from the [BibleAPI](https://bibleapi.co/) to get more than _20 requests/hour/ip_, because this requests returns how much versicles it's necessary to capture for each chapter. Fill the _token_ variable at [webscraping.py](scrapy/webscraping.py), and write the books to capture in the _book_list_ variable, in the same file.
+You need a token from the [BibleAPI](https://www.abibliadigital.com.br/) to get more than _20 requests/hour/ip_, because this requests returns how much versicles it's necessary to capture for each chapter. Fill the _token_ variable at [webscraping.py](scrapy/webscraping.py), and write the books to capture in the _book_list_ variable, in the same file.
 
 ```py
 token = "YOUR TOKEN HERE"
