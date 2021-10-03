@@ -13,13 +13,13 @@ export default class BooksIndex extends Component {
 	static contextType = ProfileContext;
 	static propTypes = {
 		changeChapter: PropTypes.func,
-		closeBookComponent: PropTypes.func
+		closeBookComponent: PropTypes.func,
 	};
 	static defaultProps = {
 		changeChapter: (a, b) => a && b && false,
-		closeBookComponent: () => {}
+		closeBookComponent: () => {},
 	};
-	
+
 	constructor(props) {
 		super(props);
 
@@ -37,14 +37,19 @@ export default class BooksIndex extends Component {
 	}
 
 	componentDidMount() {
-		axios.get("books").then((response) => {
-			if (typeof response.data === "object") {
-				this.setState({ books: response.data });
-			}
-		}).catch((error) => {
-			this.context.handleNotification("error", 
-				`Problema no servidor: ${String(error)}`)
-		});
+		axios
+			.get("books")
+			.then((response) => {
+				if (typeof response.data === "object") {
+					this.setState({ books: response.data });
+				}
+			})
+			.catch((error) => {
+				this.context.handleNotification(
+					"error",
+					`Problema no servidor: ${String(error)}`
+				);
+			});
 	}
 
 	showChapterNumbers(event) {
@@ -97,14 +102,11 @@ export default class BooksIndex extends Component {
 							<li
 								style={{
 									background: `linear-gradient(to right, 
-									lightgreen ${this.bookCommented(
-										book.abbrev,
-										book.length
-									)}%,  #DADCE2 0%)`,
+									lightgreen ${this.bookCommented(book.abbrev, book.length)}%,  #DADCE2 0%)`,
 								}}
 								key={book.abbrev}
-								data-length = {book.length}
-								data-abbrev = {book.abbrev}
+								data-length={book.length}
+								data-abbrev={book.abbrev}
 								onClick={this.showChapterNumbers}
 							>
 								{book.title}
@@ -120,17 +122,19 @@ export default class BooksIndex extends Component {
 						</div>
 					)}
 				</ul>
-				<div id = {styles.chapterChooserContainer}
-					className={this.state.chapterContainerClass}>
+				<div
+					id={styles.chapterChooserContainer}
+					className={this.state.chapterContainerClass}
+				>
 					<ChapterChooser
-						handleChangePage = {this.handleChangePage}
-						closeChapters = {this.closeChapters}
-						abbrev = {this.state.selectedAbbrev}
-						chapterLength = {this.state.selectedChapterLength}
+						handleChangePage={this.handleChangePage}
+						closeChapters={this.closeChapters}
+						abbrev={this.state.selectedAbbrev}
+						chapterLength={this.state.selectedChapterLength}
 					/>
 				</div>
-				<div 
-					className="overlay" 
+				<div
+					className="overlay"
 					style={{ display: this.state.blurDisplay }}
 				></div>
 			</div>

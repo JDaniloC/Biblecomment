@@ -38,7 +38,7 @@
 	width: -webkit-fill-available;
 }
 
-.chaptersNumber a[data-visited = true] {
+.chaptersNumber a[data-visited="true"] {
 	background-color: lightgreen;
 }
 .chaptersNumber a:hover {
