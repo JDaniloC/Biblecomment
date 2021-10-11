@@ -63,12 +63,11 @@ export function ProfileProvider({ children }) {
 	async function getComments(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			const { data } = await axios
-				.get("users/comments", {
-					headers: { name },
-					params: { pages },
-				});
-			
+			const { data } = await axios.get("users/comments", {
+				headers: { name },
+				params: { pages },
+			});
+
 			const { comments } = data;
 			if (typeof comments !== "undefined") {
 				const newResult = [...commentaries, ...comments];
@@ -77,18 +76,17 @@ export function ProfileProvider({ children }) {
 			}
 		} catch (error) {
 			handleNotification("error", error.toString());
-		} 
+		}
 		return [];
 	}
 
 	async function getFavorites(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			const { data } = await axios
-				.get("users/favorites", {
-					headers: { name },
-					params: { pages },
-				});
+			const { data } = await axios.get("users/favorites", {
+				headers: { name },
+				params: { pages },
+			});
 			if (typeof data.favorites !== "undefined") {
 				const newFavorites = data.favorites;
 				const newResult = [...favorites, ...newFavorites];
@@ -97,7 +95,7 @@ export function ProfileProvider({ children }) {
 			}
 		} catch (error) {
 			handleNotification("error", error.toString());
-		} 
+		}
 		return [];
 	}
 

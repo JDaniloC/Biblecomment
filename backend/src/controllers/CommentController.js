@@ -36,13 +36,13 @@ module.exports = {
 			.where("chapter_id", chapter.id)
 			.andWhere("verse", verse)
 			.select("*");
-		
+
 		if (comments) {
 			return response.json(comments);
 		}
-		
+
 		return response.json({
-			error: "chapter number doesn't exists"
+			error: "chapter number doesn't exists",
 		});
 	},
 

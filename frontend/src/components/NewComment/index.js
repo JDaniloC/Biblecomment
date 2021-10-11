@@ -235,10 +235,7 @@ export default class NewComment extends Component {
 NewComment.propTypes = {
 	verso: PropTypes.func,
 	text: PropTypes.string,
-	number: PropTypes.oneOfType([
-		PropTypes.number,
-		PropTypes.string,
-	]),
+	number: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 	abbrev: PropTypes.string,
 	on_title: PropTypes.object,
 	post: PropTypes.bool.isRequired,

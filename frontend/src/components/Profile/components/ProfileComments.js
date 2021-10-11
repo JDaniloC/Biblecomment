@@ -13,145 +13,135 @@ import Comment from "models/Comment";
 const PAGE_LENGTH = 5;
 
 export default function ProfileComments({ type, getComments }) {
-    const [ title, setTitle ] = useState("");
-    const [ maxPages, setMaxPages ] = useState(1);
-    const [ emptyMsg, setEmptyMsg ] = useState("");
-    const [ currentPage, setCurrentPage ] = useState(1);
-    const [ commentsLoaded, setCommentsLoaded ] = useState([]);
-    
-    const [ comments, setComments ] = useState([]);
+	const [title, setTitle] = useState("");
+	const [maxPages, setMaxPages] = useState(1);
+	const [emptyMsg, setEmptyMsg] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const [commentsLoaded, setCommentsLoaded] = useState([]);
 
-    const { name, commentaries, favorites } = useContext(ProfileContext);
+	const [comments, setComments] = useState([]);
 
-    async function handleLoadMore() {
-        const prevMaxPages = maxPages;
-        setMaxPages(-1);
-        const newComments = await getComments(currentPage);
-        const allComments = [...comments, ...newComments];
-        setComments(prevState => [...prevState, ...newComments]);
+	const { name, commentaries, favorites } = useContext(ProfileContext);
 
-        if (currentPage > 1 && newComments.length > 0) {
-            setCurrentPage(currentPage - 1);
-        }
-        if (newComments.length === 50) {
-            setMaxPages(prevMaxPages + 1);
-        } else {
-            setMaxPages(prevMaxPages);
-        }
-        return allComments;
-    }
+	async function handleLoadMore() {
+		const prevMaxPages = maxPages;
+		setMaxPages(-1);
+		const newComments = await getComments(currentPage);
+		const allComments = [...comments, ...newComments];
+		setComments((prevState) => [...prevState, ...newComments]);
 
-    function renderComments(page, optComments = []) {
-        if (optComments.length === 0) {
-            optComments = comments;
-        }
-        const inicio = (page - 1) * PAGE_LENGTH;
+		if (currentPage > 1 && newComments.length > 0) {
+			setCurrentPage(currentPage - 1);
+		}
+		if (newComments.length === 50) {
+			setMaxPages(prevMaxPages + 1);
+		} else {
+			setMaxPages(prevMaxPages);
+		}
+		return allComments;
+	}
+
+	function renderComments(page, optComments = []) {
+		if (optComments.length === 0) {
+			optComments = comments;
+		}
+		const inicio = (page - 1) * PAGE_LENGTH;
 		const final = inicio + PAGE_LENGTH;
 		setCommentsLoaded(optComments.slice(inicio, final));
-    }
+	}
 
-    async function initializeComments() {
-        let renderArray = [];
-        if (comments.length === 0) {
-            if (type === "comments") {
-                renderArray = commentaries;
-            } else {
-                renderArray = favorites;
-            }
+	async function initializeComments() {
+		let renderArray = [];
+		if (comments.length === 0) {
+			if (type === "comments") {
+				renderArray = commentaries;
+			} else {
+				renderArray = favorites;
+			}
 
-            if (renderArray.length > 0) {
-                setComments(renderArray);
-            } else {
-                renderArray = await handleLoadMore();
-            }
-        } else {
-            renderArray = comments;
-        }
-        renderComments(1, renderArray);
-    }
+			if (renderArray.length > 0) {
+				setComments(renderArray);
+			} else {
+				renderArray = await handleLoadMore();
+			}
+		} else {
+			renderArray = comments;
+		}
+		renderComments(1, renderArray);
+	}
 
-    useState(async () => {
-        if (type === "comments") {
-            setTitle("Comentários feitos");
-            setEmptyMsg("Nenhum comentário realizado");
-        } else {
-            setTitle("Comentários favoritados");
-            setEmptyMsg("Você não favoritou nenhum comentário");
-        }
-        initializeComments();
-    }, []);
+	useState(async () => {
+		if (type === "comments") {
+			setTitle("Comentários feitos");
+			setEmptyMsg("Nenhum comentário realizado");
+		} else {
+			setTitle("Comentários favoritados");
+			setEmptyMsg("Você não favoritou nenhum comentário");
+		}
+		initializeComments();
+	}, []);
 
-    useEffect(() => {
-        let totalPages = Math.ceil(
-            comments.length / PAGE_LENGTH);
-        if (comments.length % 50 === 0) {
-            totalPages += 1;
-        }
-        setMaxPages(totalPages);
-    }, [comments]);
+	useEffect(() => {
+		let totalPages = Math.ceil(comments.length / PAGE_LENGTH);
+		if (comments.length % 50 === 0) {
+			totalPages += 1;
+		}
+		setMaxPages(totalPages);
+	}, [comments]);
 
-    useEffect(initializeComments, [name]);
+	useEffect(initializeComments, [name]);
 
-    useEffect(() => {
-        renderComments(currentPage);
-    }, [currentPage]);
+	useEffect(() => {
+		renderComments(currentPage);
+	}, [currentPage]);
 
-    function handleChangePage(_, page) {
+	function handleChangePage(_, page) {
 		setCurrentPage(page);
 	}
 
-    return (
-        <ul className="commentaries">
-            <h3> {title} </h3>
-            {comments.length !== 0 ? (
-                commentsLoaded.length > 0 ? (
-                    commentsLoaded.map((comment, index) => (
-                        (type === "comments") ? 
-                            <CommentRow 
-                                key = {comment.id}
-                                comment = {comment}
-                            />
-                        :   
-                        <FavoriteRow 
-                            key = {comment.text}
-                            comment = {comment} 
-                            index = {index}
-                        />
-                    ))
-                ) : (
-                    <button
-                        className="load-btn"
-                        onClick={handleLoadMore}
-                    >
-                        Carregar
-                    </button>
-                )
-            ) : maxPages !== -1 ? (
-                <li>
-                    <p> {emptyMsg} </p>
-                </li>
-            ) : (
-                <Loading />
-            )}
-            <Pagination
-                className="pagination"
-                boundaryCount={2}
-                showFirstButton
-                showLastButton
-                size="small"
-                shape="rounded"
-                count={maxPages}
-                page={currentPage}
-                onChange={handleChangePage}
-            />
-        </ul>
-    )
+	return (
+		<ul className="commentaries">
+			<h3> {title} </h3>
+			{comments.length !== 0 ? (
+				commentsLoaded.length > 0 ? (
+					commentsLoaded.map((comment, index) =>
+						type === "comments" ? (
+							<CommentRow key={comment.id} comment={comment} />
+						) : (
+							<FavoriteRow key={comment.text} comment={comment} index={index} />
+						)
+					)
+				) : (
+					<button className="load-btn" onClick={handleLoadMore}>
+						Carregar
+					</button>
+				)
+			) : maxPages !== -1 ? (
+				<li>
+					<p> {emptyMsg} </p>
+				</li>
+			) : (
+				<Loading />
+			)}
+			<Pagination
+				className="pagination"
+				boundaryCount={2}
+				showFirstButton
+				showLastButton
+				size="small"
+				shape="rounded"
+				count={maxPages}
+				page={currentPage}
+				onChange={handleChangePage}
+			/>
+		</ul>
+	);
 }
 ProfileComments.propTypes = {
-    type: PropTypes.string.isRequired,
-    getComments: PropTypes.func.isRequired,
-    comments: PropTypes.oneOfType([
-        PropTypes.arrayOf(Comment), 
-        PropTypes.arrayOf(Favorite)
-    ])
-}
+	type: PropTypes.string.isRequired,
+	getComments: PropTypes.func.isRequired,
+	comments: PropTypes.oneOfType([
+		PropTypes.arrayOf(Comment),
+		PropTypes.arrayOf(Favorite),
+	]),
+};

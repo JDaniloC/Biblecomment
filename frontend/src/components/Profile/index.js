@@ -96,32 +96,30 @@ export default class Profile extends Component {
 		return (
 			<>
 				<section className={this.context.perfilClass}>
-					<ProfileHeader 
-						username = {this.context.name} 
-						handleConfig = {this.handleConfig}
+					<ProfileHeader
+						username={this.context.name}
+						handleConfig={this.handleConfig}
 					/>
 					<ul style={{ display: this.state.perfilDisplay }}>
 						<li>Total de livros comentados: {this.context.booksCount} de 66</li>
 						<li>
-							Total de capítulos comentados: 
+							Total de capítulos comentados:
 							{this.context.chaptersCount} de 1.189
 						</li>
 						<li>Total de comentários feitos: {this.context.commentsCount}</li>
 
-						<ProfileComments 
-							type = "comments"
-							comments = {this.context.commentaries}
-							getComments = {this.context.getComments}
+						<ProfileComments
+							type="comments"
+							comments={this.context.commentaries}
+							getComments={this.context.getComments}
 						/>
-						<ProfileComments 
-							type = "favorites"
-							comments = {this.context.favorites}
-							getComments = {this.context.getFavorites}
+						<ProfileComments
+							type="favorites"
+							comments={this.context.favorites}
+							getComments={this.context.getFavorites}
 						/>
 					</ul>
-					<ProfileConfig
-						configDisplay = {this.state.configDisplay}
-					/>
+					<ProfileConfig configDisplay={this.state.configDisplay} />
 					<button
 						style={{ display: this.state.buttonDisplay }}
 						onClick={this.closeAccount}
@@ -139,9 +137,12 @@ export default class Profile extends Component {
 						addNewComment={this.handleCommentEdit}
 					/>
 				</div>
-				<div className="overlay" style={{ 
-					display: this.state.blur 
-				}}></div>
+				<div
+					className="overlay"
+					style={{
+						display: this.state.blur,
+					}}
+				></div>
 			</>
 		);
 	}
