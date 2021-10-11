@@ -4,11 +4,11 @@ import { ProfileContext } from "../../contexts/ProfileContext";
 import React, { Component } from "react";
 
 import axios from "../../services/api";
-import bookImg from "../../assets/book.svg";
-import closeImg from "../../assets/x.svg";
-import handImg from "../../assets/hand.svg";
-import penImg from "../../assets/pen.svg";
-import personImg from "../../assets/person.svg";
+import bookImg from "assets/book.svg";
+import closeImg from "assets/x.svg";
+import handImg from "assets/hand.svg";
+import penImg from "assets/pen.svg";
+import personImg from "assets/person.svg";
 
 import PropTypes from "prop-types";
 
@@ -235,7 +235,10 @@ export default class NewComment extends Component {
 NewComment.propTypes = {
 	verso: PropTypes.func,
 	text: PropTypes.string,
-	number: PropTypes.string,
+	number: PropTypes.oneOfType([
+		PropTypes.number,
+		PropTypes.string,
+	]),
 	abbrev: PropTypes.string,
 	on_title: PropTypes.object,
 	post: PropTypes.bool.isRequired,
@@ -245,7 +248,7 @@ NewComment.propTypes = {
 };
 NewComment.defaultProps = {
 	text: "",
-	number: "",
+	number: 0,
 	abbrev: "",
 	verso: () => 0,
 	on_title: { selected: 0 },
