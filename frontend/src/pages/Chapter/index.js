@@ -12,13 +12,13 @@ import { Loading } from "../../components/Partials";
 import Comments from "../../components/Comments";
 import NavBar from "../../components/NavBar";
 
-import bookIcon from "assets//book.svg";
-import chatIcon from "assets//chat.svg";
-import handIcon from "assets//hand.svg";
-import heartIcon from "assets//heart.svg";
-import penIcon from "assets//pen.svg";
-import personIcon from "assets//person.svg";
-import warningIcon from "assets//warning.svg";
+import bookIcon from "assets/book.svg";
+import chatIcon from "assets/chat.svg";
+import handIcon from "assets/hand.svg";
+import heartIcon from "assets/heart.svg";
+import penIcon from "assets/pen.svg";
+import personIcon from "assets/person.svg";
+import warningIcon from "assets/warning.svg";
 
 export default class Chapter extends Component {
 	static contextType = NotificationContext;
