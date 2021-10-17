@@ -224,8 +224,8 @@ export default class Chapter extends Component {
 			index === false
 				? this.state.titleComments.length
 				: this.state.allComments.filter(
-						(comment) => comment.verse === index + 1
-				  ).length;
+					(comment) => comment.verse === index + 1
+				).length;
 
 		if (amount === 0) {
 			return;
