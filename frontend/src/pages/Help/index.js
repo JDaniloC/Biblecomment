@@ -15,15 +15,9 @@ export default function Help() {
 		<div className="help-component">
 			<section>
 				<Link to="/">
-					<img 
-						style={{ height: "30px" }} 
-						alt="back arrow" 
-						src={backArrow} 
-					/>
+					<img style={{ height: "30px" }} alt="back arrow" src={backArrow} />
 				</Link>
-				<h1 style={{ marginLeft: "1em" }}>
-					Sobre o Bible Comment
-				</h1>
+				<h1 style={{ marginLeft: "1em" }}>Sobre o Bible Comment</h1>
 			</section>
 			<Introduction />
 			<HelpAccount />
