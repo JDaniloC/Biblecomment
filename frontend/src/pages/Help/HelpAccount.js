@@ -32,7 +32,7 @@ export default function HelpAccount() {
 				</p>
 			</div>
 			<div style={{ width: "100%", minWidth: "300px" }}>
-				<ExampleForm/>
+				<ExampleForm />
 			</div>
 		</section>
 	);

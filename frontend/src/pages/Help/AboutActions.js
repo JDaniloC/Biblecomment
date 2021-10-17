@@ -6,7 +6,7 @@ export default function AboutActions() {
 	return (
 		<section>
 			<div>
-				<ExampleComments/>
+				<ExampleComments />
 			</div>
 			<div>
 				<h2> O que significa o coração? </h2>
