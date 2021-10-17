@@ -1,9 +1,9 @@
 import React from "react";
 
-import bookIcon from "../../assets/book.svg";
-import handIcon from "../../assets/hand.svg";
-import penIcon from "../../assets/pen.svg";
-import personIcon from "../../assets/person.svg";
+import bookIcon from "assets/book.svg";
+import handIcon from "assets/hand.svg";
+import penIcon from "assets/pen.svg";
+import personIcon from "assets/person.svg";
 
 export default function AboutComment() {
 	return (

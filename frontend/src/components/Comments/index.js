@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import closeImg from "../../assets/x.svg";
+import closeImg from "assets/x.svg";
 import PropTypes from "prop-types";
 import React, { Component } from "react";
 
