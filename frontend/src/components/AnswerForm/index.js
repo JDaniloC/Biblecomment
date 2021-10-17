@@ -8,14 +8,20 @@ import PropTypes from "prop-types";
 
 import closeImg from "assets/x.svg";
 
-export default function AnswerForm({ 
-	answers, text, selected, comment_text, closeAnswers, postNewQuestion,
-	setAnswersToDiscussions, location
+export default function AnswerForm({
+	answers,
+	text,
+	selected,
+	comment_text,
+	closeAnswers,
+	postNewQuestion,
+	setAnswersToDiscussions,
+	location,
 }) {
-	const [ newAnswerClass, setNewAnswerClass ] = useState("invisible");
-	const [ newPostClass, setNewPostClass ] = useState("pop-up");
-	const [ answersClass, setAnswersClass ] = useState("centro"); // eslint-disable-line
-	const [ replyText, setReplyText ] = useState("");
+	const [newAnswerClass, setNewAnswerClass] = useState("invisible");
+	const [newPostClass, setNewPostClass] = useState("pop-up");
+	const [answersClass, setAnswersClass] = useState("centro"); // eslint-disable-line
+	const [replyText, setReplyText] = useState("");
 
 	const { handleNotification } = useContext(NotificationContext);
 
@@ -29,8 +35,7 @@ export default function AnswerForm({
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (typeof response.data === "object" 
-							&& response.data.answers) {
+						if (typeof response.data === "object" && response.data.answers) {
 							const answers = JSON.parse(response.data.answers);
 							setAnswersToDiscussions(answers);
 							setReplyText("");
@@ -49,8 +54,8 @@ export default function AnswerForm({
 	}
 
 	function handleCloseNewPost() {
-		setNewPostClass("invisible")
-		setNewAnswerClass("pop-up")
+		setNewPostClass("invisible");
+		setNewAnswerClass("pop-up");
 		closeAnswers();
 	}
 
@@ -58,7 +63,7 @@ export default function AnswerForm({
 		setReplyText(value);
 	}
 
-	return(
+	return (
 		<div className={answersClass}>
 			<div
 				className={newAnswerClass}
@@ -83,9 +88,7 @@ export default function AnswerForm({
 							</li>
 						))
 					) : (
-						<h2 style={{ margin: "1em 1.3em" }}>
-							Seja o primeiro a responder
-						</h2>
+						<h2 style={{ margin: "1em 1.3em" }}>Seja o primeiro a responder</h2>
 					)}
 				</ul>
 
@@ -115,8 +118,7 @@ export default function AnswerForm({
 						/>
 						<MDEditor.Markdown value={replyText} />
 					</div>
-					<button className="answer-btn" 
-						onClick={handlePostNewAnswer}>
+					<button className="answer-btn" onClick={handlePostNewAnswer}>
 						Responder
 					</button>
 				</div>
@@ -140,14 +142,10 @@ export default function AnswerForm({
 								width: "100%",
 							}}
 						>
-							<MDEditor
-								value={text}
-								onChange={this.changeText}
-							/>
+							<MDEditor value={text} onChange={this.changeText} />
 							<MDEditor.Markdown value={text} />
 						</div>
-						<button className="answer-btn" 
-							onClick={postNewQuestion}>
+						<button className="answer-btn" onClick={postNewQuestion}>
 							Postar
 						</button>
 					</div>
@@ -162,16 +160,17 @@ export default function AnswerForm({
 				/>
 			)}
 		</div>
-	)
+	);
 }
 AnswerForm.propTypes = {
 	answers: PropTypes.array,
 	location: PropTypes.shape({
-		state: {}}).isRequired,
+		state: {},
+	}).isRequired,
 	text: PropTypes.string.isRequired,
 	selected: PropTypes.number.isRequired,
 	closeAnswers: PropTypes.func.isRequired,
 	comment_text: PropTypes.string.isRequired,
 	postNewQuestion: PropTypes.func.isRequired,
 	setAnswersToDiscussions: PropTypes.func.isRequired,
-}
+};

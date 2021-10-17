@@ -18,21 +18,20 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
-
 		const location = this.props.location;
-		let title = "gn", 
+		let title = "gn",
 			comment_id = -1,
 			comment_text = "",
-			comment_reference = ""
+			comment_reference = "";
 
 		if (location === undefined) {
-			let { 
-				title = title, 
-				comment_id = comment_id, 
+			let {
+				title = title,
+				comment_id = comment_id,
 				comment_text = comment_text,
-				comment_reference = comment_reference, 
+				comment_reference = comment_reference,
 			} = location.state;
-		} 
+		}
 
 		const { abbrev } = this.props.match.params;
 
@@ -278,15 +277,15 @@ export default class Discussion extends Component {
 					</div>
 				</main>
 
-				<AnswerForm 
-					text = {this.state.text} 
-					answers = {this.state.answers}
-					selected = {this.state.selected} 
-					location = {this.props.location}
-					closeAnswers = {this.closeAnswers}
-					comment_text = {this.state.comment_text} 
-					postNewQuestion = {this.postNewQuestion}
-					setAnswersToDiscussions = {this.setAnswersToDiscussions}
+				<AnswerForm
+					text={this.state.text}
+					answers={this.state.answers}
+					selected={this.state.selected}
+					location={this.props.location}
+					closeAnswers={this.closeAnswers}
+					comment_text={this.state.comment_text}
+					postNewQuestion={this.postNewQuestion}
+					setAnswersToDiscussions={this.setAnswersToDiscussions}
 				/>
 				<div className="overlay" style={{ display: this.state.blur }} />
 			</>
