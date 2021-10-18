@@ -13,12 +13,12 @@ function dateFormat(string) {
 	return `${day}/${month}/${year}`;
 }
 
-export default function TitleComment({ 
-	comments, 
-	likeFunction, 
+export default function TitleComment({
+	comments,
+	likeFunction,
 	imageFunction,
-	reportFunction, 
-	handleNewComment, 
+	reportFunction,
+	handleNewComment,
 	discussionFunction,
 }) {
 	function showNewComment(evt) {
@@ -29,7 +29,7 @@ export default function TitleComment({
 		const id = evt.target.getAttribute("data-id");
 		likeFunction(parseInt(id, 10));
 	}
-	
+
 	function handleReport(evt) {
 		const id = evt.target.getAttribute("data-id");
 		reportFunction(parseInt(id, 10));
@@ -66,25 +66,26 @@ export default function TitleComment({
 								Favoritado por <b>{getLikeCount(comment)}</b> pessoas
 							</p>
 							<button type="button" onClick={handleLike}>
-								<img 
-									alt="like icon" 
+								<img
+									alt="like icon"
 									data-id={comment.id}
-									src={imageFunction("heart")} 
+									src={imageFunction("heart")}
 								/>
 							</button>
 							<button type="button" onClick={handleChat}>
-								<img 
-									alt="chat icon" 
+								<img
+									alt="chat icon"
 									data-id={comment.id}
 									data-text={comment.text}
 									data-reference={comment.book_reference}
-									src={imageFunction("chat")}/>
+									src={imageFunction("chat")}
+								/>
 							</button>
 							<button type="button" onClick={handleReport}>
-								<img 
-									alt="report icon" 
+								<img
+									alt="report icon"
 									data-id={comment.id}
-									src={imageFunction("warning")} 
+									src={imageFunction("warning")}
 								/>
 							</button>
 						</span>
@@ -92,9 +93,7 @@ export default function TitleComment({
 				))}
 			</ul>
 			<div>
-				<button type="button" 
-					className="entry" 
-					onClick={showNewComment}>
+				<button type="button" className="entry" onClick={showNewComment}>
 					Comentar
 				</button>
 			</div>

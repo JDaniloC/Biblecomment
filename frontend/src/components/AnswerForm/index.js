@@ -42,8 +42,7 @@ export default function AnswerForm({
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (typeof response.data === "object" 
-							&& response.data.answers) {
+						if (typeof response.data === "object" && response.data.answers) {
 							const answers = JSON.parse(response.data.answers);
 							setReplyText("");
 							setAnswersToDiscussions(answers);
@@ -74,8 +73,7 @@ export default function AnswerForm({
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (typeof response.data === "object" 
-							&& response.data.question) {
+						if (typeof response.data === "object" && response.data.question) {
 							response.data.answers = [];
 							setReplyText("");
 							appendNewDiscussion(response.data);
@@ -87,7 +85,7 @@ export default function AnswerForm({
 			} catch (error) {
 				handleNotification("error", error.toString());
 			}
-		} 
+		}
 	}
 
 	function handleCloseNewPost() {
@@ -104,14 +102,12 @@ export default function AnswerForm({
 		if (!isAuthenticated()) {
 			handleNotification("info", "Você precisa estar logado");
 		}
-		return replyText !== "" && isAuthenticated()
+		return replyText !== "" && isAuthenticated();
 	}
 
 	return (
-		<div className="answersComponent"
-			style = {{ display: answersClass }}>
-			<div
-				className={newAnswerClass}>
+		<div className="answersComponent" style={{ display: answersClass }}>
+			<div className={newAnswerClass}>
 				<div className="top">
 					<h1> Respostas </h1>
 					<button onClick={handleCloseAnswers}>
@@ -153,8 +149,7 @@ export default function AnswerForm({
 						/>
 						<MDEditor.Markdown value={replyText} />
 					</div>
-					<button className="answer-btn" 
-						onClick={handlePostNewAnswer}>
+					<button className="answer-btn" onClick={handlePostNewAnswer}>
 						Responder
 					</button>
 				</div>
@@ -170,31 +165,20 @@ export default function AnswerForm({
 					</div>
 
 					<h2> {comment_reference} </h2>
-					<p className="verse-text"> 
-						{comment_text} 
-					</p>
+					<p className="verse-text">{comment_text}</p>
 
 					<div className="reply-area">
 						<div>
-							<MDEditor 
-								value={replyText} 
-								onChange={handleChangeText}
-							/>
+							<MDEditor value={replyText} onChange={handleChangeText} />
 							<MDEditor.Markdown value={replyText} />
 						</div>
-						<button 
-							className="answer-btn" 
-							onClick={handlePostNewQuestion}
-						>
+						<button className="answer-btn" onClick={handlePostNewQuestion}>
 							Postar
 						</button>
 					</div>
 				</div>
 			) : (
-				<div
-					onClick={handleCloseNewPost}
-					className="answerBlur"
-				/>
+				<div onClick={handleCloseNewPost} className="answerBlur" />
 			)}
 		</div>
 	);

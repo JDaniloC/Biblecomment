@@ -220,9 +220,7 @@ export default class Chapter extends Component {
 		).length;
 
 		let amount =
-			index === false
-				? this.state.titleComments.length
-				: allCommentsLength;
+			index === false ? this.state.titleComments.length : allCommentsLength;
 
 		if (amount === 0) {
 			return;

@@ -14,12 +14,12 @@ function dateFormat(string) {
 	return `${day}/${month}/${year}`;
 }
 
-export default function Comments({ 
-	comments, 
-	likeFunction, 
+export default function Comments({
+	comments,
+	likeFunction,
 	imageFunction,
-	closeFunction, 
-	reportFunction, 
+	closeFunction,
+	reportFunction,
 	discussionFunction,
 	handleNewComment,
 }) {
@@ -56,27 +56,19 @@ export default function Comments({
 							<h3>
 								{commentary.username}
 								{commentary.tags.map((tag) => (
-									<img
-										key={tag}
-										alt={tag}
-										src={imageFunction(tag)}
-									/>
+									<img key={tag} alt={tag} src={imageFunction(tag)} />
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
 							<label htmlFor={commentary.id}>
-								<p className="label-title">
-									{commentary.text}
-								</p>
+								<p className="label-title">{commentary.text}</p>
 							</label>
 							<input type="checkbox" id={commentary.id} />
 							<div className="user-comment">
 								<p>{commentary.text}</p>
 								<span className="comment-buttons">
 									<p>
-										Favoritado por <b>
-											{getLikeCount(commentary)}
-										</b> pessoas
+										Favoritado por <b>{getLikeCount(commentary)}</b> pessoas
 									</p>
 									<button
 										type="button"
@@ -120,8 +112,7 @@ export default function Comments({
 					width: "100%",
 				}}
 			>
-				<button type="button" className="entry" 
-					onClick={handleNewComment}>
+				<button type="button" className="entry" onClick={handleNewComment}>
 					Comentar
 				</button>
 			</div>

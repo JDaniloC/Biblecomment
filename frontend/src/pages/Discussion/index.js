@@ -136,7 +136,7 @@ export default class Discussion extends Component {
 		});
 		this.setBlurDisplay("block");
 	}
-	
+
 	setBlurDisplay(display) {
 		this.setState({
 			blurDisplay: display,
@@ -202,12 +202,8 @@ export default class Discussion extends Component {
 										<input type="checkbox" id={chat.id} />
 										<div>
 											<div className="question-header">
-												<div className="reference">
-													{chat.verse_reference}
-												</div>
-												<p className="question-verse">
-													{chat.verse_text}
-												</p>
+												<div className="reference">{chat.verse_reference}</div>
+												<p className="question-verse">{chat.verse_text}</p>
 											</div>
 
 											<details className="comment">
@@ -216,9 +212,7 @@ export default class Discussion extends Component {
 											</details>
 
 											<hr />
-											<h4 style={{ fontSize: "large" }}>
-												{chat.username}
-											</h4>
+											<h4 style={{ fontSize: "large" }}>{chat.username}</h4>
 											<MDEditor.Markdown source={chat.question} />
 											<hr />
 
@@ -263,9 +257,12 @@ export default class Discussion extends Component {
 					comment_reference={this.state.comment_reference}
 					setAnswersToDiscussions={this.setAnswersToDiscussions}
 				/>
-				<div className="overlay" style={{ 
-					display: this.state.blurDisplay 
-				}} />
+				<div
+					className="overlay"
+					style={{
+						display: this.state.blurDisplay,
+					}}
+				/>
 			</>
 		);
 	}
