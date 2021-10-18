@@ -1,13 +1,13 @@
-import MDEditor, { commands } from "@uiw/react-md-editor";
-import React, { Component, createRef } from "react";
+import React, { Component } from "react";
 import { Pagination } from "@material-ui/lab";
-import { NotificationContext } from "../../contexts/NotificationContext";
-import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
+import { NotificationContext } from "contexts/NotificationContext";
 
-import axios from "../../services/api";
-import closeImg from "../../assets/x.svg";
-import NavBar from "../../components/NavBar";
+import axios from "services/api";
+import NavBar from "components/NavBar";
 import PropTypes from "prop-types";
+
+import MDEditor from "@uiw/react-md-editor";
+import AnswerForm from "components/AnswerForm";
 
 import "./styles.css";
 
@@ -17,16 +17,30 @@ export default class Discussion extends Component {
 	constructor(props) {
 		super(props);
 
-		const { title, comment_reference, comment_id, comment_text } =
-			this.props.location.state;
+		const location = this.props.location;
+		let title = "Não encontrado...",
+			comment_id = -1,
+			comment_text = "",
+			comment_reference = "";
+
+		if (location !== undefined) {
+			let {
+				title: newTitle,
+				comment_id: newComment_id,
+				comment_text: newComment_text,
+				comment_reference: newComment_reference,
+			} = location.state;
+
+			title = newTitle;
+			comment_id = newComment_id;
+			comment_text = newComment_text;
+			comment_reference = newComment_reference;
+		}
 
 		const { abbrev } = this.props.match.params;
 
 		this.state = {
-			newPostClass: "pop-up",
-			newAnswerClass: "invisible",
-			answersClass: "centro",
-			blur: "block",
+			blurDisplay: "block",
 
 			title,
 			abbrev,
@@ -36,20 +50,15 @@ export default class Discussion extends Component {
 			selected: comment_id,
 			comment_reference,
 			comment_text,
-			text: "",
 
 			totalPages: 2,
 			currentPage: 1,
 			loadedPages: [1],
 		};
 
-		this.textArea = createRef();
-
-		this.closeNewPost = this.closeNewPost.bind(this);
-		this.closeAnswers = this.closeAnswers.bind(this);
-		this.changeText = this.changeText.bind(this);
-		this.postNewAnswer = this.postNewAnswer.bind(this);
-		this.postNewQuestion = this.postNewQuestion.bind(this);
+		this.setBlurDisplay = this.setBlurDisplay.bind(this);
+		this.appendNewDiscussion = this.appendNewDiscussion.bind(this);
+		this.setAnswersToDiscussions = this.setAnswersToDiscussions.bind(this);
 	}
 
 	componentDidMount() {
@@ -63,7 +72,6 @@ export default class Discussion extends Component {
 			try {
 				axios.get(`/discussion/${abbrev}/${selected}`).then((response) => {
 					if (response.data.length > 0) {
-						this.closeNewPost();
 						if (!this.alreadyInDiscussions(selected)) {
 							const [discussion] = response.data;
 							discussion.id = -discussion.id;
@@ -123,102 +131,16 @@ export default class Discussion extends Component {
 	openAnswers(identificador, answers) {
 		this.setState({
 			selected: Math.abs(identificador),
-			answers: answers,
 			answersClass: "centro",
-			blur: "block",
+			answers: answers,
 		});
+		this.setBlurDisplay("block");
 	}
 
-	closeAnswers() {
+	setBlurDisplay(display) {
 		this.setState({
-			answersClass: "invisible",
-			blur: "none",
+			blurDisplay: display,
 		});
-	}
-
-	closeNewPost() {
-		this.setState({
-			newPostClass: "invisible",
-			newAnswerClass: "pop-up",
-		});
-		this.closeAnswers();
-	}
-
-	changeText(value) {
-		this.setState({ text: value });
-	}
-
-	postNewQuestion() {
-		this.closeNewPost();
-		if (this.state.text !== "" && isAuthenticated()) {
-			try {
-				const [abbrev, verse_reference] =
-					this.state.comment_reference.split(" ");
-				const verseText = this.state.comment_text;
-
-				axios
-					.post(`/discussion/${abbrev}/`, {
-						comment_id: this.state.selected,
-						verse_reference,
-						verse_text: verseText,
-						question: this.state.text,
-						token: localStorage.getItem(TOKEN_KEY),
-					})
-					.then((response) => {
-						if (typeof response.data === "object" && response.data.question) {
-							response.data.answers = [];
-
-							this.setState((prev) => ({
-								text: "",
-								discussions: [response.data, ...prev.discussions],
-							}));
-							this.handleNotification("Postado!", "success");
-						} else {
-							this.handleNotification("Algo deu errado", "warning");
-						}
-					});
-			} catch (err) {
-				this.handleNotification(err.message, "error");
-			}
-		} else if (!isAuthenticated()) {
-			this.handleNotification("Você precisa estar logado", "info");
-		}
-	}
-
-	postNewAnswer() {
-		this.closeAnswers();
-		const selected = this.state.selected;
-		if (this.state.text !== "" && isAuthenticated()) {
-			try {
-				axios
-					.patch(`/discussion/${selected}/`, {
-						text: this.state.text,
-						token: localStorage.getItem(TOKEN_KEY),
-					})
-					.then((response) => {
-						if (typeof response.data === "object" && response.data.answers) {
-							const answers = JSON.parse(response.data.answers);
-							this.setState((prevState) => ({
-								discussions: prevState.map((chat) => {
-									if (chat.id === selected) {
-										chat.answers = answers;
-									}
-									return chat;
-								}),
-								text: "",
-							}));
-
-							this.handleNotification("success", "Resposta enviada");
-						} else {
-							this.handleNotification("warning", "Algo deu errado");
-						}
-					});
-			} catch (error) {
-				this.handleNotification("error", error.toString());
-			}
-		} else if (!isAuthenticated()) {
-			this.handleNotification("info", "Você precisa estar logado");
-		}
 	}
 
 	handlePaginate(_, page) {
@@ -241,6 +163,22 @@ export default class Discussion extends Component {
 		var final = inicio + 5;
 
 		return this.state.discussions.slice(inicio, final);
+	}
+
+	setAnswersToDiscussions(answers) {
+		this.setState((prevState) => ({
+			discussions: prevState.map((chat) => {
+				if (chat.id === this.state.selected) {
+					chat.answers = answers;
+				}
+				return chat;
+			}),
+		}));
+	}
+	appendNewDiscussion(newDiscussions) {
+		this.setState((prevState) => ({
+			discussions: [newDiscussions, ...prevState.discussions],
+		}));
 	}
 
 	render() {
@@ -270,7 +208,7 @@ export default class Discussion extends Component {
 
 											<details className="comment">
 												<summary>Comentário mencionado</summary>
-												<p>{chat.comment_text}</p>
+												<p> {chat.comment_text} </p>
 											</details>
 
 											<hr />
@@ -297,10 +235,10 @@ export default class Discussion extends Component {
 							)}
 						</ul>
 						<Pagination
-							showFirstButton
-							showLastButton
 							size="small"
 							shape="rounded"
+							showLastButton
+							showFirstButton
 							count={this.state.totalPages}
 							page={this.state.currentPage}
 							onChange={this.handlePaginate}
@@ -308,110 +246,23 @@ export default class Discussion extends Component {
 					</div>
 				</main>
 
-				<div className={this.state.answersClass}>
-					<div
-						className={this.state.newAnswerClass}
-						style={{
-							width: "min(700px, 100vw)",
-							maxWidth: "100vw",
-						}}
-					>
-						<div className="top">
-							<h1 style={{ marginLeft: "1em" }}> Respostas </h1>
-							<button onClick={this.closeAnswers}>
-								<img src={closeImg} alt="Fechar" />
-							</button>
-						</div>
-
-						<ul className="answer-list">
-							{this.state.answers.length > 0 ? (
-								this.state.answers.map((answer) => (
-									<li key={answer}>
-										<h3 style={{ color: "#111" }}>{answer.name}</h3>
-										<MDEditor.Markdown source={answer.text} />
-									</li>
-								))
-							) : (
-								<h2 style={{ margin: "1em 1.3em" }}>
-									Seja o primeiro a responder
-								</h2>
-							)}
-						</ul>
-
-						<div className="reply-area">
-							<div
-								style={{
-									border: "1px solid #dcdce6",
-									width: "100%",
-								}}
-							>
-								<MDEditor
-									value={this.state.text}
-									onChange={this.changeText}
-									commands={[
-										commands.bold,
-										commands.italic,
-										commands.strikethrough,
-										commands.link,
-										commands.checkedListCommand,
-										commands.unorderedListCommand,
-										commands.orderedListCommand,
-										commands.codeEdit,
-										commands.codeLive,
-										commands.codePreview,
-										commands.fullscreen,
-									]}
-								/>
-								<MDEditor.Markdown value={this.state.text} />
-							</div>
-							<button className="answer-btn" onClick={this.postNewAnswer}>
-								Responder
-							</button>
-						</div>
-					</div>
-
-					{typeof this.props.location.state !== "undefined" ? (
-						<div className={this.state.newPostClass}>
-							<div className="top">
-								<h1 style={{ marginLeft: "1em" }}>Postar novo ponto</h1>
-								<button onClick={this.closeNewPost}>
-									<img src={closeImg} alt="Fechar" />
-								</button>
-							</div>
-
-							<p className="verse-text">{this.state.comment_text}</p>
-
-							<div className="reply-area">
-								<div
-									ref={this.textArea}
-									style={{
-										border: "1px solid #dcdce6",
-										width: "100%",
-									}}
-								>
-									<MDEditor
-										value={this.state.text}
-										onChange={this.changeText}
-									/>
-									<MDEditor.Markdown value={this.state.text} />
-								</div>
-								<button className="answer-btn" onClick={this.postNewQuestion}>
-									Postar
-								</button>
-							</div>
-						</div>
-					) : (
-						<div
-							onClick={this.closeNewPost}
-							style={{
-								width: "100%",
-								height: "100%",
-							}}
-						/>
-					)}
-				</div>
-
-				<div className="overlay" style={{ display: this.state.blur }} />
+				<AnswerForm
+					answers={this.state.answers}
+					selected={this.state.selected}
+					closeAnswers={this.closeAnswers}
+					setBlurDisplay={this.setBlurDisplay}
+					comment_text={this.state.comment_text}
+					postNewQuestion={this.postNewQuestion}
+					appendNewDiscussion={this.appendNewDiscussion}
+					comment_reference={this.state.comment_reference}
+					setAnswersToDiscussions={this.setAnswersToDiscussions}
+				/>
+				<div
+					className="overlay"
+					style={{
+						display: this.state.blurDisplay,
+					}}
+				/>
 			</>
 		);
 	}
@@ -421,8 +272,9 @@ Discussion.propTypes = {
 		pathname: PropTypes.string.isRequired,
 		state: PropTypes.shape({
 			title: PropTypes.string,
-			verse: PropTypes.string,
-			comment: PropTypes.object,
+			comment_id: PropTypes.number,
+			comment_text: PropTypes.string,
+			comment_reference: PropTypes.string,
 		}),
 	}).isRequired,
 	match: PropTypes.shape({

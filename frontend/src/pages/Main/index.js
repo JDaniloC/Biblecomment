@@ -1,13 +1,12 @@
 import "./styles.css";
 
-import { HelpButton } from "../../components/Partials";
+import { HelpButton } from "components/Partials";
 
-import BooksIndex from "../../components/BooksIndex";
-import logoImg from "../../assets/logo.png";
-import Login from "../../components/Login";
+import BooksIndex from "components/BooksIndex";
+import logoImg from "assets/logo.png";
+import Login from "components/Login";
 import React from "react";
 
-// [2, { "max": 3 }]
 export default function Main() {
 	return (
 		<div className="panel">

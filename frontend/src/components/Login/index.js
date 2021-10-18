@@ -1,9 +1,10 @@
 import React, { Component, createRef } from "react";
-import axios from "../../services/api";
 
-import { ProfileContext } from "../../contexts/ProfileContext";
-import { login, logout, TOKEN_KEY } from "../../services/auth";
-import Profile from "../Profile";
+import { ProfileContext } from "contexts/ProfileContext";
+import { login, logout, TOKEN_KEY } from "services/auth";
+
+import axios from "services/api";
+import Profile from "components/Profile";
 
 import "./styles.css";
 
@@ -210,8 +211,6 @@ export default class Login extends Component {
 		this.setFormClass("");
 		this.setCommentaries([]);
 		this.context.setName("");
-		this.context.setCurrentCPage(1);
-		this.context.setCurrentFPage(1);
 	}
 
 	render() {

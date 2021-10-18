@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { NotificationContext } from "./NotificationContext";
-import { isAuthenticated, TOKEN_KEY } from "../services/auth";
+import { isAuthenticated, TOKEN_KEY } from "services/auth";
 
 import PropTypes from "prop-types";
-import axios from "../services/api";
+import axios from "services/api";
 
+const PAGE_LENGTH = 5;
 export const ProfileContext = createContext({});
 
 export function ProfileProvider({ children }) {
@@ -23,11 +24,6 @@ export function ProfileProvider({ children }) {
 	const [commentaries, setCommentaries] = useState([]);
 	const [favorites, setFavorites] = useState([]);
 	const [commented, setCommented] = useState({});
-
-	const [totalFPages, setTotalFPages] = useState(1);
-	const [totalCPages, setTotalCPages] = useState(1);
-	const [currentFPage, setCurrentFPage] = useState(1);
-	const [currentCPage, setCurrentCPage] = useState(1);
 
 	const { handleNotification } = useContext(NotificationContext);
 
@@ -61,72 +57,46 @@ export function ProfileProvider({ children }) {
 		setCommentaries([...commentaries, comment]);
 		setCommentsCount(commentsCount + 1);
 
-		const length = Math.ceil((commentaries.length + 1) / 5);
-		setTotalCPages(length);
+		return Math.ceil((commentaries.length + 1) / 5);
 	}
 
-	async function getComments() {
-		let page = currentCPage;
-		setTotalCPages(-1);
-
+	async function getComments(page) {
 		try {
-			await axios
-				.get("users/comments", {
-					headers: { name },
-					params: { pages: Math.ceil((page * 5) / 50) },
-				})
-				.then(({ data }) => {
-					const { comments } = data;
-					if (typeof comments !== "undefined") {
-						const newResult = [...commentaries, ...comments];
-						setCommentaries(newResult);
+			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
+			const { data } = await axios.get("users/comments", {
+				headers: { name },
+				params: { pages },
+			});
 
-						let length = Math.ceil(newResult.length / 5);
-						if (comments.length === 50) {
-							length += 1;
-						} else if (page !== 1) {
-							page -= 1;
-						}
-
-						setCurrentCPage(page);
-						setTotalCPages(length);
-					}
-				});
+			const { comments } = data;
+			if (typeof comments !== "undefined") {
+				const newResult = [...commentaries, ...comments];
+				setCommentaries(newResult);
+				return comments;
+			}
 		} catch (error) {
-			handleNotification("error", "Problema no servidor");
+			handleNotification("error", error.toString());
 		}
+		return [];
 	}
 
-	async function getFavorites() {
-		let page = currentFPage;
-		setTotalFPages(-1);
-
+	async function getFavorites(page) {
 		try {
-			await axios
-				.get("users/favorites", {
-					headers: { name },
-					params: { pages: Math.ceil((page * 5) / 50) },
-				})
-				.then((response) => {
-					if (typeof response.data.favorites !== "undefined") {
-						const newFavorites = response.data.favorites;
-						const newResult = [...favorites, ...newFavorites];
-						setFavorites(newResult);
-
-						let length = Math.ceil(newResult.length / 5);
-						if (newFavorites.length === 50) {
-							length += 1;
-						} else if (page !== 1) {
-							page -= 1;
-						}
-
-						setCurrentFPage(page);
-						setTotalFPages(length);
-					}
-				});
+			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
+			const { data } = await axios.get("users/favorites", {
+				headers: { name },
+				params: { pages },
+			});
+			if (typeof data.favorites !== "undefined") {
+				const newFavorites = data.favorites;
+				const newResult = [...favorites, ...newFavorites];
+				setFavorites(newResult);
+				return newFavorites;
+			}
 		} catch (error) {
-			handleNotification("error", "Problema no servidor");
+			handleNotification("error", error.toString());
 		}
+		return [];
 	}
 
 	useEffect(() => {
@@ -145,15 +115,6 @@ export function ProfileProvider({ children }) {
 		}
 	}, []);
 
-	useEffect(() => {
-		async function getUserHistory() {
-			await getFavorites();
-			await getComments();
-		}
-		getUserHistory();
-		// eslint-disable-next-line
-	}, [name]);
-
 	return (
 		<ProfileContext.Provider
 			value={{
@@ -163,10 +124,6 @@ export function ProfileProvider({ children }) {
 				belief,
 				chaptersCount,
 				commentsCount,
-				currentFPage,
-				currentCPage,
-				totalCPages,
-				totalFPages,
 				commentaries,
 				favorites,
 				perfilClass,
@@ -181,8 +138,6 @@ export function ProfileProvider({ children }) {
 				setPerfilClass,
 				setFavorites,
 				setFormClass,
-				setCurrentCPage,
-				setCurrentFPage,
 				getFavorites,
 				setStateName,
 				addNewComment,

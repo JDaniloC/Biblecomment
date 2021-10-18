@@ -56,26 +56,6 @@ aside {
 	margin: 0 20px;
 }
 
-/* listas */
-ul.commentaries {
-	height: 88%;
-	overflow: auto;
-	width: 100%;
-}
-
-ul.commentaries > li {
-	margin-top: 10px;
-}
-
-p.label-title {
-	padding-left: 5px;
-	cursor: pointer;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	line-height: 30px;
-}
-
 ul.verse-list li {
 	margin-top: 10px;
 	line-height: 25px;

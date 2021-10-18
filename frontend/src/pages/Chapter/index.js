@@ -1,24 +1,25 @@
 import "./styles.css";
 
-import React, { Component, createRef } from "react";
-import axios from "../../services/api";
+import React, { Component } from "react";
+import axios from "services/api";
 import PropTypes from "prop-types";
 
-import { NotificationContext } from "../../contexts/NotificationContext";
-import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
-import TitleComment from "../../components/TitleComments";
-import NewComment from "../../components/NewComment";
-import { Loading } from "../../components/Partials";
-import Comments from "../../components/Comments";
-import NavBar from "../../components/NavBar";
+import { NotificationContext } from "contexts/NotificationContext";
+import { isAuthenticated, TOKEN_KEY } from "services/auth";
+import { Loading } from "components/Partials";
 
-import bookIcon from "../../assets/book.svg";
-import chatIcon from "../../assets/chat.svg";
-import handIcon from "../../assets/hand.svg";
-import heartIcon from "../../assets/heart.svg";
-import penIcon from "../../assets/pen.svg";
-import personIcon from "../../assets/person.svg";
-import warningIcon from "../../assets/warning.svg";
+import TitleComment from "components/TitleComments";
+import NewComment from "components/NewComment";
+import Comments from "components/Comments";
+import NavBar from "components/NavBar";
+
+import bookIcon from "assets/book.svg";
+import chatIcon from "assets/chat.svg";
+import handIcon from "assets/hand.svg";
+import heartIcon from "assets/heart.svg";
+import penIcon from "assets/pen.svg";
+import personIcon from "assets/person.svg";
+import warningIcon from "assets/warning.svg";
 
 export default class Chapter extends Component {
 	static contextType = NotificationContext;
@@ -41,11 +42,8 @@ export default class Chapter extends Component {
 			allComments: [],
 			titleComments: [],
 			currentVerse: -1,
+			newTitleComment: false,
 		};
-
-		// to parent access children's state
-		this.titleComponent = createRef();
-		this.commentsComponent = createRef();
 
 		// to use the state of parent in the children
 		this.getVerse = this.getVerse.bind(this);
@@ -164,13 +162,14 @@ export default class Chapter extends Component {
 		});
 	}
 
-	handleNewComment(evt) {
+	handleNewComment(evt, isTitle = false) {
 		evt.preventDefault();
 
 		this.setState({
 			newBoxClass: "visible centro",
-			blur: "block",
+			newTitleComment: isTitle,
 			navClass: "invisible",
+			blur: "block",
 		});
 	}
 
@@ -195,10 +194,6 @@ export default class Chapter extends Component {
 
 	closeNewCommentary(evt) {
 		evt.preventDefault();
-
-		this.titleComponent.current.selected = false;
-		this.commentsComponent.current.selected = false;
-
 		this.setState({
 			blur: "none",
 			navClass: "visible",
@@ -220,12 +215,12 @@ export default class Chapter extends Component {
 	}
 
 	renderAmount(index) {
+		const allCommentsLength = this.state.allComments.filter(
+			(comment) => comment.verse === index + 1
+		).length;
+
 		let amount =
-			index === false
-				? this.state.titleComments.length
-				: this.state.allComments.filter(
-						(comment) => comment.verse === index + 1
-				  ).length;
+			index === false ? this.state.titleComments.length : allCommentsLength;
 
 		if (amount === 0) {
 			return;
@@ -333,13 +328,12 @@ export default class Chapter extends Component {
 						</label>
 						<input type="checkbox" id="toggle" />
 						<TitleComment
-							handleNewComment={this.handleNewComment}
-							comments={this.state.titleComments}
 							imageFunction={this.getImage}
 							likeFunction={this.handleLike}
 							reportFunction={this.handleReport}
-							goToDiscussion={this.goToDiscussion}
-							ref={this.titleComponent}
+							comments={this.state.titleComments}
+							discussionFunction={this.goToDiscussion}
+							handleNewComment={this.handleNewComment}
 						/>
 
 						<ul className="verse-list">
@@ -371,27 +365,26 @@ export default class Chapter extends Component {
 				</div>
 				<aside className={this.state.asideClass}>
 					<Comments
-						closeFunction={this.closeComments}
-						commentaries={this.state.comments}
 						imageFunction={this.getImage}
-						handleNewComment={this.handleNewComment}
 						likeFunction={this.handleLike}
+						comments={this.state.comments}
+						closeFunction={this.closeComments}
 						reportFunction={this.handleReport}
-						goToDiscussion={this.goToDiscussion}
-						ref={this.commentsComponent}
+						discussionFunction={this.goToDiscussion}
+						handleNewComment={this.handleNewComment}
 					/>
 				</aside>
 
 				<div className={this.state.newBoxClass}>
 					<NewComment
 						post
-						title="Criar comentário"
 						abbrev={this.abbrev}
 						number={this.number}
 						verso={this.getVerse}
+						title="Criar comentário"
 						close={this.closeNewCommentary}
 						addNewComment={this.addNewComment}
-						on_title={this.titleComponent.current}
+						on_title={this.state.newTitleComment}
 					/>
 				</div>
 
