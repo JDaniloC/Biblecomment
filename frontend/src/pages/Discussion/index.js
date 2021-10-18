@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { Pagination } from "@material-ui/lab";
-import { TOKEN_KEY, isAuthenticated } from "services/auth";
 import { NotificationContext } from "contexts/NotificationContext";
 
 import axios from "services/api";
@@ -19,24 +18,29 @@ export default class Discussion extends Component {
 		super(props);
 
 		const location = this.props.location;
-		let title = "gn",
+		let title = "Não encontrado...",
 			comment_id = -1,
 			comment_text = "",
 			comment_reference = "";
 
-		if (location === undefined) {
+		if (location !== undefined) {
 			let {
-				title = title,
-				comment_id = comment_id,
-				comment_text = comment_text,
-				comment_reference = comment_reference,
+				title: newTitle,
+				comment_id: newComment_id,
+				comment_text: newComment_text,
+				comment_reference: newComment_reference,
 			} = location.state;
+
+			title = newTitle;
+			comment_id = newComment_id;
+			comment_text = newComment_text;
+			comment_reference = newComment_reference;
 		}
 
 		const { abbrev } = this.props.match.params;
 
 		this.state = {
-			blur: "block",
+			blurDisplay: "block",
 
 			title,
 			abbrev,
@@ -46,15 +50,14 @@ export default class Discussion extends Component {
 			selected: comment_id,
 			comment_reference,
 			comment_text,
-			text: "",
 
 			totalPages: 2,
 			currentPage: 1,
 			loadedPages: [1],
 		};
 
-		this.closeAnswers = this.closeAnswers.bind(this);
-		this.postNewQuestion = this.postNewQuestion.bind(this);
+		this.setBlurDisplay = this.setBlurDisplay.bind(this);
+		this.appendNewDiscussion = this.appendNewDiscussion.bind(this);
 		this.setAnswersToDiscussions = this.setAnswersToDiscussions.bind(this);
 	}
 
@@ -69,7 +72,6 @@ export default class Discussion extends Component {
 			try {
 				axios.get(`/discussion/${abbrev}/${selected}`).then((response) => {
 					if (response.data.length > 0) {
-						this.closeNewPost();
 						if (!this.alreadyInDiscussions(selected)) {
 							const [discussion] = response.data;
 							discussion.id = -discussion.id;
@@ -129,54 +131,16 @@ export default class Discussion extends Component {
 	openAnswers(identificador, answers) {
 		this.setState({
 			selected: Math.abs(identificador),
-			answers: answers,
 			answersClass: "centro",
-			blur: "block",
+			answers: answers,
 		});
+		this.setBlurDisplay("block");
 	}
-
-	closeAnswers() {
+	
+	setBlurDisplay(display) {
 		this.setState({
-			answersClass: "invisible",
-			blur: "none",
+			blurDisplay: display,
 		});
-	}
-
-	postNewQuestion() {
-		this.closeNewPost();
-		if (this.state.text !== "" && isAuthenticated()) {
-			try {
-				const [abbrev, verse_reference] =
-					this.state.comment_reference.split(" ");
-				const verseText = this.state.comment_text;
-
-				axios
-					.post(`/discussion/${abbrev}/`, {
-						comment_id: this.state.selected,
-						verse_reference,
-						verse_text: verseText,
-						question: this.state.text,
-						token: localStorage.getItem(TOKEN_KEY),
-					})
-					.then((response) => {
-						if (typeof response.data === "object" && response.data.question) {
-							response.data.answers = [];
-
-							this.setState((prev) => ({
-								text: "",
-								discussions: [response.data, ...prev.discussions],
-							}));
-							this.handleNotification("Postado!", "success");
-						} else {
-							this.handleNotification("Algo deu errado", "warning");
-						}
-					});
-			} catch (err) {
-				this.handleNotification(err.message, "error");
-			}
-		} else if (!isAuthenticated()) {
-			this.handleNotification("Você precisa estar logado", "info");
-		}
 	}
 
 	handlePaginate(_, page) {
@@ -211,6 +175,11 @@ export default class Discussion extends Component {
 			}),
 		}));
 	}
+	appendNewDiscussion(newDiscussions) {
+		this.setState((prevState) => ({
+			discussions: [newDiscussions, ...prevState.discussions],
+		}));
+	}
 
 	render() {
 		return (
@@ -233,17 +202,23 @@ export default class Discussion extends Component {
 										<input type="checkbox" id={chat.id} />
 										<div>
 											<div className="question-header">
-												<div className="reference">{chat.verse_reference}</div>
-												<p className="question-verse">{chat.verse_text}</p>
+												<div className="reference">
+													{chat.verse_reference}
+												</div>
+												<p className="question-verse">
+													{chat.verse_text}
+												</p>
 											</div>
 
 											<details className="comment">
 												<summary>Comentário mencionado</summary>
-												<p>{chat.comment_text}</p>
+												<p> {chat.comment_text} </p>
 											</details>
 
 											<hr />
-											<h4 style={{ fontSize: "large" }}>{chat.username}</h4>
+											<h4 style={{ fontSize: "large" }}>
+												{chat.username}
+											</h4>
 											<MDEditor.Markdown source={chat.question} />
 											<hr />
 
@@ -266,10 +241,10 @@ export default class Discussion extends Component {
 							)}
 						</ul>
 						<Pagination
-							showFirstButton
-							showLastButton
 							size="small"
 							shape="rounded"
+							showLastButton
+							showFirstButton
 							count={this.state.totalPages}
 							page={this.state.currentPage}
 							onChange={this.handlePaginate}
@@ -278,16 +253,19 @@ export default class Discussion extends Component {
 				</main>
 
 				<AnswerForm
-					text={this.state.text}
 					answers={this.state.answers}
 					selected={this.state.selected}
-					location={this.props.location}
 					closeAnswers={this.closeAnswers}
+					setBlurDisplay={this.setBlurDisplay}
 					comment_text={this.state.comment_text}
 					postNewQuestion={this.postNewQuestion}
+					appendNewDiscussion={this.appendNewDiscussion}
+					comment_reference={this.state.comment_reference}
 					setAnswersToDiscussions={this.setAnswersToDiscussions}
 				/>
-				<div className="overlay" style={{ display: this.state.blur }} />
+				<div className="overlay" style={{ 
+					display: this.state.blurDisplay 
+				}} />
 			</>
 		);
 	}

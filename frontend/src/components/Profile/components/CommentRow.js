@@ -9,16 +9,19 @@ import Comment from "models/Comment";
 export default function CommentRow({ comment }) {
 	return (
 		<li key={comment.id}>
-			<label style={{ display: "flex" }} htmlFor={comment.id}>
+			<label 
+				style={{ display: "flex" }} 
+				htmlFor={`comment${comment.id}`}>
 				<p>
 					{comment.book_reference} {comment.text}
 				</p>
 			</label>
-			<input type="checkbox" id={comment.id} />
+			<input type="checkbox" id={`comment${comment.id}`} />
 			<div className="user-comment">
 				{comment.text}
 				<p>
 					<button
+						data-id = {comment.id}
 						onClick={() => {
 							this.editComment(comment.id);
 						}}

@@ -1,4 +1,4 @@
-.side {
+.sideComments {
 	display: flex;
 	position: fixed;
 	align-items: center;
@@ -13,8 +13,56 @@
 	max-height: 77%;
 	box-shadow: 0px 0px 15px rgb(0 0 0 / 20%);
 }
+.sideComments .top h2 {
+	align-self: center;
+}
+
+ul.commentaries {
+	height: 88%;
+	overflow: auto;
+	width: 100%;
+}
+
+ul.commentaries li h3 {
+	display: flex;
+}
+ul.commentaries li label {
+	display: flex;
+}
+ul.commentaries li h3 img {
+	height: 1rem;
+	margin: 0 4px;
+}
+
+ul.commentaries > li {
+	margin-top: 10px;
+}
+
+p.label-title {
+	padding-left: 5px;
+	cursor: pointer;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	line-height: 30px;
+}
+
+.user-comment {
+	display: flex;
+	flex-direction: column;
+}
+
+.user-comment p {
+	font-size: 14px;
+	line-height: 18px;
+	text-align: justify;
+	white-space: break-spaces;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+		Arial, sans-serif;
+}
+
 @media (max-width: 1000px) {
-	.side {
+	.sideComments {
 		position: relative;
 		right: 1px;
 		min-width: 300px;
@@ -24,25 +72,11 @@
 	}
 }
 @media (max-width: 800px) {
-	.side {
+	.sideComments {
 		position: fixed;
 		width: inherit;
 		max-height: 70%;
 	}
-}
-
-.user-comment {
-	display: flex;
-	flex-direction: column;
-}
-
-.user-comment p {
-	text-align: justify;
-	white-space: break-spaces;
-	font-size: 14px;
-	line-height: 18px;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-		Arial, sans-serif;
 }
 
 span.comment-buttons {

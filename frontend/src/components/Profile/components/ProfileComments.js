@@ -106,13 +106,21 @@ export default function ProfileComments({ type, getComments }) {
 				commentsLoaded.length > 0 ? (
 					commentsLoaded.map((comment, index) =>
 						type === "comments" ? (
-							<CommentRow key={comment.id} comment={comment} />
+							<CommentRow 
+								key={comment.id} 
+								comment={comment} 
+							/>
 						) : (
-							<FavoriteRow key={comment.text} comment={comment} index={index} />
+							<FavoriteRow 
+								index={index} 
+								comment={comment} 
+								key={comment.text} 
+							/>
 						)
 					)
 				) : (
-					<button className="load-btn" onClick={handleLoadMore}>
+					<button className="load-btn" 
+						onClick={handleLoadMore}>
 						Carregar
 					</button>
 				)

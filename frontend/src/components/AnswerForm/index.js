@@ -8,26 +8,33 @@ import PropTypes from "prop-types";
 
 import closeImg from "assets/x.svg";
 
+import "./styles.css";
+
 export default function AnswerForm({
 	answers,
-	text,
 	selected,
 	comment_text,
-	closeAnswers,
-	postNewQuestion,
+	setBlurDisplay,
+	comment_reference,
+	appendNewDiscussion,
 	setAnswersToDiscussions,
-	location,
 }) {
 	const [newAnswerClass, setNewAnswerClass] = useState("invisible");
 	const [newPostClass, setNewPostClass] = useState("pop-up");
-	const [answersClass, setAnswersClass] = useState("centro"); // eslint-disable-line
+	const [answersClass, setAnswersClass] = useState("flex");
 	const [replyText, setReplyText] = useState("");
 
 	const { handleNotification } = useContext(NotificationContext);
 
+	function handleCloseAnswers() {
+		setAnswersClass("none");
+		setBlurDisplay("none");
+	}
+
 	function handlePostNewAnswer() {
-		closeAnswers();
-		if (replyText !== "" && isAuthenticated()) {
+		handleCloseAnswers();
+		const hasPermissionToPost = canPostSomething();
+		if (hasPermissionToPost) {
 			try {
 				axios
 					.patch(`/discussion/${selected}/`, {
@@ -35,11 +42,11 @@ export default function AnswerForm({
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
-						if (typeof response.data === "object" && response.data.answers) {
+						if (typeof response.data === "object" 
+							&& response.data.answers) {
 							const answers = JSON.parse(response.data.answers);
-							setAnswersToDiscussions(answers);
 							setReplyText("");
-
+							setAnswersToDiscussions(answers);
 							handleNotification("success", "Resposta enviada");
 						} else {
 							handleNotification("warning", "Algo deu errado");
@@ -48,33 +55,66 @@ export default function AnswerForm({
 			} catch (error) {
 				handleNotification("error", error.toString());
 			}
-		} else if (!isAuthenticated()) {
-			handleNotification("info", "Você precisa estar logado");
 		}
+	}
+
+	function handlePostNewQuestion() {
+		handleCloseNewPost();
+		const hasPermissionToPost = canPostSomething();
+		if (hasPermissionToPost) {
+			try {
+				const [abbrev, verse_reference] = comment_reference.split(" ");
+
+				axios
+					.post(`/discussion/${abbrev}/`, {
+						verse_reference,
+						question: replyText,
+						comment_id: selected,
+						verse_text: comment_text,
+						token: localStorage.getItem(TOKEN_KEY),
+					})
+					.then((response) => {
+						if (typeof response.data === "object" 
+							&& response.data.question) {
+							response.data.answers = [];
+							setReplyText("");
+							appendNewDiscussion(response.data);
+							handleNotification("success", "Postado!");
+						} else {
+							handleNotification("warning", "Algo deu errado");
+						}
+					});
+			} catch (error) {
+				handleNotification("error", error.toString());
+			}
+		} 
 	}
 
 	function handleCloseNewPost() {
 		setNewPostClass("invisible");
 		setNewAnswerClass("pop-up");
-		closeAnswers();
+		handleCloseAnswers();
 	}
 
 	function handleChangeText(value) {
 		setReplyText(value);
 	}
 
+	function canPostSomething() {
+		if (!isAuthenticated()) {
+			handleNotification("info", "Você precisa estar logado");
+		}
+		return replyText !== "" && isAuthenticated()
+	}
+
 	return (
-		<div className={answersClass}>
+		<div className="answersComponent"
+			style = {{ display: answersClass }}>
 			<div
-				className={newAnswerClass}
-				style={{
-					width: "min(700px, 100vw)",
-					maxWidth: "100vw",
-				}}
-			>
+				className={newAnswerClass}>
 				<div className="top">
-					<h1 style={{ marginLeft: "1em" }}> Respostas </h1>
-					<button onClick={closeAnswers}>
+					<h1> Respostas </h1>
+					<button onClick={handleCloseAnswers}>
 						<img src={closeImg} alt="Fechar" />
 					</button>
 				</div>
@@ -83,69 +123,69 @@ export default function AnswerForm({
 					{answers.length > 0 ? (
 						answers.map((answer) => (
 							<li key={answer}>
-								<h3 style={{ color: "#111" }}>{answer.name}</h3>
+								<h3> {answer.name} </h3>
 								<MDEditor.Markdown source={answer.text} />
 							</li>
 						))
 					) : (
-						<h2 style={{ margin: "1em 1.3em" }}>Seja o primeiro a responder</h2>
+						<h2> Seja o primeiro a responder </h2>
 					)}
 				</ul>
 
 				<div className="reply-area">
-					<div
-						style={{
-							border: "1px solid #dcdce6",
-							width: "100%",
-						}}
-					>
+					<div>
 						<MDEditor
 							value={replyText}
 							onChange={handleChangeText}
 							commands={[
 								commands.bold,
-								commands.italic,
-								commands.strikethrough,
 								commands.link,
-								commands.checkedListCommand,
-								commands.unorderedListCommand,
-								commands.orderedListCommand,
+								commands.italic,
 								commands.codeEdit,
 								commands.codeLive,
-								commands.codePreview,
 								commands.fullscreen,
+								commands.codePreview,
+								commands.strikethrough,
+								commands.checkedListCommand,
+								commands.orderedListCommand,
+								commands.unorderedListCommand,
 							]}
 						/>
 						<MDEditor.Markdown value={replyText} />
 					</div>
-					<button className="answer-btn" onClick={handlePostNewAnswer}>
+					<button className="answer-btn" 
+						onClick={handlePostNewAnswer}>
 						Responder
 					</button>
 				</div>
 			</div>
 
-			{typeof location.state !== "undefined" ? (
+			{comment_text !== "" ? (
 				<div className={newPostClass}>
 					<div className="top">
-						<h1 style={{ marginLeft: "1em" }}>Postar novo ponto</h1>
+						<h1> Postar novo ponto </h1>
 						<button onClick={handleCloseNewPost}>
 							<img src={closeImg} alt="Fechar" />
 						</button>
 					</div>
 
-					<p className="verse-text">{comment_text}</p>
+					<h2> {comment_reference} </h2>
+					<p className="verse-text"> 
+						{comment_text} 
+					</p>
 
 					<div className="reply-area">
-						<div
-							style={{
-								border: "1px solid #dcdce6",
-								width: "100%",
-							}}
-						>
-							<MDEditor value={text} onChange={this.changeText} />
-							<MDEditor.Markdown value={text} />
+						<div>
+							<MDEditor 
+								value={replyText} 
+								onChange={handleChangeText}
+							/>
+							<MDEditor.Markdown value={replyText} />
 						</div>
-						<button className="answer-btn" onClick={postNewQuestion}>
+						<button 
+							className="answer-btn" 
+							onClick={handlePostNewQuestion}
+						>
 							Postar
 						</button>
 					</div>
@@ -153,10 +193,7 @@ export default function AnswerForm({
 			) : (
 				<div
 					onClick={handleCloseNewPost}
-					style={{
-						width: "100%",
-						height: "100%",
-					}}
+					className="answerBlur"
 				/>
 			)}
 		</div>
@@ -164,13 +201,10 @@ export default function AnswerForm({
 }
 AnswerForm.propTypes = {
 	answers: PropTypes.array,
-	location: PropTypes.shape({
-		state: {},
-	}).isRequired,
-	text: PropTypes.string.isRequired,
 	selected: PropTypes.number.isRequired,
-	closeAnswers: PropTypes.func.isRequired,
+	setBlurDisplay: PropTypes.func.isRequired,
 	comment_text: PropTypes.string.isRequired,
-	postNewQuestion: PropTypes.func.isRequired,
+	comment_reference: PropTypes.string.isRequired,
+	appendNewDiscussion: PropTypes.func.isRequired,
 	setAnswersToDiscussions: PropTypes.func.isRequired,
 };

@@ -78,9 +78,9 @@ export default class NewComment extends Component {
 					const verso = this.props.verso() + 1;
 					axios
 						.post(`books/${abbrev}/chapters/${number}/comments/${verso}`, {
-							on_title: this.props.on_title.selected,
-							text,
+							on_title: this.props.isTitleComment,
 							token,
+							text,
 							tags,
 						})
 						.then((response) => {
@@ -92,8 +92,8 @@ export default class NewComment extends Component {
 					axios
 						.patch(`/comments/${this.state.comment_id}`, {
 							text,
-							token,
 							tags,
+							token,
 						})
 						.then((response) => {
 							this.context.handleNotification("success", "Comentário editado!");
@@ -235,18 +235,21 @@ export default class NewComment extends Component {
 NewComment.propTypes = {
 	verso: PropTypes.func,
 	text: PropTypes.string,
-	number: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 	abbrev: PropTypes.string,
-	on_title: PropTypes.object,
+	isTitleComment: PropTypes.bool,
 	post: PropTypes.bool.isRequired,
 	close: PropTypes.func.isRequired,
 	title: PropTypes.string.isRequired,
 	addNewComment: PropTypes.func.isRequired,
+	number: PropTypes.oneOfType([
+		PropTypes.number, 
+		PropTypes.string
+	]),
 };
 NewComment.defaultProps = {
 	text: "",
 	number: 0,
 	abbrev: "",
 	verso: () => 0,
-	on_title: { selected: 0 },
+	isTitleComment: false,
 };
