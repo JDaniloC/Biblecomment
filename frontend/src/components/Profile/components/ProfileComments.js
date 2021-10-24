@@ -105,7 +105,7 @@ export default function ProfileComments({ type, getComments }) {
 							<CommentRow key={comment.id} comment={comment} />
 						) : (
 							<FavoriteRow index={index} comment={comment} key={comment.text} />
-						)
+						);
 					})
 				) : (
 					<button type="button" className="load-btn" onClick={handleLoadMore}>
