@@ -127,10 +127,7 @@ export function ProfileProvider({ children }) {
 				})
 				.then(({ data }) => {
 					if (typeof data.error === "undefined") {
-						handleNotification(
-							"success", 
-							"Conta atualizada com sucesso."
-						);
+						handleNotification("success", "Conta atualizada com sucesso.");
 					} else {
 						handleNotification("warning", data.error);
 					}
@@ -148,10 +145,7 @@ export function ProfileProvider({ children }) {
 				})
 				.then(({ data }) => {
 					if (typeof data.error === "undefined") {
-						handleNotification(
-							"success", 
-							"Conta removida com sucesso."
-						);
+						handleNotification("success", "Conta removida com sucesso.");
 					} else {
 						handleNotification("warning", data.error);
 					}

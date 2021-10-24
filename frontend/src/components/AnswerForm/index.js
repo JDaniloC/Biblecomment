@@ -149,9 +149,9 @@ export default function AnswerForm({
 						/>
 						<MDEditor.Markdown value={replyText} />
 					</div>
-					<button 
+					<button
 						type="button"
-						className="answer-btn" 
+						className="answer-btn"
 						onClick={handlePostNewAnswer}
 					>
 						Responder
@@ -159,40 +159,36 @@ export default function AnswerForm({
 				</div>
 			</div>
 
-			{comment_text !== "" && (<>
-				<div className={newPostClass}>
-					<div className="top">
-						<h1> Postar novo ponto </h1>
-						<button type="button" onClick={handleCloseNewPost}>
-							<img src={closeImg} alt="Fechar" />
-						</button>
-					</div>
-
-					<h2> {comment_reference} </h2>
-					<p className="verse-text">{comment_text}</p>
-
-					<div className="reply-area">
-						<div>
-							<MDEditor 
-								value={replyText} 
-								onChange={handleChangeText} 
-							/>
-							<MDEditor.Markdown value={replyText} />
+			{comment_text !== "" && (
+				<>
+					<div className={newPostClass}>
+						<div className="top">
+							<h1> Postar novo ponto </h1>
+							<button type="button" onClick={handleCloseNewPost}>
+								<img src={closeImg} alt="Fechar" />
+							</button>
 						</div>
-						<button 
-							type="button"
-							className="answer-btn" 
-							onClick={handlePostNewQuestion}
-						>
-							Postar
-						</button>
+
+						<h2> {comment_reference} </h2>
+						<p className="verse-text">{comment_text}</p>
+
+						<div className="reply-area">
+							<div>
+								<MDEditor value={replyText} onChange={handleChangeText} />
+								<MDEditor.Markdown value={replyText} />
+							</div>
+							<button
+								type="button"
+								className="answer-btn"
+								onClick={handlePostNewQuestion}
+							>
+								Postar
+							</button>
+						</div>
 					</div>
-				</div>
-				<div 
-					className="answerBlur" 
-					onClick={handleCloseNewPost} 
-				/>
-			</>)}
+					<div className="answerBlur" onClick={handleCloseNewPost} />
+				</>
+			)}
 		</div>
 	);
 }

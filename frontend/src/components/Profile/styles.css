@@ -105,8 +105,8 @@ div.user-comment > p button:active {
 	cursor: pointer;
 }
 .user-config .config-buttons button:first-child {
-	background-color: #1D1;
+	background-color: #1d1;
 }
 .user-config .config-buttons button:last-child {
-	background-color: #FF4030;
+	background-color: #ff4030;
 }

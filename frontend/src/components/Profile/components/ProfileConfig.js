@@ -7,11 +7,11 @@ const dataCollection = require("data/collections.json");
 const { beliefs, states } = dataCollection;
 
 export default function ProfileConfig({ configDisplay, closeAccount }) {
-	const { 
-		belief, 
-		stateName, 
-		setBelief, 
-		setStateName, 
+	const {
+		belief,
+		stateName,
+		setBelief,
+		setStateName,
 		updateAccount,
 		deleteAccount,
 	} = useContext(ProfileContext);

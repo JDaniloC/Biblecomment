@@ -53,8 +53,7 @@ export default function ProfileComments({ type, getComments }) {
 	async function initializeComments() {
 		let renderArray = [];
 		if (comments.length === 0) {
-			renderArray = (type === "comments") 
-				? commentaries : favorites;
+			renderArray = type === "comments" ? commentaries : favorites;
 
 			if (renderArray.length > 0) {
 				setComments(renderArray);
@@ -101,19 +100,15 @@ export default function ProfileComments({ type, getComments }) {
 			<h3> {title} </h3>
 			{comments.length !== 0 ? (
 				commentsLoaded.length > 0 ? (
-					commentsLoaded.map((comment, index) => (
+					commentsLoaded.map((comment, index) =>
 						type === "comments" ? (
 							<CommentRow key={comment.id} comment={comment} />
 						) : (
 							<FavoriteRow index={index} comment={comment} key={comment.text} />
 						)
-					))
+					)
 				) : (
-					<button 
-						type="button"
-						className="load-btn" 
-						onClick={handleLoadMore}
-					>
+					<button type="button" className="load-btn" onClick={handleLoadMore}>
 						Carregar
 					</button>
 				)

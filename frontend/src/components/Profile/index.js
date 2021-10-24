@@ -113,9 +113,9 @@ export default class Profile extends Component {
 							getComments={this.context.getFavorites}
 						/>
 					</ul>
-					<ProfileConfig 
-						configDisplay={this.state.configDisplay} 
-						closeAccount = {this.props.closeAccount}
+					<ProfileConfig
+						configDisplay={this.state.configDisplay}
+						closeAccount={this.props.closeAccount}
 					/>
 					<button
 						style={{ display: this.state.buttonDisplay }}
