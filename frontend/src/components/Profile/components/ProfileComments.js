@@ -100,13 +100,13 @@ export default function ProfileComments({ type, getComments }) {
 			<h3> {title} </h3>
 			{comments.length !== 0 ? (
 				commentsLoaded.length > 0 ? (
-					commentsLoaded.map((comment, index) =>
-						type === "comments" ? (
+					commentsLoaded.map((comment, index) => {
+						return type === "comments" ? (
 							<CommentRow key={comment.id} comment={comment} />
 						) : (
 							<FavoriteRow index={index} comment={comment} key={comment.text} />
 						)
-					)
+					})
 				) : (
 					<button type="button" className="load-btn" onClick={handleLoadMore}>
 						Carregar
