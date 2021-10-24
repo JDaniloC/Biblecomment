@@ -46,7 +46,7 @@
 	cursor: default;
 }
 
-.pagination {
+.MuiPagination-root {
 	display: flex;
 	align-items: center;
 	flex-direction: column;
@@ -103,4 +103,10 @@ div.user-comment > p button:active {
 	color: white;
 	border: none;
 	cursor: pointer;
+}
+.user-config .config-buttons button:first-child {
+	background-color: #1D1;
+}
+.user-config .config-buttons button:last-child {
+	background-color: #FF4030;
 }

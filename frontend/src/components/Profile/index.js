@@ -26,7 +26,6 @@ export default class Profile extends Component {
 		};
 
 		this.editComponent = createRef();
-		this.closeAccount = this.closeAccount.bind(this);
 		this.handleConfig = this.handleConfig.bind(this);
 		this.closeEditComment = this.closeEditComment.bind(this);
 		this.handleCommentEdit = this.handleCommentEdit.bind(this);
@@ -69,11 +68,6 @@ export default class Profile extends Component {
 			);
 			this.props.deleteComment(identificador);
 		}
-	}
-
-	closeAccount() {
-		this.context.setPerfilClass("invisible");
-		this.props.closeAccount();
 	}
 
 	handleConfig() {
@@ -119,10 +113,13 @@ export default class Profile extends Component {
 							getComments={this.context.getFavorites}
 						/>
 					</ul>
-					<ProfileConfig configDisplay={this.state.configDisplay} />
+					<ProfileConfig 
+						configDisplay={this.state.configDisplay} 
+						closeAccount = {this.props.closeAccount}
+					/>
 					<button
 						style={{ display: this.state.buttonDisplay }}
-						onClick={this.closeAccount}
+						onClick={this.props.closeAccount}
 					>
 						Sair
 					</button>
@@ -149,7 +146,5 @@ export default class Profile extends Component {
 }
 Profile.propTypes = {
 	closeAccount: PropTypes.func.isRequired,
-	updateAccount: PropTypes.func.isRequired,
-	deleteAccount: PropTypes.func.isRequired,
 	deleteComment: PropTypes.func.isRequired,
 };

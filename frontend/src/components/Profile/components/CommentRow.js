@@ -19,6 +19,7 @@ export default function CommentRow({ comment }) {
 				{comment.text}
 				<p>
 					<button
+						type="button"
 						data-id={comment.id}
 						onClick={() => {
 							this.editComment(comment.id);
@@ -31,6 +32,7 @@ export default function CommentRow({ comment }) {
 						<img src={heartIcon} alt="Heart" />
 					</b>
 					<button
+						type="button"
 						onClick={() => {
 							this.deleteComment(comment.id);
 						}}

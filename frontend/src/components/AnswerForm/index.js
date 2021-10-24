@@ -110,7 +110,7 @@ export default function AnswerForm({
 			<div className={newAnswerClass}>
 				<div className="top">
 					<h1> Respostas </h1>
-					<button onClick={handleCloseAnswers}>
+					<button onClick={handleCloseAnswers} type="button">
 						<img src={closeImg} alt="Fechar" />
 					</button>
 				</div>
@@ -149,17 +149,21 @@ export default function AnswerForm({
 						/>
 						<MDEditor.Markdown value={replyText} />
 					</div>
-					<button className="answer-btn" onClick={handlePostNewAnswer}>
+					<button 
+						type="button"
+						className="answer-btn" 
+						onClick={handlePostNewAnswer}
+					>
 						Responder
 					</button>
 				</div>
 			</div>
 
-			{comment_text !== "" ? (
+			{comment_text !== "" && (<>
 				<div className={newPostClass}>
 					<div className="top">
 						<h1> Postar novo ponto </h1>
-						<button onClick={handleCloseNewPost}>
+						<button type="button" onClick={handleCloseNewPost}>
 							<img src={closeImg} alt="Fechar" />
 						</button>
 					</div>
@@ -169,17 +173,26 @@ export default function AnswerForm({
 
 					<div className="reply-area">
 						<div>
-							<MDEditor value={replyText} onChange={handleChangeText} />
+							<MDEditor 
+								value={replyText} 
+								onChange={handleChangeText} 
+							/>
 							<MDEditor.Markdown value={replyText} />
 						</div>
-						<button className="answer-btn" onClick={handlePostNewQuestion}>
+						<button 
+							type="button"
+							className="answer-btn" 
+							onClick={handlePostNewQuestion}
+						>
 							Postar
 						</button>
 					</div>
 				</div>
-			) : (
-				<div onClick={handleCloseNewPost} className="answerBlur" />
-			)}
+				<div 
+					className="answerBlur" 
+					onClick={handleCloseNewPost} 
+				/>
+			</>)}
 		</div>
 	);
 }
