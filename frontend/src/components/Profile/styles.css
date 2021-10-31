@@ -115,6 +115,6 @@ div.user-comment > p button:active {
 	display: inline;
 }
 .favorite-row label,
-.comment-row  label {
+.comment-row label {
 	display: flex;
 }

@@ -7,7 +7,7 @@ import heartIcon from "assets/heart.svg";
 import Comment from "models/Comment";
 import PropTypes from "prop-types";
 
-export default function CommentRow({ 
+export default function CommentRow({
 	comment,
 	editCommentFunction,
 	deleteCommentFunction,
@@ -20,28 +20,25 @@ export default function CommentRow({
 	}
 
 	return (
-		<li key={comment.id} className = "comment-row">
+		<li key={comment.id} className="comment-row">
 			<label htmlFor={`comment${comment.id}`}>
-				<p> {comment.book_reference} {comment.text} </p>
+				<p>
+					{" "}
+					{comment.book_reference} {comment.text}{" "}
+				</p>
 			</label>
 			<input type="checkbox" id={`comment${comment.id}`} />
 			<div className="user-comment">
 				{comment.text}
 				<p>
-					<button
-						type="button"
-						onClick={handleEditComment}
-					>
+					<button type="button" onClick={handleEditComment}>
 						<img src={editIcon} alt="Edit" />
 					</button>
 					<b>
 						{JSON.parse(comment.likes).length}
 						<img src={heartIcon} alt="Heart" />
 					</b>
-					<button
-						type="button"
-						onClick={handleDeleteComment}
-					>
+					<button type="button" onClick={handleDeleteComment}>
 						<img src={deleteIcon} alt="Delete" />
 					</button>
 				</p>
@@ -49,7 +46,7 @@ export default function CommentRow({
 		</li>
 	);
 }
-CommentRow.propTypes = { 
+CommentRow.propTypes = {
 	comment: Comment,
 	editCommentFunction: PropTypes.func.isRequired,
 	deleteCommentFunction: PropTypes.func.isRequired,

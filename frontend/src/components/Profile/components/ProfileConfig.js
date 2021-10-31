@@ -6,10 +6,7 @@ import PropTypes from "prop-types";
 const dataCollection = require("data/collections.json");
 const { beliefs, states } = dataCollection;
 
-export default function ProfileConfig({ 
-	configDisplay, 
-	closeAccount 
-}) {
+export default function ProfileConfig({ configDisplay, closeAccount }) {
 	const {
 		belief,
 		stateName,
@@ -33,42 +30,34 @@ export default function ProfileConfig({
 	}
 
 	return (
-		<div 
-			className = "user-config"
-			style = {{ display: configDisplay }}
-		>
+		<div className="user-config" style={{ display: configDisplay }}>
 			<div className="dropdown-menu">
 				<label htmlFor="state"> Estado: </label>
-				<select 
+				<select
 					id="state"
-					name="state" 
+					name="state"
 					value={stateName}
 					onBlur={handleChangeState}
 					onChange={handleChangeState}
 				>
 					{states.map((item) => (
-						<option 
-							key = {item}
-							value={item}>
-								{item}
+						<option key={item} value={item}>
+							{item}
 						</option>
 					))}
 				</select>
 			</div>
 			<div className="dropdown-menu">
 				<label htmlFor="belief"> Crença: </label>
-				<select 
+				<select
 					id="belief"
-					name="belief" 
-					value = {belief}
+					name="belief"
+					value={belief}
 					onBlur={handleChangeBelief}
 					onChange={handleChangeBelief}
 				>
 					{beliefs.map((item) => (
-						<option 
-							key={item}
-							value={item}
-						>
+						<option key={item} value={item}>
 							{item}
 						</option>
 					))}

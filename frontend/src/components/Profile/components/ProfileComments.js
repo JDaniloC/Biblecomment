@@ -12,8 +12,11 @@ import Comment from "models/Comment";
 
 const PAGE_LENGTH = 5;
 
-export default function ProfileComments({ 
-	type, getComments, editComment, deleteComment
+export default function ProfileComments({
+	type,
+	getComments,
+	editComment,
+	deleteComment,
 }) {
 	const [title, setTitle] = useState("");
 	const [maxPages, setMaxPages] = useState(1);
@@ -104,26 +107,18 @@ export default function ProfileComments({
 				commentsLoaded.length > 0 ? (
 					commentsLoaded.map((comment, index) => {
 						return type === "comments" ? (
-							<CommentRow 
-								key={comment.id} 
-								comment={comment} 
+							<CommentRow
+								key={comment.id}
+								comment={comment}
 								editCommentFunction={editComment}
 								deleteCommentFunction={deleteComment}
 							/>
 						) : (
-							<FavoriteRow 
-								index={index} 
-								comment={comment} 
-								key={comment.text} 
-							/>
+							<FavoriteRow index={index} comment={comment} key={comment.text} />
 						);
 					})
 				) : (
-					<button 
-						type="button" 
-						className="load-btn" 
-						onClick={handleLoadMore}
-					>
+					<button type="button" className="load-btn" onClick={handleLoadMore}>
 						Carregar
 					</button>
 				)
@@ -160,4 +155,4 @@ ProfileComments.propTypes = {
 ProfileComments.defaultProps = {
 	editComment: () => {},
 	deleteComment: () => {},
-}
+};
