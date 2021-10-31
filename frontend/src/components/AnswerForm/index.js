@@ -186,7 +186,11 @@ export default function AnswerForm({
 							</button>
 						</div>
 					</div>
-					<div className="answerBlur" onClick={handleCloseNewPost} />
+					<div 
+						role="blur"
+						className="answerBlur" 
+						onClick={handleCloseNewPost} 
+					/>
 				</>
 			)}
 		</div>

@@ -110,3 +110,11 @@ div.user-comment > p button:active {
 .user-config .config-buttons button:last-child {
 	background-color: #ff4030;
 }
+
+.favorite-row h5 {
+	display: inline;
+}
+.favorite-row label,
+.comment-row  label {
+	display: flex;
+}
