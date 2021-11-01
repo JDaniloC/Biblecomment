@@ -35,6 +35,22 @@
 .help-component form input[type="submit"] {
 	animation: click 2s infinite;
 }
+.help-component > section a img {
+	height: 30px;
+}
+.help-component > section h1 {
+	margin-left: 1em;
+}
+.help-component #help-account-form {
+	width: 100%;
+	min-width: 300px;
+}
+.help-component #help-account-form .login-container form input[type=submit]{
+	background-color: #1E7;
+}
+.help-component #help-account-form .login-container form button {
+	background-color: rgb(136, 136, 136);
+}
 
 @keyframes click {
 	0% {

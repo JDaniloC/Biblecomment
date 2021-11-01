@@ -23,8 +23,7 @@ export default function CommentRow({
 		<li key={comment.id} className="comment-row">
 			<label htmlFor={`comment${comment.id}`}>
 				<p>
-					{" "}
-					{comment.book_reference} {comment.text}{" "}
+					{comment.book_reference} {comment.text}
 				</p>
 			</label>
 			<input type="checkbox" id={`comment${comment.id}`} />
@@ -51,3 +50,6 @@ CommentRow.propTypes = {
 	editCommentFunction: PropTypes.func.isRequired,
 	deleteCommentFunction: PropTypes.func.isRequired,
 };
+CommentRow.defaultProps = {
+	comment: new Comment(),
+}

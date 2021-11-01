@@ -241,7 +241,10 @@ NewComment.propTypes = {
 	close: PropTypes.func.isRequired,
 	title: PropTypes.string.isRequired,
 	addNewComment: PropTypes.func.isRequired,
-	number: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+	number: PropTypes.oneOfType([
+		PropTypes.number, 
+		PropTypes.string
+	]),
 };
 NewComment.defaultProps = {
 	text: "",

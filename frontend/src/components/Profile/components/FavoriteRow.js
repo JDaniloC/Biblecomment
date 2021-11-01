@@ -21,3 +21,6 @@ FavoriteRow.propTypes = {
 	favorite: Favorite,
 	index: PropTypes.number.isRequired,
 };
+FavoriteRow.defaultProps = {
+	favorite: new Favorite(),
+}

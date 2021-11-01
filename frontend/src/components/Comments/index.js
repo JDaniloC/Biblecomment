@@ -1,5 +1,6 @@
 import "./styles.css";
 
+import Comment from "models/Comment";
 import closeImg from "assets/x.svg";
 import PropTypes from "prop-types";
 import React from "react";
@@ -56,42 +57,59 @@ export default function Comments({
 							<h3>
 								{commentary.username}
 								{commentary.tags.map((tag) => (
-									<img key={tag} alt={tag} src={imageFunction(tag)} />
+									<img 
+										key={tag}
+										alt={tag}
+										src={imageFunction(tag)} 
+									/>
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
 							<label htmlFor={commentary.id}>
-								<p className="label-title">{commentary.text}</p>
+								<p className="label-title">
+									{commentary.text}
+								</p>
 							</label>
 							<input type="checkbox" id={commentary.id} />
 							<div className="user-comment">
 								<p>{commentary.text}</p>
 								<span className="comment-buttons">
 									<p>
-										Favoritado por <b>{getLikeCount(commentary)}</b> pessoas
+										Favoritado por
+										<b>{getLikeCount(commentary)}</b>
+										pessoas
 									</p>
 									<button
 										type="button"
 										onClick={handleLike}
 										data-id={commentary.id}
 									>
-										<img src={imageFunction("heart")} alt="like" />
+										<img 
+											alt="like"
+											src={imageFunction("heart")} 
+										/>
 									</button>
 									<button
 										type="button"
-										data-id={commentary.id}
 										onClick={handleChat}
+										data-id={commentary.id}
 										data-text={commentary.verse}
 										data-reference={commentary.book_reference}
 									>
-										<img src={imageFunction("chat")} alt="chat" />
+										<img 
+											alt="chat"
+											src={imageFunction("chat")} 
+										/>
 									</button>
 									<button
 										type="button"
 										data-id={commentary.id}
 										onClick={handleReport}
 									>
-										<img src={imageFunction("warning")} alt="report" />
+										<img 
+											alt="report"
+											src={imageFunction("warning")} 
+										/>
 									</button>
 								</span>
 							</div>
@@ -112,7 +130,11 @@ export default function Comments({
 					width: "100%",
 				}}
 			>
-				<button type="button" className="entry" onClick={handleNewComment}>
+				<button 
+					type="button" 
+					className="entry" 
+					onClick={handleNewComment}
+				>
 					Comentar
 				</button>
 			</div>
@@ -120,11 +142,11 @@ export default function Comments({
 	);
 }
 Comments.propTypes = {
-	comments: PropTypes.array.isRequired,
 	likeFunction: PropTypes.func.isRequired,
 	closeFunction: PropTypes.func.isRequired,
 	imageFunction: PropTypes.func.isRequired,
 	reportFunction: PropTypes.func.isRequired,
 	handleNewComment: PropTypes.func.isRequired,
 	discussionFunction: PropTypes.func.isRequired,
+	comments: PropTypes.arrayOf(Comment).isRequired,
 };

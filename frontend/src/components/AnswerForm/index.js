@@ -6,6 +6,7 @@ import React, { useState, useContext } from "react";
 import axios from "services/api";
 import PropTypes from "prop-types";
 
+import Answer from "models/Answer";
 import closeImg from "assets/x.svg";
 
 import "./styles.css";
@@ -187,7 +188,8 @@ export default function AnswerForm({
 						</div>
 					</div>
 					<div
-						role="blur"
+						role="button"
+						aria-hidden="true"
 						className="answerBlur"
 						onClick={handleCloseNewPost}
 					/>
@@ -197,7 +199,7 @@ export default function AnswerForm({
 	);
 }
 AnswerForm.propTypes = {
-	answers: PropTypes.array,
+	answers: PropTypes.arrayOf(Answer),
 	selected: PropTypes.number.isRequired,
 	setBlurDisplay: PropTypes.func.isRequired,
 	comment_text: PropTypes.string.isRequired,
@@ -205,3 +207,6 @@ AnswerForm.propTypes = {
 	appendNewDiscussion: PropTypes.func.isRequired,
 	setAnswersToDiscussions: PropTypes.func.isRequired,
 };
+AnswerForm.defaultProps = {
+	answers: [],
+}

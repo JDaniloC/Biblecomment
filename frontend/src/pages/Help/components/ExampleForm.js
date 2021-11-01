@@ -7,23 +7,32 @@ export default function ExampleForm() {
 
 	return (
 		<div className="login-container" onSubmit={handleNothing}>
-			<form style={{ width: "100%" }}>
-				<input readOnly type="email" disabled placeholder="E-mail" />
-				<input readOnly type="text" disabled placeholder="Nome de usuário" />
-				<input readOnly type="password" disabled placeholder="Senha" />
+			<form>
+				<input 
+					readOnly 
+					disabled 
+					type="email" 
+					placeholder="E-mail" 
+				/>
+				<input 
+					readOnly 
+					disabled 
+					type="text" 
+					placeholder="Nome de usuário" 
+				/>
+				<input 
+					readOnly 
+					disabled 
+					type="password" 
+					placeholder="Senha" 
+				/>
 				<input
-					style={{ backgroundColor: "#1E7" }}
-					type="submit"
 					readOnly
+					type="submit"
 					value="Cadastrar"
 				/>
 				<hr />
-				<button
-					type="button"
-					style={{
-						backgroundColor: "rgb(136, 136, 136)",
-					}}
-				>
+				<button type="button">
 					Login
 				</button>
 			</form>

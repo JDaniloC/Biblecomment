@@ -1,11 +1,12 @@
 import React, { Component, createRef } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 
-import PropTypes from "prop-types";
 import NewComment from "components/NewComment";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileConfig from "./components/ProfileConfig";
 import ProfileComments from "./components/ProfileComments";
+
+import PropTypes from "prop-types";
 
 import "./styles.css";
 
@@ -95,12 +96,17 @@ export default class Profile extends Component {
 						handleConfig={this.handleConfig}
 					/>
 					<ul style={{ display: this.state.perfilDisplay }}>
-						<li>Total de livros comentados: {this.context.booksCount} de 66</li>
+						<li>
+							Total de livros comentados:
+							{this.context.booksCount} de 66</li>
 						<li>
 							Total de capítulos comentados:
 							{this.context.chaptersCount} de 1.189
 						</li>
-						<li>Total de comentários feitos: {this.context.commentsCount}</li>
+						<li>
+							Total de comentários feitos:
+							{this.context.commentsCount}
+						</li>
 
 						<ProfileComments
 							type="comments"
@@ -138,9 +144,7 @@ export default class Profile extends Component {
 				</div>
 				<div
 					className="overlay"
-					style={{
-						display: this.state.blur,
-					}}
+					style={{ display: this.state.blur }}
 				></div>
 			</>
 		);

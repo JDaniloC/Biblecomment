@@ -143,16 +143,17 @@ export default function ProfileComments({
 	);
 }
 ProfileComments.propTypes = {
-	editComment: PropTypes.func,
-	deleteComment: PropTypes.func,
-	type: PropTypes.string.isRequired,
-	getComments: PropTypes.func.isRequired,
 	comments: PropTypes.oneOfType([
 		PropTypes.arrayOf(Comment),
 		PropTypes.arrayOf(Favorite),
 	]),
+	editComment: PropTypes.func,
+	deleteComment: PropTypes.func,
+	type: PropTypes.string.isRequired,
+	getComments: PropTypes.func.isRequired,
 };
 ProfileComments.defaultProps = {
-	editComment: () => {},
-	deleteComment: () => {},
+	comments: [],
+	editComment: (id) => id,
+	deleteComment: (id) => id,
 };
