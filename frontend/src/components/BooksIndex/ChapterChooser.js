@@ -14,7 +14,7 @@ export default function ChapterChooser({
 	abbrev,
 }) {
 	const [chapterCount, setChapterCount] = useState([]);
-	const context = useContext(ProfileContext);
+	const { commented } = useContext(ProfileContext);
 
 	useEffect(() => {
 		const number_list = [];
@@ -25,7 +25,6 @@ export default function ChapterChooser({
 	}, []);
 
 	function chapterCommented(book, chapter) {
-		const commented = context.commented;
 		if (book in commented) {
 			return commented[book].indexOf(String(chapter)) !== -1;
 		}
@@ -34,7 +33,7 @@ export default function ChapterChooser({
 
 	function handleClickLink(event) {
 		event.preventDefault();
-		const target = event.target;
+		const { target } = event;
 		const chapterNumber = target.getAttribute("data-number");
 		handleChangePage(abbrev, Number(chapterNumber));
 	}
@@ -43,7 +42,7 @@ export default function ChapterChooser({
 		<div className={styles.chaptersContainer}>
 			<div className="top">
 				<h2> Escolha o capítulo </h2>
-				<button onClick={closeChapters}>
+				<button onClick={closeChapters} type="button">
 					<img src={closeImg} alt="Fechar" />
 				</button>
 			</div>

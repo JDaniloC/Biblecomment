@@ -37,7 +37,9 @@ export function ProfileProvider({ children }) {
 
 		let currentChaptersCount = 0;
 		for (const book in currentCommented) {
-			currentChaptersCount += currentCommented[book].length;
+			if (typeof currentCommented[book] === "object") {
+				currentChaptersCount += currentCommented[book].length;
+			}
 		}
 
 		setName(currentName);
@@ -115,6 +117,44 @@ export function ProfileProvider({ children }) {
 		}
 	}, []);
 
+	async function updateAccount() {
+		try {
+			await axios
+				.patch("users", {
+					token: localStorage.getItem(TOKEN_KEY),
+					state: stateName,
+					belief,
+				})
+				.then(({ data }) => {
+					if (typeof data.error === "undefined") {
+						handleNotification("success", "Conta atualizada com sucesso.");
+					} else {
+						handleNotification("warning", data.error);
+					}
+				});
+		} catch (error) {
+			handleNotification("error", error.toString());
+		}
+	}
+
+	async function deleteAccount() {
+		try {
+			await axios
+				.delete("users", {
+					data: { token: localStorage.getItem(TOKEN_KEY), email },
+				})
+				.then(({ data }) => {
+					if (typeof data.error === "undefined") {
+						handleNotification("success", "Conta removida com sucesso.");
+					} else {
+						handleNotification("warning", data.error);
+					}
+				});
+		} catch (error) {
+			handleNotification("error", error.toString());
+		}
+	}
+
 	return (
 		<ProfileContext.Provider
 			value={{
@@ -141,6 +181,8 @@ export function ProfileProvider({ children }) {
 				getFavorites,
 				setStateName,
 				addNewComment,
+				updateAccount,
+				deleteAccount,
 				handleNotification,
 			}}
 		>

@@ -6,6 +6,7 @@ import React, { useState, useContext } from "react";
 import axios from "services/api";
 import PropTypes from "prop-types";
 
+import Answer from "models/Answer";
 import closeImg from "assets/x.svg";
 
 import "./styles.css";
@@ -110,7 +111,7 @@ export default function AnswerForm({
 			<div className={newAnswerClass}>
 				<div className="top">
 					<h1> Respostas </h1>
-					<button onClick={handleCloseAnswers}>
+					<button onClick={handleCloseAnswers} type="button">
 						<img src={closeImg} alt="Fechar" />
 					</button>
 				</div>
@@ -149,46 +150,63 @@ export default function AnswerForm({
 						/>
 						<MDEditor.Markdown value={replyText} />
 					</div>
-					<button className="answer-btn" onClick={handlePostNewAnswer}>
+					<button
+						type="button"
+						className="answer-btn"
+						onClick={handlePostNewAnswer}
+					>
 						Responder
 					</button>
 				</div>
 			</div>
 
-			{comment_text !== "" ? (
-				<div className={newPostClass}>
-					<div className="top">
-						<h1> Postar novo ponto </h1>
-						<button onClick={handleCloseNewPost}>
-							<img src={closeImg} alt="Fechar" />
-						</button>
-					</div>
-
-					<h2> {comment_reference} </h2>
-					<p className="verse-text">{comment_text}</p>
-
-					<div className="reply-area">
-						<div>
-							<MDEditor value={replyText} onChange={handleChangeText} />
-							<MDEditor.Markdown value={replyText} />
+			{comment_text !== "" && (
+				<>
+					<div className={newPostClass}>
+						<div className="top">
+							<h1> Postar novo ponto </h1>
+							<button type="button" onClick={handleCloseNewPost}>
+								<img src={closeImg} alt="Fechar" />
+							</button>
 						</div>
-						<button className="answer-btn" onClick={handlePostNewQuestion}>
-							Postar
-						</button>
+
+						<h2> {comment_reference} </h2>
+						<p className="verse-text">{comment_text}</p>
+
+						<div className="reply-area">
+							<div>
+								<MDEditor value={replyText} onChange={handleChangeText} />
+								<MDEditor.Markdown value={replyText} />
+							</div>
+							<button
+								type="button"
+								className="answer-btn"
+								onClick={handlePostNewQuestion}
+							>
+								Postar
+							</button>
+						</div>
 					</div>
-				</div>
-			) : (
-				<div onClick={handleCloseNewPost} className="answerBlur" />
+					<div
+						role="button"
+						aria-hidden="true"
+						className="answerBlur"
+						onClick={handleCloseNewPost}
+					/>
+				</>
 			)}
 		</div>
 	);
 }
 AnswerForm.propTypes = {
-	answers: PropTypes.array,
+	answers: PropTypes.arrayOf(Answer),
 	selected: PropTypes.number.isRequired,
 	setBlurDisplay: PropTypes.func.isRequired,
 	comment_text: PropTypes.string.isRequired,
 	comment_reference: PropTypes.string.isRequired,
 	appendNewDiscussion: PropTypes.func.isRequired,
 	setAnswersToDiscussions: PropTypes.func.isRequired,
+};
+AnswerForm.defaultProps = {
+	answers: [],
 };

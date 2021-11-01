@@ -5,14 +5,14 @@ import PropTypes from "prop-types";
 
 export default function FavoriteRow({ favorite, index }) {
 	return (
-		<li key={"-" + index}>
-			<h5 style={{ display: "inline" }}>
+		<li key={`-${index}`} className="favorite-row">
+			<h5>
 				{favorite.username} em {favorite.book_reference}
 			</h5>
-			<label style={{ display: "flex" }} htmlFor={"-" + index}>
+			<label htmlFor={`-${index}`}>
 				<p>{favorite.text}</p>
 			</label>
-			<input type="checkbox" id={"-" + index} />
+			<input type="checkbox" id={`-${index}`} />
 			<div className="user-comment">{favorite.text}</div>
 		</li>
 	);
@@ -20,4 +20,7 @@ export default function FavoriteRow({ favorite, index }) {
 FavoriteRow.propTypes = {
 	favorite: Favorite,
 	index: PropTypes.number.isRequired,
+};
+FavoriteRow.defaultProps = {
+	favorite: new Favorite(),
 };

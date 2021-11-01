@@ -30,8 +30,7 @@ export default class Login extends Component {
 		this.handleForm = this.handleForm.bind(this);
 		this.changeState = this.changeState.bind(this);
 		this.closeAccount = this.closeAccount.bind(this);
-		this.updateAccount = this.updateAccount.bind(this);
-		this.deleteAccount = this.deleteAccount.bind(this);
+		this.changeMethod = this.changeMethod.bind(this);
 		this.deleteComment = this.deleteComment.bind(this);
 	}
 
@@ -167,50 +166,12 @@ export default class Login extends Component {
 		}
 	}
 
-	async updateAccount(belief, state) {
-		try {
-			await axios
-				.patch("users", {
-					token: localStorage.getItem(TOKEN_KEY),
-					belief,
-					state,
-				})
-				.then((response) => {
-					if (typeof response.data.error === "undefined") {
-						this.handleNotification("success", "Conta atualizada com sucesso.");
-					} else {
-						this.handleNotification("warning", response.data.error);
-					}
-				});
-		} catch (error) {
-			this.handleNotification("error", error.toString());
-		}
-	}
-
-	async deleteAccount(email) {
-		try {
-			await axios
-				.delete("users", {
-					data: { token: localStorage.getItem(TOKEN_KEY), email },
-				})
-				.then((response) => {
-					if (typeof response.data.error === "undefined") {
-						this.handleNotification("success", "Conta removida com sucesso.");
-						this.profileComponent.current.closeAccount();
-					} else {
-						this.handleNotification("warning", response.data.error);
-					}
-				});
-		} catch (error) {
-			this.handleNotification("error", error.toString());
-		}
-	}
-
 	closeAccount() {
 		logout();
 		this.setFormClass("");
 		this.setCommentaries([]);
 		this.context.setName("");
+		this.context.setPerfilClass("invisible");
 	}
 
 	render() {
@@ -220,8 +181,6 @@ export default class Login extends Component {
 					ref={this.profileComponent}
 					closeAccount={this.closeAccount}
 					deleteComment={this.deleteComment}
-					updateAccount={this.updateAccount}
-					deleteAccount={this.deleteAccount}
 				/>
 				<form className={this.context.formClass} onSubmit={this.handleForm}>
 					<input

@@ -1,5 +1,6 @@
 import "./styles.css";
 
+import Comment from "models/Comment";
 import PropTypes from "prop-types";
 import React from "react";
 
@@ -101,10 +102,10 @@ export default function TitleComment({
 	);
 }
 TitleComment.propTypes = {
-	comments: PropTypes.array.isRequired,
 	likeFunction: PropTypes.func.isRequired,
 	imageFunction: PropTypes.func.isRequired,
 	reportFunction: PropTypes.func.isRequired,
 	handleNewComment: PropTypes.func.isRequired,
 	discussionFunction: PropTypes.func.isRequired,
+	comments: PropTypes.arrayOf(Comment).isRequired,
 };

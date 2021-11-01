@@ -31,7 +31,7 @@ export default function HelpAccount() {
 					deletar quaisquer comentários feitos na plataforma.
 				</p>
 			</div>
-			<div style={{ width: "100%", minWidth: "300px" }}>
+			<div id="help-account-form">
 				<ExampleForm />
 			</div>
 		</section>

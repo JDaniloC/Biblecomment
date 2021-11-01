@@ -7,7 +7,7 @@ export default function ProfileHeader({ username, handleConfig }) {
 	return (
 		<h2>
 			Membro {username}
-			<button onClick={handleConfig}>
+			<button onClick={handleConfig} type="button">
 				<img src={gearsIcon} alt="config" />
 			</button>
 		</h2>

@@ -5,11 +5,23 @@ import editIcon from "assets/edit.svg";
 import heartIcon from "assets/heart.svg";
 
 import Comment from "models/Comment";
+import PropTypes from "prop-types";
 
-export default function CommentRow({ comment }) {
+export default function CommentRow({
+	comment,
+	editCommentFunction,
+	deleteCommentFunction,
+}) {
+	function handleEditComment() {
+		editCommentFunction(comment.id);
+	}
+	function handleDeleteComment() {
+		deleteCommentFunction(comment.id);
+	}
+
 	return (
-		<li key={comment.id}>
-			<label style={{ display: "flex" }} htmlFor={`comment${comment.id}`}>
+		<li key={comment.id} className="comment-row">
+			<label htmlFor={`comment${comment.id}`}>
 				<p>
 					{comment.book_reference} {comment.text}
 				</p>
@@ -18,23 +30,14 @@ export default function CommentRow({ comment }) {
 			<div className="user-comment">
 				{comment.text}
 				<p>
-					<button
-						data-id={comment.id}
-						onClick={() => {
-							this.editComment(comment.id);
-						}}
-					>
+					<button type="button" onClick={handleEditComment}>
 						<img src={editIcon} alt="Edit" />
 					</button>
 					<b>
 						{JSON.parse(comment.likes).length}
 						<img src={heartIcon} alt="Heart" />
 					</b>
-					<button
-						onClick={() => {
-							this.deleteComment(comment.id);
-						}}
-					>
+					<button type="button" onClick={handleDeleteComment}>
 						<img src={deleteIcon} alt="Delete" />
 					</button>
 				</p>
@@ -42,4 +45,11 @@ export default function CommentRow({ comment }) {
 		</li>
 	);
 }
-CommentRow.propTypes = { comment: Comment };
+CommentRow.propTypes = {
+	comment: Comment,
+	editCommentFunction: PropTypes.func.isRequired,
+	deleteCommentFunction: PropTypes.func.isRequired,
+};
+CommentRow.defaultProps = {
+	comment: new Comment(),
+};

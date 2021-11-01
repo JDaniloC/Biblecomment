@@ -12,7 +12,12 @@ import Comment from "models/Comment";
 
 const PAGE_LENGTH = 5;
 
-export default function ProfileComments({ type, getComments }) {
+export default function ProfileComments({
+	type,
+	getComments,
+	editComment,
+	deleteComment,
+}) {
 	const [title, setTitle] = useState("");
 	const [maxPages, setMaxPages] = useState(1);
 	const [emptyMsg, setEmptyMsg] = useState("");
@@ -53,11 +58,7 @@ export default function ProfileComments({ type, getComments }) {
 	async function initializeComments() {
 		let renderArray = [];
 		if (comments.length === 0) {
-			if (type === "comments") {
-				renderArray = commentaries;
-			} else {
-				renderArray = favorites;
-			}
+			renderArray = type === "comments" ? commentaries : favorites;
 
 			if (renderArray.length > 0) {
 				setComments(renderArray);
@@ -104,15 +105,20 @@ export default function ProfileComments({ type, getComments }) {
 			<h3> {title} </h3>
 			{comments.length !== 0 ? (
 				commentsLoaded.length > 0 ? (
-					commentsLoaded.map((comment, index) =>
-						type === "comments" ? (
-							<CommentRow key={comment.id} comment={comment} />
+					commentsLoaded.map((comment, index) => {
+						return type === "comments" ? (
+							<CommentRow
+								key={comment.id}
+								comment={comment}
+								editCommentFunction={editComment}
+								deleteCommentFunction={deleteComment}
+							/>
 						) : (
 							<FavoriteRow index={index} comment={comment} key={comment.text} />
-						)
-					)
+						);
+					})
 				) : (
-					<button className="load-btn" onClick={handleLoadMore}>
+					<button type="button" className="load-btn" onClick={handleLoadMore}>
 						Carregar
 					</button>
 				)
@@ -124,7 +130,6 @@ export default function ProfileComments({ type, getComments }) {
 				<Loading />
 			)}
 			<Pagination
-				className="pagination"
 				boundaryCount={2}
 				showFirstButton
 				showLastButton
@@ -138,10 +143,17 @@ export default function ProfileComments({ type, getComments }) {
 	);
 }
 ProfileComments.propTypes = {
-	type: PropTypes.string.isRequired,
-	getComments: PropTypes.func.isRequired,
 	comments: PropTypes.oneOfType([
 		PropTypes.arrayOf(Comment),
 		PropTypes.arrayOf(Favorite),
 	]),
+	editComment: PropTypes.func,
+	deleteComment: PropTypes.func,
+	type: PropTypes.string.isRequired,
+	getComments: PropTypes.func.isRequired,
+};
+ProfileComments.defaultProps = {
+	comments: [],
+	editComment: (id) => id,
+	deleteComment: (id) => id,
 };
