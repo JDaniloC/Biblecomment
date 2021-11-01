@@ -54,14 +54,11 @@ module.exports = {
 				"chapters.number",
 				"chapters.verses"
 			);
-
-		return response.json(
-			chapter
-				? chapter
-				: {
-						error: "this book doesn't exists",
-				  }
-		);
+	
+		if (chapter) {
+			return response.json(chapter);
+		}
+		return response.json({ error: "this book doesn't exists" });
 	},
 
 	async update(request, response) {
