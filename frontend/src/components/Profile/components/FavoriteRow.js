@@ -18,9 +18,6 @@ export default function FavoriteRow({ favorite, index }) {
 	);
 }
 FavoriteRow.propTypes = {
-	favorite: Favorite,
+	favorite: Favorite.isRequired,
 	index: PropTypes.number.isRequired,
 };
-FavoriteRow.defaultProps = {
-	favorite: new Favorite(),
-}
