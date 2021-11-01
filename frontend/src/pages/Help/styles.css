@@ -45,8 +45,8 @@
 	width: 100%;
 	min-width: 300px;
 }
-.help-component #help-account-form .login-container form input[type=submit]{
-	background-color: #1E7;
+.help-component #help-account-form .login-container form input[type="submit"] {
+	background-color: #1e7;
 }
 .help-component #help-account-form .login-container form button {
 	background-color: rgb(136, 136, 136);

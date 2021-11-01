@@ -98,7 +98,8 @@ export default class Profile extends Component {
 					<ul style={{ display: this.state.perfilDisplay }}>
 						<li>
 							Total de livros comentados:
-							{this.context.booksCount} de 66</li>
+							{this.context.booksCount} de 66
+						</li>
 						<li>
 							Total de capítulos comentados:
 							{this.context.chaptersCount} de 1.189
@@ -142,10 +143,7 @@ export default class Profile extends Component {
 						addNewComment={this.handleCommentEdit}
 					/>
 				</div>
-				<div
-					className="overlay"
-					style={{ display: this.state.blur }}
-				></div>
+				<div className="overlay" style={{ display: this.state.blur }}></div>
 			</>
 		);
 	}

@@ -8,33 +8,12 @@ export default function ExampleForm() {
 	return (
 		<div className="login-container" onSubmit={handleNothing}>
 			<form>
-				<input 
-					readOnly 
-					disabled 
-					type="email" 
-					placeholder="E-mail" 
-				/>
-				<input 
-					readOnly 
-					disabled 
-					type="text" 
-					placeholder="Nome de usuário" 
-				/>
-				<input 
-					readOnly 
-					disabled 
-					type="password" 
-					placeholder="Senha" 
-				/>
-				<input
-					readOnly
-					type="submit"
-					value="Cadastrar"
-				/>
+				<input readOnly disabled type="email" placeholder="E-mail" />
+				<input readOnly disabled type="text" placeholder="Nome de usuário" />
+				<input readOnly disabled type="password" placeholder="Senha" />
+				<input readOnly type="submit" value="Cadastrar" />
 				<hr />
-				<button type="button">
-					Login
-				</button>
+				<button type="button">Login</button>
 			</form>
 		</div>
 	);
