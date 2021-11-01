@@ -46,10 +46,7 @@ export default function CommentRow({
 	);
 }
 CommentRow.propTypes = {
-	comment: Comment,
+	comment: Comment.isRequired,
 	editCommentFunction: PropTypes.func.isRequired,
 	deleteCommentFunction: PropTypes.func.isRequired,
-};
-CommentRow.defaultProps = {
-	comment: new Comment(),
 };

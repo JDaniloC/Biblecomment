@@ -24,6 +24,16 @@ import warningIcon from "assets/warning.svg";
 export default class Chapter extends Component {
 	static contextType = NotificationContext;
 
+	static propTypes = {
+		match: PropTypes.shape({
+			params: PropTypes.shape({
+				abbrev: PropTypes.string.isRequired,
+				number: PropTypes.string.isRequired,
+			}),
+		}),
+		history: History,
+	};
+
 	constructor(props) {
 		super(props);
 
@@ -393,12 +403,3 @@ export default class Chapter extends Component {
 		);
 	}
 }
-Chapter.propTypes = {
-	match: PropTypes.shape({
-		params: PropTypes.shape({
-			abbrev: PropTypes.string.isRequired,
-			number: PropTypes.string.isRequired,
-		}),
-	}),
-	history: History,
-};
