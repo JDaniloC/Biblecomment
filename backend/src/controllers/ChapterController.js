@@ -54,7 +54,7 @@ module.exports = {
 				"chapters.number",
 				"chapters.verses"
 			);
-	
+
 		if (chapter) {
 			return response.json(chapter);
 		}

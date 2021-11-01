@@ -121,10 +121,7 @@ export default class Login extends Component {
 					const token = response.data.token;
 					if (typeof token !== "undefined") {
 						this.context.loadUserInfos(response);
-						this.handleNotification(
-							"success", 
-							"Login realizado com sucesso!"
-						);
+						this.handleNotification("success", "Login realizado com sucesso!");
 						login(token);
 					} else {
 						this.handleNotification("warning", response.data.error);
@@ -165,11 +162,7 @@ export default class Login extends Component {
 		if (this.state.loginClass === "") {
 			this.tryLogin(this.state.email, this.state.password);
 		} else {
-			this.tryRegister(
-				this.state.email, 
-				this.state.name, 
-				this.state.password
-			);
+			this.tryRegister(this.state.email, this.state.name, this.state.password);
 		}
 	}
 
