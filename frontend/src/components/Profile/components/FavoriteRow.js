@@ -23,4 +23,4 @@ FavoriteRow.propTypes = {
 };
 FavoriteRow.defaultProps = {
 	favorite: new Favorite(),
-}
+};

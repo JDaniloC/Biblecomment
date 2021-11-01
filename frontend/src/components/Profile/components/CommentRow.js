@@ -52,4 +52,4 @@ CommentRow.propTypes = {
 };
 CommentRow.defaultProps = {
 	comment: new Comment(),
-}
+};

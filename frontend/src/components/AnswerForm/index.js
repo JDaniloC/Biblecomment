@@ -209,4 +209,4 @@ AnswerForm.propTypes = {
 };
 AnswerForm.defaultProps = {
 	answers: [],
-}
+};

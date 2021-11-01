@@ -57,18 +57,12 @@ export default function Comments({
 							<h3>
 								{commentary.username}
 								{commentary.tags.map((tag) => (
-									<img 
-										key={tag}
-										alt={tag}
-										src={imageFunction(tag)} 
-									/>
+									<img key={tag} alt={tag} src={imageFunction(tag)} />
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
 							<label htmlFor={commentary.id}>
-								<p className="label-title">
-									{commentary.text}
-								</p>
+								<p className="label-title">{commentary.text}</p>
 							</label>
 							<input type="checkbox" id={commentary.id} />
 							<div className="user-comment">
@@ -84,10 +78,7 @@ export default function Comments({
 										onClick={handleLike}
 										data-id={commentary.id}
 									>
-										<img 
-											alt="like"
-											src={imageFunction("heart")} 
-										/>
+										<img alt="like" src={imageFunction("heart")} />
 									</button>
 									<button
 										type="button"
@@ -96,20 +87,14 @@ export default function Comments({
 										data-text={commentary.verse}
 										data-reference={commentary.book_reference}
 									>
-										<img 
-											alt="chat"
-											src={imageFunction("chat")} 
-										/>
+										<img alt="chat" src={imageFunction("chat")} />
 									</button>
 									<button
 										type="button"
 										data-id={commentary.id}
 										onClick={handleReport}
 									>
-										<img 
-											alt="report"
-											src={imageFunction("warning")} 
-										/>
+										<img alt="report" src={imageFunction("warning")} />
 									</button>
 								</span>
 							</div>
@@ -130,11 +115,7 @@ export default function Comments({
 					width: "100%",
 				}}
 			>
-				<button 
-					type="button" 
-					className="entry" 
-					onClick={handleNewComment}
-				>
+				<button type="button" className="entry" onClick={handleNewComment}>
 					Comentar
 				</button>
 			</div>
