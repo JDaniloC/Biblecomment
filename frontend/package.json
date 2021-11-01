@@ -11,6 +11,7 @@
 		"@testing-library/user-event": "^13.2.1",
 		"@uiw/react-md-editor": "^3.6.3",
 		"axios": "^0.21.4",
+		"babel-plugin-transform-react-remove-prop-types": "^0.4.24",
 		"balloon-css": "^1.2.0",
 		"prop-types": "^15.7.2",
 		"react": "^17.0.2",

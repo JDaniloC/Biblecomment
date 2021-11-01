@@ -17,7 +17,7 @@ export default class BooksIndex extends Component {
 	};
 	static defaultProps = {
 		changeChapter: (a, b) => a && b && false,
-		closeBookComponent: () => {},
+		closeBookComponent: () => false,
 	};
 
 	constructor(props) {
