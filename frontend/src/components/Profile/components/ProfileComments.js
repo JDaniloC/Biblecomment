@@ -47,12 +47,10 @@ export default function ProfileComments({
 	}
 
 	function renderComments(page, optComments = []) {
-		if (optComments.length === 0) {
-			optComments = comments;
-		}
+		const commentsToRender = optComments.length > 0 ? optComments : comments;
 		const inicio = (page - 1) * PAGE_LENGTH;
 		const final = inicio + PAGE_LENGTH;
-		setCommentsLoaded(optComments.slice(inicio, final));
+		setCommentsLoaded(commentsToRender.slice(inicio, final));
 	}
 
 	async function initializeComments() {
@@ -71,7 +69,7 @@ export default function ProfileComments({
 		renderComments(1, renderArray);
 	}
 
-	useState(async () => {
+	useState(() => {
 		if (type === "comments") {
 			setTitle("Comentários feitos");
 			setEmptyMsg("Nenhum comentário realizado");
@@ -143,10 +141,6 @@ export default function ProfileComments({
 	);
 }
 ProfileComments.propTypes = {
-	comments: PropTypes.oneOfType([
-		PropTypes.arrayOf(Comment),
-		PropTypes.arrayOf(Favorite),
-	]),
 	editComment: PropTypes.func,
 	deleteComment: PropTypes.func,
 	type: PropTypes.string.isRequired,

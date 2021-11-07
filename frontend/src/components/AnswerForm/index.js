@@ -32,6 +32,13 @@ export default function AnswerForm({
 		setBlurDisplay("none");
 	}
 
+	function canPostSomething() {
+		if (!isAuthenticated()) {
+			handleNotification("info", "Você precisa estar logado");
+		}
+		return replyText !== "" && isAuthenticated();
+	}
+
 	function handlePostNewAnswer() {
 		handleCloseAnswers();
 		const hasPermissionToPost = canPostSomething();
@@ -44,9 +51,9 @@ export default function AnswerForm({
 					})
 					.then((response) => {
 						if (typeof response.data === "object" && response.data.answers) {
-							const answers = JSON.parse(response.data.answers);
+							const answersToDiscussion = JSON.parse(response.data.answers);
 							setReplyText("");
-							setAnswersToDiscussions(answers);
+							setAnswersToDiscussions(answersToDiscussion);
 							handleNotification("success", "Resposta enviada");
 						} else {
 							handleNotification("warning", "Algo deu errado");
@@ -97,13 +104,6 @@ export default function AnswerForm({
 
 	function handleChangeText(value) {
 		setReplyText(value);
-	}
-
-	function canPostSomething() {
-		if (!isAuthenticated()) {
-			handleNotification("info", "Você precisa estar logado");
-		}
-		return replyText !== "" && isAuthenticated();
 	}
 
 	return (
