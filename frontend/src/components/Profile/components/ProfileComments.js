@@ -5,10 +5,7 @@ import { Pagination } from "@material-ui/lab";
 
 import FavoriteRow from "./FavoriteRow";
 import CommentRow from "./CommentRow";
-
 import PropTypes from "prop-types";
-import Favorite from "models/Favorite";
-import Comment from "models/Comment";
 
 const PAGE_LENGTH = 5;
 
@@ -147,7 +144,6 @@ ProfileComments.propTypes = {
 	getComments: PropTypes.func.isRequired,
 };
 ProfileComments.defaultProps = {
-	comments: [],
 	editComment: (id) => id,
 	deleteComment: (id) => id,
 };

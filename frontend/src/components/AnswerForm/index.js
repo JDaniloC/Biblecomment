@@ -31,6 +31,12 @@ export default function AnswerForm({
 		setAnswersClass("none");
 		setBlurDisplay("none");
 	}
+	
+	function handleCloseNewPost() {
+		setNewPostClass("invisible");
+		setNewAnswerClass("pop-up");
+		handleCloseAnswers();
+	}
 
 	function canPostSomething() {
 		if (!isAuthenticated()) {
@@ -94,12 +100,6 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}
-
-	function handleCloseNewPost() {
-		setNewPostClass("invisible");
-		setNewAnswerClass("pop-up");
-		handleCloseAnswers();
 	}
 
 	function handleChangeText(value) {
