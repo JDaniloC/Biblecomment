@@ -31,7 +31,7 @@ export default function AnswerForm({
 		setAnswersClass("none");
 		setBlurDisplay("none");
 	}
-	
+
 	function handleCloseNewPost() {
 		setNewPostClass("invisible");
 		setNewAnswerClass("pop-up");
