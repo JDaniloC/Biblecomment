@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, memo } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Link } from "react-router-dom";
 
@@ -7,7 +7,7 @@ import styles from "./ChapterChooser.module.css";
 import closeImg from "assets/x.svg";
 import PropTypes from "prop-types";
 
-export default function ChapterChooser({
+function ChapterChooser({
 	handleChangePage,
 	closeChapters,
 	chapterLength,
@@ -26,7 +26,9 @@ export default function ChapterChooser({
 
 	function chapterCommented(book, chapter) {
 		if (book in commented) {
-			return commented[book].indexOf(String(chapter)) !== -1;
+			return commented[book].indexOf(
+				String(chapter)
+			) !== -1;
 		}
 		return false;
 	}
@@ -69,3 +71,4 @@ ChapterChooser.propTypes = {
 	closeChapters: PropTypes.func.isRequired,
 	abbrev: PropTypes.string.isRequired,
 };
+export default memo(ChapterChooser);

@@ -70,7 +70,7 @@ export default function Comments({
 								<span className="comment-buttons">
 									<p>
 										Favoritado por
-										<b>{getLikeCount(commentary)}</b>
+										<b> {getLikeCount(commentary)} </b>
 										pessoas
 									</p>
 									<button

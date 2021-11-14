@@ -8,6 +8,7 @@ import ChapterChooser from "./ChapterChooser";
 import PropTypes from "prop-types";
 
 import styles from "./BooksIndex.module.css";
+import BookChooser from "./BookChooser";
 
 export default class BooksIndex extends Component {
 	static contextType = ProfileContext;
@@ -33,7 +34,7 @@ export default class BooksIndex extends Component {
 
 		this.closeChapters = this.closeChapters.bind(this);
 		this.handleChangePage = this.handleChangePage.bind(this);
-		this.showChapterNumbers = this.showChapterNumbers.bind(this);
+		this.showChapterChooser = this.showChapterChooser.bind(this);
 	}
 
 	componentDidMount() {
@@ -52,9 +53,7 @@ export default class BooksIndex extends Component {
 			});
 	}
 
-	showChapterNumbers(event) {
-		const abbrev = event.target.getAttribute("data-abbrev");
-		const max = event.target.getAttribute("data-length");
+	showChapterChooser(abbrev, max) {
 		this.setState({
 			blurDisplay: "block",
 			selectedAbbrev: abbrev,
@@ -83,35 +82,16 @@ export default class BooksIndex extends Component {
 		}
 	}
 
-	bookCommented(book, length) {
-		const commented = this.context.commented;
-
-		if (book in commented) {
-			return (commented[book].length * 100) / length;
-		}
-		return 0;
-	}
-
 	render() {
 		return (
 			<div className={styles.booksContainer}>
 				<h2> Escolha a meditação de hoje </h2>
 				<ul className={styles.books}>
 					{this.state.books.length > 0 ? (
-						this.state.books.map((book) => (
-							<li
-								style={{
-									background: `linear-gradient(to right, 
-									lightgreen ${this.bookCommented(book.abbrev, book.length)}%,  #DADCE2 0%)`,
-								}}
-								key={book.abbrev}
-								data-length={book.length}
-								data-abbrev={book.abbrev}
-								onClick={this.showChapterNumbers}
-							>
-								{book.title}
-							</li>
-						))
+						<BookChooser 
+							books={this.state.books}
+							showChapterChooser={this.showChapterChooser}
+						/>
 					) : (
 						<div>
 							<Loading />
