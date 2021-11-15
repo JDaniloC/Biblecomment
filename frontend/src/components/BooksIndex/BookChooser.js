@@ -13,7 +13,7 @@ function BookChooser({ books, showChapterChooser }) {
 		showChapterChooser(abbrev, Number(max));
 	}
 
-    function bookCommented(book, length) {
+	function bookCommented(book, length) {
 		console.log("Buscando o livro", book);
 		if (book in commented) {
 			return (commented[book].length * 100) / length;
@@ -24,22 +24,22 @@ function BookChooser({ books, showChapterChooser }) {
 	return (
 		<div>
 			{books.map((book) => (
-                <li
-                    style={{
-                        background: `linear-gradient(to right, 
+				<li
+					style={{
+						background: `linear-gradient(to right, 
                         lightgreen ${bookCommented(
-                            book.abbrev, 
-                            book.length
-                        )}%,  #DADCE2 0%)`,
-                    }}
-                    key={book.abbrev}
-                    data-length={book.length}
-                    data-abbrev={book.abbrev}
-                    onClick={showChapterComponents}
-                >
-                    {book.title}
-                </li>
-            ))}
+													book.abbrev,
+													book.length
+												)}%,  #DADCE2 0%)`,
+					}}
+					key={book.abbrev}
+					data-length={book.length}
+					data-abbrev={book.abbrev}
+					onClick={showChapterComponents}
+				>
+					{book.title}
+				</li>
+			))}
 		</div>
 	);
 }
