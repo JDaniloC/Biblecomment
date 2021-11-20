@@ -22,9 +22,9 @@ function BookChooser({ books, showChapterChooser }) {
 	return (
 		<>
 			{books.map((book) => (
-                <li
-                    style={{
-                        background: `linear-gradient(to right, 
+				<li
+					style={{
+						background: `linear-gradient(to right, 
                         lightgreen ${bookCommented(
                             book.abbrev, 
                             book.length

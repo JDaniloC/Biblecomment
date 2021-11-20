@@ -25,9 +25,7 @@ function ChapterChooser({
 
 	function chapterCommented(book, chapter) {
 		if (book in commented) {
-			return commented[book].indexOf(
-				String(chapter)
-			) !== -1;
+			return commented[book].indexOf(String(chapter)) !== -1;
 		}
 		return false;
 	}

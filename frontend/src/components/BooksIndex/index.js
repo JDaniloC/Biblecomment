@@ -88,7 +88,7 @@ export default class BooksIndex extends Component {
 				<h2> Escolha a meditação de hoje </h2>
 				<ul className={styles.books}>
 					{this.state.books.length > 0 ? (
-						<BookChooser 
+						<BookChooser
 							books={this.state.books}
 							showChapterChooser={this.showChapterChooser}
 						/>
