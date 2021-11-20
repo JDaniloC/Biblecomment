@@ -12,7 +12,7 @@ function BookChooser({ books, showChapterChooser }) {
 		showChapterChooser(abbrev, Number(max));
 	});
 
-    function bookCommented(book, length) {
+	function bookCommented(book, length) {
 		if (book in commented) {
 			return (commented[book].length * 100) / length;
 		}
@@ -25,10 +25,9 @@ function BookChooser({ books, showChapterChooser }) {
 				<a
 					style={{
 						background: `linear-gradient(to right, 
-                        lightgreen ${bookCommented(
-                            book.abbrev, 
-                            book.length
-                        )}%,  #DADCE2 0%)`,
+                        lightgreen ${
+							bookCommented(book.abbrev, book.length)
+						}%,  #DADCE2 0%)`,
                     }}
 					key={book.abbrev}
                     data-length={book.length}

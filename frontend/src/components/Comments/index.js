@@ -39,7 +39,7 @@ export default function Comments({
 		const comment_id = parseInt(evt.target.getAttribute("data-id"), 10);
 		const username = evt.target.getAttribute("data-username");
 		const comment_text = evt.target.getAttribute("data-text");
-		const reference = `${username} ${comment_reference}`
+		const reference = `${username} ${comment_reference}`;
 		discussionFunction(comment_id, comment_text, reference);
 	});
 
@@ -59,11 +59,7 @@ export default function Comments({
 							<h3>
 								{commentary.username}
 								{commentary.tags.map((tag) => (
-									<img 
-										key={tag} 
-										alt={tag} 
-										src={imageFunction(tag)}
-									/>
+									<img key={tag} alt={tag} src={imageFunction(tag)} />
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
@@ -79,20 +75,14 @@ export default function Comments({
 										<b> {getLikeCount(commentary)} </b>
 										pessoas
 									</p>
-									<button
-										type="button"
-										onClick={handleLike}
-										>
+									<button type="button" onClick={handleLike}>
 										<img 
 											alt="Like comment"
 											data-id={commentary.id}
-											src={imageFunction("heart")} 
+											src={imageFunction("heart")}
 										/>
 									</button>
-									<button
-										type="button"
-										onClick={handleChat}
-									>
+									<button type="button" onClick={handleChat}>
 										<img 
 											alt="Go to chat"
 											data-id={commentary.id}
@@ -102,10 +92,7 @@ export default function Comments({
 											data-reference={commentary.book_reference}
 										/>
 									</button>
-									<button
-										type="button"
-										onClick={handleReport}
-										>
+									<button type="button" onClick={handleReport}>
 										<img 
 											alt="Report comment"
 											data-id={commentary.id}
@@ -124,11 +111,7 @@ export default function Comments({
 				)}
 			</ul>
 			<div className="buttonContainer">
-				<button 
-					type="button" 
-					className="entry" 
-					onClick={handleNewComment}
-				>
+				<button type="button" className="entry" onClick={handleNewComment}>
 					Comentar
 				</button>
 			</div>
