@@ -31,14 +31,14 @@ export default function CommentRow({
 				{comment.text}
 				<p>
 					<button type="button" onClick={handleEditComment}>
-						<img src={editIcon} alt="Edit image" />
+						<img src={editIcon} alt="Edit comment" />
 					</button>
 					<b>
 						{JSON.parse(comment.likes).length}
-						<img src={heartIcon} alt="Favorite image" />
+						<img src={heartIcon} alt="Favorite comment" />
 					</b>
 					<button type="button" onClick={handleDeleteComment}>
-						<img src={deleteIcon} alt="Delete image" />
+						<img src={deleteIcon} alt="Delete comment" />
 					</button>
 				</p>
 			</div>

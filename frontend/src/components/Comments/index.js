@@ -3,7 +3,7 @@ import "./styles.css";
 import Comment from "models/Comment";
 import closeImg from "assets/x.svg";
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useCallback } from "react";
 
 function getLikeCount(comment) {
 	return JSON.parse(comment.likes).length;
@@ -24,31 +24,31 @@ export default function Comments({
 	handleNewComment,
 	discussionFunction,
 }) {
-	function handleLike(evt) {
+	const handleLike = useCallback((evt) => {
 		const id = evt.target.getAttribute("data-id");
 		likeFunction(parseInt(id, 10));
-	}
+	});
 	
-	function handleReport(evt) {
+	const handleReport = useCallback((evt) => {
 		const id = evt.target.getAttribute("data-id");
 		reportFunction(parseInt(id, 10));
-	}
+	});
 
-	function handleChat(evt) {
+	const handleChat = useCallback((evt) => {
 		const comment_reference = evt.target.getAttribute("data-reference");
 		const comment_id = parseInt(evt.target.getAttribute("data-id"), 10);
 		const username = evt.target.getAttribute("data-username");
 		const comment_text = evt.target.getAttribute("data-text");
 		const reference = `${username} ${comment_reference}`
 		discussionFunction(comment_id, comment_text, reference);
-	}
+	});
 
 	return (
 		<div className="sideComments">
 			<div className="top">
 				<h2> Comentários </h2>
 				<button type="button" onClick={closeFunction}>
-					<img src={closeImg} alt="Close image" />
+					<img src={closeImg} alt="Close comments" />
 				</button>
 			</div>
 
@@ -84,7 +84,7 @@ export default function Comments({
 										onClick={handleLike}
 										>
 										<img 
-											alt="like image"
+											alt="Like comment"
 											data-id={commentary.id}
 											src={imageFunction("heart")} 
 										/>
@@ -94,7 +94,7 @@ export default function Comments({
 										onClick={handleChat}
 									>
 										<img 
-											alt="chat image"
+											alt="Go to chat"
 											data-id={commentary.id}
 											src={imageFunction("chat")}
 											data-text={commentary.text}
@@ -107,7 +107,7 @@ export default function Comments({
 										onClick={handleReport}
 										>
 										<img 
-											alt="report image"
+											alt="Report comment"
 											data-id={commentary.id}
 											src={imageFunction("warning")}
 										/>

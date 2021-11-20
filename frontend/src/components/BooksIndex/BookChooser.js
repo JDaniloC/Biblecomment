@@ -22,7 +22,7 @@ function BookChooser({ books, showChapterChooser }) {
 	return (
 		<>
 			{books.map((book) => (
-				<li
+				<a
 					style={{
 						background: `linear-gradient(to right, 
                         lightgreen ${bookCommented(
@@ -30,15 +30,13 @@ function BookChooser({ books, showChapterChooser }) {
                             book.length
                         )}%,  #DADCE2 0%)`,
                     }}
-					role="button"
 					key={book.abbrev}
-					aria-hidden="false"
                     data-length={book.length}
                     data-abbrev={book.abbrev}
                     onClick={showChapterComponents}
                 >
                     {book.title}
-                </li>
+                </a>
             ))}
 		</>
 	);
