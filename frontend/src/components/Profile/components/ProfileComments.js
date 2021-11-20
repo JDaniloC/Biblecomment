@@ -109,7 +109,11 @@ export default function ProfileComments({
 								deleteCommentFunction={deleteComment}
 							/>
 						) : (
-							<FavoriteRow index={index} comment={comment} key={comment.text} />
+							<FavoriteRow 
+								index={index} 
+								key={comment.id} 
+								comment={comment} 
+							/>
 						);
 					})
 				) : (

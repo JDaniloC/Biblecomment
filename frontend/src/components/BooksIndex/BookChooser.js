@@ -1,4 +1,4 @@
-import React, { useContext, memo } from "react";
+import React, { useContext, useCallback, memo } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 
 import PropTypes from "prop-types";
@@ -6,15 +6,13 @@ import Book from "models/Book";
 
 function BookChooser({ books, showChapterChooser }) {
 	const { commented } = useContext(ProfileContext);
-
-	function showChapterComponents(event) {
+	const showChapterComponents = useCallback((event) => {
 		const abbrev = event.target.getAttribute("data-abbrev");
 		const max = event.target.getAttribute("data-length");
 		showChapterChooser(abbrev, Number(max));
-	}
+	});
 
     function bookCommented(book, length) {
-		console.log("Buscando o livro", book);
 		if (book in commented) {
 			return (commented[book].length * 100) / length;
 		}
@@ -22,7 +20,7 @@ function BookChooser({ books, showChapterChooser }) {
 	}
 
 	return (
-		<div>
+		<>
 			{books.map((book) => (
                 <li
                     style={{
@@ -32,7 +30,9 @@ function BookChooser({ books, showChapterChooser }) {
                             book.length
                         )}%,  #DADCE2 0%)`,
                     }}
-                    key={book.abbrev}
+					role="button"
+					key={book.abbrev}
+					aria-hidden="false"
                     data-length={book.length}
                     data-abbrev={book.abbrev}
                     onClick={showChapterComponents}
@@ -40,7 +40,7 @@ function BookChooser({ books, showChapterChooser }) {
                     {book.title}
                 </li>
             ))}
-		</div>
+		</>
 	);
 }
 BookChooser.propTypes = {

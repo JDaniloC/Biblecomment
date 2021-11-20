@@ -97,15 +97,15 @@ export default class Profile extends Component {
 					/>
 					<ul style={{ display: this.state.perfilDisplay }}>
 						<li>
-							Total de livros comentados:
+							Total de livros comentados:&nbsp;
 							{this.context.booksCount} de 66
 						</li>
 						<li>
-							Total de capítulos comentados:
+							Total de capítulos comentados:&nbsp;
 							{this.context.chaptersCount} de 1.189
 						</li>
 						<li>
-							Total de comentários feitos:
+							Total de comentários feitos:&nbsp;
 							{this.context.commentsCount}
 						</li>
 

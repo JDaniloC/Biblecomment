@@ -37,7 +37,6 @@ export default class Discussion extends Component {
 			comment_reference = newComment_reference;
 		}
 
-		console.log(comment_reference, comment_text);
 		const { abbrev } = this.props.match.params;
 
 		this.state = {

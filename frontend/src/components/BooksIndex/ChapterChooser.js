@@ -2,10 +2,9 @@ import React, { useState, useEffect, useContext, memo } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Link } from "react-router-dom";
 
-import styles from "./ChapterChooser.module.css";
-
 import closeImg from "assets/x.svg";
 import PropTypes from "prop-types";
+import styles from "./ChapterChooser.module.css";
 
 function ChapterChooser({
 	handleChangePage,

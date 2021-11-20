@@ -21,14 +21,14 @@ export default function Comments({
 	imageFunction,
 	closeFunction,
 	reportFunction,
-	discussionFunction,
 	handleNewComment,
+	discussionFunction,
 }) {
 	function handleLike(evt) {
 		const id = evt.target.getAttribute("data-id");
 		likeFunction(parseInt(id, 10));
 	}
-
+	
 	function handleReport(evt) {
 		const id = evt.target.getAttribute("data-id");
 		reportFunction(parseInt(id, 10));
@@ -37,8 +37,10 @@ export default function Comments({
 	function handleChat(evt) {
 		const comment_reference = evt.target.getAttribute("data-reference");
 		const comment_id = parseInt(evt.target.getAttribute("data-id"), 10);
+		const username = evt.target.getAttribute("data-username");
 		const comment_text = evt.target.getAttribute("data-text");
-		discussionFunction(comment_id, comment_text, comment_reference);
+		const reference = `${username} ${comment_reference}`
+		discussionFunction(comment_id, comment_text, reference);
 	}
 
 	return (
@@ -46,7 +48,7 @@ export default function Comments({
 			<div className="top">
 				<h2> Comentários </h2>
 				<button type="button" onClick={closeFunction}>
-					<img src={closeImg} alt="Close img" />
+					<img src={closeImg} alt="Close image" />
 				</button>
 			</div>
 
@@ -57,7 +59,11 @@ export default function Comments({
 							<h3>
 								{commentary.username}
 								{commentary.tags.map((tag) => (
-									<img key={tag} alt={tag} src={imageFunction(tag)} />
+									<img 
+										key={tag} 
+										alt={tag} 
+										src={imageFunction(tag)}
+									/>
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
@@ -76,25 +82,35 @@ export default function Comments({
 									<button
 										type="button"
 										onClick={handleLike}
-										data-id={commentary.id}
-									>
-										<img alt="like" src={imageFunction("heart")} />
+										>
+										<img 
+											alt="like image"
+											data-id={commentary.id}
+											src={imageFunction("heart")} 
+										/>
 									</button>
 									<button
 										type="button"
 										onClick={handleChat}
-										data-id={commentary.id}
-										data-text={commentary.verse}
-										data-reference={commentary.book_reference}
 									>
-										<img alt="chat" src={imageFunction("chat")} />
+										<img 
+											alt="chat image"
+											data-id={commentary.id}
+											src={imageFunction("chat")}
+											data-text={commentary.text}
+											data-username={commentary.username}
+											data-reference={commentary.book_reference}
+										/>
 									</button>
 									<button
 										type="button"
-										data-id={commentary.id}
 										onClick={handleReport}
-									>
-										<img alt="report" src={imageFunction("warning")} />
+										>
+										<img 
+											alt="report image"
+											data-id={commentary.id}
+											src={imageFunction("warning")}
+										/>
 									</button>
 								</span>
 							</div>
@@ -107,15 +123,12 @@ export default function Comments({
 					</li>
 				)}
 			</ul>
-			<div
-				style={{
-					display: "flex",
-					flexDirection: "column",
-					alignItems: "center",
-					width: "100%",
-				}}
-			>
-				<button type="button" className="entry" onClick={handleNewComment}>
+			<div className="buttonContainer">
+				<button 
+					type="button" 
+					className="entry" 
+					onClick={handleNewComment}
+				>
 					Comentar
 				</button>
 			</div>

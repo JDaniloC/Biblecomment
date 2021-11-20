@@ -1,7 +1,7 @@
 import MDEditor, { commands } from "@uiw/react-md-editor";
 import { NotificationContext } from "contexts/NotificationContext";
 import { TOKEN_KEY, isAuthenticated } from "services/auth";
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useCallback } from "react";
 
 import axios from "services/api";
 import PropTypes from "prop-types";
@@ -27,16 +27,16 @@ export default function AnswerForm({
 
 	const { handleNotification } = useContext(NotificationContext);
 
-	function handleCloseAnswers() {
+	const handleCloseAnswers = useCallback(() => {
 		setAnswersClass("none");
 		setBlurDisplay("none");
-	}
+	}, [])
 
-	function handleCloseNewPost() {
+	const handleCloseNewPost = useCallback(() => {
 		setNewPostClass("invisible");
 		setNewAnswerClass("pop-up");
 		handleCloseAnswers();
-	}
+	}, [])
 
 	function canPostSomething() {
 		if (!isAuthenticated()) {
@@ -45,7 +45,7 @@ export default function AnswerForm({
 		return replyText !== "" && isAuthenticated();
 	}
 
-	function handlePostNewAnswer() {
+	const handlePostNewAnswer = useCallback(() => {
 		handleCloseAnswers();
 		const hasPermissionToPost = canPostSomething();
 		if (hasPermissionToPost) {
@@ -69,9 +69,9 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}
+	}, [])
 
-	function handlePostNewQuestion() {
+	const handlePostNewQuestion = useCallback(() => {
 		handleCloseNewPost();
 		const hasPermissionToPost = canPostSomething();
 		if (hasPermissionToPost) {
@@ -100,11 +100,11 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}
+	}, [])
 
-	function handleChangeText(value) {
+	const handleChangeText = useCallback((value) => {
 		setReplyText(value);
-	}
+	}, []);
 
 	return (
 		<div className="answersComponent" style={{ display: answersClass }}>
