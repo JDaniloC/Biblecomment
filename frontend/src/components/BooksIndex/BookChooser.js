@@ -25,18 +25,19 @@ function BookChooser({ books, showChapterChooser }) {
 				<a
 					style={{
 						background: `linear-gradient(to right, 
-                        lightgreen ${
-							bookCommented(book.abbrev, book.length)
-						}%,  #DADCE2 0%)`,
-                    }}
+                        lightgreen ${bookCommented(
+													book.abbrev,
+													book.length
+												)}%,  #DADCE2 0%)`,
+					}}
 					key={book.abbrev}
-                    data-length={book.length}
-                    data-abbrev={book.abbrev}
-                    onClick={showChapterComponents}
-                >
-                    {book.title}
-                </a>
-            ))}
+					data-length={book.length}
+					data-abbrev={book.abbrev}
+					onClick={showChapterComponents}
+				>
+					{book.title}
+				</a>
+			))}
 		</>
 	);
 }
