@@ -28,7 +28,7 @@ export default function Comments({
 		const id = evt.target.getAttribute("data-id");
 		likeFunction(parseInt(id, 10));
 	}
-	
+
 	function handleReport(evt) {
 		const id = evt.target.getAttribute("data-id");
 		reportFunction(parseInt(id, 10));
@@ -39,7 +39,7 @@ export default function Comments({
 		const comment_id = parseInt(evt.target.getAttribute("data-id"), 10);
 		const username = evt.target.getAttribute("data-username");
 		const comment_text = evt.target.getAttribute("data-text");
-		const reference = `${username} ${comment_reference}`
+		const reference = `${username} ${comment_reference}`;
 		discussionFunction(comment_id, comment_text, reference);
 	}
 
@@ -59,11 +59,7 @@ export default function Comments({
 							<h3>
 								{commentary.username}
 								{commentary.tags.map((tag) => (
-									<img 
-										key={tag} 
-										alt={tag} 
-										src={imageFunction(tag)}
-									/>
+									<img key={tag} alt={tag} src={imageFunction(tag)} />
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
@@ -79,21 +75,15 @@ export default function Comments({
 										<b> {getLikeCount(commentary)} </b>
 										pessoas
 									</p>
-									<button
-										type="button"
-										onClick={handleLike}
-										>
-										<img 
+									<button type="button" onClick={handleLike}>
+										<img
 											alt="like image"
 											data-id={commentary.id}
-											src={imageFunction("heart")} 
+											src={imageFunction("heart")}
 										/>
 									</button>
-									<button
-										type="button"
-										onClick={handleChat}
-									>
-										<img 
+									<button type="button" onClick={handleChat}>
+										<img
 											alt="chat image"
 											data-id={commentary.id}
 											src={imageFunction("chat")}
@@ -102,11 +92,8 @@ export default function Comments({
 											data-reference={commentary.book_reference}
 										/>
 									</button>
-									<button
-										type="button"
-										onClick={handleReport}
-										>
-										<img 
+									<button type="button" onClick={handleReport}>
+										<img
 											alt="report image"
 											data-id={commentary.id}
 											src={imageFunction("warning")}
@@ -124,11 +111,7 @@ export default function Comments({
 				)}
 			</ul>
 			<div className="buttonContainer">
-				<button 
-					type="button" 
-					className="entry" 
-					onClick={handleNewComment}
-				>
+				<button type="button" className="entry" onClick={handleNewComment}>
 					Comentar
 				</button>
 			</div>

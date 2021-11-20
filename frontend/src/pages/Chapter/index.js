@@ -32,7 +32,7 @@ export default class Chapter extends Component {
 			}),
 		}),
 		history: PropTypes.shape({
-			push: PropTypes.func.isRequired
+			push: PropTypes.func.isRequired,
 		}),
 	};
 

@@ -30,13 +30,13 @@ export default function AnswerForm({
 	const handleCloseAnswers = useCallback(() => {
 		setAnswersClass("none");
 		setBlurDisplay("none");
-	}, [])
+	}, []);
 
 	const handleCloseNewPost = useCallback(() => {
 		setNewPostClass("invisible");
 		setNewAnswerClass("pop-up");
 		handleCloseAnswers();
-	}, [])
+	}, []);
 
 	function canPostSomething() {
 		if (!isAuthenticated()) {
@@ -69,7 +69,7 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [])
+	}, []);
 
 	const handlePostNewQuestion = useCallback(() => {
 		handleCloseNewPost();
@@ -100,7 +100,7 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [])
+	}, []);
 
 	const handleChangeText = useCallback((value) => {
 		setReplyText(value);

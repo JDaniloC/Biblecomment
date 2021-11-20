@@ -12,7 +12,7 @@ function BookChooser({ books, showChapterChooser }) {
 		showChapterChooser(abbrev, Number(max));
 	});
 
-    function bookCommented(book, length) {
+	function bookCommented(book, length) {
 		if (book in commented) {
 			return (commented[book].length * 100) / length;
 		}
@@ -26,20 +26,20 @@ function BookChooser({ books, showChapterChooser }) {
 					style={{
 						background: `linear-gradient(to right, 
                         lightgreen ${bookCommented(
-                            book.abbrev, 
-                            book.length
-                        )}%,  #DADCE2 0%)`,
-                    }}
+													book.abbrev,
+													book.length
+												)}%,  #DADCE2 0%)`,
+					}}
 					role="button"
 					key={book.abbrev}
 					aria-hidden="false"
-                    data-length={book.length}
-                    data-abbrev={book.abbrev}
-                    onClick={showChapterComponents}
-                >
-                    {book.title}
-                </li>
-            ))}
+					data-length={book.length}
+					data-abbrev={book.abbrev}
+					onClick={showChapterComponents}
+				>
+					{book.title}
+				</li>
+			))}
 		</>
 	);
 }
