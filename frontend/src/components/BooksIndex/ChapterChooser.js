@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, memo } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Link } from "react-router-dom";
 
-import styles from "./ChapterChooser.module.css";
-
 import closeImg from "assets/x.svg";
 import PropTypes from "prop-types";
+import styles from "./ChapterChooser.module.css";
 
-export default function ChapterChooser({
+function ChapterChooser({
 	handleChangePage,
 	closeChapters,
 	chapterLength,
@@ -69,3 +68,4 @@ ChapterChooser.propTypes = {
 	closeChapters: PropTypes.func.isRequired,
 	abbrev: PropTypes.string.isRequired,
 };
+export default memo(ChapterChooser);

@@ -31,7 +31,9 @@ export default class Chapter extends Component {
 				number: PropTypes.string.isRequired,
 			}),
 		}),
-		history: History,
+		history: PropTypes.shape({
+			push: PropTypes.func.isRequired,
+		}),
 	};
 
 	constructor(props) {

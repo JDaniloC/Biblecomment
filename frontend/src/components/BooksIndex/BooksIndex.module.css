@@ -16,7 +16,7 @@
 	margin: 1em 0;
 }
 
-.books li {
+.books a {
 	flex: 1 0 30%;
 	flex-grow: 1;
 	padding: 10px;
