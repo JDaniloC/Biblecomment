@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Loading } from "components/Partials";
 import { Pagination } from "@material-ui/lab";
@@ -25,8 +25,7 @@ export default function ProfileComments({
 
 	const { name, commentaries, favorites } = useContext(ProfileContext);
 
-	async function handleLoadMore() {
-		const prevMaxPages = maxPages;
+	const handleLoadMore = useCallback(async () => {
 		setMaxPages(-1);
 		const newComments = await getComments(currentPage);
 		const allComments = [...comments, ...newComments];
@@ -35,13 +34,8 @@ export default function ProfileComments({
 		if (currentPage > 1 && newComments.length > 0) {
 			setCurrentPage(currentPage - 1);
 		}
-		if (newComments.length === 50) {
-			setMaxPages(prevMaxPages + 1);
-		} else {
-			setMaxPages(prevMaxPages);
-		}
 		return allComments;
-	}
+	});
 
 	function renderComments(page, optComments = []) {
 		const commentsToRender = optComments.length > 0 ? optComments : comments;
@@ -91,9 +85,9 @@ export default function ProfileComments({
 		renderComments(currentPage);
 	}, [currentPage]);
 
-	function handleChangePage(_, page) {
+	const handleChangePage = useCallback((_, page) => {
 		setCurrentPage(page);
-	}
+	});
 
 	return (
 		<ul className="commentaries">

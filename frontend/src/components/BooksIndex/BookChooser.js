@@ -22,7 +22,7 @@ function BookChooser({ books, showChapterChooser }) {
 	return (
 		<>
 			{books.map((book) => (
-				<a
+				<button
 					style={{
 						background: `linear-gradient(to right, 
                         lightgreen ${bookCommented(
@@ -30,19 +30,20 @@ function BookChooser({ books, showChapterChooser }) {
 													book.length
 												)}%,  #DADCE2 0%)`,
 					}}
+					type="button"
 					key={book.abbrev}
 					data-length={book.length}
 					data-abbrev={book.abbrev}
 					onClick={showChapterComponents}
 				>
 					{book.title}
-				</a>
+				</button>
 			))}
 		</>
 	);
 }
 BookChooser.propTypes = {
 	showChapterChooser: PropTypes.func.isRequired,
-	books: Book.isRequired,
+	books: PropTypes.arrayOf(Book).isRequired,
 };
 export default memo(BookChooser);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 
 import deleteIcon from "assets/delete.svg";
 import editIcon from "assets/edit.svg";
@@ -12,12 +12,12 @@ export default function CommentRow({
 	editCommentFunction,
 	deleteCommentFunction,
 }) {
-	function handleEditComment() {
+	const handleEditComment = useCallback(() => {
 		editCommentFunction(comment.id);
-	}
-	function handleDeleteComment() {
+	});
+	const handleDeleteComment = useCallback(() => {
 		deleteCommentFunction(comment.id);
-	}
+	});
 
 	return (
 		<li key={comment.id} className="comment-row">
