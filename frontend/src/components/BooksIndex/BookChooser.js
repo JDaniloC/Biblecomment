@@ -22,7 +22,7 @@ function BookChooser({ books, showChapterChooser }) {
 	return (
 		<>
 			{books.map((book) => (
-				<a
+				<button
 					style={{
 						background: `linear-gradient(to right, 
                         lightgreen ${
@@ -35,13 +35,13 @@ function BookChooser({ books, showChapterChooser }) {
                     onClick={showChapterComponents}
                 >
                     {book.title}
-                </a>
+                </button>
             ))}
 		</>
 	);
 }
 BookChooser.propTypes = {
 	showChapterChooser: PropTypes.func.isRequired,
-	books: Book.isRequired,
+	books: PropTypes.arrayOf(Book).isRequired,
 };
 export default memo(BookChooser);

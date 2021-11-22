@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useCallback } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 
 import PropTypes from "prop-types";
@@ -24,10 +24,10 @@ export default function ProfileConfig({ configDisplay, closeAccount }) {
 		setBelief(evt.target.value);
 	}
 
-	function handleDeleteAccount() {
+	const handleDeleteAccount = useCallback(() => {
 		deleteAccount();
 		closeAccount();
-	}
+	});
 
 	return (
 		<div className="user-config" style={{ display: configDisplay }}>

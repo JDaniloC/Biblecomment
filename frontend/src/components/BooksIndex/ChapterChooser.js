@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useContext, memo } from "react";
+import React, { 
+	memo, 
+	useState, 
+	useEffect, 
+	useContext, 
+	useCallback 
+} from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Link } from "react-router-dom";
 
@@ -30,12 +36,12 @@ function ChapterChooser({
 		return false;
 	}
 
-	function handleClickLink(event) {
+	const handleClickLink = useCallback((event) => {
 		event.preventDefault();
 		const { target } = event;
 		const chapterNumber = target.getAttribute("data-number");
 		handleChangePage(abbrev, Number(chapterNumber));
-	}
+	});
 
 	return (
 		<div className={styles.chaptersContainer}>

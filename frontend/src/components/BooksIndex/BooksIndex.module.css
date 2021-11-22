@@ -16,7 +16,8 @@
 	margin: 1em 0;
 }
 
-.books a {
+.books button {
+	border: none;
 	flex: 1 0 30%;
 	flex-grow: 1;
 	padding: 10px;
