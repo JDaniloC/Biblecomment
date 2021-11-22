@@ -28,7 +28,7 @@ export default function Comments({
 		const id = evt.target.getAttribute("data-id");
 		likeFunction(parseInt(id, 10));
 	});
-	
+
 	const handleReport = useCallback((evt) => {
 		const id = evt.target.getAttribute("data-id");
 		reportFunction(parseInt(id, 10));
@@ -76,14 +76,14 @@ export default function Comments({
 										pessoas
 									</p>
 									<button type="button" onClick={handleLike}>
-										<img 
+										<img
 											alt="Like comment"
 											data-id={commentary.id}
 											src={imageFunction("heart")}
 										/>
 									</button>
 									<button type="button" onClick={handleChat}>
-										<img 
+										<img
 											alt="Go to chat"
 											data-id={commentary.id}
 											src={imageFunction("chat")}
@@ -93,7 +93,7 @@ export default function Comments({
 										/>
 									</button>
 									<button type="button" onClick={handleReport}>
-										<img 
+										<img
 											alt="Report comment"
 											data-id={commentary.id}
 											src={imageFunction("warning")}
