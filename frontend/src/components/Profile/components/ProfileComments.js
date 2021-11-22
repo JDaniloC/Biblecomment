@@ -73,7 +73,6 @@ export default function ProfileComments({
 
 	useEffect(() => {
 		let totalPages = Math.ceil(comments.length / PAGE_LENGTH);
-		console.log(totalPages);
 		if (comments.length % 50 === 0) {
 			totalPages += 1;
 		}

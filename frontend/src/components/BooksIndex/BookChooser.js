@@ -30,6 +30,7 @@ function BookChooser({ books, showChapterChooser }) {
 													book.length
 												)}%,  #DADCE2 0%)`,
 					}}
+					type="button"
 					key={book.abbrev}
 					data-length={book.length}
 					data-abbrev={book.abbrev}
