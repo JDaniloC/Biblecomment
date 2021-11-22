@@ -1,9 +1,9 @@
-import React, { 
-	memo, 
-	useState, 
-	useEffect, 
-	useContext, 
-	useCallback 
+import React, {
+	memo,
+	useState,
+	useEffect,
+	useContext,
+	useCallback,
 } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Link } from "react-router-dom";
