@@ -1,8 +1,10 @@
 import re, json, time, requests, os
+from requests.api import options
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
 
 token = "YOUR TOKEN HERE"
+API_URL = "https://www.abibliadigital.com.br/api"
 
 class PageLoaded(object):
     def __init__(self, oldId):
@@ -29,7 +31,7 @@ def versesTotal(abbrev, chapter, token):
     Return the total of verses of a chapter requesting bibleapi
     '''
     response = requests.get(
-        f"https://bibleapi.co/api/verses/ra/{abbrev}/{str(chapter)}", 
+        f"{API_URL}/verses/ra/{abbrev}/{str(chapter)}", 
         headers = {"Authorization": "Bearer " + token},
     )
     result = response.json()
@@ -38,15 +40,15 @@ def versesTotal(abbrev, chapter, token):
 book_list = []
 
 opcoes = ChromeOptions()
-# opcoes.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-browser = Chrome(chrome_options = opcoes)
+opcoes.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+browser = Chrome("./chromedriver.exe", options = opcoes)
 
 for abbrev in book_list:
     error = False
 
     chapter = 1
     totalChapters = requests.get(
-            f"https://bibleapi.co/api/books/{abbrev}/", 
+            f"{API_URL}/books/{abbrev}/", 
             headers = {"Authorization": "Bearer " + token},
         ).json()["chapters"]
     book = {}
@@ -60,7 +62,7 @@ for abbrev in book_list:
         error = not waitToLoad(browser, oldId)
         
         if error:
-            print("Script interruted")
+            print("Script interrupted")
             continue
 
         # It scroll to the end for load full page

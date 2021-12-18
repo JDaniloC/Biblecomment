@@ -5,8 +5,7 @@ with open("books.json", encoding = "utf-8") as file:
 
 baseurl = "http://localhost:3333"
 
-for abbrev in books:
-    title, length = books[abbrev]
+for abbrev, (title, length) in books.items():
     print(f"\nSending {title}[{abbrev}] with {length} chapters = ", end = "")
     response = requests.post(
         f"{baseurl}/books", 
