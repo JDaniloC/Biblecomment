@@ -263,7 +263,7 @@ export default class Control extends Component {
 										style={{ alignItems: "flex-start" }}
 									>
 										<p> E-mail: {user.email} </p>
-										<p> Name: {user.name} </p>
+										<p> Name: {user.username} </p>
 										<p> State: {user.state} </p>
 										<p> Belief: {user.belief} </p>
 										<p> Since: {user.created_at} </p>

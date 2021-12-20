@@ -7,18 +7,20 @@ module.exports = {
 		const { pages = 1 } = request.query;
 
 		const users = await connection("users")
-			.orderBy("created_at", "desc")
+			.orderBy("users.created_at", "desc")
 			.limit(PAGE_LENGTH)
 			.offset((pages - 1) * PAGE_LENGTH)
-			.select(
-				"email",
-				"name",
-				"total_comments",
-				"state",
-				"belief",
-				"created_at"
-			);
-
+			.join('comments', 'comments.username', 'users.username')
+			.select({
+				email: "users.email",
+				state: "users.state",
+				belief: "users.belief",
+				username: "users.username",
+				created_at: "users.created_at",
+			})
+			.count("*", {as: "total_comments"})
+			.groupBy('users.username');
+				
 		return response.json(users);
 	},
 
@@ -53,7 +55,7 @@ module.exports = {
 		const user = await connection("users")
 			.where("token", token)
 			.first()
-			.select("moderator", "email", "name");
+			.select("moderator", "email", "username");
 
 		if (!user) {
 			return response.json({ msg: "User doesn't exists" });
@@ -64,15 +66,19 @@ module.exports = {
 				.where("email", email.toLowerCase())
 				.first();
 
-			await connection("discussions").where("username", deleted.name).delete();
+			await connection("discussions")
+				.where("username", deleted.username).delete();
 
 			await connection("comments")
-				.where("username", deleted.name)
+				.where("username", deleted.username)
 				.first()
 				.delete();
 
 			return response.json(
-				await connection("users").where("email", email).first().delete()
+				await connection("users")
+					.where("email", email)
+					.first()
+					.delete()
 			);
 		}
 		return response.json({ msg: "Not authorized" });

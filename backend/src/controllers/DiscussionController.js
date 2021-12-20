@@ -61,7 +61,7 @@ module.exports = {
 		const user = await connection("users")
 			.where("token", token)
 			.first()
-			.select("name");
+			.select("username");
 
 		if (typeof user === "undefined") {
 			return response.json({ error: "not authorized" });
@@ -79,7 +79,7 @@ module.exports = {
 				book_abbrev: abbrev,
 				comment_id,
 				comment_text: comment.text,
-				username: user.name,
+				username: user.username,
 				verse_text,
 				verse_reference,
 				question,
@@ -89,7 +89,7 @@ module.exports = {
 			return response.json({
 				id: discussion[0],
 				comment_text: comment.text,
-				username: user.name,
+				username: user.username,
 				verse_text,
 				verse_reference,
 				question,
@@ -112,7 +112,7 @@ module.exports = {
 		const user = await connection("users")
 			.where("token", token)
 			.first()
-			.select("name");
+			.select("username");
 
 		if (user) {
 			const discussion = await connection("discussions")
@@ -124,7 +124,7 @@ module.exports = {
 			}
 
 			const prevAnswers = JSON.parse(discussion.answers);
-			prevAnswers.push({ name: user.name, text });
+			prevAnswers.push({ name: user.username, text });
 			const answers = JSON.stringify(prevAnswers);
 
 			await connection("discussions").where("id", id).first().update({
@@ -151,7 +151,7 @@ module.exports = {
 		const user = await connection("users")
 			.where("token", token)
 			.first()
-			.select("moderator", "name");
+			.select("moderator", "username");
 
 		const discussion = await connection("discussions").where("id", id).first();
 
@@ -159,7 +159,7 @@ module.exports = {
 			return response.json({ msg: "Discussion doesn't exists'" });
 		}
 
-		if ((discussion.username === user.name) | user.moderator) {
+		if ((discussion.username === user.username) | user.moderator) {
 			const deletedDiscussion = await connection("discussions")
 				.where("id", id)
 				.first()

@@ -64,9 +64,11 @@ module.exports = {
 
 		if (chapter) {
 			let username = "Visitante";
-			const user = await connection("users").where("token", token).first();
+			const user = await connection("users")
+							.where("token", token)
+							.first();
 			if (user) {
-				username = user.name;
+				username = user.username;
 
 				// Add the abbrev to commented chapters array in user
 				const new_chapter_commented = JSON.parse(user.chapters_commented);
@@ -137,7 +139,9 @@ module.exports = {
 			});
 		}
 
-		const user = await connection("users").where("token", token).select("name");
+		const user = await connection("users")
+							.where("token", token)
+							.select("username");
 
 		if (user.length > 0) {
 			const comment = await connection("comments").where("id", id).first();
@@ -150,15 +154,15 @@ module.exports = {
 			tags = typeof tags !== "undefined" ? JSON.stringify(tags) : comment.tags;
 			if (typeof likes !== "undefined") {
 				const likeList = JSON.parse(comment.likes);
-				if (likeList.indexOf(user[0].name) === -1) {
-					likeList.push(user[0].name);
+				if (likeList.indexOf(user[0].username) === -1) {
+					likeList.push(user[0].username);
 				}
 				likes = JSON.stringify(likeList);
 			}
 			if (typeof reports !== "undefined") {
 				const reportList = JSON.parse(comment.reports);
 				reportList.push({
-					user: user[0].name,
+					user: user[0].username,
 					msg: reports,
 				});
 				reports = JSON.stringify(reportList);
@@ -194,7 +198,7 @@ module.exports = {
 		const user = await connection("users")
 			.where("token", token)
 			.first()
-			.select("name", "moderator");
+			.select("username", "moderator");
 
 		if (user.length === 0) {
 			return response
@@ -204,7 +208,7 @@ module.exports = {
 
 		const comment = await connection("comments").where("id", id).first();
 
-		if (comment.username === user.name || user.moderator) {
+		if (comment.username === user.username || user.moderator) {
 			await connection("discussions")
 				.where("comment_text", comment.text)
 				.delete();
@@ -212,7 +216,7 @@ module.exports = {
 			await connection("comments").where("id", id).first().delete();
 
 			await connection("users")
-				.where("name", comment.username)
+				.where("username", comment.username)
 				.first()
 				.decrement("total_comments", 1);
 			return response.json(comment);

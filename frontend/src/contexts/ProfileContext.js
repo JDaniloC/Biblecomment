@@ -28,9 +28,9 @@ export function ProfileProvider({ children }) {
 	const { handleNotification } = useContext(NotificationContext);
 
 	function loadUserInfos({ data }) {
-		const { email: currentEmail, name: currentName } = data;
+		const { email: currentEmail, username: currentName } = data;
 		const currentCommentsCount = data.total_comments;
-		const currentCommented = JSON.parse(data.chapters_commented);
+		const currentCommented = data.chapters_commented;
 		const currentBooksCount = Object.keys(currentCommented).length;
 		const currentBelief = data.belief !== null ? data.belief : "";
 		const currentStateName = data.state !== null ? data.state : "";
