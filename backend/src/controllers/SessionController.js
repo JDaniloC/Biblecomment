@@ -23,8 +23,6 @@ module.exports = {
 				username: name,
 				password: md5(password),
 				token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa"),
-				total_comments: 0,
-				chapters_commented: JSON.stringify({}),
 				moderator: false,
 			});
 

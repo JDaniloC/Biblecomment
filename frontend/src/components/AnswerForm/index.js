@@ -69,14 +69,14 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, []);
+	}, [replyText]);
 
 	const handlePostNewQuestion = useCallback(() => {
 		handleCloseNewPost();
 		const hasPermissionToPost = canPostSomething();
 		if (hasPermissionToPost) {
 			try {
-				const [abbrev, verse_reference] = comment_reference.split(" ");
+				const [username, abbrev, verse_reference] = comment_reference.split(" ");
 
 				axios
 					.post(`/discussion/${abbrev}/`, {
@@ -91,16 +91,16 @@ export default function AnswerForm({
 							response.data.answers = [];
 							setReplyText("");
 							appendNewDiscussion(response.data);
-							handleNotification("success", "Postado!");
+							handleNotification("success", `Comentário enviado à ${username}!`);
 						} else {
-							handleNotification("warning", "Algo deu errado");
+							handleNotification("warning", response.data.error);
 						}
 					});
 			} catch (error) {
 				handleNotification("error", error.toString());
 			}
 		}
-	}, []);
+	}, [replyText]);
 
 	const handleChangeText = useCallback((value) => {
 		setReplyText(value);

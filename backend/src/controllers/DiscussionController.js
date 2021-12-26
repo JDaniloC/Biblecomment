@@ -1,14 +1,17 @@
 const connection = require("../database/connection");
+const missingBodyParams = require("../utils/missingBodyParams");
 
 const PAGE_LENGTH = 5;
 
 module.exports = {
 	async index(request, response) {
-		let { abbrev } = request.params;
-		abbrev = abbrev.toLocaleLowerCase();
+		const { abbrev: oldAbbrev } = request.params;
 		const { pages = 1 } = request.query;
-
-		const book = await connection("books").where("abbrev", abbrev).first();
+		
+		const abbrev = oldAbbrev.toLocaleLowerCase();
+		const book = await connection("books")
+			.where("abbrev", abbrev)
+			.first();
 
 		if (book) {
 			const discussions = await connection("discussions")
@@ -24,10 +27,12 @@ module.exports = {
 
 	async show(request, response) {
 		const { id } = request.params;
-		let { abbrev } = request.params;
-		abbrev = abbrev.toLocaleLowerCase();
-
-		const book = await connection("books").where("abbrev", abbrev).first();
+		const { abbrev: oldAbbrev } = request.params;
+		
+		const abbrev = oldAbbrev.toLocaleLowerCase();
+		const book = await connection("books")
+			.where("abbrev", abbrev)
+			.first();
 
 		if (book) {
 			const discussion = await connection("discussions")
@@ -41,20 +46,26 @@ module.exports = {
 	},
 
 	async store(request, response) {
-		let { abbrev } = request.params;
-		abbrev = abbrev.toLocaleLowerCase();
-		const { comment_id, verse_reference, verse_text, question, token } =
-			request.body;
+		const { abbrev: oldAbbrev } = request.params;
+		const abbrev = oldAbbrev.toLocaleLowerCase();
+		const { 
+			verse_reference, 
+			comment_id, 
+			verse_text, 
+			question, 
+			token 
+		} = request.body;
 
-		if (
-			[comment_id, token, verse_reference, verse_text, question].some(
-				(element) => typeof element === "undefined"
-			) ||
-			question === ""
-		) {
+		if (missingBodyParams([
+			verse_reference, 
+			comment_id, 
+			verse_text, 
+			question,
+			token, 
+		]) || question === "") {
 			return response.json({
-				error:
-					"insufficient body: comment_id, token, verse_reference, verse_text, question",
+				error: "insufficient body: comment_id, token, \
+						verse_reference, verse_text, question",
 			});
 		}
 
@@ -63,17 +74,19 @@ module.exports = {
 			.first()
 			.select("username");
 
-		if (typeof user === "undefined") {
+		if (!user) {
 			return response.json({ error: "not authorized" });
 		}
 
-		const book = await connection("books").where("abbrev", abbrev).first();
-
+		const book = await connection("books")
+			.where("abbrev", abbrev)
+			.first();
+		
 		const comment = await connection("comments")
 			.where("id", comment_id)
 			.first()
 			.select("text");
-
+		
 		if (book && comment) {
 			const discussion = await connection("discussions").insert({
 				book_abbrev: abbrev,
@@ -103,7 +116,7 @@ module.exports = {
 		const { token, text } = request.body;
 		const { id } = request.params;
 
-		if (typeof token === "undefined" || typeof text === "undefined") {
+		if (missingBodyParams([token, text])) {
 			return response.json({
 				error: "It's missing the token",
 			});

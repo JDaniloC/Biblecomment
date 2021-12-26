@@ -1,4 +1,5 @@
 const connection = require("../database/connection");
+const missingBodyParams = require("../utils/missingBodyParams");
 
 module.exports = {
 	async index(request, response) {
@@ -12,20 +13,25 @@ module.exports = {
 	async store(request, response) {
 		const { title, abbrev, length } = request.body;
 
-		if ((title === null) | (abbrev === null) | (length === null)) {
+		if (missingBodyParams([title, abbrev, length])) {
 			return response.json({
-				error: "insufficient body: title, abbrev, length",
+				error: "insufficient body: title, abbrev, length.",
 			});
 		}
 
 		const exists = await connection("books").where("abbrev", abbrev).first();
 
 		if (!exists) {
+			const created_at = new Date()
+				.toISOString()
+				.replace("Z", "")
+				.replace("T", " ");
+			
 			const book = await connection("books").insert({
 				title,
 				abbrev,
 				length,
-				created_at: new Date().toISOString().replace("Z", "").replace("T", " "),
+				created_at,
 			});
 
 			return response.json(book);
@@ -36,7 +42,7 @@ module.exports = {
 	async show(request, response) {
 		const { abbrev } = request.params;
 
-		if (abbrev !== null) {
+		if (typeof abbrev !== "undefined") {
 			const book = await connection("books")
 				.where("abbrev", abbrev)
 				.select("abbrev", "title", "length")
@@ -45,6 +51,6 @@ module.exports = {
 
 			return response.json(book);
 		}
-		return response.json({ error: "insufficient params: abbrev" });
+		return response.json({ error: "insufficient params: abbrev." });
 	},
 };

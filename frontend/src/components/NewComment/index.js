@@ -50,8 +50,8 @@ export default class NewComment extends Component {
 			this.state.texto.length > 1000
 		) {
 			return this.context.handleNotification(
+				"info",
 				"O mínimo de caracteres é 200 e o máximo de 1000!",
-				"info"
 			);
 		}
 		const tags = [];

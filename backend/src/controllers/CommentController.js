@@ -1,4 +1,5 @@
 const connection = require("../database/connection");
+const missingBodyParams = require("../utils/missingBodyParams");
 
 const UNAUTHORIZED_STATUS = 401;
 const BAD_REQUEST_STATUS = 400;
@@ -50,9 +51,9 @@ module.exports = {
 		const { abbrev, number, verse } = request.params;
 		const { token, text, tags, on_title } = request.body;
 
-		if (!token | !text | !tags | (typeof on_title === "undefined")) {
+		if (missingBodyParams([token, text, tags, on_title])) {
 			return response.json({
-				error: "insufficient body: token, text, tags, on_title",
+				error: "insufficient body: token, text, tags, on_title.",
 			});
 		}
 
@@ -62,50 +63,32 @@ module.exports = {
 			.first()
 			.select("id", "book_abbrev", "number");
 
-		if (chapter) {
-			let username = "Visitante";
-			const user = await connection("users")
-							.where("token", token)
-							.first();
-			if (user) {
-				username = user.username;
+		const user = await connection("users")
+						.where("token", token)
+						.first();
+		
+		if (chapter && user) {
+			const username = user.username;
 
-				// Add the abbrev to commented chapters array in user
-				const new_chapter_commented = JSON.parse(user.chapters_commented);
-				if (abbrev in new_chapter_commented) {
-					if (new_chapter_commented[abbrev].indexOf(number) === -1) {
-						new_chapter_commented[abbrev].push(number);
-					}
-				} else {
-					new_chapter_commented[abbrev] = [number];
-				}
-				await connection("users")
-					.where("token", token)
-					.first()
-					.increment("total_comments", 1)
-					.update({
-						chapters_commented: JSON.stringify(new_chapter_commented),
-					});
-			}
-
-			let book_abbrev =
-				chapter.book_abbrev.charAt(0).toUpperCase() +
+			let capitalizedBookAbbrev = chapter.book_abbrev
+				.charAt(0).toUpperCase() +
 				chapter.book_abbrev.slice(1);
-			if (book_abbrev === "Job") {
-				book_abbrev = "Jó";
+			if (capitalizedBookAbbrev === "Job") {
+				capitalizedBookAbbrev = "Jó";
 			}
 
 			const created_at = new Date()
 				.toISOString()
 				.replace("Z", "")
 				.replace("T", " ");
+			
 			const comment = await connection("comments").insert({
 				username,
 				text,
 				verse,
 				on_title,
 				created_at,
-				book_reference: `${book_abbrev} ${number}:${verse}`,
+				book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
 				tags: JSON.stringify(tags),
 				chapter_id: chapter.id,
 				reports: JSON.stringify([]),
@@ -121,11 +104,11 @@ module.exports = {
 				verse: parseInt(verse, 10),
 				reports: JSON.stringify([]),
 				likes: JSON.stringify([]),
-				book_reference: `${book_abbrev} ${number}:${verse}`,
+				book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
 				created_at,
 			});
 		}
-		return response.json({ error: "Chapter doesn't exists" });
+		return response.json({ error: "Chapter/User doesn't exists" });
 	},
 
 	async update(request, response) {
@@ -141,9 +124,10 @@ module.exports = {
 
 		const user = await connection("users")
 							.where("token", token)
+							.first()
 							.select("username");
 
-		if (user.length > 0) {
+		if (user) {
 			const comment = await connection("comments").where("id", id).first();
 
 			if (!comment) {
@@ -154,15 +138,15 @@ module.exports = {
 			tags = typeof tags !== "undefined" ? JSON.stringify(tags) : comment.tags;
 			if (typeof likes !== "undefined") {
 				const likeList = JSON.parse(comment.likes);
-				if (likeList.indexOf(user[0].username) === -1) {
-					likeList.push(user[0].username);
+				if (likeList.indexOf(user.username) === -1) {
+					likeList.push(user.username);
 				}
 				likes = JSON.stringify(likeList);
 			}
 			if (typeof reports !== "undefined") {
 				const reportList = JSON.parse(comment.reports);
 				reportList.push({
-					user: user[0].username,
+					user: user.username,
 					msg: reports,
 				});
 				reports = JSON.stringify(reportList);
@@ -206,19 +190,20 @@ module.exports = {
 				.json({ Unauthorized: "Você precisa estar logado" });
 		}
 
-		const comment = await connection("comments").where("id", id).first();
+		const comment = await connection("comments")
+			.where("id", id)
+			.first();
 
 		if (comment.username === user.username || user.moderator) {
 			await connection("discussions")
 				.where("comment_text", comment.text)
 				.delete();
 
-			await connection("comments").where("id", id).first().delete();
-
-			await connection("users")
-				.where("username", comment.username)
+			await connection("comments")
+				.where("id", id)
 				.first()
-				.decrement("total_comments", 1);
+				.delete();
+
 			return response.json(comment);
 		}
 		return response

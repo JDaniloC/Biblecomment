@@ -24,7 +24,7 @@ export default class Discussion extends Component {
 			comment_reference = "";
 
 		if (location !== undefined) {
-			let {
+			const {
 				title: newTitle,
 				comment_id: newComment_id,
 				comment_text: newComment_text,

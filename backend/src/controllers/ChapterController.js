@@ -18,11 +18,13 @@ module.exports = {
 		const { abbrev, number } = request.params;
 		const { verses } = request.body;
 
-		if (!verses) {
+		if (typeof verses === "undefined") {
 			return response.json({ error: "insufficient body: verses" });
 		}
 
-		const book = await connection("books").where("abbrev", abbrev).first();
+		const book = await connection("books")
+			.where("abbrev", abbrev)
+			.first();
 
 		if (book) {
 			await connection("chapters")
@@ -37,7 +39,7 @@ module.exports = {
 			});
 			return response.json(chapter);
 		}
-		return response.json({ error: "this books doesn't exists" });
+		return response.json({ error: "this books doesn't exists." });
 	},
 
 	async show(request, response) {
@@ -65,11 +67,13 @@ module.exports = {
 		const { abbrev, number } = request.params;
 		const { verses } = request.body;
 
-		if (!verses) {
-			return response.json({ error: "insufficient body: verses" });
+		if (typeof verses === "undefined") {
+			return response.json({ error: "insufficient body: verses." });
 		}
 
-		const book = await connection("books").where("abbrev", abbrev).first();
+		const book = await connection("books")
+			.where("abbrev", abbrev)
+			.first();
 
 		if (book) {
 			await connection("chapters")
