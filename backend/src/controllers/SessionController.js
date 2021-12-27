@@ -62,7 +62,8 @@ module.exports = {
 			.count("*", { as: "total_comments" });
 
 		if (!registeredUser) {
-			return response.status(BAD_REQUEST_STATUS)
+			return response
+				.status(BAD_REQUEST_STATUS)
 				.json({ error: "E-mail não cadastrado" });
 		}
 
@@ -80,14 +81,18 @@ module.exports = {
 						return prevDict;
 					}, {});
 				});
-			
-			const token = jwt.sign({
-				email: registeredUser.email, 
-				username: registeredUser.username,
-				moderator: registeredUser.moderator,
-			}, process.env.SECRET, {
-				expiresIn: "1d",
-			});
+
+			const token = jwt.sign(
+				{
+					email: registeredUser.email,
+					username: registeredUser.username,
+					moderator: registeredUser.moderator,
+				},
+				process.env.SECRET,
+				{
+					expiresIn: "1d",
+				}
+			);
 			return response.json({
 				token,
 				email: registeredUser.email,
@@ -99,17 +104,19 @@ module.exports = {
 				chapters_commented: chaptersCommented,
 				total_comments: registeredUser.total_comments,
 			});
-		} 
-		return response.status(BAD_REQUEST_STATUS)
+		}
+		return response
+			.status(BAD_REQUEST_STATUS)
 			.json({ error: "Senha incorreta" });
 	},
 
 	async show(request, response) {
 		const { email } = response.locals.userData;
-		
+
 		const registeredUser = await connection("users")
-			.where("email", email).first()
-			.join('comments', 'comments.username', 'users.username')
+			.where("email", email)
+			.first()
+			.join("comments", "comments.username", "users.username")
 			.select({
 				email: "users.email",
 				state: "users.state",
@@ -122,7 +129,8 @@ module.exports = {
 			.count("*", { as: "total_comments" });
 
 		if (!registeredUser) {
-			return response.status(BAD_REQUEST_STATUS)
+			return response
+				.status(BAD_REQUEST_STATUS)
 				.json({ error: "Usuário não cadastrado." });
 		}
 

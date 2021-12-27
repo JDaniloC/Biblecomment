@@ -60,7 +60,7 @@ export default class Control extends Component {
 			this.setState({ usersTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				usersPage: (currentPage > 1) ? currentPage - 1 : 1,
+				usersPage: currentPage > 1 ? currentPage - 1 : 1,
 				usersTotalPages: newTotal,
 			});
 		}
@@ -88,7 +88,7 @@ export default class Control extends Component {
 			this.setState({ commentsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				commentsPage: (currentPage > 1) ? currentPage - 1 : 1,
+				commentsPage: currentPage > 1 ? currentPage - 1 : 1,
 				commentsTotalPages: newTotal,
 			});
 		}
@@ -111,7 +111,7 @@ export default class Control extends Component {
 			this.setState({ discussionsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				discussionsPage: (currentPage > 1) ? currentPage - 1 : 1,
+				discussionsPage: currentPage > 1 ? currentPage - 1 : 1,
 				discussionsTotalPages: newTotal,
 			});
 		}
@@ -119,17 +119,19 @@ export default class Control extends Component {
 
 	componentDidMount() {
 		if (isAuthenticated()) {
-			axios.get("/session/").then(({ data }) => {
-				if (data.moderator) {
-					this.setState({ authorized: true });
-					this.getUsers();
-					this.getComments();
-					this.getDiscussions();
-				}
-			})
-			.catch(({ response }) => {
-				this.handleNotification("error", response.data.error);
-			});
+			axios
+				.get("/session/")
+				.then(({ data }) => {
+					if (data.moderator) {
+						this.setState({ authorized: true });
+						this.getUsers();
+						this.getComments();
+						this.getDiscussions();
+					}
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
+				});
 		}
 	}
 
@@ -140,9 +142,8 @@ export default class Control extends Component {
 			.then(({ status }) => {
 				if (status === 200) {
 					this.setState((prevState) => ({
-						users: prevState.users.filter(
-							(user) => user.email !== email
-					)}));
+						users: prevState.users.filter((user) => user.email !== email),
+					}));
 				}
 			})
 			.catch(({ response }) => {

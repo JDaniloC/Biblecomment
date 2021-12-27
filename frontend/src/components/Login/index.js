@@ -122,10 +122,7 @@ export default class Login extends Component {
 				})
 				.then(({ data }) => {
 					this.context.loadUserInfos(data);
-					this.handleNotification(
-						"success", 
-						"Login realizado com sucesso!"
-					);
+					this.handleNotification("success", "Login realizado com sucesso!");
 					login(data.token);
 				})
 				.catch(({ response }) => {
@@ -146,10 +143,7 @@ export default class Login extends Component {
 				})
 				.then(() => {
 					this.changeMethod(null);
-					this.handleNotification(
-						"success",
-						"Cadastro realizado com sucesso!"
-					);
+					this.handleNotification("success", "Cadastro realizado com sucesso!");
 				})
 				.catch(({ response }) => {
 					this.handleNotification("error", response.data.error);

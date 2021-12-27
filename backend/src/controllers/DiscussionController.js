@@ -47,29 +47,21 @@ module.exports = {
 		const { abbrev: oldAbbrev } = request.params;
 		const abbrev = oldAbbrev.toLocaleLowerCase();
 
-		const { 
-			verse_reference, 
-			comment_id, 
-			verse_text, 
-			question, 
-		} = request.body;
+		const { verse_reference, comment_id, verse_text, question } = request.body;
 
-		if (missingBodyParams([
-			verse_reference, 
-			comment_id, 
-			verse_text, 
-			question,
-		]) || question === "") {
+		if (
+			missingBodyParams([verse_reference, comment_id, verse_text, question]) ||
+			question === ""
+		) {
 			return response.status(BAD_REQUEST_STATUS).json({
-				error: "insufficient body: comment_id, \
+				error:
+					"insufficient body: comment_id, \
 						verse_reference, verse_text, question",
 			});
 		}
 
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
-		
+		const book = await connection("books").where("abbrev", abbrev).first();
+
 		const comment = await connection("comments")
 			.where("id", comment_id)
 			.first()
@@ -97,7 +89,8 @@ module.exports = {
 				answers: JSON.stringify([]),
 			});
 		}
-		return response.status(BAD_REQUEST_STATUS)
+		return response
+			.status(BAD_REQUEST_STATUS)
 			.json({ error: "Book/Comment don't exist" });
 	},
 
@@ -112,12 +105,11 @@ module.exports = {
 			});
 		}
 
-		const discussion = await connection("discussions")
-			.where("id", id)
-			.first();
+		const discussion = await connection("discussions").where("id", id).first();
 
 		if (!discussion) {
-			return response.status(BAD_REQUEST_STATUS)
+			return response
+				.status(BAD_REQUEST_STATUS)
 				.json({ error: "Discussion not found" });
 		}
 
@@ -125,9 +117,7 @@ module.exports = {
 		prevAnswers.push({ name: username, text });
 		const answers = JSON.stringify(prevAnswers);
 
-		await connection("discussions")
-			.where("id", id).first()
-			.update({ answers });
+		await connection("discussions").where("id", id).first().update({ answers });
 
 		return response.json({
 			id,
@@ -140,16 +130,15 @@ module.exports = {
 		const { username, moderator } = response.locals.userData;
 		const { id } = request.params;
 
-		const discussion = await connection("discussions")
-			.where("id", id)
-			.first();
+		const discussion = await connection("discussions").where("id", id).first();
 
 		if (!discussion) {
-			return response.status(BAD_REQUEST_STATUS)
+			return response
+				.status(BAD_REQUEST_STATUS)
 				.json({ error: "Discussion doesn't exists'" });
 		}
 
-		if ((discussion.username === username) || moderator) {
+		if (discussion.username === username || moderator) {
 			const deletedDiscussion = await connection("discussions")
 				.where("id", id)
 				.first()
@@ -157,7 +146,8 @@ module.exports = {
 
 			return response.json(deletedDiscussion);
 		}
-		return response.status(BAD_REQUEST_STATUS)
+		return response
+			.status(BAD_REQUEST_STATUS)
 			.json({ error: "Not authorized" });
 	},
 };

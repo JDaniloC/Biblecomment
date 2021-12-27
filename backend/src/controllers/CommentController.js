@@ -21,7 +21,8 @@ module.exports = {
 
 			return response.json(comments);
 		}
-		return response.status(BAD_REQUEST_STATUS)
+		return response
+			.status(BAD_REQUEST_STATUS)
 			.json({ error: "chapter not found" });
 	},
 
@@ -66,8 +67,8 @@ module.exports = {
 			.select("id", "book_abbrev", "number");
 
 		if (chapter) {
-			let capitalizedBookAbbrev = chapter.book_abbrev
-				.charAt(0).toUpperCase() +
+			let capitalizedBookAbbrev =
+				chapter.book_abbrev.charAt(0).toUpperCase() +
 				chapter.book_abbrev.slice(1);
 			if (capitalizedBookAbbrev === "Job") {
 				capitalizedBookAbbrev = "Jó";
@@ -104,7 +105,8 @@ module.exports = {
 				book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
 			});
 		}
-		return response.status(BAD_REQUEST_STATUS)
+		return response
+			.status(BAD_REQUEST_STATUS)
 			.json({ error: "Chapter/User doesn't exists" });
 	},
 
@@ -116,7 +118,8 @@ module.exports = {
 		const comment = await connection("comments").where("id", id).first();
 
 		if (!comment) {
-			return response.status(BAD_REQUEST_STATUS)
+			return response
+				.status(BAD_REQUEST_STATUS)
 				.json({ error: "Comment not found" });
 		}
 
@@ -143,8 +146,7 @@ module.exports = {
 			reports = comment.reports;
 		}
 
-		await connection("comments")
-			.where("id", id).first().update({
+		await connection("comments").where("id", id).first().update({
 			text,
 			tags,
 			likes,

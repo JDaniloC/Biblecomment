@@ -65,17 +65,19 @@ export function ProfileProvider({ children }) {
 	async function getComments(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			return await axios.get("/users/comments/", {
-				params: { pages },
-			}).then(({ data }) => {
-				const newResult = [...commentaries, ...data.comments];
-				setCommentaries(newResult);
-				return data.comments;
-			})
-			.catch(({ response }) => {
-				handleNotification("error", response.data.error);
-				return [];
-			});
+			return await axios
+				.get("/users/comments/", {
+					params: { pages },
+				})
+				.then(({ data }) => {
+					const newResult = [...commentaries, ...data.comments];
+					setCommentaries(newResult);
+					return data.comments;
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
+					return [];
+				});
 		} catch (error) {
 			handleNotification("error", error.toString());
 		}
@@ -85,19 +87,20 @@ export function ProfileProvider({ children }) {
 	async function getFavorites(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			return await axios.get("/users/favorites/", {
-				headers: { name },
-				params: { pages },
-			})
-			.then(({ data }) => {
-				const newResult = [...favorites, ...data.favorites];
-				setFavorites(newResult);
-				return data.favorites;
-			})
-			.catch(({ response }) => {
-				handleNotification("error", response.data.error);
-				return [];
-			});
+			return await axios
+				.get("/users/favorites/", {
+					headers: { name },
+					params: { pages },
+				})
+				.then(({ data }) => {
+					const newResult = [...favorites, ...data.favorites];
+					setFavorites(newResult);
+					return data.favorites;
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
+					return [];
+				});
 		} catch (error) {
 			handleNotification("error", error.toString());
 		}
@@ -106,7 +109,8 @@ export function ProfileProvider({ children }) {
 
 	useEffect(() => {
 		if (isAuthenticated()) {
-			axios.get("/session/")
+			axios
+				.get("/session/")
 				.then(({ data }) => {
 					loadUserInfos(data);
 				})

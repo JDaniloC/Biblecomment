@@ -50,7 +50,8 @@ routes.get(
 );
 routes.post(
 	"/books/:abbrev/chapters/:number/comments/:verse",
-	Authentication, CommentController.store
+	Authentication,
+	CommentController.store
 );
 routes.patch("/comments/:id", Authentication, CommentController.update);
 routes.delete("/comments/:id", Authentication, CommentController.destroy);
