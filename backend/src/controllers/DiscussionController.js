@@ -1,6 +1,7 @@
 const connection = require("../database/connection");
 const missingBodyParams = require("../utils/missingBodyParams");
 
+const BAD_REQUEST_STATUS = 400;
 const PAGE_LENGTH = 5;
 
 module.exports = {
@@ -46,14 +47,15 @@ module.exports = {
 	},
 
 	async store(request, response) {
+		const { username } = response.locals.userData;
 		const { abbrev: oldAbbrev } = request.params;
 		const abbrev = oldAbbrev.toLocaleLowerCase();
+
 		const { 
 			verse_reference, 
 			comment_id, 
 			verse_text, 
 			question, 
-			token 
 		} = request.body;
 
 		if (missingBodyParams([
@@ -61,21 +63,11 @@ module.exports = {
 			comment_id, 
 			verse_text, 
 			question,
-			token, 
 		]) || question === "") {
-			return response.json({
-				error: "insufficient body: comment_id, token, \
+			return response.status(BAD_REQUEST_STATUS).json({
+				error: "insufficient body: comment_id, \
 						verse_reference, verse_text, question",
 			});
-		}
-
-		const user = await connection("users")
-			.where("token", token)
-			.first()
-			.select("username");
-
-		if (!user) {
-			return response.json({ error: "not authorized" });
 		}
 
 		const book = await connection("books")
@@ -89,90 +81,79 @@ module.exports = {
 		
 		if (book && comment) {
 			const discussion = await connection("discussions").insert({
-				book_abbrev: abbrev,
-				comment_id,
-				comment_text: comment.text,
-				username: user.username,
-				verse_text,
-				verse_reference,
 				question,
+				username,
+				verse_text,
+				comment_id,
+				verse_reference,
+				book_abbrev: abbrev,
+				comment_text: comment.text,
 				answers: JSON.stringify([]),
 			});
 
 			return response.json({
-				id: discussion[0],
-				comment_text: comment.text,
-				username: user.username,
+				username,
+				question,
 				verse_text,
 				verse_reference,
-				question,
+				id: discussion[0],
+				comment_text: comment.text,
 				answers: JSON.stringify([]),
 			});
 		}
-		return response.json({ error: "Book/Comment don't exist" });
+		return response.status(BAD_REQUEST_STATUS)
+			.json({ error: "Book/Comment don't exist" });
 	},
 
 	async update(request, response) {
-		const { token, text } = request.body;
+		const { username } = response.locals.userData;
+		const { text } = request.body;
 		const { id } = request.params;
 
-		if (missingBodyParams([token, text])) {
+		if (missingBodyParams([text])) {
 			return response.json({
-				error: "It's missing the token",
+				error: "insufficient body: text",
 			});
 		}
 
-		const user = await connection("users")
-			.where("token", token)
-			.first()
-			.select("username");
+		const discussion = await connection("discussions")
+			.where("id", id)
+			.first();
 
-		if (user) {
-			const discussion = await connection("discussions")
-				.where("id", id)
-				.first();
-
-			if (!discussion) {
-				return response.json({ error: "Discussion not found" });
-			}
-
-			const prevAnswers = JSON.parse(discussion.answers);
-			prevAnswers.push({ name: user.username, text });
-			const answers = JSON.stringify(prevAnswers);
-
-			await connection("discussions").where("id", id).first().update({
-				answers,
-			});
-
-			return response.json({
-				id,
-				text,
-				answers,
-			});
+		if (!discussion) {
+			return response.status(BAD_REQUEST_STATUS)
+				.json({ error: "Discussion not found" });
 		}
-		return response.json({ Unauthorized: "Você precisa estar logado" });
+
+		const prevAnswers = JSON.parse(discussion.answers);
+		prevAnswers.push({ name: username, text });
+		const answers = JSON.stringify(prevAnswers);
+
+		await connection("discussions")
+			.where("id", id).first()
+			.update({ answers });
+
+		return response.json({
+			id,
+			text,
+			answers,
+		});
 	},
 
 	async delete(request, response) {
+		const { username, moderator } = response.locals.userData;
 		const { id } = request.params;
-		const { token } = request.body;
 
-		if (typeof token === "undefined") {
-			return response.json({ msg: "insufficient body: token" });
-		}
-
-		const user = await connection("users")
-			.where("token", token)
-			.first()
-			.select("moderator", "username");
-
-		const discussion = await connection("discussions").where("id", id).first();
+		const discussion = await connection("discussions")
+			.where("id", id)
+			.first();
 
 		if (!discussion) {
-			return response.json({ msg: "Discussion doesn't exists'" });
+			return response.status(BAD_REQUEST_STATUS)
+				.json({ error: "Discussion doesn't exists'" });
 		}
 
-		if ((discussion.username === user.username) | user.moderator) {
+		if ((discussion.username === username) || moderator) {
 			const deletedDiscussion = await connection("discussions")
 				.where("id", id)
 				.first()
@@ -180,6 +161,7 @@ module.exports = {
 
 			return response.json(deletedDiscussion);
 		}
-		return response.json({ msg: "Not authorized" });
+		return response.status(BAD_REQUEST_STATUS)
+			.json({ error: "Not authorized" });
 	},
 };

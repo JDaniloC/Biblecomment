@@ -95,6 +95,9 @@ export default function AnswerForm({
 						} else {
 							handleNotification("warning", response.data.error);
 						}
+					})
+					.catch(({ response }) => {
+						handleNotification("error", response.data.error);
 					});
 			} catch (error) {
 				handleNotification("error", error.toString());

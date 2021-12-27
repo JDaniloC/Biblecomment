@@ -1,4 +1,5 @@
 const connection = require("../database/connection");
+const missingBodyParams = require("../utils/missingBodyParams");
 
 const PAGE_LENGTH = 5;
 
@@ -25,20 +26,17 @@ module.exports = {
 	},
 
 	async update(request, response) {
-		const { token, belief, state } = request.body;
+		const { belief, state } = request.body;
+		const { email } = response.locals.userData;
 
-		if (
-			typeof token === "undefined" ||
-			typeof state === "undefined" ||
-			typeof belief === "undefined"
-		) {
+		if (missingBodyParams([state, belief])) {
 			return response.json({
-				error: "It's missing the token, state or belief",
+				error: "insufficient body: state, belief",
 			});
 		}
 
 		const user = await connection("users")
-			.where("token", token)
+			.where("email", email)
 			.first()
 			.update({ belief, state });
 
@@ -46,22 +44,14 @@ module.exports = {
 	},
 
 	async delete(request, response) {
-		const { token, email } = request.body;
+		const user = response.locals.userData;
+		const { email } = request.body;
 
-		if (typeof token === "undefined" || typeof email === "undefined") {
-			return response.json({ msg: "insufficient body: token or email" });
+		if (typeof email === "undefined") {
+			return response.json({ msg: "insufficient body: email" });
 		}
 
-		const user = await connection("users")
-			.where("token", token)
-			.first()
-			.select("moderator", "email", "username");
-
-		if (!user) {
-			return response.json({ msg: "User doesn't exists" });
-		}
-
-		if ((user.email === email) | user.moderator) {
+		if (user.email === email || user.moderator) {
 			const deleted = await connection("users")
 				.where("email", email.toLowerCase())
 				.first();

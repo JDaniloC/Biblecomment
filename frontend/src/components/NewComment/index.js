@@ -84,9 +84,14 @@ export default class NewComment extends Component {
 							tags,
 						})
 						.then((response) => {
-							this.context.handleNotification("success", "Comentário enviado!");
+							this.context.handleNotification(
+								"success", "Comentário enviado!");
 							this.props.addNewComment(response.data);
 							this.context.addNewComment(response.data);
+						})
+						.catch(({ response }) => {
+							this.context.handleNotification(
+								"error", response.data.error);
 						});
 				} else {
 					axios
@@ -96,8 +101,13 @@ export default class NewComment extends Component {
 							token,
 						})
 						.then((response) => {
-							this.context.handleNotification("success", "Comentário editado!");
+							this.context.handleNotification(
+								"success", "Comentário editado!");
 							this.props.addNewComment(response.data);
+						})
+						.catch(({ response }) => {
+							this.context.handleNotification(
+								"error", response.data.error);
 						});
 				}
 			} else {

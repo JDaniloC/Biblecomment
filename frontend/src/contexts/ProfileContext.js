@@ -27,7 +27,7 @@ export function ProfileProvider({ children }) {
 
 	const { handleNotification } = useContext(NotificationContext);
 
-	function loadUserInfos({ data }) {
+	function loadUserInfos(data) {
 		const { email: currentEmail, username: currentName } = data;
 		const currentCommentsCount = data.total_comments;
 		const currentCommented = data.chapters_commented;
@@ -102,18 +102,17 @@ export function ProfileProvider({ children }) {
 	}
 
 	useEffect(() => {
-		async function getUserInfos(token) {
-			await axios.get("session", { headers: { token } }).then((response) => {
-				const hasError = response.data.error;
-				if (!hasError) {
-					loadUserInfos(response);
-				}
-			});
-		}
-
 		if (isAuthenticated()) {
-			const token = localStorage.getItem(TOKEN_KEY);
-			getUserInfos(token);
+			axios.get("session/")
+				.then(({ data }) => {
+					const hasError = data.error;
+					if (!hasError) {
+						loadUserInfos(data);
+					}
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
+				});
 		}
 	}, []);
 
@@ -140,15 +139,16 @@ export function ProfileProvider({ children }) {
 	async function deleteAccount() {
 		try {
 			await axios
-				.delete("users", {
-					data: { token: localStorage.getItem(TOKEN_KEY), email },
-				})
+				.delete("users/")
 				.then(({ data }) => {
 					if (typeof data.error === "undefined") {
 						handleNotification("success", "Conta removida com sucesso.");
 					} else {
 						handleNotification("warning", data.error);
 					}
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
 				});
 		} catch (error) {
 			handleNotification("error", error.toString());
