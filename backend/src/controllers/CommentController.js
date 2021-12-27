@@ -77,7 +77,7 @@ module.exports = {
 				.toISOString()
 				.replace("Z", "")
 				.replace("T", " ");
-			
+
 			const comment = await connection("comments").insert({
 				text,
 				verse,
@@ -128,7 +128,10 @@ module.exports = {
 				likeList.push(username);
 			}
 			likes = JSON.stringify(likeList);
+		} else {
+			likes = comment.likes;
 		}
+
 		if (typeof reports !== "undefined") {
 			const reportList = JSON.parse(comment.reports);
 			reportList.push({
@@ -136,9 +139,12 @@ module.exports = {
 				msg: reports,
 			});
 			reports = JSON.stringify(reportList);
+		} else {
+			reports = comment.reports;
 		}
 
-		await connection("comments").where("id", id).first().update({
+		await connection("comments")
+			.where("id", id).first().update({
 			text,
 			tags,
 			likes,
@@ -157,19 +163,14 @@ module.exports = {
 		const { id } = request.params;
 		const { username, moderator } = response.locals.userData;
 
-		const comment = await connection("comments")
-			.where("id", id)
-			.first();
+		const comment = await connection("comments").where("id", id).first();
 
 		if (comment.username === username || moderator) {
 			await connection("discussions")
 				.where("comment_text", comment.text)
 				.delete();
 
-			await connection("comments")
-				.where("id", id)
-				.first()
-				.delete();
+			await connection("comments").where("id", id).first().delete();
 
 			return response.json(comment);
 		}

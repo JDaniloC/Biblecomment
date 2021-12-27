@@ -22,9 +22,7 @@ module.exports = {
 			return response.json({ error: "insufficient body: verses" });
 		}
 
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
+		const book = await connection("books").where("abbrev", abbrev).first();
 
 		if (book) {
 			await connection("chapters")
@@ -71,9 +69,7 @@ module.exports = {
 			return response.json({ error: "insufficient body: verses." });
 		}
 
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
+		const book = await connection("books").where("abbrev", abbrev).first();
 
 		if (book) {
 			await connection("chapters")

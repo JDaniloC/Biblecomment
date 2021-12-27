@@ -6,7 +6,7 @@ const COMMENTS_AMOUNT = 50;
 module.exports = {
 	async getComments(request, response) {
 		const { pages = 1 } = request.query;
-
+				
 		const comments = await connection("comments")
 			.orderBy("created_at", "desc")
 			.limit(PAGE_LENGTH)

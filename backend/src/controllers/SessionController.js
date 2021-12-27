@@ -4,12 +4,14 @@ const missingBodyParams = require("../utils/missingBodyParams");
 const jwt = require("jsonwebtoken");
 const md5 = require("md5");
 
+const BAD_REQUEST_STATUS = 400;
+
 module.exports = {
 	async register(request, response) {
 		const { email, name, password } = request.body;
 
 		if (missingBodyParams([email, name, password])) {
-			return response.status(400).json({
+			return response.status(BAD_REQUEST_STATUS).json({
 				error: "Faltando os campos: email, name, password",
 			});
 		}
@@ -30,7 +32,7 @@ module.exports = {
 			return response.json({ msg: "Usuário criado com sucesso" });
 		}
 
-		return response.status(400).json({
+		return response.status(BAD_REQUEST_STATUS).json({
 			error: "E-mail ou nome de usuário já cadastrado",
 		});
 	},
@@ -39,14 +41,15 @@ module.exports = {
 		const { email, password } = request.body;
 
 		if (missingBodyParams([email, password])) {
-			return response.status(400).json({
+			return response.status(BAD_REQUEST_STATUS).json({
 				msg: "Faltando os campos: email, password",
 			});
 		}
 
 		const registeredUser = await connection("users")
-			.where("email", email.toLowerCase()).first()
-			.join('comments', 'comments.username', 'users.username')
+			.where("email", email.toLowerCase())
+			.first()
+			.join("comments", "comments.username", "users.username")
 			.select({
 				email: "users.email",
 				state: "users.state",
@@ -56,17 +59,19 @@ module.exports = {
 				moderator: "users.moderator",
 				created_at: "users.created_at",
 			})
-			.count("*", {as: "total_comments"});
-		
+			.count("*", { as: "total_comments" });
+
 		if (!registeredUser) {
-			return response.status(400).json({ error: "E-mail não cadastrado" });
+			return response.status(BAD_REQUEST_STATUS)
+				.json({ error: "E-mail não cadastrado" });
 		}
 
 		if (registeredUser.password === md5(password)) {
 			const chaptersCommented = await connection("comments")
 				.where("username", registeredUser.username)
 				.join("chapters", "chapters.id", "comments.chapter_id")
-				.distinct("book_abbrev", "number").then(chapters => {
+				.distinct("book_abbrev", "number")
+				.then((chapters) => {
 					return chapters.reduce((prevDict, chapter) => {
 						if (prevDict[chapter.book_abbrev] === undefined) {
 							prevDict[chapter.book_abbrev] = [];
@@ -95,7 +100,8 @@ module.exports = {
 				total_comments: registeredUser.total_comments,
 			});
 		} 
-		return response.status(400).json({ error: "Senha incorreta" });
+		return response.status(BAD_REQUEST_STATUS)
+			.json({ error: "Senha incorreta" });
 	},
 
 	async show(request, response) {
@@ -113,16 +119,18 @@ module.exports = {
 				moderator: "users.moderator",
 				created_at: "users.created_at",
 			})
-			.count("*", {as: "total_comments"});
-		
+			.count("*", { as: "total_comments" });
+
 		if (!registeredUser) {
-			return response.status(400).json({ error: "Usuário não cadastrado." });
+			return response.status(BAD_REQUEST_STATUS)
+				.json({ error: "Usuário não cadastrado." });
 		}
-		
+
 		const chaptersCommented = await connection("comments")
 			.where("username", registeredUser.username)
 			.join("chapters", "chapters.id", "comments.chapter_id")
-			.distinct("book_abbrev", "number").then(chapters => {
+			.distinct("book_abbrev", "number")
+			.then((chapters) => {
 				return chapters.reduce((prevDict, chapter) => {
 					if (prevDict[chapter.book_abbrev] === undefined) {
 						prevDict[chapter.book_abbrev] = [];

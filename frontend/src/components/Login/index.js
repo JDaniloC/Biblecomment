@@ -116,7 +116,7 @@ export default class Login extends Component {
 	async tryLogin(email, password) {
 		try {
 			await axios
-				.post("session/login/", {
+				.post("/session/login/", {
 					email,
 					password,
 				})
@@ -139,7 +139,7 @@ export default class Login extends Component {
 	async tryRegister(email, name, password) {
 		try {
 			await axios
-				.post("session/register/", {
+				.post("/session/register/", {
 					email,
 					name,
 					password,

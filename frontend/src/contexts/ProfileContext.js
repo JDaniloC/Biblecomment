@@ -65,17 +65,17 @@ export function ProfileProvider({ children }) {
 	async function getComments(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			const { data } = await axios.get("users/comments", {
-				headers: { name },
+			return await axios.get("/users/comments/", {
 				params: { pages },
-			});
-
-			const { comments } = data;
-			if (typeof comments !== "undefined") {
-				const newResult = [...commentaries, ...comments];
+			}).then(({ data }) => {
+				const newResult = [...commentaries, ...data.comments];
 				setCommentaries(newResult);
-				return comments;
-			}
+				return data.comments;
+			})
+			.catch(({ response }) => {
+				handleNotification("error", response.data.error);
+				return [];
+			});
 		} catch (error) {
 			handleNotification("error", error.toString());
 		}
@@ -85,16 +85,19 @@ export function ProfileProvider({ children }) {
 	async function getFavorites(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			const { data } = await axios.get("users/favorites", {
+			return await axios.get("/users/favorites/", {
 				headers: { name },
 				params: { pages },
-			});
-			if (typeof data.favorites !== "undefined") {
-				const newFavorites = data.favorites;
-				const newResult = [...favorites, ...newFavorites];
+			})
+			.then(({ data }) => {
+				const newResult = [...favorites, ...data.favorites];
 				setFavorites(newResult);
-				return newFavorites;
-			}
+				return data.favorites;
+			})
+			.catch(({ response }) => {
+				handleNotification("error", response.data.error);
+				return [];
+			});
 		} catch (error) {
 			handleNotification("error", error.toString());
 		}
@@ -103,12 +106,9 @@ export function ProfileProvider({ children }) {
 
 	useEffect(() => {
 		if (isAuthenticated()) {
-			axios.get("session/")
+			axios.get("/session/")
 				.then(({ data }) => {
-					const hasError = data.error;
-					if (!hasError) {
-						loadUserInfos(data);
-					}
+					loadUserInfos(data);
 				})
 				.catch(({ response }) => {
 					handleNotification("error", response.data.error);

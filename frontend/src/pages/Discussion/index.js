@@ -70,19 +70,24 @@ export default class Discussion extends Component {
 
 		if (typeof this.props.location.state !== "undefined") {
 			try {
-				axios.get(`/discussion/${abbrev}/${selected}`).then((response) => {
-					if (response.data.length > 0) {
-						if (!this.alreadyInDiscussions(selected)) {
-							const [discussion] = response.data;
-							discussion.id = -discussion.id;
-							discussion.answers = JSON.parse(discussion.answers);
+				axios
+					.get(`/discussion/${abbrev}/${selected}`)
+					.then(({ data }) => {
+						if (data.length > 0) {
+							if (!this.alreadyInDiscussions(selected)) {
+								const [discussion] = data;
+								discussion.id = -discussion.id;
+								discussion.answers = JSON.parse(discussion.answers);
 
-							this.setState((prev) => ({
-								discussions: [discussion, ...prev.discussions],
-							}));
+								this.setState((prev) => ({
+									discussions: [discussion, ...prev.discussions],
+								}));
+							}
 						}
-					}
-				});
+					})
+					.catch(({ response }) => {
+						this.handleNotification("error", response.data.error);
+					});
 			} catch (error) {
 				this.handleNotification("error", error.toString());
 			}
@@ -95,26 +100,27 @@ export default class Discussion extends Component {
 		}
 
 		try {
-			axios.get(`/discussion/${abbrev}/?pages=${page}`).then((response) => {
-				if (typeof response.data === "object") {
-					if (response.data.length > 0) {
-						for (let i = 0; i < response.data.length; i++) {
-							response.data[i].answers = JSON.parse(response.data[i].answers);
+			axios
+				.get(`/discussion/${abbrev}/?pages=${page}`)
+				.then(({ data }) => {
+					if (data.length > 0) {
+						for (let i = 0; i < data.length; i++) {
+							data[i].answers = JSON.parse(data[i].answers);
 						}
 						this.setState((prev) => ({
-							discussions: [...prev.discussions, ...response.data],
+							discussions: [...prev.discussions, ...data],
 						}));
 					}
 
-					if (response.data.length < 5) {
+					if (data.length < 5) {
 						this.setState((prev) => ({
 							totalPages: prev.totalPages - 1,
 						}));
 					}
-				} else {
-					this.handleNotification("warning", "Algo deu errado");
-				}
-			});
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
+				});
 		} catch (error) {
 			this.handleNotification("error", error.toString());
 		}

@@ -45,7 +45,7 @@ export default class Control extends Component {
 
 	async getUsers(currentPage = 1) {
 		const { users } = this.state;
-		const { data: newUsers } = await axios.get("users", {
+		const { data: newUsers } = await axios.get("/users/", {
 			params: { pages: currentPage },
 		});
 
@@ -60,8 +60,8 @@ export default class Control extends Component {
 			this.setState({ usersTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
+				usersPage: (currentPage > 1) ? currentPage - 1 : 1,
 				usersTotalPages: newTotal,
-				usersPage: currentPage - 1,
 			});
 		}
 	}
@@ -69,9 +69,10 @@ export default class Control extends Component {
 	async getComments(currentPage = 1) {
 		const { comments } = this.state;
 
-		const { data: dataComments } = await axios.get("comments/", {
+		const { data: dataComments } = await axios.get("/comments/", {
 			params: { pages: currentPage },
 		});
+
 		const newComments = dataComments.map((item) => {
 			item.likes = JSON.parse(item.likes);
 			item.reports = JSON.parse(item.reports);
@@ -87,7 +88,7 @@ export default class Control extends Component {
 			this.setState({ commentsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				commentsPage: currentPage - 1,
+				commentsPage: (currentPage > 1) ? currentPage - 1 : 1,
 				commentsTotalPages: newTotal,
 			});
 		}
@@ -96,7 +97,7 @@ export default class Control extends Component {
 	async getDiscussions(currentPage = 1) {
 		const { discussions } = this.state;
 
-		const { data: newDiscussions } = await axios.get("discussions/", {
+		const { data: newDiscussions } = await axios.get("/discussions/", {
 			params: { pages: currentPage },
 		});
 
@@ -110,7 +111,7 @@ export default class Control extends Component {
 			this.setState({ discussionsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				discussionsPage: currentPage - 1,
+				discussionsPage: (currentPage > 1) ? currentPage - 1 : 1,
 				discussionsTotalPages: newTotal,
 			});
 		}
@@ -118,7 +119,7 @@ export default class Control extends Component {
 
 	componentDidMount() {
 		if (isAuthenticated()) {
-			axios.get("session/").then(({ data }) => {
+			axios.get("/session/").then(({ data }) => {
 				if (data.moderator) {
 					this.setState({ authorized: true });
 					this.getUsers();

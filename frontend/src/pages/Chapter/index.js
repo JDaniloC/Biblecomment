@@ -90,23 +90,26 @@ export default class Chapter extends Component {
 		this.number = number;
 
 		try {
-			axios.get(`books/${abbrev}/chapters/${number}`).then((response) => {
-				if (typeof response.data.title !== "undefined") {
-					const { title, verses } = response.data;
+			axios
+				.get(`/books/${abbrev}/chapters/${number}/`)
+				.then(({ data }) => {
+					const { title, verses } = data;
 					this.setState({ titleName: title });
 					this.setState({ verses: JSON.parse(verses) });
-				}
-			});
-		} catch (err) {
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
+				});
+		} catch (error) {
 			this.handleNotification(
 				"error",
-				"Não consegui me conectar com o servidor"
+				`Problema no servidor: ${error.toString()}`
 			);
 		}
 
 		try {
 			axios
-				.get(`books/${abbrev}/chapters/${number}/comments`)
+				.get(`/books/${abbrev}/chapters/${number}/comments`)
 				.then((response) => {
 					if (typeof response.data === "object") {
 						const result = response.data.map((comment) => {
@@ -128,11 +131,14 @@ export default class Chapter extends Component {
 							titleComments: titleComments,
 						});
 					}
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
 				});
-		} catch (err) {
+		} catch (error) {
 			this.handleNotification(
 				"error",
-				"Não consegui me conectar com o servidor"
+				`Problema no servidor: ${error.toString()}`
 			);
 		}
 

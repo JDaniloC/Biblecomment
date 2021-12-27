@@ -8,11 +8,9 @@ module.exports = {
 	async index(request, response) {
 		const { abbrev: oldAbbrev } = request.params;
 		const { pages = 1 } = request.query;
-		
+
 		const abbrev = oldAbbrev.toLocaleLowerCase();
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
+		const book = await connection("books").where("abbrev", abbrev).first();
 
 		if (book) {
 			const discussions = await connection("discussions")
@@ -29,11 +27,9 @@ module.exports = {
 	async show(request, response) {
 		const { id } = request.params;
 		const { abbrev: oldAbbrev } = request.params;
-		
+
 		const abbrev = oldAbbrev.toLocaleLowerCase();
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
+		const book = await connection("books").where("abbrev", abbrev).first();
 
 		if (book) {
 			const discussion = await connection("discussions")
@@ -78,7 +74,7 @@ module.exports = {
 			.where("id", comment_id)
 			.first()
 			.select("text");
-		
+
 		if (book && comment) {
 			const discussion = await connection("discussions").insert({
 				question,
