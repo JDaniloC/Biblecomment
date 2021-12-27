@@ -76,7 +76,8 @@ export default function AnswerForm({
 		const hasPermissionToPost = canPostSomething();
 		if (hasPermissionToPost) {
 			try {
-				const [username, abbrev, verse_reference] = comment_reference.split(" ");
+				const [username, abbrev, verse_reference] =
+					comment_reference.split(" ");
 
 				axios
 					.post(`/discussion/${abbrev}/`, {
@@ -91,7 +92,10 @@ export default function AnswerForm({
 							response.data.answers = [];
 							setReplyText("");
 							appendNewDiscussion(response.data);
-							handleNotification("success", `Comentário enviado à ${username}!`);
+							handleNotification(
+								"success",
+								`Comentário enviado à ${username}!`
+							);
 						} else {
 							handleNotification("warning", response.data.error);
 						}

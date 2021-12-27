@@ -7,11 +7,9 @@ module.exports = {
 	async index(request, response) {
 		const { abbrev: oldAbbrev } = request.params;
 		const { pages = 1 } = request.query;
-		
+
 		const abbrev = oldAbbrev.toLocaleLowerCase();
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
+		const book = await connection("books").where("abbrev", abbrev).first();
 
 		if (book) {
 			const discussions = await connection("discussions")
@@ -28,11 +26,9 @@ module.exports = {
 	async show(request, response) {
 		const { id } = request.params;
 		const { abbrev: oldAbbrev } = request.params;
-		
+
 		const abbrev = oldAbbrev.toLocaleLowerCase();
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
+		const book = await connection("books").where("abbrev", abbrev).first();
 
 		if (book) {
 			const discussion = await connection("discussions")
@@ -48,23 +44,22 @@ module.exports = {
 	async store(request, response) {
 		const { abbrev: oldAbbrev } = request.params;
 		const abbrev = oldAbbrev.toLocaleLowerCase();
-		const { 
-			verse_reference, 
-			comment_id, 
-			verse_text, 
-			question, 
-			token 
-		} = request.body;
+		const { verse_reference, comment_id, verse_text, question, token } =
+			request.body;
 
-		if (missingBodyParams([
-			verse_reference, 
-			comment_id, 
-			verse_text, 
-			question,
-			token, 
-		]) || question === "") {
+		if (
+			missingBodyParams([
+				verse_reference,
+				comment_id,
+				verse_text,
+				question,
+				token,
+			]) ||
+			question === ""
+		) {
 			return response.json({
-				error: "insufficient body: comment_id, token, \
+				error:
+					"insufficient body: comment_id, token, \
 						verse_reference, verse_text, question",
 			});
 		}
@@ -78,15 +73,13 @@ module.exports = {
 			return response.json({ error: "not authorized" });
 		}
 
-		const book = await connection("books")
-			.where("abbrev", abbrev)
-			.first();
-		
+		const book = await connection("books").where("abbrev", abbrev).first();
+
 		const comment = await connection("comments")
 			.where("id", comment_id)
 			.first()
 			.select("text");
-		
+
 		if (book && comment) {
 			const discussion = await connection("discussions").insert({
 				book_abbrev: abbrev,

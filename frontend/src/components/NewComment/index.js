@@ -51,7 +51,7 @@ export default class NewComment extends Component {
 		) {
 			return this.context.handleNotification(
 				"info",
-				"O mínimo de caracteres é 200 e o máximo de 1000!",
+				"O mínimo de caracteres é 200 e o máximo de 1000!"
 			);
 		}
 		const tags = [];

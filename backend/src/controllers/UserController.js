@@ -10,7 +10,7 @@ module.exports = {
 			.orderBy("users.created_at", "desc")
 			.limit(PAGE_LENGTH)
 			.offset((pages - 1) * PAGE_LENGTH)
-			.join('comments', 'comments.username', 'users.username')
+			.join("comments", "comments.username", "users.username")
 			.select({
 				email: "users.email",
 				state: "users.state",
@@ -18,9 +18,9 @@ module.exports = {
 				username: "users.username",
 				created_at: "users.created_at",
 			})
-			.count("*", {as: "total_comments"})
-			.groupBy('users.username');
-				
+			.count("*", { as: "total_comments" })
+			.groupBy("users.username");
+
 		return response.json(users);
 	},
 
@@ -67,7 +67,8 @@ module.exports = {
 				.first();
 
 			await connection("discussions")
-				.where("username", deleted.username).delete();
+				.where("username", deleted.username)
+				.delete();
 
 			await connection("comments")
 				.where("username", deleted.username)
@@ -75,10 +76,7 @@ module.exports = {
 				.delete();
 
 			return response.json(
-				await connection("users")
-					.where("email", email)
-					.first()
-					.delete()
+				await connection("users").where("email", email).first().delete()
 			);
 		}
 		return response.json({ msg: "Not authorized" });

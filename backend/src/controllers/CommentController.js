@@ -63,15 +63,13 @@ module.exports = {
 			.first()
 			.select("id", "book_abbrev", "number");
 
-		const user = await connection("users")
-						.where("token", token)
-						.first();
-		
+		const user = await connection("users").where("token", token).first();
+
 		if (chapter && user) {
 			const username = user.username;
 
-			let capitalizedBookAbbrev = chapter.book_abbrev
-				.charAt(0).toUpperCase() +
+			let capitalizedBookAbbrev =
+				chapter.book_abbrev.charAt(0).toUpperCase() +
 				chapter.book_abbrev.slice(1);
 			if (capitalizedBookAbbrev === "Job") {
 				capitalizedBookAbbrev = "Jó";
@@ -81,7 +79,7 @@ module.exports = {
 				.toISOString()
 				.replace("Z", "")
 				.replace("T", " ");
-			
+
 			const comment = await connection("comments").insert({
 				username,
 				text,
@@ -123,9 +121,9 @@ module.exports = {
 		}
 
 		const user = await connection("users")
-							.where("token", token)
-							.first()
-							.select("username");
+			.where("token", token)
+			.first()
+			.select("username");
 
 		if (user) {
 			const comment = await connection("comments").where("id", id).first();
@@ -190,19 +188,14 @@ module.exports = {
 				.json({ Unauthorized: "Você precisa estar logado" });
 		}
 
-		const comment = await connection("comments")
-			.where("id", id)
-			.first();
+		const comment = await connection("comments").where("id", id).first();
 
 		if (comment.username === user.username || user.moderator) {
 			await connection("discussions")
 				.where("comment_text", comment.text)
 				.delete();
 
-			await connection("comments")
-				.where("id", id)
-				.first()
-				.delete();
+			await connection("comments").where("id", id).first().delete();
 
 			return response.json(comment);
 		}

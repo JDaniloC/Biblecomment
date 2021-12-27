@@ -26,7 +26,7 @@ module.exports = {
 				.toISOString()
 				.replace("Z", "")
 				.replace("T", " ");
-			
+
 			const book = await connection("books").insert({
 				title,
 				abbrev,

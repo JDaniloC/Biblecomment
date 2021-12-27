@@ -44,8 +44,9 @@ module.exports = {
 		}
 
 		const registeredUser = await connection("users")
-			.where("email", email.toLowerCase()).first()
-			.join('comments', 'comments.username', 'users.username')
+			.where("email", email.toLowerCase())
+			.first()
+			.join("comments", "comments.username", "users.username")
 			.select({
 				email: "users.email",
 				token: "users.token",
@@ -56,8 +57,8 @@ module.exports = {
 				moderator: "users.moderator",
 				created_at: "users.created_at",
 			})
-			.count("*", {as: "total_comments"});
-		
+			.count("*", { as: "total_comments" });
+
 		if (!registeredUser) {
 			return response.json({ error: "E-mail não cadastrado" });
 		}
@@ -66,7 +67,8 @@ module.exports = {
 			const chaptersCommented = await connection("comments")
 				.where("username", registeredUser.username)
 				.join("chapters", "chapters.id", "comments.chapter_id")
-				.distinct("book_abbrev", "number").then(chapters => {
+				.distinct("book_abbrev", "number")
+				.then((chapters) => {
 					return chapters.reduce((prevDict, chapter) => {
 						if (prevDict[chapter.book_abbrev] === undefined) {
 							prevDict[chapter.book_abbrev] = [];
@@ -87,7 +89,7 @@ module.exports = {
 				chapters_commented: chaptersCommented,
 				total_comments: registeredUser.total_comments,
 			});
-		} 
+		}
 		return response.json({ error: "Senha incorreta" });
 	},
 
@@ -101,8 +103,9 @@ module.exports = {
 		}
 
 		const registeredUser = await connection("users")
-			.where("token", token).first()
-			.join('comments', 'comments.username', 'users.username')
+			.where("token", token)
+			.first()
+			.join("comments", "comments.username", "users.username")
 			.select({
 				email: "users.email",
 				token: "users.token",
@@ -113,16 +116,17 @@ module.exports = {
 				moderator: "users.moderator",
 				created_at: "users.created_at",
 			})
-			.count("*", {as: "total_comments"});
-		
+			.count("*", { as: "total_comments" });
+
 		if (!registeredUser) {
 			return response.json({ error: "Usuário não cadastrado." });
 		}
-		
+
 		const chaptersCommented = await connection("comments")
 			.where("username", registeredUser.username)
 			.join("chapters", "chapters.id", "comments.chapter_id")
-			.distinct("book_abbrev", "number").then(chapters => {
+			.distinct("book_abbrev", "number")
+			.then((chapters) => {
 				return chapters.reduce((prevDict, chapter) => {
 					if (prevDict[chapter.book_abbrev] === undefined) {
 						prevDict[chapter.book_abbrev] = [];
