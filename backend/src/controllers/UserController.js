@@ -1,4 +1,5 @@
 const connection = require("../database/connection");
+const missingBodyParams = require("../utils/missingBodyParams");
 
 const PAGE_LENGTH = 5;
 
@@ -7,36 +8,35 @@ module.exports = {
 		const { pages = 1 } = request.query;
 
 		const users = await connection("users")
-			.orderBy("created_at", "desc")
+			.orderBy("users.created_at", "desc")
 			.limit(PAGE_LENGTH)
 			.offset((pages - 1) * PAGE_LENGTH)
-			.select(
-				"email",
-				"name",
-				"total_comments",
-				"state",
-				"belief",
-				"created_at"
-			);
+			.join("comments", "comments.username", "users.username")
+			.select({
+				email: "users.email",
+				state: "users.state",
+				belief: "users.belief",
+				username: "users.username",
+				created_at: "users.created_at",
+			})
+			.count("*", { as: "total_comments" })
+			.groupBy("users.username");
 
 		return response.json(users);
 	},
 
 	async update(request, response) {
-		const { token, belief, state } = request.body;
+		const { belief, state } = request.body;
+		const { email } = response.locals.userData;
 
-		if (
-			typeof token === "undefined" ||
-			typeof state === "undefined" ||
-			typeof belief === "undefined"
-		) {
+		if (missingBodyParams([state, belief])) {
 			return response.json({
-				error: "It's missing the token, state or belief",
+				error: "insufficient body: state, belief",
 			});
 		}
 
 		const user = await connection("users")
-			.where("token", token)
+			.where("email", email)
 			.first()
 			.update({ belief, state });
 
@@ -44,30 +44,24 @@ module.exports = {
 	},
 
 	async delete(request, response) {
-		const { token, email } = request.body;
+		const user = response.locals.userData;
+		const { email } = request.body;
 
-		if (typeof token === "undefined" || typeof email === "undefined") {
-			return response.json({ msg: "insufficient body: token or email" });
+		if (typeof email === "undefined") {
+			return response.json({ msg: "insufficient body: email" });
 		}
 
-		const user = await connection("users")
-			.where("token", token)
-			.first()
-			.select("moderator", "email", "name");
-
-		if (!user) {
-			return response.json({ msg: "User doesn't exists" });
-		}
-
-		if ((user.email === email) | user.moderator) {
+		if (user.email === email || user.moderator) {
 			const deleted = await connection("users")
 				.where("email", email.toLowerCase())
 				.first();
 
-			await connection("discussions").where("username", deleted.name).delete();
+			await connection("discussions")
+				.where("username", deleted.username)
+				.delete();
 
 			await connection("comments")
-				.where("username", deleted.name)
+				.where("username", deleted.username)
 				.first()
 				.delete();
 

@@ -2,7 +2,7 @@ import "./styles.css";
 
 import React, { Component } from "react";
 import { Pagination } from "@material-ui/lab";
-import { TOKEN_KEY, isAuthenticated } from "../../services/auth";
+import { isAuthenticated } from "../../services/auth";
 
 import axios from "../../services/api";
 
@@ -14,17 +14,17 @@ export default class Control extends Component {
 
 		this.state = {
 			authorized: false,
+			discussions: [],
 			comments: [],
 			users: [],
-			discussions: [],
 
 			usersTotalPages: 0,
 			commentsTotalPages: 0,
 
-			commentsPage: 1,
 			usersPage: 1,
-			discussionsTotalPages: 0,
+			commentsPage: 1,
 			discussionsPage: 1,
+			discussionsTotalPages: 0,
 		};
 
 		this.handleUsersPage = this.handleUsersPage.bind(this);
@@ -45,7 +45,7 @@ export default class Control extends Component {
 
 	async getUsers(currentPage = 1) {
 		const { users } = this.state;
-		const { data: newUsers } = await axios.get("users", {
+		const { data: newUsers } = await axios.get("/users/", {
 			params: { pages: currentPage },
 		});
 
@@ -60,8 +60,8 @@ export default class Control extends Component {
 			this.setState({ usersTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
+				usersPage: currentPage > 1 ? currentPage - 1 : 1,
 				usersTotalPages: newTotal,
-				usersPage: currentPage - 1,
 			});
 		}
 	}
@@ -69,9 +69,10 @@ export default class Control extends Component {
 	async getComments(currentPage = 1) {
 		const { comments } = this.state;
 
-		const { data: dataComments } = await axios.get("comments", {
+		const { data: dataComments } = await axios.get("/comments/", {
 			params: { pages: currentPage },
 		});
+
 		const newComments = dataComments.map((item) => {
 			item.likes = JSON.parse(item.likes);
 			item.reports = JSON.parse(item.reports);
@@ -87,7 +88,7 @@ export default class Control extends Component {
 			this.setState({ commentsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				commentsPage: currentPage - 1,
+				commentsPage: currentPage > 1 ? currentPage - 1 : 1,
 				commentsTotalPages: newTotal,
 			});
 		}
@@ -96,7 +97,7 @@ export default class Control extends Component {
 	async getDiscussions(currentPage = 1) {
 		const { discussions } = this.state;
 
-		const { data: newDiscussions } = await axios.get("discussions", {
+		const { data: newDiscussions } = await axios.get("/discussions/", {
 			params: { pages: currentPage },
 		});
 
@@ -110,67 +111,66 @@ export default class Control extends Component {
 			this.setState({ discussionsTotalPages: newTotal + 1 });
 		} else {
 			this.setState({
-				discussionsPage: currentPage - 1,
+				discussionsPage: currentPage > 1 ? currentPage - 1 : 1,
 				discussionsTotalPages: newTotal,
 			});
 		}
 	}
 
 	componentDidMount() {
-		function getUser(token) {
-			return axios.get("session", {
-				headers: { token },
-			});
-		}
-
 		if (isAuthenticated()) {
-			getUser(localStorage.getItem(TOKEN_KEY)).then((response) => {
-				if (response.data.moderator) {
-					this.setState({ authorized: true });
-					this.getUsers();
-					this.getComments();
-					this.getDiscussions();
-				}
-			});
+			axios
+				.get("/session/")
+				.then(({ data }) => {
+					if (data.moderator) {
+						this.setState({ authorized: true });
+						this.getUsers();
+						this.getComments();
+						this.getDiscussions();
+					}
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
+				});
 		}
 	}
 
 	async handleDeleteAccount(evt) {
 		const email = evt.target.getAttribute("data-email");
 		await axios
-			.delete("users", {
-				data: { token: localStorage.getItem(TOKEN_KEY), email },
-			})
-			.then((response) => {
-				if (typeof response.data.error === "undefined") {
+			.delete("users/", { data: { email } })
+			.then(({ status }) => {
+				if (status === 200) {
 					this.setState((prevState) => ({
 						users: prevState.users.filter((user) => user.email !== email),
 					}));
 				}
+			})
+			.catch(({ response }) => {
+				this.handleNotification("error", response.data.error);
 			});
 	}
 
 	async handleDeleteComment(evt) {
 		const id = evt.target.getAttribute("data-id");
 		await axios
-			.delete(`comments/${id}`, {
-				headers: { token: localStorage.getItem(TOKEN_KEY) },
-			})
+			.delete(`comments/${id}/`)
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
 					this.setState((prevState) => ({
 						comments: prevState.comments.filter((comment) => comment.id !== id),
 					}));
 				}
+			})
+			.catch(({ response }) => {
+				this.handleNotification("error", response.data.error);
 			});
 	}
 
 	async handleDeleteDiscussion(evt) {
 		const id = evt.target.getAttribute("data-id");
 		await axios
-			.delete(`discussion/${id}`, {
-				data: { token: localStorage.getItem(TOKEN_KEY) },
-			})
+			.delete(`discussion/${id}`)
 			.then((response) => {
 				if (typeof response.data.error === "undefined") {
 					this.setState((prevState) => ({
@@ -179,6 +179,9 @@ export default class Control extends Component {
 						),
 					}));
 				}
+			})
+			.catch(({ response }) => {
+				this.handleNotification("error", response.data.error);
 			});
 	}
 
@@ -263,7 +266,7 @@ export default class Control extends Component {
 										style={{ alignItems: "flex-start" }}
 									>
 										<p> E-mail: {user.email} </p>
-										<p> Name: {user.name} </p>
+										<p> Name: {user.username} </p>
 										<p> State: {user.state} </p>
 										<p> Belief: {user.belief} </p>
 										<p> Since: {user.created_at} </p>

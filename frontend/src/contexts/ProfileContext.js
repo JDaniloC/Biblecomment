@@ -27,10 +27,10 @@ export function ProfileProvider({ children }) {
 
 	const { handleNotification } = useContext(NotificationContext);
 
-	function loadUserInfos({ data }) {
-		const { email: currentEmail, name: currentName } = data;
+	function loadUserInfos(data) {
+		const { email: currentEmail, username: currentName } = data;
 		const currentCommentsCount = data.total_comments;
-		const currentCommented = JSON.parse(data.chapters_commented);
+		const currentCommented = data.chapters_commented;
 		const currentBooksCount = Object.keys(currentCommented).length;
 		const currentBelief = data.belief !== null ? data.belief : "";
 		const currentStateName = data.state !== null ? data.state : "";
@@ -65,17 +65,19 @@ export function ProfileProvider({ children }) {
 	async function getComments(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			const { data } = await axios.get("users/comments", {
-				headers: { name },
-				params: { pages },
-			});
-
-			const { comments } = data;
-			if (typeof comments !== "undefined") {
-				const newResult = [...commentaries, ...comments];
-				setCommentaries(newResult);
-				return comments;
-			}
+			return await axios
+				.get("/users/comments/", {
+					params: { pages },
+				})
+				.then(({ data }) => {
+					const newResult = [...commentaries, ...data.comments];
+					setCommentaries(newResult);
+					return data.comments;
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
+					return [];
+				});
 		} catch (error) {
 			handleNotification("error", error.toString());
 		}
@@ -85,16 +87,20 @@ export function ProfileProvider({ children }) {
 	async function getFavorites(page) {
 		try {
 			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			const { data } = await axios.get("users/favorites", {
-				headers: { name },
-				params: { pages },
-			});
-			if (typeof data.favorites !== "undefined") {
-				const newFavorites = data.favorites;
-				const newResult = [...favorites, ...newFavorites];
-				setFavorites(newResult);
-				return newFavorites;
-			}
+			return await axios
+				.get("/users/favorites/", {
+					headers: { name },
+					params: { pages },
+				})
+				.then(({ data }) => {
+					const newResult = [...favorites, ...data.favorites];
+					setFavorites(newResult);
+					return data.favorites;
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
+					return [];
+				});
 		} catch (error) {
 			handleNotification("error", error.toString());
 		}
@@ -102,18 +108,15 @@ export function ProfileProvider({ children }) {
 	}
 
 	useEffect(() => {
-		async function getUserInfos(token) {
-			await axios.get("session", { headers: { token } }).then((response) => {
-				const hasError = response.data.error;
-				if (!hasError) {
-					loadUserInfos(response);
-				}
-			});
-		}
-
 		if (isAuthenticated()) {
-			const token = localStorage.getItem(TOKEN_KEY);
-			getUserInfos(token);
+			axios
+				.get("/session/")
+				.then(({ data }) => {
+					loadUserInfos(data);
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
+				});
 		}
 	}, []);
 
@@ -140,15 +143,16 @@ export function ProfileProvider({ children }) {
 	async function deleteAccount() {
 		try {
 			await axios
-				.delete("users", {
-					data: { token: localStorage.getItem(TOKEN_KEY), email },
-				})
+				.delete("users/")
 				.then(({ data }) => {
 					if (typeof data.error === "undefined") {
 						handleNotification("success", "Conta removida com sucesso.");
 					} else {
 						handleNotification("warning", data.error);
 					}
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
 				});
 		} catch (error) {
 			handleNotification("error", error.toString());

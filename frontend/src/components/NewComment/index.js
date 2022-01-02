@@ -50,8 +50,8 @@ export default class NewComment extends Component {
 			this.state.texto.length > 1000
 		) {
 			return this.context.handleNotification(
-				"O mínimo de caracteres é 200 e o máximo de 1000!",
-				"info"
+				"info",
+				"O mínimo de caracteres é 200 e o máximo de 1000!"
 			);
 		}
 		const tags = [];
@@ -77,7 +77,7 @@ export default class NewComment extends Component {
 					const number = this.props.number;
 					const verso = this.props.verso() + 1;
 					axios
-						.post(`books/${abbrev}/chapters/${number}/comments/${verso}`, {
+						.post(`/books/${abbrev}/chapters/${number}/comments/${verso}`, {
 							on_title: this.props.isTitleComment,
 							token,
 							text,
@@ -87,6 +87,9 @@ export default class NewComment extends Component {
 							this.context.handleNotification("success", "Comentário enviado!");
 							this.props.addNewComment(response.data);
 							this.context.addNewComment(response.data);
+						})
+						.catch(({ response }) => {
+							this.context.handleNotification("error", response.data.error);
 						});
 				} else {
 					axios
@@ -98,6 +101,9 @@ export default class NewComment extends Component {
 						.then((response) => {
 							this.context.handleNotification("success", "Comentário editado!");
 							this.props.addNewComment(response.data);
+						})
+						.catch(({ response }) => {
+							this.context.handleNotification("error", response.data.error);
 						});
 				}
 			} else {

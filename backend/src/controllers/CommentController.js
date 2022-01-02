@@ -1,4 +1,5 @@
 const connection = require("../database/connection");
+const missingBodyParams = require("../utils/missingBodyParams");
 
 const UNAUTHORIZED_STATUS = 401;
 const BAD_REQUEST_STATUS = 400;
@@ -20,7 +21,9 @@ module.exports = {
 
 			return response.json(comments);
 		}
-		return response.json({ error: "chapter not found" });
+		return response
+			.status(BAD_REQUEST_STATUS)
+			.json({ error: "chapter not found" });
 	},
 
 	async show(request, response) {
@@ -41,18 +44,19 @@ module.exports = {
 			return response.json(comments);
 		}
 
-		return response.json({
+		return response.status(BAD_REQUEST_STATUS).json({
 			error: "chapter number doesn't exists",
 		});
 	},
 
 	async store(request, response) {
 		const { abbrev, number, verse } = request.params;
-		const { token, text, tags, on_title } = request.body;
+		const { text, tags, on_title } = request.body;
+		const { username } = response.locals.userData;
 
-		if (!token | !text | !tags | (typeof on_title === "undefined")) {
-			return response.json({
-				error: "insufficient body: token, text, tags, on_title",
+		if (missingBodyParams([text, tags, on_title])) {
+			return response.status(BAD_REQUEST_STATUS).json({
+				error: "insufficient body: text, tags, on_title.",
 			});
 		}
 
@@ -63,158 +67,113 @@ module.exports = {
 			.select("id", "book_abbrev", "number");
 
 		if (chapter) {
-			let username = "Visitante";
-			const user = await connection("users").where("token", token).first();
-			if (user) {
-				username = user.name;
-
-				// Add the abbrev to commented chapters array in user
-				const new_chapter_commented = JSON.parse(user.chapters_commented);
-				if (abbrev in new_chapter_commented) {
-					if (new_chapter_commented[abbrev].indexOf(number) === -1) {
-						new_chapter_commented[abbrev].push(number);
-					}
-				} else {
-					new_chapter_commented[abbrev] = [number];
-				}
-				await connection("users")
-					.where("token", token)
-					.first()
-					.increment("total_comments", 1)
-					.update({
-						chapters_commented: JSON.stringify(new_chapter_commented),
-					});
-			}
-
-			let book_abbrev =
+			let capitalizedBookAbbrev =
 				chapter.book_abbrev.charAt(0).toUpperCase() +
 				chapter.book_abbrev.slice(1);
-			if (book_abbrev === "Job") {
-				book_abbrev = "Jó";
+			if (capitalizedBookAbbrev === "Job") {
+				capitalizedBookAbbrev = "Jó";
 			}
 
 			const created_at = new Date()
 				.toISOString()
 				.replace("Z", "")
 				.replace("T", " ");
+
 			const comment = await connection("comments").insert({
-				username,
 				text,
 				verse,
+				username,
 				on_title,
 				created_at,
-				book_reference: `${book_abbrev} ${number}:${verse}`,
-				tags: JSON.stringify(tags),
 				chapter_id: chapter.id,
-				reports: JSON.stringify([]),
 				likes: JSON.stringify([]),
+				tags: JSON.stringify(tags),
+				reports: JSON.stringify([]),
+				book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
 			});
 
 			return response.json({
-				id: comment[0],
-				username,
 				text,
-				on_title,
 				tags,
+				username,
+				on_title,
+				created_at,
+				id: comment[0],
+				likes: JSON.stringify([]),
 				verse: parseInt(verse, 10),
 				reports: JSON.stringify([]),
-				likes: JSON.stringify([]),
-				book_reference: `${book_abbrev} ${number}:${verse}`,
-				created_at,
+				book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
 			});
 		}
-		return response.json({ error: "Chapter doesn't exists" });
+		return response
+			.status(BAD_REQUEST_STATUS)
+			.json({ error: "Chapter/User doesn't exists" });
 	},
 
 	async update(request, response) {
 		const { id } = request.params;
-		const { token } = request.body;
+		const { username } = response.locals.userData;
 		let { text, tags, likes, reports } = request.body;
 
-		if (typeof token === "undefined") {
-			return response.json({
-				error: "It's missing the token",
-			});
+		const comment = await connection("comments").where("id", id).first();
+
+		if (!comment) {
+			return response
+				.status(BAD_REQUEST_STATUS)
+				.json({ error: "Comment not found" });
 		}
 
-		const user = await connection("users").where("token", token).select("name");
-
-		if (user.length > 0) {
-			const comment = await connection("comments").where("id", id).first();
-
-			if (!comment) {
-				return response.json({ error: "Comment not found" });
+		text = typeof text !== "undefined" ? text : comment.text;
+		tags = typeof tags !== "undefined" ? JSON.stringify(tags) : comment.tags;
+		if (typeof likes !== "undefined") {
+			const likeList = JSON.parse(comment.likes);
+			if (likeList.indexOf(username) === -1) {
+				likeList.push(username);
 			}
-
-			text = typeof text !== "undefined" ? text : comment.text;
-			tags = typeof tags !== "undefined" ? JSON.stringify(tags) : comment.tags;
-			if (typeof likes !== "undefined") {
-				const likeList = JSON.parse(comment.likes);
-				if (likeList.indexOf(user[0].name) === -1) {
-					likeList.push(user[0].name);
-				}
-				likes = JSON.stringify(likeList);
-			}
-			if (typeof reports !== "undefined") {
-				const reportList = JSON.parse(comment.reports);
-				reportList.push({
-					user: user[0].name,
-					msg: reports,
-				});
-				reports = JSON.stringify(reportList);
-			}
-
-			await connection("comments").where("id", id).first().update({
-				text,
-				tags,
-				likes,
-				reports,
-			});
-
-			return response.json({
-				text,
-				tags,
-				likes,
-				reports,
-			});
+			likes = JSON.stringify(likeList);
+		} else {
+			likes = comment.likes;
 		}
-		return response.json({ Unauthorized: "Você precisa estar logado" });
+
+		if (typeof reports !== "undefined") {
+			const reportList = JSON.parse(comment.reports);
+			reportList.push({
+				user: username,
+				msg: reports,
+			});
+			reports = JSON.stringify(reportList);
+		} else {
+			reports = comment.reports;
+		}
+
+		await connection("comments").where("id", id).first().update({
+			text,
+			tags,
+			likes,
+			reports,
+		});
+
+		return response.json({
+			text,
+			tags,
+			likes,
+			reports,
+		});
 	},
 
 	async destroy(request, response) {
 		const { id } = request.params;
-		const { token } = request.headers;
-
-		if (typeof token === "undefined") {
-			return response
-				.status(BAD_REQUEST_STATUS)
-				.json({ BadRequest: "It's missing the header token" });
-		}
-
-		const user = await connection("users")
-			.where("token", token)
-			.first()
-			.select("name", "moderator");
-
-		if (user.length === 0) {
-			return response
-				.status(UNAUTHORIZED_STATUS)
-				.json({ Unauthorized: "Você precisa estar logado" });
-		}
+		const { username, moderator } = response.locals.userData;
 
 		const comment = await connection("comments").where("id", id).first();
 
-		if (comment.username === user.name || user.moderator) {
+		if (comment.username === username || moderator) {
 			await connection("discussions")
 				.where("comment_text", comment.text)
 				.delete();
 
 			await connection("comments").where("id", id).first().delete();
 
-			await connection("users")
-				.where("name", comment.username)
-				.first()
-				.decrement("total_comments", 1);
 			return response.json(comment);
 		}
 		return response

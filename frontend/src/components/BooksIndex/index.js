@@ -39,16 +39,14 @@ export default class BooksIndex extends Component {
 
 	componentDidMount() {
 		axios
-			.get("books")
-			.then((response) => {
-				if (typeof response.data === "object") {
-					this.setState({ books: response.data });
-				}
+			.get("/books/")
+			.then(({ data }) => {
+				this.setState({ books: data });
 			})
 			.catch((error) => {
 				this.context.handleNotification(
 					"error",
-					`Problema no servidor: ${String(error)}`
+					`Problema no servidor: ${error.toString()}`
 				);
 			});
 	}

@@ -104,6 +104,9 @@ export default class Login extends Component {
 						"success",
 						"Comentário excluído com sucesso."
 					);
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
 				});
 		} catch (error) {
 			this.handleNotification("error", error.toString());
@@ -113,19 +116,17 @@ export default class Login extends Component {
 	async tryLogin(email, password) {
 		try {
 			await axios
-				.post("session/login", {
+				.post("/session/login/", {
 					email,
 					password,
 				})
-				.then((response) => {
-					const token = response.data.token;
-					if (typeof token !== "undefined") {
-						this.context.loadUserInfos(response);
-						this.handleNotification("success", "Login realizado com sucesso!");
-						login(token);
-					} else {
-						this.handleNotification("warning", response.data.error);
-					}
+				.then(({ data }) => {
+					this.context.loadUserInfos(data);
+					this.handleNotification("success", "Login realizado com sucesso!");
+					login(data.token);
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
 				});
 		} catch (error) {
 			this.handleNotification("error", error.toString());
@@ -135,21 +136,17 @@ export default class Login extends Component {
 	async tryRegister(email, name, password) {
 		try {
 			await axios
-				.post("session/register", {
+				.post("/session/register/", {
 					email,
 					name,
 					password,
 				})
-				.then((response) => {
-					if (typeof response.data.error === "undefined") {
-						this.changeMethod(null);
-						this.handleNotification(
-							"success",
-							"Cadastro realizado com sucesso!"
-						);
-					} else {
-						this.handleNotification("warning", response.data.error);
-					}
+				.then(() => {
+					this.changeMethod(null);
+					this.handleNotification("success", "Cadastro realizado com sucesso!");
+				})
+				.catch(({ response }) => {
+					this.handleNotification("error", response.data.error);
 				});
 		} catch (error) {
 			this.handleNotification("error", error.toString());

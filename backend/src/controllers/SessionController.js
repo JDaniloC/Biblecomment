@@ -1,37 +1,38 @@
 const connection = require("../database/connection");
+const missingBodyParams = require("../utils/missingBodyParams");
+
 const jwt = require("jsonwebtoken");
 const md5 = require("md5");
+
+const BAD_REQUEST_STATUS = 400;
 
 module.exports = {
 	async register(request, response) {
 		const { email, name, password } = request.body;
 
-		if ((email === null) | (name === null) | (password === null)) {
-			return response.json({
+		if (missingBodyParams([email, name, password])) {
+			return response.status(BAD_REQUEST_STATUS).json({
 				error: "Faltando os campos: email, name, password",
 			});
 		}
 
 		const exists = await connection("users")
 			.where("email", email)
-			.orWhere("name", name)
+			.orWhere("username", name)
 			.first();
 
 		if (!exists) {
 			await connection("users").insert({
 				email: email.toLowerCase(),
-				name,
-				password: md5(password),
-				token: jwt.sign(email + Date.now().toString(), "SóDeusNaCausa"),
-				total_comments: 0,
-				chapters_commented: JSON.stringify({}),
+				username: name,
 				moderator: false,
+				password: md5(password),
 			});
 
 			return response.json({ msg: "Usuário criado com sucesso" });
 		}
 
-		return response.json({
+		return response.status(BAD_REQUEST_STATUS).json({
 			error: "E-mail ou nome de usuário já cadastrado",
 		});
 	},
@@ -39,34 +40,123 @@ module.exports = {
 	async login(request, response) {
 		const { email, password } = request.body;
 
-		if ((typeof email === "undefined") | (typeof password === "undefined")) {
-			return response.json({
+		if (missingBodyParams([email, password])) {
+			return response.status(BAD_REQUEST_STATUS).json({
 				msg: "Faltando os campos: email, password",
 			});
 		}
 
-		const user = await connection("users")
+		const registeredUser = await connection("users")
 			.where("email", email.toLowerCase())
-			.first();
-		if (user) {
-			return response.json(
-				user.password === md5(password) ? user : { error: "Senha incorreta" }
-			);
+			.first()
+			.join("comments", "comments.username", "users.username")
+			.select({
+				email: "users.email",
+				state: "users.state",
+				belief: "users.belief",
+				password: "users.password",
+				username: "users.username",
+				moderator: "users.moderator",
+				created_at: "users.created_at",
+			})
+			.count("*", { as: "total_comments" });
+
+		if (!registeredUser) {
+			return response
+				.status(BAD_REQUEST_STATUS)
+				.json({ error: "E-mail não cadastrado" });
 		}
-		return response.json({ error: "E-mail não cadastrado" });
+
+		if (registeredUser.password === md5(password)) {
+			const chaptersCommented = await connection("comments")
+				.where("username", registeredUser.username)
+				.join("chapters", "chapters.id", "comments.chapter_id")
+				.distinct("book_abbrev", "number")
+				.then((chapters) => {
+					return chapters.reduce((prevDict, chapter) => {
+						if (prevDict[chapter.book_abbrev] === undefined) {
+							prevDict[chapter.book_abbrev] = [];
+						}
+						prevDict[chapter.book_abbrev].push(chapter.number);
+						return prevDict;
+					}, {});
+				});
+
+			const token = jwt.sign(
+				{
+					email: registeredUser.email,
+					username: registeredUser.username,
+					moderator: registeredUser.moderator,
+				},
+				process.env.SECRET,
+				{
+					expiresIn: "1d",
+				}
+			);
+			return response.json({
+				token,
+				email: registeredUser.email,
+				state: registeredUser.state,
+				belief: registeredUser.belief,
+				username: registeredUser.username,
+				moderator: registeredUser.moderator,
+				created_at: registeredUser.created_at,
+				chapters_commented: chaptersCommented,
+				total_comments: registeredUser.total_comments,
+			});
+		}
+		return response
+			.status(BAD_REQUEST_STATUS)
+			.json({ error: "Senha incorreta" });
 	},
 
 	async show(request, response) {
-		const { token } = request.headers;
+		const { email } = response.locals.userData;
 
-		if (token === null) {
-			return response.json({
-				error: "Faltando o campo: token",
-			});
+		const registeredUser = await connection("users")
+			.where("email", email)
+			.first()
+			.join("comments", "comments.username", "users.username")
+			.select({
+				email: "users.email",
+				state: "users.state",
+				belief: "users.belief",
+				password: "users.password",
+				username: "users.username",
+				moderator: "users.moderator",
+				created_at: "users.created_at",
+			})
+			.count("*", { as: "total_comments" });
+
+		if (!registeredUser) {
+			return response
+				.status(BAD_REQUEST_STATUS)
+				.json({ error: "Usuário não cadastrado." });
 		}
 
-		const user = await connection("users").where("token", token).first();
+		const chaptersCommented = await connection("comments")
+			.where("username", registeredUser.username)
+			.join("chapters", "chapters.id", "comments.chapter_id")
+			.distinct("book_abbrev", "number")
+			.then((chapters) => {
+				return chapters.reduce((prevDict, chapter) => {
+					if (prevDict[chapter.book_abbrev] === undefined) {
+						prevDict[chapter.book_abbrev] = [];
+					}
+					prevDict[chapter.book_abbrev].push(chapter.number);
+					return prevDict;
+				}, {});
+			});
 
-		return response.json(user ? user : { error: "Usuário não cadastrado." });
+		return response.json({
+			email: registeredUser.email,
+			state: registeredUser.state,
+			belief: registeredUser.belief,
+			username: registeredUser.username,
+			moderator: registeredUser.moderator,
+			created_at: registeredUser.created_at,
+			chapters_commented: chaptersCommented,
+			total_comments: registeredUser.total_comments,
+		});
 	},
 };

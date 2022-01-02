@@ -29,14 +29,11 @@ module.exports = {
 	},
 
 	async userComments(request, response) {
-		const { name } = request.headers;
+		const { username } = response.locals.userData;
 		const { pages = 1 } = request.query;
 
-		if (typeof name === "undefined") {
-			return response.json([]);
-		}
 		const comments = await connection("comments")
-			.where("username", name)
+			.where("username", username)
 			.limit(COMMENTS_AMOUNT)
 			.offset((pages - 1) * COMMENTS_AMOUNT);
 
@@ -44,17 +41,13 @@ module.exports = {
 	},
 
 	async userFavorites(request, response) {
-		const { name } = request.headers;
+		const { username } = response.locals.userData;
 		const { pages = 1 } = request.query;
-
-		if (typeof name === "undefined") {
-			return response.json([]);
-		}
 
 		const favorites = await connection.raw(`
             SELECT * 
             FROM json_each(comments.likes), comments
-            WHERE json_each.value LIKE "${name}"
+            WHERE json_each.value LIKE "${username}"
             LIMIT ${COMMENTS_AMOUNT}
             OFFSET (${pages} - 1) * ${COMMENTS_AMOUNT}
         `);
