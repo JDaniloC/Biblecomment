@@ -55,8 +55,8 @@ module.exports = {
 		) {
 			return response.status(BAD_REQUEST_STATUS).json({
 				error:
-					"insufficient body: comment_id, \
-						verse_reference, verse_text, question",
+					"insufficient body: comment_id, " +
+					"verse_reference, verse_text, question",
 			});
 		}
 

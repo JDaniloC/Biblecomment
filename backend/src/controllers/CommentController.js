@@ -113,7 +113,12 @@ module.exports = {
 	async update(request, response) {
 		const { id } = request.params;
 		const { username } = response.locals.userData;
-		let { text, tags, likes, reports } = request.body;
+		const { 
+			text: newText, 
+			tags: newTags, 
+			likes: newLikes, 
+			reports: newReports 
+		} = request.body;
 
 		const comment = await connection("comments").where("id", id).first();
 
@@ -123,35 +128,38 @@ module.exports = {
 				.json({ error: "Comment not found" });
 		}
 
-		text = typeof text !== "undefined" ? text : comment.text;
-		tags = typeof tags !== "undefined" ? JSON.stringify(tags) : comment.tags;
-		if (typeof likes !== "undefined") {
-			const likeList = JSON.parse(comment.likes);
+		let { text, tags, likes, reports } = comment;
+		if (typeof newText !== "undefined") {
+			text = newText;
+		}
+		if (typeof newTags !== "undefined") {
+			tags = newTags;
+		}
+		if (typeof newLikes !== "undefined") {
+			const likeList = JSON.parse(likes);
 			if (likeList.indexOf(username) === -1) {
 				likeList.push(username);
 			}
 			likes = JSON.stringify(likeList);
-		} else {
-			likes = comment.likes;
-		}
-
-		if (typeof reports !== "undefined") {
-			const reportList = JSON.parse(comment.reports);
+		} 
+		if (typeof newReports !== "undefined") {
+			const reportList = JSON.parse(reports);
 			reportList.push({
 				user: username,
-				msg: reports,
+				msg: newReports,
 			});
 			reports = JSON.stringify(reportList);
-		} else {
-			reports = comment.reports;
-		}
+		} 
 
-		await connection("comments").where("id", id).first().update({
-			text,
-			tags,
-			likes,
-			reports,
-		});
+		await connection("comments")
+			.where("id", id).
+			first()
+			.update({
+				text,
+				tags,
+				likes,
+				reports,
+			});
 
 		return response.json({
 			text,
