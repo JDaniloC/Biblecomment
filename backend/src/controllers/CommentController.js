@@ -113,11 +113,11 @@ module.exports = {
 	async update(request, response) {
 		const { id } = request.params;
 		const { username } = response.locals.userData;
-		const { 
-			text: newText, 
-			tags: newTags, 
-			likes: newLikes, 
-			reports: newReports 
+		const {
+			text: newText,
+			tags: newTags,
+			likes: newLikes,
+			reports: newReports,
 		} = request.body;
 
 		const comment = await connection("comments").where("id", id).first();
@@ -141,7 +141,7 @@ module.exports = {
 				likeList.push(username);
 			}
 			likes = JSON.stringify(likeList);
-		} 
+		}
 		if (typeof newReports !== "undefined") {
 			const reportList = JSON.parse(reports);
 			reportList.push({
@@ -149,17 +149,14 @@ module.exports = {
 				msg: newReports,
 			});
 			reports = JSON.stringify(reportList);
-		} 
+		}
 
-		await connection("comments")
-			.where("id", id).
-			first()
-			.update({
-				text,
-				tags,
-				likes,
-				reports,
-			});
+		await connection("comments").where("id", id).first().update({
+			text,
+			tags,
+			likes,
+			reports,
+		});
 
 		return response.json({
 			text,
