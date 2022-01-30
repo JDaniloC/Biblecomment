@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Loading } from "components/Partials";
 import { Pagination } from "@material-ui/lab";
-import debounce from 'lodash.debounce';
+import debounce from "lodash.debounce";
 
 import CommentRow from "./CommentRow";
 import PropTypes from "prop-types";
@@ -10,12 +10,14 @@ import PropTypes from "prop-types";
 const PAGE_LENGTH = 5;
 
 export default function ProfileComments({
-	getComments, editComment, deleteComment
+	getComments,
+	editComment,
+	deleteComment,
 }) {
 	const [maxPages, setMaxPages] = useState(1);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [commentsLoaded, setCommentsLoaded] = useState([]);
-	
+
 	const { commentaries } = useContext(ProfileContext);
 
 	function renderComments(page, forceComments = null) {
@@ -31,7 +33,7 @@ export default function ProfileComments({
 
 	const handleLoadMore = useCallback(async () => {
 		setMaxPages(-1);
-		const page = currentPage > 0 ? currentPage : 1; 
+		const page = currentPage > 0 ? currentPage : 1;
 		const newComments = await getComments(page);
 		const allComments = [...commentaries, ...newComments];
 

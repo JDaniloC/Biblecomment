@@ -98,9 +98,7 @@ export default class Chapter extends Component {
 			})
 			.catch((error) => {
 				if (error.response) {
-					this.handleNotification(
-						"error", error.response.data.error
-					);
+					this.handleNotification("error", error.response.data.error);
 				} else {
 					this.handleNotification(
 						"error",

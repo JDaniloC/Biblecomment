@@ -56,8 +56,8 @@ export function ProfileProvider({ children }) {
 	}
 
 	function addNewComment(comment) {
-		setCommentaries(prevState => [...prevState, comment]);
-		setCommentsCount(prevState => prevState + 1);
+		setCommentaries((prevState) => [...prevState, comment]);
+		setCommentsCount((prevState) => prevState + 1);
 
 		return Math.ceil((commentaries.length + 1) / 5);
 	}
