@@ -2,84 +2,54 @@ import React, { useState, useEffect, useContext, useCallback } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Loading } from "components/Partials";
 import { Pagination } from "@material-ui/lab";
+import debounce from 'lodash.debounce';
 
-import FavoriteRow from "./FavoriteRow";
 import CommentRow from "./CommentRow";
 import PropTypes from "prop-types";
 
 const PAGE_LENGTH = 5;
 
 export default function ProfileComments({
-	type,
-	getComments,
-	editComment,
-	deleteComment,
+	getComments, editComment, deleteComment
 }) {
-	const [title, setTitle] = useState("");
 	const [maxPages, setMaxPages] = useState(1);
-	const [emptyMsg, setEmptyMsg] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 	const [commentsLoaded, setCommentsLoaded] = useState([]);
+	
+	const { commentaries } = useContext(ProfileContext);
 
-	const [comments, setComments] = useState([]);
-
-	const { name, commentaries, favorites } = useContext(ProfileContext);
+	function renderComments(page, forceComments = null) {
+		const comments = forceComments || commentaries;
+		const inicio = (page - 1) * PAGE_LENGTH;
+		const final = inicio + PAGE_LENGTH;
+		const commentsToShow = comments.slice(inicio, final);
+		if (commentsToShow.length === 0 && currentPage > 0) {
+			emitRenderDebounced();
+		}
+		setCommentsLoaded(commentsToShow);
+	}
 
 	const handleLoadMore = useCallback(async () => {
 		setMaxPages(-1);
-		const newComments = await getComments(currentPage);
-		const allComments = [...comments, ...newComments];
-		setComments((prevState) => [...prevState, ...newComments]);
+		const page = currentPage > 0 ? currentPage : 1; 
+		const newComments = await getComments(page);
+		const allComments = [...commentaries, ...newComments];
 
 		if (currentPage > 1 && newComments.length > 0) {
 			setCurrentPage(currentPage - 1);
+		} else {
+			renderComments(1, allComments);
 		}
 		return allComments;
 	});
 
-	function renderComments(page, optComments = []) {
-		const commentsToRender = optComments.length > 0 ? optComments : comments;
-		const inicio = (page - 1) * PAGE_LENGTH;
-		const final = inicio + PAGE_LENGTH;
-		setCommentsLoaded(commentsToRender.slice(inicio, final));
-	}
-
-	async function initializeComments() {
-		let renderArray = [];
-		if (comments.length === 0) {
-			renderArray = type === "comments" ? commentaries : favorites;
-
-			if (renderArray.length > 0) {
-				setComments(renderArray);
-			} else {
-				renderArray = await handleLoadMore();
-			}
-		} else {
-			renderArray = comments;
-		}
-		renderComments(1, renderArray);
-	}
-
-	useState(() => {
-		if (type === "comments") {
-			setTitle("Comentários feitos");
-			setEmptyMsg("Nenhum comentário realizado");
-		} else {
-			setTitle("Comentários favoritados");
-			setEmptyMsg("Você não favoritou nenhum comentário");
-		}
-		initializeComments();
-	}, []);
+	const emitRenderDebounced = debounce(handleLoadMore, 100);
 
 	useEffect(() => {
-		let totalPages = Math.ceil(comments.length / PAGE_LENGTH);
-		if (comments.length % 50 === 0) {
-			totalPages += 1;
-		}
+		let totalPages = Math.ceil(commentaries.length / PAGE_LENGTH);
+		if (commentaries.length % 50 === 0) totalPages += 1;
 		setMaxPages(totalPages);
-	}, [comments]);
-
-	useEffect(initializeComments, [name]);
+	}, [commentaries]);
 
 	useEffect(() => {
 		renderComments(currentPage);
@@ -91,29 +61,19 @@ export default function ProfileComments({
 
 	return (
 		<ul className="commentaries">
-			<h3> {title} </h3>
-			{comments.length !== 0 ? (
-				commentsLoaded.length > 0 ? (
-					commentsLoaded.map((comment, index) => {
-						return type === "comments" ? (
-							<CommentRow
-								key={comment.id}
-								comment={comment}
-								editCommentFunction={editComment}
-								deleteCommentFunction={deleteComment}
-							/>
-						) : (
-							<FavoriteRow index={index} key={comment.id} comment={comment} />
-						);
-					})
-				) : (
-					<button type="button" className="load-btn" onClick={handleLoadMore}>
-						Carregar
-					</button>
-				)
+			<h3> Comentários feitos </h3>
+			{commentaries.length !== 0 ? (
+				commentsLoaded.map((comment) => (
+					<CommentRow
+						key={comment.id}
+						comment={comment}
+						editCommentFunction={editComment}
+						deleteCommentFunction={deleteComment}
+					/>
+				))
 			) : maxPages !== -1 ? (
 				<li>
-					<p> {emptyMsg} </p>
+					<p> Nenhum comentário realizado </p>
 				</li>
 			) : (
 				<Loading />
@@ -134,7 +94,6 @@ export default function ProfileComments({
 ProfileComments.propTypes = {
 	editComment: PropTypes.func,
 	deleteComment: PropTypes.func,
-	type: PropTypes.string.isRequired,
 	getComments: PropTypes.func.isRequired,
 };
 ProfileComments.defaultProps = {

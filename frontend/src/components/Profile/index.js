@@ -110,16 +110,9 @@ export default class Profile extends Component {
 						</li>
 
 						<ProfileComments
-							type="comments"
-							comments={this.context.commentaries}
 							getComments={this.context.getComments}
 							editComment={this.editComment.bind(this)}
 							deleteComment={this.deleteComment.bind(this)}
-						/>
-						<ProfileComments
-							type="favorites"
-							comments={this.context.favorites}
-							getComments={this.context.getFavorites}
 						/>
 					</ul>
 					<ProfileConfig
