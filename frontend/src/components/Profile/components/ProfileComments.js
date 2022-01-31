@@ -19,6 +19,8 @@ export default function ProfileComments({
 	const [commentsLoaded, setCommentsLoaded] = useState([]);
 
 	const { commentaries } = useContext(ProfileContext);
+	// eslint-disable-next-line
+	const emitRenderDebounced = debounce(handleLoadMore, 100);
 
 	function renderComments(page, forceComments = null) {
 		const comments = forceComments || commentaries;
@@ -44,8 +46,6 @@ export default function ProfileComments({
 		}
 		return allComments;
 	});
-
-	const emitRenderDebounced = debounce(handleLoadMore, 100);
 
 	useEffect(() => {
 		let totalPages = Math.ceil(commentaries.length / PAGE_LENGTH);

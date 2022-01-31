@@ -68,7 +68,7 @@ export function ProfileProvider({ children }) {
 		if (sliced.length > 0) {
 			return sliced;
 		}
-		return await axios
+		return axios
 			.get("/users/comments/", { params: { pages } })
 			.then(({ data }) => {
 				const newResult = [...commentaries, ...data.comments];
