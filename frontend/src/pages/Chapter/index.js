@@ -89,58 +89,58 @@ export default class Chapter extends Component {
 		this.abbrev = abbrev;
 		this.number = number;
 
-		try {
-			axios
-				.get(`/books/${abbrev}/chapters/${number}/`)
-				.then(({ data }) => {
-					const { title, verses } = data;
-					this.setState({ titleName: title });
-					this.setState({ verses: JSON.parse(verses) });
-				})
-				.catch(({ response }) => {
-					this.handleNotification("error", response.data.error);
-				});
-		} catch (error) {
-			this.handleNotification(
-				"error",
-				`Problema no servidor: ${error.toString()}`
-			);
-		}
+		axios
+			.get(`/books/${abbrev}/chapters/${number}/`)
+			.then(({ data }) => {
+				const { title, verses } = data;
+				this.setState({ titleName: title });
+				this.setState({ verses: JSON.parse(verses) });
+			})
+			.catch((error) => {
+				if (error.response) {
+					this.handleNotification("error", error.response.data.error);
+				} else {
+					this.handleNotification(
+						"error",
+						`Problema no servidor: ${error.toString()}`
+					);
+				}
+			});
 
-		try {
-			axios
-				.get(`/books/${abbrev}/chapters/${number}/comments`)
-				.then((response) => {
-					if (typeof response.data === "object") {
-						const result = response.data.map((comment) => {
-							comment.tags = JSON.parse(comment.tags);
-							return comment;
-						});
-						const titleComments = [];
-						const comments = [];
-						for (const comment of result) {
-							if (comment.on_title) {
-								titleComments.push(comment);
-							} else {
-								comments.push(comment);
-							}
+		axios
+			.get(`/books/${abbrev}/chapters/${number}/comments`)
+			.then((response) => {
+				if (typeof response.data === "object") {
+					const result = response.data.map((comment) => {
+						comment.tags = JSON.parse(comment.tags);
+						return comment;
+					});
+					const titleComments = [];
+					const comments = [];
+					for (const comment of result) {
+						if (comment.on_title) {
+							titleComments.push(comment);
+						} else {
+							comments.push(comment);
 						}
-
-						this.setState({
-							allComments: comments,
-							titleComments: titleComments,
-						});
 					}
-				})
-				.catch(({ response }) => {
-					this.handleNotification("error", response.data.error);
-				});
-		} catch (error) {
-			this.handleNotification(
-				"error",
-				`Problema no servidor: ${error.toString()}`
-			);
-		}
+
+					this.setState({
+						allComments: comments,
+						titleComments: titleComments,
+					});
+				}
+			})
+			.catch((error) => {
+				if (error.response) {
+					this.handleNotification("error", error.response.data.error);
+				} else {
+					this.handleNotification(
+						"error",
+						`Problema no servidor: ${error.toString()}`
+					);
+				}
+			});
 
 		if (number.length === 1) {
 			number = "0" + number;
@@ -357,7 +357,7 @@ export default class Chapter extends Component {
 						<ul className="verse-list">
 							{this.state.verses.length > 0 ? (
 								this.state.verses.map((verse, index) => (
-									<li key={verse}>
+									<li key={`${index}${verse}`}>
 										<sup> {index + 1} </sup>
 										<p
 											data-index={index}
@@ -402,7 +402,7 @@ export default class Chapter extends Component {
 						title="Criar comentário"
 						close={this.closeNewCommentary}
 						addNewComment={this.addNewComment}
-						on_title={this.state.newTitleComment}
+						isTitleComment={this.state.newTitleComment}
 					/>
 				</div>
 

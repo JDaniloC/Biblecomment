@@ -56,55 +56,53 @@ export function ProfileProvider({ children }) {
 	}
 
 	function addNewComment(comment) {
-		setCommentaries([...commentaries, comment]);
-		setCommentsCount(commentsCount + 1);
+		setCommentaries((prevState) => [...prevState, comment]);
+		setCommentsCount((prevState) => prevState + 1);
 
 		return Math.ceil((commentaries.length + 1) / 5);
 	}
 
-	async function getComments(page) {
-		try {
-			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			return await axios
-				.get("/users/comments/", {
-					params: { pages },
-				})
-				.then(({ data }) => {
-					const newResult = [...commentaries, ...data.comments];
-					setCommentaries(newResult);
-					return data.comments;
-				})
-				.catch(({ response }) => {
-					handleNotification("error", response.data.error);
-					return [];
-				});
-		} catch (error) {
-			handleNotification("error", error.toString());
+	function getComments(page) {
+		const pages = Math.ceil((page * PAGE_LENGTH) / 50);
+		const sliced = commentaries.slice((page - 1) * 50, page * 50);
+		if (sliced.length > 0) {
+			return sliced;
 		}
-		return [];
+		return axios
+			.get("/users/comments/", { params: { pages } })
+			.then(({ data }) => {
+				const newResult = [...commentaries, ...data.comments];
+				setCommentaries(newResult);
+				return data.comments;
+			})
+			.catch((error) => {
+				if (error.response) {
+					handleNotification("error", error.response.data.error);
+				} else {
+					handleNotification("error", error.toString());
+				}
+				return [];
+			});
 	}
 
 	async function getFavorites(page) {
+		const pages = Math.ceil((page * PAGE_LENGTH) / 50);
 		try {
-			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			return await axios
-				.get("/users/favorites/", {
-					headers: { name },
-					params: { pages },
-				})
-				.then(({ data }) => {
-					const newResult = [...favorites, ...data.favorites];
-					setFavorites(newResult);
-					return data.favorites;
-				})
-				.catch(({ response }) => {
-					handleNotification("error", response.data.error);
-					return [];
-				});
+			const { data } = await axios.get("/users/favorites/", {
+				headers: { name },
+				params: { pages },
+			});
+			const newResult = [...favorites, ...data.favorites];
+			setFavorites(newResult);
+			return data.favorites;
 		} catch (error) {
-			handleNotification("error", error.toString());
+			if (error.response) {
+				handleNotification("error", error.response.data.error);
+			} else {
+				handleNotification("error", error.toString());
+			}
+			return [];
 		}
-		return [];
 	}
 
 	useEffect(() => {
