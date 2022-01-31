@@ -62,7 +62,7 @@ export function ProfileProvider({ children }) {
 		return Math.ceil((commentaries.length + 1) / 5);
 	}
 
-	async function getComments(page) {
+	function getComments(page) {
 		const pages = Math.ceil((page * PAGE_LENGTH) / 50);
 		const sliced = commentaries.slice((page - 1) * 50, page * 50);
 		if (sliced.length > 0) {
@@ -86,26 +86,24 @@ export function ProfileProvider({ children }) {
 	}
 
 	async function getFavorites(page) {
+		const pages = Math.ceil((page * PAGE_LENGTH) / 50);
 		try {
-			const pages = Math.ceil((page * PAGE_LENGTH) / 50);
-			return await axios
+			const { data } = await axios
 				.get("/users/favorites/", {
 					headers: { name },
-					params: { pages },
-				})
-				.then(({ data }) => {
-					const newResult = [...favorites, ...data.favorites];
-					setFavorites(newResult);
-					return data.favorites;
-				})
-				.catch(({ response }) => {
-					handleNotification("error", response.data.error);
-					return [];
+					params: { pages }
 				});
+			const newResult = [...favorites, ...data.favorites];
+			setFavorites(newResult);
+			return data.favorites;
 		} catch (error) {
-			handleNotification("error", error.toString());
+			if (error.response) {
+				handleNotification("error", error.response.data.error);
+			} else {
+				handleNotification("error", error.toString());
+			}
+			return [];
 		}
-		return [];
 	}
 
 	useEffect(() => {
