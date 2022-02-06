@@ -24,19 +24,19 @@ export default function App() {
 	}, []);
 
 	return (
-		<div className="container">
-			<h1> Bible Comment </h1>
-			<sub> A Program for His Glory </sub>
+		<NotificationProvider>
+			<ProfileProvider>
+				<Routes />
+				{/* <div className="container">
+					<h1> Bible Comment </h1>
+					<sub> A Program for His Glory </sub>
 
-			<div className="content">
-				<NotificationProvider>
-					<ProfileProvider>
-						<Routes />
-					</ProfileProvider>
-				</NotificationProvider>
-			</div>
+					<div className="content">
+					</div>
 
-			<footer>Inspired by God, written by JDaniloC</footer>
-		</div>
+					<footer>Inspired by God, written by JDaniloC</footer>
+				</div> */}
+			</ProfileProvider>
+		</NotificationProvider>
 	);
 }

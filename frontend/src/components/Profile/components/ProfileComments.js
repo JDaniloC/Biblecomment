@@ -19,8 +19,6 @@ export default function ProfileComments({
 	const [commentsLoaded, setCommentsLoaded] = useState([]);
 
 	const { commentaries } = useContext(ProfileContext);
-	// eslint-disable-next-line
-	const emitRenderDebounced = debounce(handleLoadMore, 100);
 
 	function renderComments(page, forceComments = null) {
 		const comments = forceComments || commentaries;
@@ -28,6 +26,7 @@ export default function ProfileComments({
 		const final = inicio + PAGE_LENGTH;
 		const commentsToShow = comments.slice(inicio, final);
 		if (commentsToShow.length === 0 && currentPage > 0) {
+			// eslint-disable-next-line
 			emitRenderDebounced();
 		}
 		setCommentsLoaded(commentsToShow);
@@ -46,6 +45,8 @@ export default function ProfileComments({
 		}
 		return allComments;
 	});
+
+	const emitRenderDebounced = debounce(handleLoadMore, 100);
 
 	useEffect(() => {
 		let totalPages = Math.ceil(commentaries.length / PAGE_LENGTH);
