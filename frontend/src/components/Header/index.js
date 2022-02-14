@@ -48,12 +48,12 @@ export default function Header({ changeChapter }) {
 					<input type="text" placeholder="+ Buscar..." />
 				</div>
 				<div className="rightSide">
-					<button onClick={toggleBooksComponent}>
+					<button type="button" onClick={toggleBooksComponent}>
 						<p> Livros </p>
 						<img src={BooksIcon} alt="Books" />
 						<img src={ArrowIcon} alt="Show more" />
 					</button>
-					<button onClick={toggleLoginComponent}>
+					<button type="button" onClick={toggleLoginComponent}>
 						<p> Perfil </p>
 						<img src={PersonIcon} alt="Perfil" style={{ margin: "0 -10px" }} />
 						<img src={ArrowIcon} alt="Show more" />
