@@ -11,7 +11,7 @@ import { Loading } from "components/Partials";
 import TitleComment from "components/TitleComments";
 import NewComment from "components/NewComment";
 import Comments from "components/Comments";
-import NavBar from "components/NavBar";
+import Header from "components/Header";
 
 import bookIcon from "assets/book.svg";
 import chatIcon from "assets/chat.svg";
@@ -335,78 +335,78 @@ export default class Chapter extends Component {
 	render() {
 		return (
 			<>
-				<div className="chapter-container">
-					<div className={this.state.navClass}>
-						<NavBar changeChapter={this.loadChapter} />
+				<Header changeChapter={this.loadChapter} />
+				<div className="container">
+					<div className="chapter-container">
+						<div className={this.state.mainClass}>
+							<label htmlFor="toggle" style={{ display: "flex" }}>
+								{this.state.titleName} {this.state.chapterNumber}{" "}
+								{this.renderAmount(false)}
+							</label>
+							<input type="checkbox" id="toggle" />
+							<TitleComment
+								imageFunction={this.getImage}
+								likeFunction={this.handleLike}
+								reportFunction={this.handleReport}
+								comments={this.state.titleComments}
+								discussionFunction={this.goToDiscussion}
+								handleNewComment={this.handleNewComment}
+							/>
+
+							<ul className="verse-list">
+								{this.state.verses.length > 0 ? (
+									this.state.verses.map((verse, index) => (
+										<li key={`${index}${verse}`}>
+											<sup> {index + 1} </sup>
+											<p
+												data-index={index}
+												style={{
+													display: "inline",
+													backgroundColor:
+														index === this.state.currentVerse
+															? "yellow"
+															: "white",
+												}}
+												onClick={this.handleComments}
+											>
+												{verse}
+											</p>
+											{this.renderAmount(index)}
+										</li>
+									))
+								) : (
+									<Loading />
+								)}
+							</ul>
+						</div>
 					</div>
-					<div className={this.state.mainClass}>
-						<label htmlFor="toggle" style={{ display: "flex" }}>
-							{this.state.titleName} {this.state.chapterNumber}{" "}
-							{this.renderAmount(false)}
-						</label>
-						<input type="checkbox" id="toggle" />
-						<TitleComment
+					<aside className={this.state.asideClass}>
+						<Comments
 							imageFunction={this.getImage}
 							likeFunction={this.handleLike}
+							comments={this.state.comments}
+							closeFunction={this.closeComments}
 							reportFunction={this.handleReport}
-							comments={this.state.titleComments}
 							discussionFunction={this.goToDiscussion}
 							handleNewComment={this.handleNewComment}
 						/>
+					</aside>
 
-						<ul className="verse-list">
-							{this.state.verses.length > 0 ? (
-								this.state.verses.map((verse, index) => (
-									<li key={`${index}${verse}`}>
-										<sup> {index + 1} </sup>
-										<p
-											data-index={index}
-											style={{
-												display: "inline",
-												backgroundColor:
-													index === this.state.currentVerse
-														? "yellow"
-														: "white",
-											}}
-											onClick={this.handleComments}
-										>
-											{verse}
-										</p>
-										{this.renderAmount(index)}
-									</li>
-								))
-							) : (
-								<Loading />
-							)}
-						</ul>
+					<div className={this.state.newBoxClass}>
+						<NewComment
+							post
+							abbrev={this.abbrev}
+							number={this.number}
+							verso={this.getVerse}
+							title="Criar comentário"
+							close={this.closeNewCommentary}
+							addNewComment={this.addNewComment}
+							isTitleComment={this.state.newTitleComment}
+						/>
 					</div>
-				</div>
-				<aside className={this.state.asideClass}>
-					<Comments
-						imageFunction={this.getImage}
-						likeFunction={this.handleLike}
-						comments={this.state.comments}
-						closeFunction={this.closeComments}
-						reportFunction={this.handleReport}
-						discussionFunction={this.goToDiscussion}
-						handleNewComment={this.handleNewComment}
-					/>
-				</aside>
 
-				<div className={this.state.newBoxClass}>
-					<NewComment
-						post
-						abbrev={this.abbrev}
-						number={this.number}
-						verso={this.getVerse}
-						title="Criar comentário"
-						close={this.closeNewCommentary}
-						addNewComment={this.addNewComment}
-						isTitleComment={this.state.newTitleComment}
-					/>
+					<div className="overlay" style={{ display: this.state.blur }} />
 				</div>
-
-				<div className="overlay" style={{ display: this.state.blur }} />
 			</>
 		);
 	}

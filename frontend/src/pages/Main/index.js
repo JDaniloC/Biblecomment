@@ -9,16 +9,18 @@ import React from "react";
 
 export default function Main() {
 	return (
-		<div className="panel">
-			<HelpButton />
-			<div className="logo-container">
-				<img src={logoImg} alt="logo" />
-				<p>
-					Compartilhe a mensagem de Deus <br /> com seus irmãos
-				</p>
-				<Login />
+		<div className="container">
+			<div className="panel">
+				<HelpButton />
+				<div className="logo-container">
+					<img src={logoImg} alt="logo" />
+					<p>
+						Compartilhe a mensagem de Deus <br /> com seus irmãos
+					</p>
+					<Login />
+				</div>
+				<BooksIndex />
 			</div>
-			<BooksIndex />
 		</div>
 	);
 }

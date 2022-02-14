@@ -52,8 +52,8 @@ button.entry:hover {
 /* verse commentaries */
 aside {
 	position: relative;
+	margin-left: 20px;
 	width: 500px;
-	margin: 0 20px;
 }
 
 ul.verse-list li {
