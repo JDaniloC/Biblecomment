@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { NotificationContext } from "./NotificationContext";
-import { isAuthenticated, TOKEN_KEY } from "services/auth";
+import { isAuthenticated, logout, TOKEN_KEY } from "services/auth";
 
 import PropTypes from "prop-types";
 import axios from "services/api";
@@ -115,6 +115,7 @@ export function ProfileProvider({ children }) {
 				})
 				.catch(({ response }) => {
 					handleNotification("error", response.data.error);
+					logout();
 				});
 		}
 	}, []);

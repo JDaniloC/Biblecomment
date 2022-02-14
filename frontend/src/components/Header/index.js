@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 
 import BooksIndex from "../BooksIndex";
@@ -12,27 +12,27 @@ import BooksIcon from "assets/books.svg";
 import ArrowIcon from "assets/arrow.svg";
 import PersonIcon from "assets/person.svg";
 
-export default function Header(props) {
+export default function Header({ changeChapter }) {
 	const [booksIndexClass, setBooksIndexClass] = useState("invisible");
 	const [loginClass, setLoginClass] = useState("invisible");
 
-	function toggleBooksComponent() {
+	const toggleBooksComponent = useCallback(() => {
 		if (booksIndexClass === "invisible") {
 			setBooksIndexClass("visible");
 			setLoginClass("invisible");
 		} else {
 			setBooksIndexClass("invisible");
 		}
-	}
+	}, [booksIndexClass]);
 
-	function toggleLoginComponent() {
+	const toggleLoginComponent = useCallback(() => {
 		if (loginClass === "invisible") {
 			setLoginClass("visible");
 			setBooksIndexClass("invisible");
 		} else {
 			setLoginClass("invisible");
 		}
-	}
+	}, [loginClass]);
 
 	return (
 		<>
@@ -48,16 +48,16 @@ export default function Header(props) {
 					<input type="text" placeholder="+ Buscar..." />
 				</div>
 				<div className="rightSide">
-					<div onClick={toggleBooksComponent}>
+					<button onClick={toggleBooksComponent}>
 						<p> Livros </p>
 						<img src={BooksIcon} alt="Books" />
 						<img src={ArrowIcon} alt="Show more" />
-					</div>
-					<div onClick={toggleLoginComponent}>
+					</button>
+					<button onClick={toggleLoginComponent}>
 						<p> Perfil </p>
 						<img src={PersonIcon} alt="Perfil" style={{ margin: "0 -10px" }} />
 						<img src={ArrowIcon} alt="Show more" />
-					</div>
+					</button>
 				</div>
 			</header>
 			<section className={loginClass} style={{ maxWidth: "min(62em, 100vw)" }}>
@@ -65,7 +65,7 @@ export default function Header(props) {
 			</section>
 			<section className={booksIndexClass}>
 				<BooksIndex
-					changeChapter={props.changeChapter}
+					changeChapter={changeChapter}
 					closeBookComponent={toggleBooksComponent}
 				/>
 			</section>

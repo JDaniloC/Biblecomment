@@ -248,7 +248,7 @@ export default class Control extends Component {
 		} = this.state;
 
 		return authorized ? (
-			<main className="control">
+			<main className="control container">
 				<h1> Painel de Controle </h1>
 
 				<div className="control-container">

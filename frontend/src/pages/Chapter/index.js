@@ -11,7 +11,6 @@ import { Loading } from "components/Partials";
 import TitleComment from "components/TitleComments";
 import NewComment from "components/NewComment";
 import Comments from "components/Comments";
-// import NavBar from "components/NavBar";
 import Header from "components/Header";
 
 import bookIcon from "assets/book.svg";
@@ -339,9 +338,6 @@ export default class Chapter extends Component {
 				<Header changeChapter={this.loadChapter} />
 				<div className="container">
 					<div className="chapter-container">
-						<div className={this.state.navClass}>
-							{/* <NavBar changeChapter={this.loadChapter} /> */}
-						</div>
 						<div className={this.state.mainClass}>
 							<label htmlFor="toggle" style={{ display: "flex" }}>
 								{this.state.titleName} {this.state.chapterNumber}{" "}

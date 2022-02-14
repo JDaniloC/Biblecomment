@@ -2,6 +2,8 @@ main.control {
 	font-size: larger;
 	line-height: 1.5em;
 	text-align: center;
+	flex-direction: column;
+    align-items: center;
 }
 
 main.control hr {

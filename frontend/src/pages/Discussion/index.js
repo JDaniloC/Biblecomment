@@ -3,13 +3,13 @@ import { Pagination } from "@material-ui/lab";
 import { NotificationContext } from "contexts/NotificationContext";
 
 import axios from "services/api";
-import NavBar from "components/NavBar";
 import PropTypes from "prop-types";
 
 import MDEditor from "@uiw/react-md-editor";
 import AnswerForm from "components/AnswerForm";
 
 import "./styles.css";
+import Header from "components/Header";
 
 export default class Discussion extends Component {
 	static contextType = NotificationContext;
@@ -190,10 +190,8 @@ export default class Discussion extends Component {
 	render() {
 		return (
 			<>
-				<main>
-					<div className="visible">
-						<NavBar />
-					</div>
+				<Header/>
+				<div className="container">
 					<div className="main">
 						<h1 style={{ textAlign: "center" }}>{this.state.title}</h1>
 						<ul className="discussion-list">
@@ -250,7 +248,7 @@ export default class Discussion extends Component {
 							onChange={this.handlePaginate}
 						/>
 					</div>
-				</main>
+				</div>
 
 				<AnswerForm
 					answers={this.state.answers}

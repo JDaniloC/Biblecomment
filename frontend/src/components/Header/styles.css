@@ -47,23 +47,25 @@
 	width: 20em;
 }
 
-.navbar .rightSide div {
+.navbar .rightSide button {
 	display: flex;
 	justify-content: space-evenly;
 	align-items: center;
 	width: 12em;
 	margin: 0 1em;
 	cursor: pointer;
+	background: none;
+    border: none;
 }
-.navbar .rightSide div p {
+.navbar .rightSide button p {
 	font-weight: bold;
 	font-size: 20px;
 }
 
-.navbar .rightSide div p + img {
+.navbar .rightSide button p + img {
 	max-height: 40px;
 }
-.navbar .rightSide div img:last-child {
+.navbar .rightSide button img:last-child {
 	max-height: 20px;
 }
 .navbar ~ .visible {

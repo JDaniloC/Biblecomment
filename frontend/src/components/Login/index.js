@@ -124,6 +124,8 @@ export default class Login extends Component {
 					this.context.loadUserInfos(data);
 					this.handleNotification("success", "Login realizado com sucesso!");
 					login(data.token);
+					this.context.getComments(1);
+					this.context.getFavorites(1);
 				})
 				.catch(({ response }) => {
 					this.handleNotification("error", response.data.error);

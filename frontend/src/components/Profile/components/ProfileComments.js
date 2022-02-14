@@ -6,6 +6,7 @@ import debounce from "lodash.debounce";
 
 import CommentRow from "./CommentRow";
 import PropTypes from "prop-types";
+import { isAuthenticated } from "services/auth";
 
 const PAGE_LENGTH = 5;
 
@@ -20,12 +21,13 @@ export default function ProfileComments({
 
 	const { commentaries } = useContext(ProfileContext);
 
-	function renderComments(page, forceComments = null) {
+	function renderComments(page, forceComments = null, forceRender = false) {
 		const comments = forceComments || commentaries;
 		const inicio = (page - 1) * PAGE_LENGTH;
 		const final = inicio + PAGE_LENGTH;
 		const commentsToShow = comments.slice(inicio, final);
-		if (commentsToShow.length === 0 && currentPage > 0) {
+		if (commentsToShow.length === 0 && 
+			(maxPages > 1 || forceRender)) {
 			// eslint-disable-next-line
 			emitRenderDebounced();
 		}
@@ -55,8 +57,10 @@ export default function ProfileComments({
 	}, [commentaries]);
 
 	useEffect(() => {
-		renderComments(currentPage);
-	}, [currentPage]);
+		if (isAuthenticated()) {
+			renderComments(currentPage, null, true);
+		}
+	}, [currentPage, commentaries]);
 
 	const handleChangePage = useCallback((_, page) => {
 		setCurrentPage(page);
