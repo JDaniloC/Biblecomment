@@ -190,7 +190,7 @@ export default class Discussion extends Component {
 	render() {
 		return (
 			<>
-				<Header/>
+				<Header />
 				<div className="container">
 					<div className="main">
 						<h1 style={{ textAlign: "center" }}>{this.state.title}</h1>

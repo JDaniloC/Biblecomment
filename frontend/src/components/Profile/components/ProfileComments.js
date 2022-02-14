@@ -26,8 +26,7 @@ export default function ProfileComments({
 		const inicio = (page - 1) * PAGE_LENGTH;
 		const final = inicio + PAGE_LENGTH;
 		const commentsToShow = comments.slice(inicio, final);
-		if (commentsToShow.length === 0 && 
-			(maxPages > 1 || forceRender)) {
+		if (commentsToShow.length === 0 && (maxPages > 1 || forceRender)) {
 			// eslint-disable-next-line
 			emitRenderDebounced();
 		}
