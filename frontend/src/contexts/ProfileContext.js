@@ -88,11 +88,10 @@ export function ProfileProvider({ children }) {
 	async function getFavorites(page) {
 		const pages = Math.ceil((page * PAGE_LENGTH) / 50);
 		try {
-			const { data } = await axios
-				.get("/users/favorites/", {
-					headers: { name },
-					params: { pages }
-				});
+			const { data } = await axios.get("/users/favorites/", {
+				headers: { name },
+				params: { pages },
+			});
 			const newResult = [...favorites, ...data.favorites];
 			setFavorites(newResult);
 			return data.favorites;
