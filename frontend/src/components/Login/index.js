@@ -100,10 +100,7 @@ export default class Login extends Component {
 				})
 				.then(({ data }) => {
 					this.context.loadUserInfos(data);
-					this.handleNotification(
-						"success", 
-						"Login realizado com sucesso!"
-					);
+					this.handleNotification("success", "Login realizado com sucesso!");
 					login(data.token);
 					this.context.getComments(1);
 					this.context.getFavorites(1);
@@ -126,10 +123,7 @@ export default class Login extends Component {
 				})
 				.then(() => {
 					this.changeMethod();
-					this.handleNotification(
-						"success", 
-						"Cadastro realizado com sucesso!"
-					);
+					this.handleNotification("success", "Cadastro realizado com sucesso!");
 				})
 				.catch(({ response }) => {
 					this.handleNotification("error", response.data.error);
@@ -165,48 +159,48 @@ export default class Login extends Component {
 					closeAccount={this.closeAccount}
 					deleteComment={this.deleteComment}
 				/>
-				
-				{(this.context.showLogin) && 
-				<form onSubmit={this.handleForm}>
-					<input
-						type="email"
-						name="email"
-						id="email"
-						placeholder="E-mail"
-						onChange={this.changeState}
-						required
-					/>
-					{(!this._isInLoginState()) &&
+
+				{this.context.showLogin && (
+					<form onSubmit={this.handleForm}>
 						<input
-							type="text"
-							name="name"
-							maxLength="15"
-							placeholder="Nome de usuário"
+							type="email"
+							name="email"
+							id="email"
+							placeholder="E-mail"
 							onChange={this.changeState}
+							required
 						/>
-					}
-					<input
-						type="password"
-						name="password"
-						placeholder="Senha"
-						onChange={this.changeState}
-						required
-					/>
-					<input
-						style={{ backgroundColor: "#1E7" }}
-						type="submit"
-						value={this.state.submitName}
-					/>
-					<hr />
-					<button
-						type = "button"
-						style={{ backgroundColor: "#888" }}
-						onClick={this.changeMethod}
-					>
-						{this.state.switchBtnName}
-					</button>
-				</form>
-				}
+						{!this._isInLoginState() && (
+							<input
+								type="text"
+								name="name"
+								maxLength="15"
+								placeholder="Nome de usuário"
+								onChange={this.changeState}
+							/>
+						)}
+						<input
+							type="password"
+							name="password"
+							placeholder="Senha"
+							onChange={this.changeState}
+							required
+						/>
+						<input
+							style={{ backgroundColor: "#1E7" }}
+							type="submit"
+							value={this.state.submitName}
+						/>
+						<hr />
+						<button
+							type="button"
+							style={{ backgroundColor: "#888" }}
+							onClick={this.changeMethod}
+						>
+							{this.state.switchBtnName}
+						</button>
+					</form>
+				)}
 			</div>
 		);
 	}
