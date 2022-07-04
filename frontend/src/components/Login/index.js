@@ -15,10 +15,8 @@ export default class Login extends Component {
 		super(props);
 
 		this.state = {
-			loginClass: "",
-			registerClass: "invisible",
-			buttonColor: "#1E7",
-			buttonName: "Cadastrar",
+			submitName: "Entrar",
+			switchBtnName: "Cadastrar",
 
 			name: "",
 			email: "",
@@ -29,14 +27,14 @@ export default class Login extends Component {
 
 		this.handleForm = this.handleForm.bind(this);
 		this.changeState = this.changeState.bind(this);
-		this.closeAccount = this.closeAccount.bind(this);
 		this.changeMethod = this.changeMethod.bind(this);
+		this.closeAccount = this.closeAccount.bind(this);
 		this.deleteComment = this.deleteComment.bind(this);
 	}
 
 	componentDidMount() {
 		const {
-			setFormClass,
+			setShowLogin,
 			setFavorites,
 			loadUserInfos,
 			setCommentaries,
@@ -44,49 +42,29 @@ export default class Login extends Component {
 		} = this.context;
 
 		this.setFavorites = setFavorites;
-		this.setFormClass = setFormClass;
+		this.setShowLogin = setShowLogin;
 		this.loadUserInfos = loadUserInfos;
 		this.setCommentaries = setCommentaries;
 		this.handleNotification = handleNotification;
 	}
 
-	changeMethod(event) {
-		if (this._isEventNotNull(event)) {
-			event.preventDefault();
-		}
-
-		if (this._isLoginClassEmpty()) {
-			this._setStateCaseLoginClassIsEmpty();
-		} else {
-			this._setStateCaseLoginClassIsNotEmpty();
-		}
+	_isInLoginState() {
+		return this.state.submitName === "Entrar";
 	}
 
-	_isEventNotNull = (event) => {
-		return event !== null;
-	};
-
-	_isLoginClassEmpty = () => {
-		return this.state.loginClass === "";
-	};
-
-	_setStateCaseLoginClassIsEmpty = () => {
-		this.setState({
-			loginClass: "invisible",
-			registerClass: "",
-			buttonColor: "#888",
-			buttonName: "Login",
-		});
-	};
-
-	_setStateCaseLoginClassIsNotEmpty = () => {
-		this.setState({
-			loginClass: "",
-			registerClass: "invisible",
-			buttonColor: "#1E7",
-			buttonName: "Cadastrar",
-		});
-	};
+	changeMethod() {
+		if (this._isInLoginState()) {
+			this.setState({
+				submitName: "Cadastrar",
+				switchBtnName: "Entrar",
+			});
+		} else {
+			this.setState({
+				switchBtnName: "Cadastrar",
+				submitName: "Entrar",
+			});
+		}
+	}
 
 	changeState(event) {
 		event.preventDefault();
@@ -122,7 +100,10 @@ export default class Login extends Component {
 				})
 				.then(({ data }) => {
 					this.context.loadUserInfos(data);
-					this.handleNotification("success", "Login realizado com sucesso!");
+					this.handleNotification(
+						"success", 
+						"Login realizado com sucesso!"
+					);
 					login(data.token);
 					this.context.getComments(1);
 					this.context.getFavorites(1);
@@ -144,8 +125,11 @@ export default class Login extends Component {
 					password,
 				})
 				.then(() => {
-					this.changeMethod(null);
-					this.handleNotification("success", "Cadastro realizado com sucesso!");
+					this.changeMethod();
+					this.handleNotification(
+						"success", 
+						"Cadastro realizado com sucesso!"
+					);
 				})
 				.catch(({ response }) => {
 					this.handleNotification("error", response.data.error);
@@ -158,7 +142,7 @@ export default class Login extends Component {
 	handleForm(event) {
 		event.preventDefault();
 
-		if (this.state.loginClass === "") {
+		if (!this.state.showNameField) {
 			this.tryLogin(this.state.email, this.state.password);
 		} else {
 			this.tryRegister(this.state.email, this.state.name, this.state.password);
@@ -167,7 +151,7 @@ export default class Login extends Component {
 
 	closeAccount() {
 		logout();
-		this.setFormClass("");
+		this.setShowLogin(true);
 		this.setCommentaries([]);
 		this.context.setName("");
 		this.context.setPerfilClass("invisible");
@@ -181,7 +165,9 @@ export default class Login extends Component {
 					closeAccount={this.closeAccount}
 					deleteComment={this.deleteComment}
 				/>
-				<form className={this.context.formClass} onSubmit={this.handleForm}>
+				
+				{(this.context.showLogin) && 
+				<form onSubmit={this.handleForm}>
 					<input
 						type="email"
 						name="email"
@@ -190,14 +176,15 @@ export default class Login extends Component {
 						onChange={this.changeState}
 						required
 					/>
-					<input
-						className={this.state.registerClass}
-						type="text"
-						name="name"
-						maxLength="15"
-						placeholder="Nome de usuário"
-						onChange={this.changeState}
-					/>
+					{(!this._isInLoginState()) &&
+						<input
+							type="text"
+							name="name"
+							maxLength="15"
+							placeholder="Nome de usuário"
+							onChange={this.changeState}
+						/>
+					}
 					<input
 						type="password"
 						name="password"
@@ -206,24 +193,20 @@ export default class Login extends Component {
 						required
 					/>
 					<input
-						className={this.state.loginClass}
-						type="submit"
-						value="Entrar"
-					/>
-					<input
-						className={this.state.registerClass}
 						style={{ backgroundColor: "#1E7" }}
 						type="submit"
-						value="Cadastrar"
+						value={this.state.submitName}
 					/>
 					<hr />
 					<button
-						style={{ backgroundColor: this.state.buttonColor }}
+						type = "button"
+						style={{ backgroundColor: "#888" }}
 						onClick={this.changeMethod}
 					>
-						{this.state.buttonName}
+						{this.state.switchBtnName}
 					</button>
 				</form>
+				}
 			</div>
 		);
 	}

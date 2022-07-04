@@ -27,15 +27,6 @@ export default function App() {
 		<NotificationProvider>
 			<ProfileProvider>
 				<Routes />
-				{/* <div className="container">
-					<h1> Bible Comment </h1>
-					<sub> A Program for His Glory </sub>
-
-					<div className="content">
-					</div>
-
-					<footer>Inspired by God, written by JDaniloC</footer>
-				</div> */}
 			</ProfileProvider>
 		</NotificationProvider>
 	);

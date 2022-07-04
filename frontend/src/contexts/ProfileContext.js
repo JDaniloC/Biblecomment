@@ -15,7 +15,7 @@ export function ProfileProvider({ children }) {
 	const [stateName, setStateName] = useState("");
 
 	const [perfilClass, setPerfilClass] = useState("invisible");
-	const [formClass, setFormClass] = useState("");
+	const [showLogin, setShowLogin] = useState(true);
 
 	const [booksCount, setBooksCount] = useState(0);
 	const [chaptersCount, setChaptersCount] = useState(0);
@@ -51,8 +51,8 @@ export function ProfileProvider({ children }) {
 		setStateName(currentStateName);
 		setBelief(currentBelief);
 
+		setShowLogin(false);
 		setPerfilClass(""); // Shows the profile component
-		setFormClass("invisible"); // Shows the profile component
 	}
 
 	function addNewComment(comment) {
@@ -170,7 +170,7 @@ export function ProfileProvider({ children }) {
 				commentaries,
 				favorites,
 				perfilClass,
-				formClass,
+				showLogin,
 				commented,
 				booksCount,
 				setName,
@@ -180,7 +180,7 @@ export function ProfileProvider({ children }) {
 				setCommentaries,
 				setPerfilClass,
 				setFavorites,
-				setFormClass,
+				setShowLogin,
 				getFavorites,
 				setStateName,
 				addNewComment,
