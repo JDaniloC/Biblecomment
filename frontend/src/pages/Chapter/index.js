@@ -356,7 +356,8 @@ export default class Chapter extends Component {
 							<ul className="verse-list">
 								{this.state.verses.length > 0 ? (
 									this.state.verses.map((verse, index) => (
-										<li key={`${index}${verse}`}>
+										<li key={`${index}${verse}`} 
+											id = {index + 1}>
 											<sup> {index + 1} </sup>
 											<p
 												data-index={index}

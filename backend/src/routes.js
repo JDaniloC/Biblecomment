@@ -6,6 +6,7 @@ const UserController = require("./controllers/UserController");
 const SessionController = require("./controllers/SessionController");
 const ChapterController = require("./controllers/ChapterController");
 const CommentController = require("./controllers/CommentController");
+const SearchController = require("./controllers/SearchController");
 const DiscussionController = require("./controllers/DiscussionController");
 const InfoController = require("./controllers/InfoController");
 const BackupController = require("./controllers/BackupController");
@@ -68,5 +69,7 @@ routes.get("/backup/comments", BackupController.saveComments);
 routes.post("/backup/comments", BackupController.loadComments);
 routes.get("/backup/discussions", BackupController.saveDiscussions);
 routes.post("/backup/discussions", BackupController.loadDiscussions);
+
+routes.get("/search", SearchController.index);
 
 module.exports = routes;

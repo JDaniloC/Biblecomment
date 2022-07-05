@@ -1,11 +1,15 @@
 import "./styles.css";
 
 import React, { useState, useCallback } from "react";
+import { useHistory } from "react-router-dom";
 import { Link } from "react-router-dom";
-
-import BooksIndex from "../BooksIndex";
-import Login from "../Login";
 import PropTypes from "prop-types";
+
+import axios from "services/api";
+
+import SearchInput from "components/SearchInput";
+import BooksIndex from "components/BooksIndex";
+import Login from "components/Login";
 
 import LogoIcon from "assets/logo.svg";
 import BooksIcon from "assets/books.svg";
@@ -15,6 +19,9 @@ import PersonIcon from "assets/person.svg";
 export default function Header({ changeChapter }) {
 	const [booksIndexClass, setBooksIndexClass] = useState("invisible");
 	const [loginClass, setLoginClass] = useState("invisible");
+	const [comments, setComments] = useState([]);
+
+	const history = useHistory();
 
 	const toggleBooksComponent = useCallback(() => {
 		if (booksIndexClass === "invisible") {
@@ -34,10 +41,27 @@ export default function Header({ changeChapter }) {
 		}
 	}, [loginClass]);
 
+	function searchCommentText(text) {
+		axios.get("/search/", { params: { text } }).then(({ data }) => {
+			setComments(data);
+		});
+	}
+
+	function selectComment(comment) {
+		let [book, reference] = comment.book_reference.split(" ");
+		const [chapter, verse] = reference.split(":");
+		book = book.toLowerCase();
+		if (book == "jó") {
+			book = "job";
+		}
+		history.push(`/verses/${book}/${chapter}#${verse}`);
+		window.location.reload();
+	}
+
 	return (
 		<>
 			<header className="navbar">
-				<div className="leftSide">
+				<div className="leftSide" style={{ minWidth: '40em' }}>
 					<Link to="/">
 						<img src={LogoIcon} alt="Home" />
 					</Link>
@@ -45,7 +69,11 @@ export default function Header({ changeChapter }) {
 						<h1> Bible Comment </h1>
 						<sub> A Program for His Glory</sub>
 					</span>
-					<input type="text" placeholder="+ Buscar..." />
+					<SearchInput
+						searchResult = {comments}
+						handleSelect = {selectComment}
+						handleText = {searchCommentText}
+					/>
 				</div>
 				<div className="rightSide">
 					<button type="button" onClick={toggleBooksComponent}>
