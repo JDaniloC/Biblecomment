@@ -1,17 +1,17 @@
 const connection = require("../database/connection");
 
 module.exports = {
-    async index(request, response) {
-        const { text } = request.query;
-        
-        if (!text) {
-            return response.json([]);
-        }
+	async index(request, response) {
+		const { text } = request.query;
 
-        const comments = await connection("comments")
-            .whereLike("text",  `%${text}%`)
-            .select("*");
+		if (!text) {
+			return response.json([]);
+		}
 
-        return response.json(comments);
-    }
-}
+		const comments = await connection("comments")
+			.whereLike("text", `%${text}%`)
+			.select("*");
+
+		return response.json(comments);
+	},
+};

@@ -61,7 +61,7 @@ export default function Header({ changeChapter }) {
 	return (
 		<>
 			<header className="navbar">
-				<div className="leftSide" style={{ minWidth: '40em' }}>
+				<div className="leftSide" style={{ minWidth: "40em" }}>
 					<Link to="/">
 						<img src={LogoIcon} alt="Home" />
 					</Link>
@@ -70,9 +70,9 @@ export default function Header({ changeChapter }) {
 						<sub> A Program for His Glory</sub>
 					</span>
 					<SearchInput
-						searchResult = {comments}
-						handleSelect = {selectComment}
-						handleText = {searchCommentText}
+						searchResult={comments}
+						handleSelect={selectComment}
+						handleText={searchCommentText}
 					/>
 				</div>
 				<div className="rightSide">

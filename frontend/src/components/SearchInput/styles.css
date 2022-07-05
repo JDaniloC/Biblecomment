@@ -2,8 +2,8 @@
 	padding: 1em;
 	display: flex;
 	border-radius: 20px;
-	border: 1px solid #DDD;
-    justify-content: space-around;
+	border: 1px solid #ddd;
+	justify-content: space-around;
 }
 .search-input div.on-search {
 	border-radius: 20px 20px 0 0;
@@ -17,31 +17,31 @@
 	cursor: pointer;
 }
 .search-input div.on-search + ul {
-    display: block;
+	display: block;
 }
 .search-input ul {
-    display: none;
-    position: absolute;
-    flex-direction: column;
+	display: none;
+	position: absolute;
+	flex-direction: column;
 
-    width: inherit;
-    background: #FFF;
-    font-size: initial;
-    overflow-y: scroll;
-    max-height: 80vh;
+	width: inherit;
+	background: #fff;
+	font-size: initial;
+	overflow-y: scroll;
+	max-height: 80vh;
 
-    padding: 1em;
-	border: 1px solid #DDD;
+	padding: 1em;
+	border: 1px solid #ddd;
 	border-radius: 0 0 20px 20px;
 }
 .search-input ul li {
-    width: 100%;
-    cursor: pointer;
-    overflow-x: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    margin-bottom: 5px;
+	width: 100%;
+	cursor: pointer;
+	overflow-x: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	margin-bottom: 5px;
 }
 .search-input ul li:hover {
-    color: #000;
+	color: #000;
 }
