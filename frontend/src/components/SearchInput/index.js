@@ -44,15 +44,20 @@ export default function SearchInput({
 					placeholder="Buscar..."
 					onChange={handleSearchChange}
 				/>
-				<img src={CloseIcon} alt="Limpar pesquisa"
-					onKeyUp={handleCleanSearch} 
-					onClick={handleCleanSearch} />
+				<img
+					src={CloseIcon}
+					alt="Limpar pesquisa"
+					onKeyUp={handleCleanSearch}
+					onClick={handleCleanSearch}
+				/>
 			</div>
 			<ul>
 				{searchResult.map((comment) => (
-					<li key={comment.id}
-						onKeyUp={() => handleSelect(comment)} 
-						onClick={() => handleSelect(comment)}>
+					<li
+						key={comment.id}
+						onKeyUp={() => handleSelect(comment)}
+						onClick={() => handleSelect(comment)}
+					>
 						{comment.book_reference} - {comment.text}
 					</li>
 				))}

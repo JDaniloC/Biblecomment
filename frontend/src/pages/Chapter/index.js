@@ -80,7 +80,7 @@ export default class Chapter extends Component {
 		this.getVerse = this.getVerse.bind(this);
 		this.loadChapter = this.loadChapter.bind(this);
 		this.goToDiscussion = this.goToDiscussion.bind(this);
-		
+
 		this.onHandleLike = this.handleLike.bind(this);
 		this.onHandleReport = this.handleReport.bind(this);
 		this.onHandleNewComment = this.handleNewComment.bind(this);
@@ -160,7 +160,7 @@ export default class Chapter extends Component {
 					);
 				}
 			});
-		
+
 		const newChapterNumber = number.length === 1 ? `0${number}` : number;
 		this.setState({ chapterNumber: newChapterNumber });
 		return true;
@@ -236,7 +236,7 @@ export default class Chapter extends Component {
 		const allCommentsLength = allComments.filter(
 			(comment) => comment.verse === index + 1
 		).length;
-		
+
 		let amount = titleComments.length;
 		if (index) {
 			amount = allCommentsLength;
@@ -287,7 +287,7 @@ export default class Chapter extends Component {
 					})
 					.then(() => {
 						this.handleNotification("success", "Adicionado aos favoritos");
-						
+
 						const { comments, titleComments } = this.state;
 						const found = searchLike(comments);
 						if (!found) {
