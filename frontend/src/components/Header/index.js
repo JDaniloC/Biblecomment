@@ -41,13 +41,13 @@ export default function Header({ changeChapter }) {
 		}
 	}, [loginClass]);
 
-	function searchCommentText(text) {
+	const searchCommentText = useCallback((text) => {
 		axios.get("/search/", { params: { text } }).then(({ data }) => {
 			setComments(data);
 		});
-	}
+	}, []);
 
-	function selectComment(comment) {
+	const selectComment = useCallback((comment) => {
 		let [book, reference] = comment.book_reference.split(" ");
 		const [chapter, verse] = reference.split(":");
 		book = book.toLowerCase();
@@ -56,7 +56,7 @@ export default function Header({ changeChapter }) {
 		}
 		history.push(`/verses/${book}/${chapter}#${verse}`);
 		window.location.reload();
-	}
+	}, []);
 
 	return (
 		<>

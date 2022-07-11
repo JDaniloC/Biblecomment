@@ -29,26 +29,30 @@ export default function SearchInput({
 		setSearchText(text);
 	}, []);
 
-	function clearSearch() {
+	const handleCleanSearch = useCallback(() => {
 		setIsTexting(false);
 		setSearchText("");
-	}
+	}, []);
 
 	return (
 		<div className="search-input">
-			<div className={isTexting && "on-search"}>
+			<div className={isTexting ? "on-search" : ""}>
 				<img src={SearchIcon} alt="Pesquisar" />
 				<input
 					type="text"
+					value={searchText}
 					placeholder="Buscar..."
 					onChange={handleSearchChange}
-					value={searchText}
 				/>
-				<img src={CloseIcon} alt="Limpar pesquisa" onClick={clearSearch} />
+				<img src={CloseIcon} alt="Limpar pesquisa"
+					onKeyUp={handleCleanSearch} 
+					onClick={handleCleanSearch} />
 			</div>
 			<ul>
 				{searchResult.map((comment) => (
-					<li key={comment.id} onClick={() => handleSelect(comment)}>
+					<li key={comment.id}
+						onKeyUp={() => handleSelect(comment)} 
+						onClick={() => handleSelect(comment)}>
 						{comment.book_reference} - {comment.text}
 					</li>
 				))}
