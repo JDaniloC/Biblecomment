@@ -5,17 +5,11 @@ export default PropTypes.shape({
 		PropTypes.string,
 		PropTypes.arrayOf(PropTypes.string),
 	]).isRequired,
-	verse: PropTypes.oneOfType([
-		PropTypes.number,
-		PropTypes.string
-	]).isRequired,
+	verse: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 	id: PropTypes.number.isRequired,
 	text: PropTypes.string.isRequired,
 	likes: PropTypes.string.isRequired,
-	on_title: PropTypes.oneOfType([
-		PropTypes.number,
-		PropTypes.bool
-	]).isRequired,
+	on_title: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]).isRequired,
 	username: PropTypes.string.isRequired,
 	created_at: PropTypes.string.isRequired,
 	book_reference: PropTypes.string.isRequired,

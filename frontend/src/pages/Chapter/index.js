@@ -21,6 +21,25 @@ import penIcon from "assets/pen.svg";
 import personIcon from "assets/person.svg";
 import warningIcon from "assets/warning.svg";
 
+function getIconImage(tag) {
+	switch (tag) {
+		case "heart":
+			return heartIcon;
+		case "warning":
+			return warningIcon;
+		case "chat":
+			return chatIcon;
+		case "devocional":
+			return handIcon;
+		case "inspirado":
+			return penIcon;
+		case "pessoal":
+			return personIcon;
+		default:
+			return bookIcon;
+	}
+}
+
 export default class Chapter extends Component {
 	static contextType = NotificationContext;
 
@@ -30,10 +49,10 @@ export default class Chapter extends Component {
 				abbrev: PropTypes.string.isRequired,
 				number: PropTypes.string.isRequired,
 			}),
-		}),
+		}).isRequired,
 		history: PropTypes.shape({
 			push: PropTypes.func.isRequired,
-		}),
+		}).isRequired,
 	};
 
 	constructor(props) {
@@ -61,10 +80,10 @@ export default class Chapter extends Component {
 		this.getVerse = this.getVerse.bind(this);
 		this.loadChapter = this.loadChapter.bind(this);
 		this.goToDiscussion = this.goToDiscussion.bind(this);
-		this.handleNewComment = this.handleNewComment.bind(this);
-
-		this.handleLike = this.handleLike.bind(this);
-		this.handleReport = this.handleReport.bind(this);
+		
+		this.onHandleLike = this.handleLike.bind(this);
+		this.onHandleReport = this.handleReport.bind(this);
+		this.onHandleNewComment = this.handleNewComment.bind(this);
 
 		this.closeComments = this.closeComments.bind(this);
 		this.closeNewCommentary = this.closeNewCommentary.bind(this);
@@ -127,7 +146,7 @@ export default class Chapter extends Component {
 
 					this.setState({
 						allComments: comments,
-						titleComments: titleComments,
+						titleComments,
 					});
 				}
 			})
@@ -141,19 +160,18 @@ export default class Chapter extends Component {
 					);
 				}
 			});
-
-		if (number.length === 1) {
-			number = "0" + number;
-		}
-		this.setState({ chapterNumber: number });
+		
+		const newChapterNumber = number.length === 1 ? `0${number}` : number;
+		this.setState({ chapterNumber: newChapterNumber });
 		return true;
 	}
 
 	handleComments(event) {
 		const target = event.target;
-		const numberVerse = parseInt(target.getAttribute("data-index"));
+		const { currentVerse } = this.state;
+		const numberVerse = parseInt(target.getAttribute("data-index"), 10);
 
-		if (this.state.currentVerse === numberVerse) {
+		if (currentVerse === numberVerse) {
 			this.closeComments(event);
 		} else {
 			this.setState((prevState) => ({
@@ -161,7 +179,7 @@ export default class Chapter extends Component {
 				mainClass: "main comment",
 				navClass: prevState.navClass.includes("navHide")
 					? prevState.navClass
-					: prevState.navClass + " navHide",
+					: `${prevState.navClass} navHide`,
 				comments: prevState.allComments.filter(
 					(comment) => comment.verse === numberVerse + 1
 				),
@@ -191,25 +209,6 @@ export default class Chapter extends Component {
 		});
 	}
 
-	getImage(tag) {
-		switch (tag) {
-			case "heart":
-				return heartIcon;
-			case "warning":
-				return warningIcon;
-			case "chat":
-				return chatIcon;
-			case "devocional":
-				return handIcon;
-			case "inspirado":
-				return penIcon;
-			case "pessoal":
-				return personIcon;
-			default:
-				return bookIcon;
-		}
-	}
-
 	closeNewCommentary(evt) {
 		evt.preventDefault();
 		this.setState({
@@ -233,15 +232,18 @@ export default class Chapter extends Component {
 	}
 
 	renderAmount(index) {
-		const allCommentsLength = this.state.allComments.filter(
+		const { allComments, titleComments } = this.state;
+		const allCommentsLength = allComments.filter(
 			(comment) => comment.verse === index + 1
 		).length;
-
-		let amount =
-			index === false ? this.state.titleComments.length : allCommentsLength;
+		
+		let amount = titleComments.length;
+		if (index) {
+			amount = allCommentsLength;
+		}
 
 		if (amount === 0) {
-			return;
+			return <></>;
 		}
 
 		const color =
@@ -264,7 +266,7 @@ export default class Chapter extends Component {
 	handleLike(identificador) {
 		function searchLike(comments) {
 			let commentFound = false;
-			comments.forEach(function (part, index, array) {
+			comments.forEach((part, index, array) => {
 				if (array[index].id === identificador) {
 					const likes = JSON.parse(array[index].likes);
 					if (!("+1" in likes)) {
@@ -285,9 +287,11 @@ export default class Chapter extends Component {
 					})
 					.then(() => {
 						this.handleNotification("success", "Adicionado aos favoritos");
-						const found = searchLike(this.state.comments);
+						
+						const { comments, titleComments } = this.state;
+						const found = searchLike(comments);
 						if (!found) {
-							searchLike(this.state.titleComments);
+							searchLike(titleComments);
 						}
 					});
 			} catch (error) {
@@ -300,7 +304,7 @@ export default class Chapter extends Component {
 
 	handleReport(identificador) {
 		if (isAuthenticated()) {
-			var token = localStorage.getItem(TOKEN_KEY);
+			const token = localStorage.getItem(TOKEN_KEY);
 			const message = window.prompt("Qual o problema com o comentário?");
 			try {
 				axios
@@ -325,7 +329,7 @@ export default class Chapter extends Component {
 			pathname: `/discussion/${abbrev}`,
 			state: {
 				title: this.state.titleName,
-				comment_id: parseInt(comment_id),
+				comment_id: parseInt(comment_id, 10),
 				comment_text,
 				comment_reference,
 			},
@@ -345,19 +349,18 @@ export default class Chapter extends Component {
 							</label>
 							<input type="checkbox" id="toggle" />
 							<TitleComment
-								imageFunction={this.getImage}
-								likeFunction={this.handleLike}
-								reportFunction={this.handleReport}
+								imageFunction={getIconImage}
+								likeFunction={this.onHandleLike}
+								reportFunction={this.onHandleReport}
 								comments={this.state.titleComments}
 								discussionFunction={this.goToDiscussion}
-								handleNewComment={this.handleNewComment}
+								handleNewComment={this.onHandleNewComment}
 							/>
 
 							<ul className="verse-list">
 								{this.state.verses.length > 0 ? (
 									this.state.verses.map((verse, index) => (
-										<li key={`${index}${verse}`} 
-											id = {index + 1}>
+										<li key={`${index}${verse}`} id={index + 1}>
 											<sup> {index + 1} </sup>
 											<p
 												data-index={index}
@@ -383,13 +386,13 @@ export default class Chapter extends Component {
 					</div>
 					<aside className={this.state.asideClass}>
 						<Comments
-							imageFunction={this.getImage}
-							likeFunction={this.handleLike}
+							imageFunction={getIconImage}
+							likeFunction={this.onHandleLike}
 							comments={this.state.comments}
 							closeFunction={this.closeComments}
-							reportFunction={this.handleReport}
+							reportFunction={this.onHandleReport}
 							discussionFunction={this.goToDiscussion}
-							handleNewComment={this.handleNewComment}
+							handleNewComment={this.onHandleNewComment}
 						/>
 					</aside>
 
