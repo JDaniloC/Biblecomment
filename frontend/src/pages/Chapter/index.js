@@ -238,7 +238,7 @@ export default class Chapter extends Component {
 		).length;
 		
 		let amount = titleComments.length;
-		if (index) {
+		if (index !== false) {
 			amount = allCommentsLength;
 		}
 
@@ -372,6 +372,7 @@ export default class Chapter extends Component {
 															: "white",
 												}}
 												onClick={this.handleComments}
+												onKeyUp={this.handleComments}
 											>
 												{verse}
 											</p>

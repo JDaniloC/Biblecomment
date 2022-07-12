@@ -26,10 +26,10 @@ export default class Login extends Component {
 		this.profileComponent = createRef();
 
 		this.handleForm = this.handleForm.bind(this);
-		this.changeState = this.changeState.bind(this);
-		this.changeMethod = this.changeMethod.bind(this);
 		this.closeAccount = this.closeAccount.bind(this);
 		this.deleteComment = this.deleteComment.bind(this);
+		this.handleChangeInput = this.handleChangeInput.bind(this);
+		this.handleToggleRegister = this.handleToggleRegister.bind(this);
 	}
 
 	componentDidMount() {
@@ -52,7 +52,7 @@ export default class Login extends Component {
 		return this.state.submitName === "Entrar";
 	}
 
-	changeMethod() {
+	handleToggleRegister() {
 		if (this._isInLoginState()) {
 			this.setState({
 				submitName: "Cadastrar",
@@ -66,7 +66,7 @@ export default class Login extends Component {
 		}
 	}
 
-	changeState(event) {
+	handleChangeInput(event) {
 		event.preventDefault();
 		this.setState({ [event.target.name]: event.target.value });
 	}
@@ -122,7 +122,7 @@ export default class Login extends Component {
 					password,
 				})
 				.then(() => {
-					this.changeMethod();
+					this.handleToggleRegister();
 					this.handleNotification("success", "Cadastro realizado com sucesso!");
 				})
 				.catch(({ response }) => {
@@ -167,7 +167,7 @@ export default class Login extends Component {
 							name="email"
 							id="email"
 							placeholder="E-mail"
-							onChange={this.changeState}
+							onChange={this.handleChangeInput}
 							required
 						/>
 						{!this._isInLoginState() && (
@@ -176,26 +176,24 @@ export default class Login extends Component {
 								name="name"
 								maxLength="15"
 								placeholder="Nome de usuário"
-								onChange={this.changeState}
+								onChange={this.handleChangeInput}
 							/>
 						)}
 						<input
 							type="password"
 							name="password"
 							placeholder="Senha"
-							onChange={this.changeState}
+							onChange={this.handleChangeInput}
 							required
 						/>
 						<input
-							style={{ backgroundColor: "#1E7" }}
 							type="submit"
 							value={this.state.submitName}
 						/>
 						<hr />
 						<button
 							type="button"
-							style={{ backgroundColor: "#888" }}
-							onClick={this.changeMethod}
+							onClick={this.handleToggleRegister}
 						>
 							{this.state.switchBtnName}
 						</button>

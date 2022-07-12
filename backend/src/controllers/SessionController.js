@@ -74,7 +74,7 @@ module.exports = {
 				.distinct("book_abbrev", "number")
 				.then((chapters) => {
 					return chapters.reduce((prevDict, chapter) => {
-						if (prevDict[chapter.book_abbrev] === undefined) {
+						if (typeof prevDict[chapter.book_abbrev] === "undefined") {
 							prevDict[chapter.book_abbrev] = [];
 						}
 						prevDict[chapter.book_abbrev].push(chapter.number);
@@ -140,7 +140,7 @@ module.exports = {
 			.distinct("book_abbrev", "number")
 			.then((chapters) => {
 				return chapters.reduce((prevDict, chapter) => {
-					if (prevDict[chapter.book_abbrev] === undefined) {
+					if (typeof prevDict[chapter.book_abbrev] === "undefined") {
 						prevDict[chapter.book_abbrev] = [];
 					}
 					prevDict[chapter.book_abbrev].push(chapter.number);

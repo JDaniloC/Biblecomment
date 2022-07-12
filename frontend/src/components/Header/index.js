@@ -1,8 +1,7 @@
 import "./styles.css";
 
 import React, { useState, useCallback } from "react";
-import { useHistory } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useHistory, Link } from "react-router-dom";
 import PropTypes from "prop-types";
 
 import axios from "services/api";
@@ -51,7 +50,7 @@ export default function Header({ changeChapter }) {
 		let [book, reference] = comment.book_reference.split(" ");
 		const [chapter, verse] = reference.split(":");
 		book = book.toLowerCase();
-		if (book == "jó") {
+		if (book === "jó") {
 			book = "job";
 		}
 		history.push(`/verses/${book}/${chapter}#${verse}`);
