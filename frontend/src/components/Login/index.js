@@ -186,15 +186,9 @@ export default class Login extends Component {
 							onChange={this.handleChangeInput}
 							required
 						/>
-						<input
-							type="submit"
-							value={this.state.submitName}
-						/>
+						<input type="submit" value={this.state.submitName} />
 						<hr />
-						<button
-							type="button"
-							onClick={this.handleToggleRegister}
-						>
+						<button type="button" onClick={this.handleToggleRegister}>
 							{this.state.switchBtnName}
 						</button>
 					</form>
