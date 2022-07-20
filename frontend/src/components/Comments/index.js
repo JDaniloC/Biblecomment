@@ -63,10 +63,10 @@ export default function Comments({
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
-							<label htmlFor={commentary.id}>
+							<label htmlFor={`c${commentary.id}`}>
 								<p className="label-title">{commentary.text}</p>
 							</label>
-							<input type="checkbox" id={commentary.id} />
+							<input type="checkbox" id={`c${commentary.id}`} />
 							<div className="user-comment">
 								<p>{commentary.text}</p>
 								<span className="comment-buttons">
