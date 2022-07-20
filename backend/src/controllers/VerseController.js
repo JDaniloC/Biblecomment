@@ -23,13 +23,14 @@ module.exports = {
 
 		if (typeof text === "undefined") {
 			return response.status(BAD_REQUEST_STATUS).json({
-				error: "insufficient body: text" });
+				error: "insufficient body: text",
+			});
 		}
 
 		const book = await connection("books")
-            .where("abbrev", abbrev)
+			.where("abbrev", abbrev)
 			.andWhere("length", ">=", chapter)
-            .first();
+			.first();
 
 		if (book) {
 			await connection("verses")
@@ -37,8 +38,8 @@ module.exports = {
 				.andWhere("chapter", chapter)
 				.andWhere("verse_number", verse)
 				.delete();
-            
-            const bookAbbrev = parseBookAbbrev(abbrev);
+
+			const bookAbbrev = parseBookAbbrev(abbrev);
 			const newChapter = {
 				text,
 				abbrev,
@@ -51,7 +52,8 @@ module.exports = {
 			return response.json(newChapter);
 		}
 		return response.status(BAD_REQUEST_STATUS).json({
-			error: "Chapter doesn't exist in the book" });
+			error: "Chapter doesn't exist in the book",
+		});
 	},
 
 	async show(request, response) {
@@ -61,13 +63,14 @@ module.exports = {
 			.where("abbrev", abbrev)
 			.andWhere("chapter", chapter)
 			.orderBy("verse_number")
-            .select("*");
+			.select("*");
 
 		if (verseList) {
 			return response.json(verseList);
 		}
 		return response.status(BAD_REQUEST_STATUS).json({
-			error: "this chapter doesn't exists" });
+			error: "this chapter doesn't exists",
+		});
 	},
 
 	async update(request, response) {
@@ -76,13 +79,14 @@ module.exports = {
 
 		if (typeof text === "undefined") {
 			return response.status(BAD_REQUEST_STATUS).json({
-				error: "insufficient body: verse." });
+				error: "insufficient body: verse.",
+			});
 		}
 
 		const book = await connection("books")
-            .where("abbrev", abbrev)
+			.where("abbrev", abbrev)
 			.andWhere("length", ">=", chapter)
-            .first();
+			.first();
 
 		if (book) {
 			const newChapter = {
@@ -96,9 +100,10 @@ module.exports = {
 				.andWhere("chapter", chapter)
 				.andWhere("verse_number", verse)
 				.update({ text });
-            return response.json(newChapter);
+			return response.json(newChapter);
 		}
 		return response.status(BAD_REQUEST_STATUS).json({
-			error: "this book doesn't exists" });
+			error: "this book doesn't exists",
+		});
 	},
 };
