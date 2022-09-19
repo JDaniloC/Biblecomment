@@ -18,7 +18,7 @@ module.exports = {
 			const comments = await connection("comments")
 				.where("chapter_id", chapter.id)
 				.select("*");
-			
+
 			const titleComments = [];
 			const verseComments = [];
 			for (const comment of comments) {
