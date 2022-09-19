@@ -77,7 +77,7 @@ export default class NewComment extends Component {
 					const number = this.props.number;
 					const verso = this.props.verso() + 1;
 					axios
-						.post(`/books/${abbrev}/chapters/${number}/comments/${verso}`, {
+						.post(`/books/${abbrev}/comments/${number}/${verso}`, {
 							on_title: this.props.isTitleComment,
 							token,
 							text,

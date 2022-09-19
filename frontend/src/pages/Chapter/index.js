@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 
 import { NotificationContext } from "contexts/NotificationContext";
 import { isAuthenticated, TOKEN_KEY } from "services/auth";
-import { Loading } from "components/Partials";
+import { chapterAPI } from "./api";
 
 import TitleComment from "components/TitleComments";
 import NewComment from "components/NewComment";
@@ -20,6 +20,8 @@ import heartIcon from "assets/heart.svg";
 import penIcon from "assets/pen.svg";
 import personIcon from "assets/person.svg";
 import warningIcon from "assets/warning.svg";
+
+import Verses from "./components/Verses";
 
 function getIconImage(tag) {
 	switch (tag) {
@@ -68,6 +70,7 @@ export default class Chapter extends Component {
 			titleName: "Chapter",
 			chapterNumber: "0",
 
+			verseList: [],
 			verses: [],
 			comments: [],
 			allComments: [],
@@ -77,9 +80,9 @@ export default class Chapter extends Component {
 		};
 
 		// to use the state of parent in the children
-		this.getVerse = this.getVerse.bind(this);
 		this.loadChapter = this.loadChapter.bind(this);
 		this.goToDiscussion = this.goToDiscussion.bind(this);
+		this.getCurrentVerse = this.getCurrentVerse.bind(this);
 
 		this.onHandleLike = this.handleLike.bind(this);
 		this.onHandleReport = this.handleReport.bind(this);
@@ -100,68 +103,34 @@ export default class Chapter extends Component {
 		this.handleNotification = handleNotification;
 	}
 
-	getVerse() {
+	getCurrentVerse() {
 		return this.state.currentVerse;
 	}
 
-	loadChapter(abbrev, number) {
+	loadChapter(abbrev, chapter) {
 		this.abbrev = abbrev;
-		this.number = number;
+		this.number = chapter;
 
-		axios
-			.get(`/books/${abbrev}/chapters/${number}/`)
-			.then(({ data }) => {
-				const { title, verses } = data;
-				this.setState({ titleName: title });
-				this.setState({ verses: JSON.parse(verses) });
-			})
-			.catch((error) => {
-				if (error.response) {
-					this.handleNotification("error", error.response.data.error);
-				} else {
-					this.handleNotification(
-						"error",
-						`Problema no servidor: ${error.toString()}`
-					);
-				}
-			});
+		chapterAPI.getChapterVerses(abbrev, chapter).then((response) => {
+			if (response.error) {
+				return this.handleNotification("error", response.error);
+			}
+			this.setState({ verseList: response.data });
+		});
+		chapterAPI.getChapterComments(abbrev, chapter).then((response) => {
+			if (response.error) {
+				return this.handleNotification("error", response.error);
+			}
 
-		axios
-			.get(`/books/${abbrev}/chapters/${number}/comments`)
-			.then((response) => {
-				if (typeof response.data === "object") {
-					const result = response.data.map((comment) => {
-						comment.tags = JSON.parse(comment.tags);
-						return comment;
-					});
-					const titleComments = [];
-					const comments = [];
-					for (const comment of result) {
-						if (comment.on_title) {
-							titleComments.push(comment);
-						} else {
-							comments.push(comment);
-						}
-					}
+			const {
+				titleComments,
+				verseComments: allComments
+			} = response.data;
 
-					this.setState({
-						allComments: comments,
-						titleComments,
-					});
-				}
-			})
-			.catch((error) => {
-				if (error.response) {
-					this.handleNotification("error", error.response.data.error);
-				} else {
-					this.handleNotification(
-						"error",
-						`Problema no servidor: ${error.toString()}`
-					);
-				}
-			});
+			this.setState({ allComments, titleComments });
+		});
 
-		const newChapterNumber = number.length === 1 ? `0${number}` : number;
+		const newChapterNumber = chapter.length === 1 ? `0${chapter}` : chapter;
 		this.setState({ chapterNumber: newChapterNumber });
 		return true;
 	}
@@ -169,9 +138,9 @@ export default class Chapter extends Component {
 	handleComments(event) {
 		const target = event.target;
 		const { currentVerse } = this.state;
-		const numberVerse = parseInt(target.getAttribute("data-index"), 10);
+		const verseID = parseInt(target.getAttribute("data-index"), 10);
 
-		if (currentVerse === numberVerse) {
+		if (currentVerse === verseID) {
 			this.closeComments(event);
 		} else {
 			this.setState((prevState) => ({
@@ -181,9 +150,9 @@ export default class Chapter extends Component {
 					? prevState.navClass
 					: `${prevState.navClass} navHide`,
 				comments: prevState.allComments.filter(
-					(comment) => comment.verse === numberVerse + 1
+					(comment) => comment.verse_id === verseID
 				),
-				currentVerse: numberVerse,
+				currentVerse: verseID,
 			}));
 		}
 	}
@@ -356,33 +325,12 @@ export default class Chapter extends Component {
 								discussionFunction={this.goToDiscussion}
 								handleNewComment={this.onHandleNewComment}
 							/>
-
-							<ul className="verse-list">
-								{this.state.verses.length > 0 ? (
-									this.state.verses.map((verse, index) => (
-										<li key={`${index}${verse}`} id={index + 1}>
-											<sup> {index + 1} </sup>
-											<p
-												data-index={index}
-												style={{
-													display: "inline",
-													backgroundColor:
-														index === this.state.currentVerse
-															? "yellow"
-															: "white",
-												}}
-												onClick={this.handleComments}
-												onKeyUp={this.handleComments}
-											>
-												{verse}
-											</p>
-											{this.renderAmount(index)}
-										</li>
-									))
-								) : (
-									<Loading />
-								)}
-							</ul>
+							<Verses
+								verseList={this.state.verseList}
+								commentList={this.state.allComments}
+								handleComments={this.handleComments}
+								currentVerse={this.state.currentVerse}
+							/>
 						</div>
 					</div>
 					<aside className={this.state.asideClass}>
@@ -402,8 +350,8 @@ export default class Chapter extends Component {
 							post
 							abbrev={this.abbrev}
 							number={this.number}
-							verso={this.getVerse}
 							title="Criar comentário"
+							verso={this.getCurrentVerse}
 							close={this.closeNewCommentary}
 							addNewComment={this.addNewComment}
 							isTitleComment={this.state.newTitleComment}

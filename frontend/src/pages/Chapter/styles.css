@@ -56,20 +56,6 @@ aside {
 	width: 500px;
 }
 
-ul.verse-list li {
-	margin-top: 10px;
-	line-height: 25px;
-	font-size: 18px;
-	display: flex;
-}
-ul.verse-list li p {
-	cursor: pointer;
-}
-
-ul.verse-list li sup {
-	margin-right: 0.5em;
-}
-
 .chapter-container div.amount {
 	min-width: 25px;
 	height: 25px;

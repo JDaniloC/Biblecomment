@@ -6,7 +6,7 @@ const BAD_REQUEST_STATUS = 400;
 
 module.exports = {
 	async index(request, response) {
-		const { abbrev, number } = request.params;
+		const { abbrev, chapter: number } = request.params;
 
 		const chapter = await connection("chapters")
 			.where("book_abbrev", abbrev)
@@ -18,8 +18,19 @@ module.exports = {
 			const comments = await connection("comments")
 				.where("chapter_id", chapter.id)
 				.select("*");
+			
+			const titleComments = [];
+			const verseComments = [];
+			for (const comment of comments) {
+				comment.tags = JSON.parse(comment.tags);
+				if (comment.on_title) {
+					titleComments.push(comment);
+				} else {
+					verseComments.push(comment);
+				}
+			}
 
-			return response.json(comments);
+			return response.json({ titleComments, verseComments });
 		}
 		return response
 			.status(BAD_REQUEST_STATUS)
@@ -27,7 +38,7 @@ module.exports = {
 	},
 
 	async show(request, response) {
-		const { abbrev, number, verse } = request.params;
+		const { abbrev, chapter: number, verse } = request.params;
 
 		const chapter = await connection("chapters")
 			.where("book_abbrev", abbrev)
@@ -50,7 +61,7 @@ module.exports = {
 	},
 
 	async store(request, response) {
-		const { abbrev, number, verse } = request.params;
+		const { abbrev, verse, chapter: number } = request.params;
 		const { text, tags, on_title } = request.body;
 		const { username } = response.locals.userData;
 

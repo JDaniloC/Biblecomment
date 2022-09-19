@@ -52,13 +52,10 @@ routes.get("/books/:abbrev/verses/:chapter", VerseController.show);
 routes.post("/books/:abbrev/verses/:chapter/:verse", VerseController.store);
 routes.patch("/books/:abbrev/verses/:chapter/:verse", VerseController.update);
 
-routes.get("/books/:abbrev/chapters/:number/comments", CommentController.index);
-routes.get(
-	"/books/:abbrev/chapters/:number/comments/:verse",
-	CommentController.show
-);
+routes.get("/books/:abbrev/comments/:chapter", CommentController.index);
+routes.get("/books/:abbrev/comments/:chapter/:verse", CommentController.show);
 routes.post(
-	"/books/:abbrev/chapters/:number/comments/:verse",
+	"/books/:abbrev/comments/:chapter/:verse",
 	Authentication,
 	CommentController.store
 );
