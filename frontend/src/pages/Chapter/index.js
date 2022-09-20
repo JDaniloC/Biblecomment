@@ -122,10 +122,7 @@ export default class Chapter extends Component {
 				return this.handleNotification("error", response.error);
 			}
 
-			const {
-				titleComments,
-				verseComments: allComments
-			} = response.data;
+			const { titleComments, verseComments: allComments } = response.data;
 
 			this.setState({ allComments, titleComments });
 		});

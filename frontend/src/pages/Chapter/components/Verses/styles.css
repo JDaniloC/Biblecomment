@@ -12,5 +12,5 @@ ul.verse-list li sup {
 	margin-right: 0.5em;
 }
 ul.verse-list p.verse-text[data-active="true"] {
-    background-color: yellow;
+	background-color: yellow;
 }

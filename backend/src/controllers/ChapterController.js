@@ -22,39 +22,41 @@ module.exports = {
 
 		if (typeof verses === "undefined") {
 			return response.status(BAD_REQUEST_STATUS).json({
-				error: "insufficient body: verses" });
+				error: "insufficient body: verses",
+			});
 		}
 
 		const book = await connection("books")
-            .where("abbrev", abbrev)
+			.where("abbrev", abbrev)
 			.andWhere("length", ">=", chapter)
-            .first();
+			.first();
 
 		if (book) {
 			await connection("verses")
 				.where("abbrev", abbrev)
 				.andWhere("chapter", chapter)
 				.delete();
-            
-            const bookAbbrev = parseBookAbbrev(abbrev);
-            const chapterList = [];
-            verses.forEach(async (verse, index) => {
-                const verseNumber = index + 1;
-                const newChapter = {
-                    abbrev,
-                    chapter,
-                    text: verse,
-                    verse_number: verseNumber,
-                    reference: `${bookAbbrev} ${chapter}:${verseNumber}`,
-                };
-                await connection("verses").insert(newChapter);
-                chapterList.push(newChapter);
-            });
+
+			const bookAbbrev = parseBookAbbrev(abbrev);
+			const chapterList = [];
+			verses.forEach(async (verse, index) => {
+				const verseNumber = index + 1;
+				const newChapter = {
+					abbrev,
+					chapter,
+					text: verse,
+					verse_number: verseNumber,
+					reference: `${bookAbbrev} ${chapter}:${verseNumber}`,
+				};
+				await connection("verses").insert(newChapter);
+				chapterList.push(newChapter);
+			});
 
 			return response.json(chapterList);
 		}
 		return response.status(BAD_REQUEST_STATUS).json({
-			error: "this books doesn't exists." });
+			error: "this books doesn't exists.",
+		});
 	},
 
 	async show(request, response) {
@@ -84,36 +86,38 @@ module.exports = {
 
 		if (typeof verses === "undefined") {
 			return response.status(BAD_REQUEST_STATUS).json({
-				error: "insufficient body: verses." });
+				error: "insufficient body: verses.",
+			});
 		}
 
 		const book = await connection("books")
-            .where("abbrev", abbrev)
+			.where("abbrev", abbrev)
 			.andWhere("length", ">=", chapter)
-            .first();
+			.first();
 
 		if (book) {
-            const chapterList = [];
-            verses.forEach(async (verse, index) => {
-                const verseNumber = index + 1;
-                const newChapter = {
-                    abbrev,
-                    chapter,
-                    text: verse,
-                    verse_number: verseNumber,
-                };
-                await connection("verses")
-                    .where("abbrev", abbrev)
-                    .andWhere("chapter", chapter)
-                    .andWhere("verse_number", verseNumber)
-                    .update({
-                        text: verse,
-                    });
-                chapterList.push(newChapter);
-            });
-            return response.json(chapterList);
+			const chapterList = [];
+			verses.forEach(async (verse, index) => {
+				const verseNumber = index + 1;
+				const newChapter = {
+					abbrev,
+					chapter,
+					text: verse,
+					verse_number: verseNumber,
+				};
+				await connection("verses")
+					.where("abbrev", abbrev)
+					.andWhere("chapter", chapter)
+					.andWhere("verse_number", verseNumber)
+					.update({
+						text: verse,
+					});
+				chapterList.push(newChapter);
+			});
+			return response.json(chapterList);
 		}
 		return response.status(BAD_REQUEST_STATUS).json({
-			error: "this book doesn't exists" });
+			error: "this book doesn't exists",
+		});
 	},
 };

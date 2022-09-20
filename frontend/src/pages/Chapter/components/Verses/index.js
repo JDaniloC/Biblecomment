@@ -7,12 +7,12 @@ import Verse from "models/Verse";
 import Comment from "models/Comment";
 
 export default function Verses({
-    verseList,
-    commentList,
-    currentVerse,
-    handleComments
+	verseList,
+	commentList,
+	currentVerse,
+	handleComments,
 }) {
-    function renderAmount(verseID) {
+	function renderAmount(verseID) {
 		const amount = commentList.filter(
 			(comment) => comment.verse_id === verseID
 		).length;
@@ -40,31 +40,31 @@ export default function Verses({
 
 	return (
 		<ul className="verse-list">
-            {verseList.length > 0 ? (
-                verseList.map(verse => (
-                    <li key={verse.id} id={verse.verse_number}>
-                        <sup> {verse.verse_number} </sup>
-                        <p
-                            className="verse-text"
-                            data-index={verse.id}
-                            onClick={handleComments}
-                            onKeyUp={handleComments}
-                            data-active={currentVerse === verse.id}
-                        >
-                            {verse.text}
-                        </p>
-                        {renderAmount(verse.id)}
-                    </li>
-                ))
-            ) : (
-                <Loading />
-            )}
-        </ul>
+			{verseList.length > 0 ? (
+				verseList.map((verse) => (
+					<li key={verse.id} id={verse.verse_number}>
+						<sup> {verse.verse_number} </sup>
+						<p
+							className="verse-text"
+							data-index={verse.id}
+							onClick={handleComments}
+							onKeyUp={handleComments}
+							data-active={currentVerse === verse.id}
+						>
+							{verse.text}
+						</p>
+						{renderAmount(verse.id)}
+					</li>
+				))
+			) : (
+				<Loading />
+			)}
+		</ul>
 	);
 }
 Verses.propTypes = {
-    commentList: PropTypes.arrayOf(Comment).isRequired,
-    verseList: PropTypes.arrayOf(Verse).isRequired,
-    currentVerse: PropTypes.number.isRequired,
-    handleComments: PropTypes.func.isRequired,
+	commentList: PropTypes.arrayOf(Comment).isRequired,
+	verseList: PropTypes.arrayOf(Verse).isRequired,
+	currentVerse: PropTypes.number.isRequired,
+	handleComments: PropTypes.func.isRequired,
 };
