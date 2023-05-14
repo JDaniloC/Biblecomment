@@ -54,7 +54,7 @@ module.exports = {
 	},
 
 	async store(request, response) {
-		const { abbrev, verse, chapter } = request.params;
+		const { verseID } = request.params;
 		const { text, tags, on_title } = request.body;
 		const { username } = response.locals.userData;
 
@@ -65,21 +65,18 @@ module.exports = {
 		}
 
 		const verses = await connection("verses")
-			.where("chapter", chapter)
-			.andWhere("abbrev", abbrev)
-			.andWhere("verse_number", verse)	
-			.select("id", "abbrev").first();
+			.where("id", verseID)
+			.select("abbrev", "chapter", "verse_number").first();
 
 		if (!verses) {
 			return response.status(BAD_REQUEST_STATUS).json({
 				error: "Verse not found"
 			});
 		}
-		let capitalizedBookAbbrev =
-			chapter.book_abbrev.charAt(0).toUpperCase() +
-			chapter.book_abbrev.slice(1);
-		if (capitalizedBookAbbrev === "Job") {
-			capitalizedBookAbbrev = "Jó";
+		let newBookAbbrev = verses.abbrev.charAt(0).toUpperCase() +
+							verses.abbrev.slice(1);
+		if (newBookAbbrev === "Job") {
+			newBookAbbrev = "Jó";
 		}
 
 		const created_at = new Date()
@@ -87,22 +84,24 @@ module.exports = {
 			.replace("Z", "")
 			.replace("T", " ");
 
+		const chapVers = `${verses.chapter}:${verses.verse_number}`;
+		const reference = `${newBookAbbrev} ${chapVers}`
 		const newComment = {
 			text,
 			username,
 			on_title,
 			created_at,
-			verse_id: verses.id,
-			chapter_id: chapter.id,
+			book_reference: reference,
 			likes: JSON.stringify([]),
 			tags: JSON.stringify(tags),
+			verse_id: parseInt(verseID),
 			reports: JSON.stringify([]),
-			book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
 		};
 		const comment = await connection("comments").insert(newComment);
 
-		return response.json({ ...newComment,
-			id: comment[0], likes: [], reports: []
+		return response.json({
+			...newComment, id: comment[0],
+			likes: [], reports: [], tags: []
 		});
 	},
 
@@ -129,7 +128,7 @@ module.exports = {
 			text = newText;
 		}
 		if (typeof newTags !== "undefined") {
-			tags = newTags;
+			tags = JSON.stringify(newTags);
 		}
 		if (typeof newLikes !== "undefined") {
 			const likeList = JSON.parse(likes);
@@ -156,9 +155,9 @@ module.exports = {
 
 		return response.json({
 			text,
-			tags,
-			likes,
-			reports,
+			tags: JSON.parse(tags),
+			likes: JSON.parse(likes),
+			reports: JSON.parse(reports),
 		});
 	},
 

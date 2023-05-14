@@ -37,7 +37,13 @@ module.exports = {
 			.limit(COMMENTS_AMOUNT)
 			.offset((pages - 1) * COMMENTS_AMOUNT);
 
-		return response.json({ comments });
+		return response.json({ comments: comments.map((comment) => {
+			return { ...comment,
+				tags: JSON.parse(comment.tags),
+				likes: JSON.parse(comment.likes),
+				reports: JSON.parse(comment.reports),
+			}
+		}) });
 	},
 
 	async userFavorites(request, response) {

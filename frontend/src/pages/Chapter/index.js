@@ -108,9 +108,6 @@ export default class Chapter extends Component {
 	}
 
 	loadChapter(abbrev, chapter) {
-		this.abbrev = abbrev;
-		this.number = chapter;
-
 		chapterAPI.getChapterVerses(abbrev, chapter).then((response) => {
 			if (response.error) {
 				return this.handleNotification("error", response.error);
@@ -345,10 +342,8 @@ export default class Chapter extends Component {
 					<div className={this.state.newBoxClass}>
 						<NewComment
 							post
-							abbrev={this.abbrev}
-							number={this.number}
 							title="Criar comentário"
-							verso={this.getCurrentVerse}
+							verseID={this.getCurrentVerse}
 							close={this.closeNewCommentary}
 							addNewComment={this.addNewComment}
 							isTitleComment={this.state.newTitleComment}

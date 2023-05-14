@@ -48,8 +48,7 @@ routes.patch("/books/:abbrev/verses/:chapter/:verse", VerseController.update);
 
 routes.get("/comments/:abbrev/:chapter", CommentController.index);
 routes.get("/comments/:abbrev/:chapter/:verse", CommentController.show);
-routes.post("/comments/:abbrev/:chapter/:verse",
-			Authentication, CommentController.store);
+routes.post("/comments/:verseID", Authentication, CommentController.store);
 routes.patch("/comments/:id", Authentication, CommentController.update);
 routes.delete("/comments/:id", Authentication, CommentController.destroy);
 
