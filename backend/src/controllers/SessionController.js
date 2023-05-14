@@ -85,7 +85,8 @@ module.exports = {
 
 		if (registeredUser.password === md5(password)) {
 			const commentedChapters = await getCommentedChapters(
-				registeredUser.username)
+				registeredUser.username
+			);
 
 			const token = jwt.sign(
 				{
@@ -140,7 +141,8 @@ module.exports = {
 		}
 
 		const commentedChapters = await getCommentedChapters(
-			registeredUser.username)
+			registeredUser.username
+		);
 
 		return response.json({
 			email: registeredUser.email,

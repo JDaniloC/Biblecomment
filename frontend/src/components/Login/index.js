@@ -93,11 +93,9 @@ export default class Login extends Component {
 
 	async tryLogin(email, password) {
 		try {
-			const { data } = await axios.post(
-				"/session/login/", { email, password })
+			const { data } = await axios.post("/session/login/", { email, password });
 			this.context.loadUserInfos(data);
-			this.handleNotification("success",
-				"Login realizado com sucesso!");
+			this.handleNotification("success", "Login realizado com sucesso!");
 			login(data.token);
 			this.context.getComments(1);
 			this.context.getFavorites(1);
@@ -179,15 +177,9 @@ export default class Login extends Component {
 							onChange={this.handleChangeInput}
 							required
 						/>
-						<input
-							type="submit"
-							value={this.state.submitName}
-						/>
+						<input type="submit" value={this.state.submitName} />
 						<hr />
-						<button
-							type="button"
-							onClick={this.handleToggleRegister}
-						>
+						<button type="button" onClick={this.handleToggleRegister}>
 							{this.state.switchBtnName}
 						</button>
 					</form>

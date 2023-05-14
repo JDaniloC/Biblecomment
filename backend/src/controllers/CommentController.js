@@ -21,10 +21,8 @@ module.exports = {
 				.where("verse_id", verse.id)
 				.select("*");
 
-			const {
-				titleComments: tComments,
-				verseComments: vComments
-			} = parseComments(comments)
+			const { titleComments: tComments, verseComments: vComments } =
+				parseComments(comments);
 			titleComments.push(...tComments);
 			verseComments.push(...vComments);
 		}
@@ -37,8 +35,9 @@ module.exports = {
 		const verses = await connection("verses")
 			.where("chapter", chapter)
 			.andWhere("abbrev", abbrev)
-			.andWhere("verse_number", verse)	
-			.select("id").first();
+			.andWhere("verse_number", verse)
+			.select("id")
+			.first();
 
 		if (!verses) {
 			return response.status(BAD_REQUEST_STATUS).json({
@@ -67,12 +66,13 @@ module.exports = {
 		const verses = await connection("verses")
 			.where("chapter", chapter)
 			.andWhere("abbrev", abbrev)
-			.andWhere("verse_number", verse)	
-			.select("id", "abbrev").first();
+			.andWhere("verse_number", verse)
+			.select("id", "abbrev")
+			.first();
 
 		if (!verses) {
 			return response.status(BAD_REQUEST_STATUS).json({
-				error: "Verse not found"
+				error: "Verse not found",
 			});
 		}
 		let capitalizedBookAbbrev =
@@ -101,8 +101,11 @@ module.exports = {
 		};
 		const comment = await connection("comments").insert(newComment);
 
-		return response.json({ ...newComment,
-			id: comment[0], likes: [], reports: []
+		return response.json({
+			...newComment,
+			id: comment[0],
+			likes: [],
+			reports: [],
 		});
 	},
 
@@ -178,7 +181,7 @@ module.exports = {
 			return response.json(comment);
 		}
 		return response.status(UNAUTHORIZED_STATUS).json({
-			Unauthorized: "Comentário não correspondente ao usuário"
+			Unauthorized: "Comentário não correspondente ao usuário",
 		});
 	},
 };

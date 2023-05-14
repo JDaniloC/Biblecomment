@@ -8,7 +8,7 @@ import bookImg from "assets/book.svg";
 import handImg from "assets/hand.svg";
 import penImg from "assets/pen.svg";
 import personImg from "assets/person.svg";
-import { ReactComponent as CloseIcon } from 'assets/x.svg';
+import { ReactComponent as CloseIcon } from "assets/x.svg";
 
 import PropTypes from "prop-types";
 
@@ -142,7 +142,7 @@ export default class NewComment extends Component {
 				<div className="top">
 					<h2 style={{ alignSelf: "center" }}>{this.props.title}</h2>
 					<button onClick={this.props.close}>
-						<CloseIcon/>
+						<CloseIcon />
 					</button>
 				</div>
 

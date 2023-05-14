@@ -107,13 +107,15 @@ export function ProfileProvider({ children }) {
 
 	useEffect(() => {
 		if (isAuthenticated()) {
-			axios.get("/session/").then(({ data }) => {
-				loadUserInfos(data);
-			})
-			.catch(({ response }) => {
-				handleNotification("error", response.data.error);
-				logout();
-			});
+			axios
+				.get("/session/")
+				.then(({ data }) => {
+					loadUserInfos(data);
+				})
+				.catch(({ response }) => {
+					handleNotification("error", response.data.error);
+					logout();
+				});
 		}
 	}, []);
 

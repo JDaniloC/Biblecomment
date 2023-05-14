@@ -4,7 +4,7 @@ import React, { useState, useCallback } from "react";
 import debounce from "lodash.debounce";
 import PropTypes from "prop-types";
 
-import { ReactComponent as CloseIcon } from 'assets/x.svg';
+import { ReactComponent as CloseIcon } from "assets/x.svg";
 import SearchIcon from "assets/search.svg";
 import Comment from "models/Comment";
 
@@ -44,10 +44,7 @@ export default function SearchInput({
 					placeholder="Buscar..."
 					onChange={handleSearchChange}
 				/>
-				<CloseIcon
-					onKeyUp={handleCleanSearch}
-					onClick={handleCleanSearch}
-				/>
+				<CloseIcon onKeyUp={handleCleanSearch} onClick={handleCleanSearch} />
 			</div>
 			<ul>
 				{searchResult.map((comment) => (
