@@ -3,7 +3,7 @@ import "./styles.css";
 import Comment from "models/Comment";
 import PropTypes from "prop-types";
 import React, { useCallback } from "react";
-import { ReactComponent as CloseIcon } from 'assets/x.svg';
+import { ReactComponent as CloseIcon } from "assets/x.svg";
 
 function getLikeCount(comment) {
 	return comment.likes.length;
@@ -48,7 +48,7 @@ export default function Comments({
 			<div className="top">
 				<h2> Comentários </h2>
 				<button type="button" onClick={closeFunction}>
-					<CloseIcon/>
+					<CloseIcon />
 				</button>
 			</div>
 

@@ -12,10 +12,11 @@
 }
 .title-comments li > p {
 	font-size: 14px;
-    line-height: 18px;
-    text-align: justify;
+	line-height: 18px;
+	text-align: justify;
 	white-space: break-spaces;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+		Arial, sans-serif;
 }
 .title-comments li p {
 	padding-left: 5px;

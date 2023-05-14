@@ -15,9 +15,7 @@ export const chapterAPI = {
 
 	getChapterComments: async (abbrev, chapter) => {
 		try {
-			const response = await axios.get(
-				`/comments/${abbrev}/${chapter}/`
-			);
+			const response = await axios.get(`/comments/${abbrev}/${chapter}/`);
 			return { data: response.data };
 		} catch (error) {
 			if (error.response) {

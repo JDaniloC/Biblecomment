@@ -65,6 +65,7 @@ yarn
 Finally run this command to start the development server, currently the project is using Node v16, so if you need to use the new version, downgrade or access this [solution](https://stackoverflow.com/questions/69692842/error-message-error0308010cdigital-envelope-routinesunsupported)
 
 ### To migrate
+
 ```bash
 npx knex migrate:latest
 ```

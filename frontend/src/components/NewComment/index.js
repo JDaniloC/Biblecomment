@@ -13,7 +13,7 @@ import bookImg from "assets/book.svg";
 import handImg from "assets/hand.svg";
 import penImg from "assets/pen.svg";
 import personImg from "assets/person.svg";
-import { ReactComponent as CloseIcon } from 'assets/x.svg';
+import { ReactComponent as CloseIcon } from "assets/x.svg";
 
 import PropTypes from "prop-types";
 
