@@ -94,7 +94,7 @@ module.exports = {
 			book_reference: reference,
 			likes: JSON.stringify([]),
 			tags: JSON.stringify(tags),
-			verse_id: parseInt(verseID),
+			verse_id: parseInt(verseID, 10),
 			reports: JSON.stringify([]),
 		};
 		const comment = await connection("comments").insert(newComment);

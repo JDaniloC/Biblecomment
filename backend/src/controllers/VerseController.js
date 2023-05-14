@@ -90,9 +90,9 @@ module.exports = {
 
 		if (book) {
 			const newChapter = {
+				text,
 				abbrev,
 				chapter,
-				text: text,
 				verse_number: verse,
 			};
 			await connection("verses")

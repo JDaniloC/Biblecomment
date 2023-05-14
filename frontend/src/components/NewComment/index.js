@@ -192,7 +192,7 @@ export default function NewComment(props) {
 					value={commentText}
 					onChange={handleChange}
 					placeholder="Descreva seu comentário"
-				></textarea>
+				/>
 			</div>
 			<button
 				type="submit"

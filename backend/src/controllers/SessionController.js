@@ -6,7 +6,7 @@ const md5 = require("md5");
 
 const BAD_REQUEST_STATUS = 400;
 
-async function getCommentedChapters(username) {
+function getCommentedChapters(username) {
 	return connection("comments")
 		.where("username", username)
 		.join("verses", "verses.id", "verse_id")

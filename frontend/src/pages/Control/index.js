@@ -36,8 +36,8 @@ export default class Control extends Component {
 		this.handleLoadDiscussion = this.handleLoadDiscussion.bind(this);
 	}
 
-	shouldComponentUpdate(nextProperties, nextState) {
-		if (this.state !== nextState || this.props !== nextProperties) {
+	shouldComponentUpdate(nextProps, nextState) {
+		if (this.state !== nextState || this.props !== nextProps) {
 			return true;
 		}
 		return false;

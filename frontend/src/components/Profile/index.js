@@ -17,7 +17,6 @@ export default class Profile extends Component {
 		super(props);
 
 		this.state = {
-			perfilClass: "invisible",
 			editBox: "invisible",
 			blur: "none",
 			selected: 0,
@@ -138,7 +137,7 @@ export default class Profile extends Component {
 						addNewComment={this.handleCommentEdit}
 					/>
 				</div>
-				<div className="overlay" style={{ display: this.state.blur }}></div>
+				<div className="overlay" style={{ display: this.state.blur }}/>
 			</>
 		);
 	}

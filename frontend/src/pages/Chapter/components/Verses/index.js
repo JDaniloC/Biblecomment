@@ -18,7 +18,7 @@ export default function Verses({
 		).length;
 
 		if (amount === 0) {
-			return <></>;
+			return <React.Fragment></React.Fragment>;
 		}
 
 		const color =

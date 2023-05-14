@@ -71,7 +71,6 @@ export default class Chapter extends Component {
 			chapterNumber: "0",
 
 			verseList: [],
-			verses: [],
 			comments: [],
 			allComments: [],
 			titleComments: [],
