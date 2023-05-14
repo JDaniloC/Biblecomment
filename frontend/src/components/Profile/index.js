@@ -17,13 +17,15 @@ export default class Profile extends Component {
 		super(props);
 
 		this.state = {
-			perfilClass: "invisible",
 			editBox: "invisible",
 			blur: "none",
 			selected: 0,
 			perfilDisplay: "contents",
 			configDisplay: "none",
 			buttonDisplay: "block",
+
+			commentID: -1,
+			commentText: "",
 		};
 
 		this.editComponent = createRef();
@@ -44,14 +46,12 @@ export default class Profile extends Component {
 				index = i;
 			}
 		});
-		this.editComponent.current.setState({
-			texto: selected,
-			comment_id: identificador,
-		});
 
 		this.setState({
-			selected: index,
 			blur: "block",
+			selected: index,
+			commentText: selected,
+			commentID: identificador,
 			editBox: "visible centro",
 		});
 	}
@@ -130,13 +130,14 @@ export default class Profile extends Component {
 				<div className={this.state.editBox}>
 					<NewComment
 						post={false}
-						ref={this.editComponent}
 						title="Editar comentário"
 						close={this.closeEditComment}
+						text={this.state.commentText}
+						commentID={this.state.commentID}
 						addNewComment={this.handleCommentEdit}
 					/>
 				</div>
-				<div className="overlay" style={{ display: this.state.blur }}></div>
+				<div className="overlay" style={{ display: this.state.blur }} />
 			</>
 		);
 	}

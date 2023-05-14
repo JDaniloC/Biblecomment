@@ -1,4 +1,5 @@
 const connection = require("../database/connection");
+const parseComments = require("../utils/parseComments");
 const missingBodyParams = require("../utils/missingBodyParams");
 
 const UNAUTHORIZED_STATUS = 401;
@@ -6,51 +7,53 @@ const BAD_REQUEST_STATUS = 400;
 
 module.exports = {
 	async index(request, response) {
-		const { abbrev, number } = request.params;
+		const { abbrev, chapter } = request.params;
 
-		const chapter = await connection("chapters")
-			.where("book_abbrev", abbrev)
-			.andWhere("number", number)
-			.first()
+		const verses = await connection("verses")
+			.where("chapter", chapter)
+			.andWhere("abbrev", abbrev)
 			.select("id");
 
-		if (chapter) {
+		const titleComments = [];
+		const verseComments = [];
+		for (const verse of verses) {
 			const comments = await connection("comments")
-				.where("chapter_id", chapter.id)
+				.where("verse_id", verse.id)
 				.select("*");
 
-			return response.json(comments);
+			const { titleComments: tComments, verseComments: vComments } =
+				parseComments(comments);
+			titleComments.push(...tComments);
+			verseComments.push(...vComments);
 		}
-		return response
-			.status(BAD_REQUEST_STATUS)
-			.json({ error: "chapter not found" });
+		return response.json({ titleComments, verseComments });
 	},
 
 	async show(request, response) {
-		const { abbrev, number, verse } = request.params;
+		const { abbrev, chapter, verse } = request.params;
 
-		const chapter = await connection("chapters")
-			.where("book_abbrev", abbrev)
-			.andWhere("number", number)
-			.first()
-			.select("id");
+		const verses = await connection("verses")
+			.where("chapter", chapter)
+			.andWhere("abbrev", abbrev)
+			.andWhere("verse_number", verse)
+			.select("id")
+			.first();
 
-		const comments = await connection("comments")
-			.where("chapter_id", chapter.id)
-			.andWhere("verse", verse)
-			.select("*");
-
-		if (comments) {
-			return response.json(comments);
+		if (!verses) {
+			return response.status(BAD_REQUEST_STATUS).json({
+				error: "comments not found for this verse.",
+			});
 		}
 
-		return response.status(BAD_REQUEST_STATUS).json({
-			error: "chapter number doesn't exists",
-		});
+		const comments = await connection("comments")
+			.where("verse_id", verses.id)
+			.select("*");
+
+		return response.json(parseComments(comments));
 	},
 
 	async store(request, response) {
-		const { abbrev, number, verse } = request.params;
+		const { verseID } = request.params;
 		const { text, tags, on_title } = request.body;
 		const { username } = response.locals.userData;
 
@@ -60,54 +63,49 @@ module.exports = {
 			});
 		}
 
-		const chapter = await connection("chapters")
-			.where("book_abbrev", abbrev)
-			.andWhere("number", number)
-			.first()
-			.select("id", "book_abbrev", "number");
+		const verses = await connection("verses")
+			.where("id", verseID)
+			.select("abbrev", "chapter", "verse_number")
+			.first();
 
-		if (chapter) {
-			let capitalizedBookAbbrev =
-				chapter.book_abbrev.charAt(0).toUpperCase() +
-				chapter.book_abbrev.slice(1);
-			if (capitalizedBookAbbrev === "Job") {
-				capitalizedBookAbbrev = "Jó";
-			}
-
-			const created_at = new Date()
-				.toISOString()
-				.replace("Z", "")
-				.replace("T", " ");
-
-			const comment = await connection("comments").insert({
-				text,
-				verse,
-				username,
-				on_title,
-				created_at,
-				chapter_id: chapter.id,
-				likes: JSON.stringify([]),
-				tags: JSON.stringify(tags),
-				reports: JSON.stringify([]),
-				book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
-			});
-
-			return response.json({
-				text,
-				tags,
-				username,
-				on_title,
-				created_at,
-				id: comment[0],
-				likes: JSON.stringify([]),
-				verse: parseInt(verse, 10),
-				reports: JSON.stringify([]),
-				book_reference: `${capitalizedBookAbbrev} ${number}:${verse}`,
+		if (!verses) {
+			return response.status(BAD_REQUEST_STATUS).json({
+				error: "Verse not found",
 			});
 		}
-		return response
-			.status(BAD_REQUEST_STATUS)
-			.json({ error: "Chapter/User doesn't exists" });
+		let newBookAbbrev =
+			verses.abbrev.charAt(0).toUpperCase() + verses.abbrev.slice(1);
+		if (newBookAbbrev === "Job") {
+			newBookAbbrev = "Jó";
+		}
+
+		const created_at = new Date()
+			.toISOString()
+			.replace("Z", "")
+			.replace("T", " ");
+
+		const chapVers = `${verses.chapter}:${verses.verse_number}`;
+		const reference = `${newBookAbbrev} ${chapVers}`;
+		const newComment = {
+			text,
+			username,
+			on_title,
+			created_at,
+			book_reference: reference,
+			likes: JSON.stringify([]),
+			tags: JSON.stringify(tags),
+			verse_id: parseInt(verseID, 10),
+			reports: JSON.stringify([]),
+		};
+		const comment = await connection("comments").insert(newComment);
+
+		return response.json({
+			...newComment,
+			id: comment[0],
+			reports: [],
+			likes: [],
+			tags: [],
+		});
 	},
 
 	async update(request, response) {
@@ -133,7 +131,7 @@ module.exports = {
 			text = newText;
 		}
 		if (typeof newTags !== "undefined") {
-			tags = newTags;
+			tags = JSON.stringify(newTags);
 		}
 		if (typeof newLikes !== "undefined") {
 			const likeList = JSON.parse(likes);
@@ -160,9 +158,9 @@ module.exports = {
 
 		return response.json({
 			text,
-			tags,
-			likes,
-			reports,
+			tags: JSON.parse(tags),
+			likes: JSON.parse(likes),
+			reports: JSON.parse(reports),
 		});
 	},
 
@@ -181,8 +179,8 @@ module.exports = {
 
 			return response.json(comment);
 		}
-		return response
-			.status(UNAUTHORIZED_STATUS)
-			.json({ Unauthorized: "Comentário não correspondente ao usuário" });
+		return response.status(UNAUTHORIZED_STATUS).json({
+			Unauthorized: "Comentário não correspondente ao usuário",
+		});
 	},
 };

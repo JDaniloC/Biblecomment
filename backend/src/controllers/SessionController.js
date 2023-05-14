@@ -6,6 +6,22 @@ const md5 = require("md5");
 
 const BAD_REQUEST_STATUS = 400;
 
+function getCommentedChapters(username) {
+	return connection("comments")
+		.where("username", username)
+		.join("verses", "verses.id", "verse_id")
+		.distinct("abbrev", "chapter")
+		.then((chapters) => {
+			return chapters.reduce((prevDict, chapter) => {
+				if (typeof prevDict[chapter.abbrev] === "undefined") {
+					prevDict[chapter.abbrev] = [];
+				}
+				prevDict[chapter.abbrev].push(chapter.chapter);
+				return prevDict;
+			}, {});
+		});
+}
+
 module.exports = {
 	async register(request, response) {
 		const { email, name, password } = request.body;
@@ -68,19 +84,9 @@ module.exports = {
 		}
 
 		if (registeredUser.password === md5(password)) {
-			const chaptersCommented = await connection("comments")
-				.where("username", registeredUser.username)
-				.join("chapters", "chapters.id", "comments.chapter_id")
-				.distinct("book_abbrev", "number")
-				.then((chapters) => {
-					return chapters.reduce((prevDict, chapter) => {
-						if (typeof prevDict[chapter.book_abbrev] === "undefined") {
-							prevDict[chapter.book_abbrev] = [];
-						}
-						prevDict[chapter.book_abbrev].push(chapter.number);
-						return prevDict;
-					}, {});
-				});
+			const commentedChapters = await getCommentedChapters(
+				registeredUser.username
+			);
 
 			const token = jwt.sign(
 				{
@@ -101,7 +107,7 @@ module.exports = {
 				username: registeredUser.username,
 				moderator: registeredUser.moderator,
 				created_at: registeredUser.created_at,
-				chapters_commented: chaptersCommented,
+				commented_chapters: commentedChapters,
 				total_comments: registeredUser.total_comments,
 			});
 		}
@@ -134,19 +140,9 @@ module.exports = {
 				.json({ error: "Usuário não cadastrado." });
 		}
 
-		const chaptersCommented = await connection("comments")
-			.where("username", registeredUser.username)
-			.join("chapters", "chapters.id", "comments.chapter_id")
-			.distinct("book_abbrev", "number")
-			.then((chapters) => {
-				return chapters.reduce((prevDict, chapter) => {
-					if (typeof prevDict[chapter.book_abbrev] === "undefined") {
-						prevDict[chapter.book_abbrev] = [];
-					}
-					prevDict[chapter.book_abbrev].push(chapter.number);
-					return prevDict;
-				}, {});
-			});
+		const commentedChapters = await getCommentedChapters(
+			registeredUser.username
+		);
 
 		return response.json({
 			email: registeredUser.email,
@@ -155,7 +151,7 @@ module.exports = {
 			username: registeredUser.username,
 			moderator: registeredUser.moderator,
 			created_at: registeredUser.created_at,
-			chapters_commented: chaptersCommented,
+			commented_chapters: commentedChapters,
 			total_comments: registeredUser.total_comments,
 		});
 	},

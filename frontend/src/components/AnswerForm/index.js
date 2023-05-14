@@ -7,7 +7,7 @@ import axios from "services/api";
 import PropTypes from "prop-types";
 
 import Answer from "models/Answer";
-import closeImg from "assets/x.svg";
+import { ReactComponent as CloseIcon } from "assets/x.svg";
 
 import "./styles.css";
 
@@ -119,7 +119,7 @@ export default function AnswerForm({
 				<div className="top">
 					<h1> Respostas </h1>
 					<button onClick={handleCloseAnswers} type="button">
-						<img src={closeImg} alt="Fechar" />
+						<CloseIcon />
 					</button>
 				</div>
 
@@ -173,7 +173,7 @@ export default function AnswerForm({
 						<div className="top">
 							<h1> Postar novo ponto </h1>
 							<button type="button" onClick={handleCloseNewPost}>
-								<img src={closeImg} alt="Fechar" />
+								<CloseIcon />
 							</button>
 						</div>
 

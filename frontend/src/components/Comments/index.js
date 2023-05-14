@@ -1,12 +1,12 @@
 import "./styles.css";
 
 import Comment from "models/Comment";
-import closeImg from "assets/x.svg";
 import PropTypes from "prop-types";
 import React, { useCallback } from "react";
+import { ReactComponent as CloseIcon } from "assets/x.svg";
 
 function getLikeCount(comment) {
-	return JSON.parse(comment.likes).length;
+	return comment.likes.length;
 }
 
 function dateFormat(string) {
@@ -48,7 +48,7 @@ export default function Comments({
 			<div className="top">
 				<h2> Comentários </h2>
 				<button type="button" onClick={closeFunction}>
-					<img src={closeImg} alt="Close comments" />
+					<CloseIcon />
 				</button>
 			</div>
 
@@ -63,10 +63,10 @@ export default function Comments({
 								))}
 								<sub>{dateFormat(commentary.created_at)}</sub>
 							</h3>
-							<label htmlFor={commentary.id}>
+							<label htmlFor={`c${commentary.id}`}>
 								<p className="label-title">{commentary.text}</p>
 							</label>
-							<input type="checkbox" id={commentary.id} />
+							<input type="checkbox" id={`c${commentary.id}`} />
 							<div className="user-comment">
 								<p>{commentary.text}</p>
 								<span className="comment-buttons">

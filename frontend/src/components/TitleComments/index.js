@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import React from "react";
 
 function getLikeCount(comment) {
-	return JSON.parse(comment.likes).length;
+	return comment.likes.length;
 }
 
 function dateFormat(string) {

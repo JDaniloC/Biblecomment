@@ -93,21 +93,12 @@ export default class Login extends Component {
 
 	async tryLogin(email, password) {
 		try {
-			await axios
-				.post("/session/login/", {
-					email,
-					password,
-				})
-				.then(({ data }) => {
-					this.context.loadUserInfos(data);
-					this.handleNotification("success", "Login realizado com sucesso!");
-					login(data.token);
-					this.context.getComments(1);
-					this.context.getFavorites(1);
-				})
-				.catch(({ response }) => {
-					this.handleNotification("error", response.data.error);
-				});
+			const { data } = await axios.post("/session/login/", { email, password });
+			this.context.loadUserInfos(data);
+			this.handleNotification("success", "Login realizado com sucesso!");
+			login(data.token);
+			this.context.getComments(1);
+			this.context.getFavorites(1);
 		} catch (error) {
 			this.handleNotification("error", error.toString());
 		}
@@ -186,15 +177,9 @@ export default class Login extends Component {
 							onChange={this.handleChangeInput}
 							required
 						/>
-						<input
-							type="submit"
-							value={this.state.submitName}
-						/>
+						<input type="submit" value={this.state.submitName} />
 						<hr />
-						<button
-							type="button"
-							onClick={this.handleToggleRegister}
-						>
+						<button type="button" onClick={this.handleToggleRegister}>
 							{this.state.switchBtnName}
 						</button>
 					</form>

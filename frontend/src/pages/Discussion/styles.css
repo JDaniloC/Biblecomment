@@ -84,7 +84,7 @@ ul.answer-list li {
 	margin: 20px 0;
 }
 
-p.verse-text {
+.answersComponent p.verse-text {
 	padding: 5px 20px 0;
 	white-space: break-spaces;
 	margin: 1em;

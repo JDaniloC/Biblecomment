@@ -21,9 +21,8 @@ for abbrev, (title, length) in books.items():
         for number in verses:
             print(f"Populating {abbrev}:{number} = ", end = "")
             response = requests.post(
-            f"{baseurl}/books/{abbrev}/chapters/{number}", 
-                json = {
-                   "verses": verses[number]
+            f"{baseurl}/books/{abbrev}/chapters/{number}", json = {
+                "verses": verses[number]
             })
             print(response.json())
             time.sleep(0.5)
