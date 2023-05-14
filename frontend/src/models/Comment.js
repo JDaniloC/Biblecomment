@@ -5,7 +5,7 @@ export default PropTypes.shape({
 		PropTypes.string,
 		PropTypes.arrayOf(PropTypes.string),
 	]).isRequired,
-	verse: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+	verse_id: PropTypes.number.isRequired,
 	id: PropTypes.number.isRequired,
 	text: PropTypes.string.isRequired,
 	likes: PropTypes.string.isRequired,

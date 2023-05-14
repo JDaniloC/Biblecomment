@@ -30,7 +30,7 @@ export function ProfileProvider({ children }) {
 	function loadUserInfos(data) {
 		const { email: currentEmail, username: currentName } = data;
 		const currentCommentsCount = data.total_comments;
-		const currentCommented = data.chapters_commented;
+		const currentCommented = data.commented_chapters;
 		const currentBooksCount = Object.keys(currentCommented).length;
 		const currentBelief = data.belief !== null ? data.belief : "";
 		const currentStateName = data.state !== null ? data.state : "";
@@ -107,15 +107,13 @@ export function ProfileProvider({ children }) {
 
 	useEffect(() => {
 		if (isAuthenticated()) {
-			axios
-				.get("/session/")
-				.then(({ data }) => {
-					loadUserInfos(data);
-				})
-				.catch(({ response }) => {
-					handleNotification("error", response.data.error);
-					logout();
-				});
+			axios.get("/session/").then(({ data }) => {
+				loadUserInfos(data);
+			})
+			.catch(({ response }) => {
+				handleNotification("error", response.data.error);
+				logout();
+			});
 		}
 	}, []);
 

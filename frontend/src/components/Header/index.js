@@ -10,7 +10,7 @@ import SearchInput from "components/SearchInput";
 import BooksIndex from "components/BooksIndex";
 import Login from "components/Login";
 
-import LogoIcon from "assets/logo.svg";
+import { ReactComponent as LogoIcon } from 'assets/logo.svg';
 import BooksIcon from "assets/books.svg";
 import ArrowIcon from "assets/arrow.svg";
 import PersonIcon from "assets/person.svg";
@@ -62,7 +62,7 @@ export default function Header({ changeChapter }) {
 			<header className="navbar">
 				<div className="leftSide" style={{ minWidth: "40em" }}>
 					<Link to="/">
-						<img src={LogoIcon} alt="Home" />
+						<LogoIcon className="logo"/>
 					</Link>
 					<span className="title">
 						<h1> Bible Comment </h1>

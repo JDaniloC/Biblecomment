@@ -34,7 +34,7 @@ export default function CommentRow({
 						<img src={editIcon} alt="Edit comment" />
 					</button>
 					<b>
-						{JSON.parse(comment.likes).length}
+						{comment.likes.length}
 						<img src={heartIcon} alt="Favorite comment" />
 					</b>
 					<button type="button" onClick={handleDeleteComment}>

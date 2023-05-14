@@ -69,15 +69,10 @@ export default class Control extends Component {
 	async getComments(currentPage = 1) {
 		const { comments } = this.state;
 
-		const { data: dataComments } = await axios.get("/comments/", {
+		const { data: newComments } = await axios.get("/comments/", {
 			params: { pages: currentPage },
 		});
 
-		const newComments = dataComments.map((item) => {
-			item.likes = JSON.parse(item.likes);
-			item.reports = JSON.parse(item.reports);
-			return item;
-		});
 		const commentsSum = comments.length + newComments.length;
 		const newTotal = Math.ceil(commentsSum / PAGE_LENGTH);
 

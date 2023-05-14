@@ -23,6 +23,7 @@
 	display: none;
 	position: absolute;
 	flex-direction: column;
+	z-index: 2;
 
 	width: inherit;
 	background: #fff;

@@ -18,7 +18,8 @@
 	margin-left: 1em;
 }
 
-.navbar .leftSide img {
+.navbar .leftSide .logo {
+	max-width: 60px;
 	max-height: 60px;
 }
 .navbar .title h1 {

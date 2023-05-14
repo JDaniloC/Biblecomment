@@ -8,7 +8,7 @@ import React, {
 import { ProfileContext } from "contexts/ProfileContext";
 import { Link } from "react-router-dom";
 
-import closeImg from "assets/x.svg";
+import { ReactComponent as CloseIcon } from 'assets/x.svg';
 import PropTypes from "prop-types";
 import styles from "./ChapterChooser.module.css";
 
@@ -48,7 +48,7 @@ function ChapterChooser({
 			<div className="top">
 				<h2> Escolha o capítulo </h2>
 				<button onClick={closeChapters} type="button">
-					<img src={closeImg} alt="Fechar" />
+					<CloseIcon/>
 				</button>
 			</div>
 

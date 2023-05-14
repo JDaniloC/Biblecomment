@@ -5,10 +5,10 @@ import React, { Component } from "react";
 
 import axios from "../../services/api";
 import bookImg from "assets/book.svg";
-import closeImg from "assets/x.svg";
 import handImg from "assets/hand.svg";
 import penImg from "assets/pen.svg";
 import personImg from "assets/person.svg";
+import { ReactComponent as CloseIcon } from 'assets/x.svg';
 
 import PropTypes from "prop-types";
 
@@ -77,7 +77,7 @@ export default class NewComment extends Component {
 					const number = this.props.number;
 					const verso = this.props.verso() + 1;
 					axios
-						.post(`/books/${abbrev}/comments/${number}/${verso}`, {
+						.post(`/comments/${abbrev}/${number}/${verso}`, {
 							on_title: this.props.isTitleComment,
 							token,
 							text,
@@ -142,7 +142,7 @@ export default class NewComment extends Component {
 				<div className="top">
 					<h2 style={{ alignSelf: "center" }}>{this.props.title}</h2>
 					<button onClick={this.props.close}>
-						<img src={closeImg} alt="Fechar" />
+						<CloseIcon/>
 					</button>
 				</div>
 

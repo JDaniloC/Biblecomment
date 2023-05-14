@@ -34,16 +34,36 @@ exports.up = function (knex) {
 						id: comment.id,
 					});
 			}
+            knex.schema.dropTableIfExists("chapters");
 		});
-	// .dropTableIfExists("chapters");
 };
 
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = function (knex) {
-	return knex.schema.alterTable("comments", (table) => {
-		table.dropColumn("verse_id");
-	});
+exports.down = function(knex) {
+    return knex.schema
+		.createTable("chapters", (table) => {
+			table.increments("id");
+
+			table.string("book_abbrev");
+			table.foreign("book_abbrev").references("abbrev").inTable("books");
+			table.integer("number").notNullable();
+			table.json("verses").notNullable();
+		}).then(async () => {
+			const books = await knex.select("*").from("books");
+			for (const book of books) {
+				for (let chapter = 1; chapter <= book.length; chapter++) {
+					const verses = await knex.select("*").from("verses")
+						.where({ abbrev: book.abbrev, chapter }).orderBy("verse_number");
+					const versesText = JSON.stringify(verses.map((verse) => verse.text));
+					await knex.insert({
+						book_abbrev: book.abbrev,
+						number: chapter,
+						verses: versesText,
+					}).into("chapters");
+				}
+			}
+		});
 };

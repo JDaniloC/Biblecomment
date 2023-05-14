@@ -2,7 +2,6 @@ const express = require("express");
 const verifyToken = require("./utils/verifyToken");
 
 const BookController = require("./controllers/BookController");
-const ChapterController = require("./controllers/ChapterController");
 const VerseController = require("./controllers/VerseController");
 const CommentController = require("./controllers/CommentController");
 
@@ -42,23 +41,15 @@ routes.get("/books", BookController.index);
 routes.post("/books", BookController.store);
 routes.get("/books/:abbrev", BookController.show);
 
-routes.get("/books/:abbrev/chapters", ChapterController.index);
-routes.get("/books/:abbrev/chapters/:number", ChapterController.show);
-routes.post("/books/:abbrev/chapters/:number", ChapterController.store);
-routes.patch("/books/:abbrev/chapters/:number", ChapterController.update);
-
 routes.get("/books/:abbrev/verses", VerseController.index);
 routes.get("/books/:abbrev/verses/:chapter", VerseController.show);
 routes.post("/books/:abbrev/verses/:chapter/:verse", VerseController.store);
 routes.patch("/books/:abbrev/verses/:chapter/:verse", VerseController.update);
 
-routes.get("/books/:abbrev/comments/:chapter", CommentController.index);
-routes.get("/books/:abbrev/comments/:chapter/:verse", CommentController.show);
-routes.post(
-	"/books/:abbrev/comments/:chapter/:verse",
-	Authentication,
-	CommentController.store
-);
+routes.get("/comments/:abbrev/:chapter", CommentController.index);
+routes.get("/comments/:abbrev/:chapter/:verse", CommentController.show);
+routes.post("/comments/:abbrev/:chapter/:verse",
+			Authentication, CommentController.store);
 routes.patch("/comments/:id", Authentication, CommentController.update);
 routes.delete("/comments/:id", Authentication, CommentController.destroy);
 

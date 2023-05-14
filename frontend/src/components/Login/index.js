@@ -93,21 +93,14 @@ export default class Login extends Component {
 
 	async tryLogin(email, password) {
 		try {
-			await axios
-				.post("/session/login/", {
-					email,
-					password,
-				})
-				.then(({ data }) => {
-					this.context.loadUserInfos(data);
-					this.handleNotification("success", "Login realizado com sucesso!");
-					login(data.token);
-					this.context.getComments(1);
-					this.context.getFavorites(1);
-				})
-				.catch(({ response }) => {
-					this.handleNotification("error", response.data.error);
-				});
+			const { data } = await axios.post(
+				"/session/login/", { email, password })
+			this.context.loadUserInfos(data);
+			this.handleNotification("success",
+				"Login realizado com sucesso!");
+			login(data.token);
+			this.context.getComments(1);
+			this.context.getFavorites(1);
 		} catch (error) {
 			this.handleNotification("error", error.toString());
 		}
