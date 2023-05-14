@@ -1,12 +1,7 @@
 import { isAuthenticated, TOKEN_KEY } from "../../services/auth";
 import { ProfileContext } from "../../contexts/ProfileContext";
 
-import React, {
-	useCallback,
-	useContext,
-	useState,
-	useEffect,
-} from "react";
+import React, { useCallback, useContext, useState, useEffect } from "react";
 
 import axios from "../../services/api";
 import bookImg from "assets/book.svg";
@@ -21,14 +16,11 @@ import "balloon-css";
 import "./styles.css";
 
 export default function NewComment(props) {
-	const {
-		addNewComment,
-		handleNotification,
-	} = useContext(ProfileContext);
+	const { addNewComment, handleNotification } = useContext(ProfileContext);
 	const [buttonDisabled, setButtonDisabled] = useState(true);
 	const [commentText, setCommentText] = useState("");
 	const [type, setType] = useState("");
-	
+
 	const [tags, setTags] = useState({
 		devocional: false,
 		inspirado: false,
@@ -43,99 +35,95 @@ export default function NewComment(props) {
 		setType(props.post ? "" : "y");
 	}, [props.post, props.text]);
 
-	const postNewComment = useCallback((evt) => {
-		evt.preventDefault();
+	const postNewComment = useCallback(
+		(evt) => {
+			evt.preventDefault();
 
-		if (!isAuthenticated()) {
-			return handleNotification("info",
-				"Você precisa estar logado!"
-			);
-		} else if (
-			commentText.length < 200 ||
-			commentText.length > 1000
-		) {
-			return handleNotification("info",
-				"Reescreva o comentário entre 200-1000 caracteres!"
-			);
-		}
-		const tagList = [];
-		if (tags.devocional) tagList.push("devocional");
-		if (tags.inspirado) tagList.push("inspirado");
-		if (tags.exegese) tagList.push("exegese");
-		if (tags.pessoal) tagList.push("pessoal");
+			if (!isAuthenticated()) {
+				return handleNotification("info", "Você precisa estar logado!");
+			} else if (commentText.length < 200 || commentText.length > 1000) {
+				return handleNotification(
+					"info",
+					"Reescreva o comentário entre 200-1000 caracteres!"
+				);
+			}
+			const tagList = [];
+			if (tags.devocional) tagList.push("devocional");
+			if (tags.inspirado) tagList.push("inspirado");
+			if (tags.exegese) tagList.push("exegese");
+			if (tags.pessoal) tagList.push("pessoal");
 
-		try {
-			const token = localStorage.getItem(TOKEN_KEY);
-			if (props.post) {
-				const verseID = props.verseID();
-				axios
-					.post(`/comments/${verseID}`, {
-						on_title: props.isTitleComment,
-						text: commentText,
-						tags: tagList,
-						token,
-					})
-					.then((response) => {
-						handleNotification("success", 
-								"Comentário enviado!");
-						props.addNewComment(response.data);
-						addNewComment(response.data);
-					})
-					.catch(({ response }) => {
-						handleNotification("error",
-								response.data.error);
-					});
+			try {
+				const token = localStorage.getItem(TOKEN_KEY);
+				if (props.post) {
+					const verseID = props.verseID();
+					axios
+						.post(`/comments/${verseID}`, {
+							on_title: props.isTitleComment,
+							text: commentText,
+							tags: tagList,
+							token,
+						})
+						.then((response) => {
+							handleNotification("success", "Comentário enviado!");
+							props.addNewComment(response.data);
+							addNewComment(response.data);
+						})
+						.catch(({ response }) => {
+							handleNotification("error", response.data.error);
+						});
+				} else {
+					axios
+						.patch(`/comments/${props.commentID}`, {
+							text: commentText,
+							tags: tagList,
+							token,
+						})
+						.then((response) => {
+							handleNotification("success", "Comentário editado!");
+							props.addNewComment(response.data);
+						})
+						.catch(({ response }) => {
+							handleNotification("error", response.data.error);
+						});
+				}
+			} catch (error) {
+				handleNotification("error", error.toString());
+			}
+			setCommentText("");
+			props.close(evt);
+		},
+		[addNewComment, commentText, tags, handleNotification, props]
+	);
+
+	const handleChange = useCallback(
+		(event) => {
+			let value = "";
+			if (typeof event.target.checked !== "undefined") {
+				value = event.target.checked;
+				setTags({ ...tags, [event.target.name]: value });
 			} else {
-				axios
-					.patch(`/comments/${props.commentID}`, {
-						text: commentText,
-						tags: tagList,
-						token,
-					})
-					.then((response) => {
-						handleNotification("success",
-								"Comentário editado!");
-						props.addNewComment(response.data);
-					})
-					.catch(({ response }) => {
-						handleNotification("error",
-								response.data.error);
-					});
+				value = event.target.value;
+				if (value.slice(-2) === "  ") {
+					value = value.slice(0, -1);
+				}
+				if (value.length < 200 || value.length > 1000) {
+					if (!buttonDisabled) setButtonDisabled(true);
+				} else if (buttonDisabled) {
+					setButtonDisabled(false);
+				}
+				setCommentText(value);
 			}
-		} catch (error) {
-			handleNotification("error", error.toString());
-		}
-		setCommentText("");
-		props.close(evt);
-	}, [addNewComment, commentText, tags,
-		handleNotification, props
-	]);
-
-	const handleChange = useCallback((event) => {
-		let value = "";
-		if (typeof event.target.checked !== "undefined") {
-			value = event.target.checked;
-			setTags({ ...tags, [event.target.name]: value });
-		} else {
-			value = event.target.value;
-			if (value.slice(-2) === "  ") {
-				value = value.slice(0, -1);
-			}
-			if (value.length < 200 || value.length > 1000) {
-				if (!buttonDisabled) setButtonDisabled(true);
-			} else if (buttonDisabled) {
-				setButtonDisabled(false);
-			}
-			setCommentText(value);
-		}
-	}, [buttonDisabled, tags, setTags, setButtonDisabled, setCommentText]);
+		},
+		[buttonDisabled, tags, setTags, setButtonDisabled, setCommentText]
+	);
 
 	return (
 		<div className="pop-up">
 			<div className="top">
 				<h2 style={{ alignSelf: "center" }}>{props.title}</h2>
 				<button onClick={props.close}>
-					<CloseIcon/>
+					<CloseIcon />
 				</button>
 			</div>
 
@@ -153,8 +141,7 @@ export default function NewComment(props) {
 							onChange={handleChange}
 							id={`devocional${type}`}
 						/>
-						<img className="tag" src={handImg}
-							 alt="hand icon" />
+						<img className="tag" src={handImg} alt="hand icon" />
 					</label>
 					<label
 						aria-label="Exegese"
@@ -167,8 +154,7 @@ export default function NewComment(props) {
 							onChange={handleChange}
 							id={`exegese${type}`}
 						/>
-						<img className="tag" src={bookImg} 
-						 	 alt="book icon" />
+						<img className="tag" src={bookImg} alt="book icon" />
 					</label>
 					<label
 						aria-label="Inspirado"
@@ -181,8 +167,7 @@ export default function NewComment(props) {
 							onChange={handleChange}
 							id={`inspirado${type}`}
 						/>
-						<img className="tag" src={penImg}
-							alt="pencil icon"/>
+						<img className="tag" src={penImg} alt="pencil icon" />
 					</label>
 					<label
 						aria-label="Pessoal"
@@ -195,12 +180,10 @@ export default function NewComment(props) {
 							onChange={handleChange}
 							id={`pessoal${type}`}
 						/>
-						<img className="tag" src={personImg} 
-							alt="person icon" />
+						<img className="tag" src={personImg} alt="person icon" />
 					</label>
 					<div className="char-count">
-						{commentText.length}/
-						{commentText.length < 200 ? 200 : 1000}
+						{commentText.length}/{commentText.length < 200 ? 200 : 1000}
 					</div>
 				</div>
 				<textarea

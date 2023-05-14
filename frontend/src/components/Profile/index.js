@@ -138,10 +138,7 @@ export default class Profile extends Component {
 						addNewComment={this.handleCommentEdit}
 					/>
 				</div>
-				<div
-					className="overlay"
-					style={{ display: this.state.blur }}
-				></div>
+				<div className="overlay" style={{ display: this.state.blur }}></div>
 			</>
 		);
 	}

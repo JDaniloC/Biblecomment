@@ -73,8 +73,8 @@ module.exports = {
 				error: "Verse not found",
 			});
 		}
-		let newBookAbbrev = verses.abbrev.charAt(0).toUpperCase() +
-							verses.abbrev.slice(1);
+		let newBookAbbrev =
+			verses.abbrev.charAt(0).toUpperCase() + verses.abbrev.slice(1);
 		if (newBookAbbrev === "Job") {
 			newBookAbbrev = "Jó";
 		}
@@ -85,7 +85,7 @@ module.exports = {
 			.replace("T", " ");
 
 		const chapVers = `${verses.chapter}:${verses.verse_number}`;
-		const reference = `${newBookAbbrev} ${chapVers}`
+		const reference = `${newBookAbbrev} ${chapVers}`;
 		const newComment = {
 			text,
 			username,
@@ -104,7 +104,7 @@ module.exports = {
 			id: comment[0],
 			reports: [],
 			likes: [],
-			tags: []
+			tags: [],
 		});
 	},
 

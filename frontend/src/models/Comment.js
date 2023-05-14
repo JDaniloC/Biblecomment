@@ -6,9 +6,7 @@ export default PropTypes.shape({
 	verse_id: PropTypes.number.isRequired,
 	tags: PropTypes.arrayOf(PropTypes.string).isRequired,
 	likes: PropTypes.arrayOf(PropTypes.string).isRequired,
-	on_title: PropTypes.oneOfType([
-		PropTypes.number, PropTypes.bool
-	]).isRequired,
+	on_title: PropTypes.oneOfType([PropTypes.number, PropTypes.bool]).isRequired,
 	username: PropTypes.string.isRequired,
 	created_at: PropTypes.string.isRequired,
 	book_reference: PropTypes.string.isRequired,

@@ -18,10 +18,10 @@
 }
 .char-count {
 	align-self: center;
-    font-size: 14px;
-    color: #999;
-    margin-left: auto;
-    padding: 0 10px;
+	font-size: 14px;
+	color: #999;
+	margin-left: auto;
+	padding: 0 10px;
 }
 
 input#devocional:checked + img,
