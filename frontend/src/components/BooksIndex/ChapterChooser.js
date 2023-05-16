@@ -36,12 +36,15 @@ function ChapterChooser({
 		return false;
 	}
 
-	const handleClickLink = useCallback((event) => {
-		event.preventDefault();
-		const { target } = event;
-		const chapterNumber = target.getAttribute("data-number");
-		handleChangePage(abbrev, Number(chapterNumber));
-	}, [handleChangePage, abbrev]);
+	const handleClickLink = useCallback(
+		(event) => {
+			event.preventDefault();
+			const { target } = event;
+			const chapterNumber = target.getAttribute("data-number");
+			handleChangePage(abbrev, Number(chapterNumber));
+		},
+		[handleChangePage, abbrev]
+	);
 
 	return (
 		<div className={styles.chaptersContainer}>

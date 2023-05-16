@@ -7,11 +7,14 @@ import Book from "models/Book";
 function BookChooser({ books, showChapterChooser }) {
 	const { commented } = useContext(ProfileContext);
 
-	const showChapterComponents = useCallback((event) => {
-		const abbrev = event.target.getAttribute("data-abbrev");
-		const max = event.target.getAttribute("data-length");
-		showChapterChooser(abbrev, Number(max));
-	}, [showChapterChooser]);
+	const showChapterComponents = useCallback(
+		(event) => {
+			const abbrev = event.target.getAttribute("data-abbrev");
+			const max = event.target.getAttribute("data-length");
+			showChapterChooser(abbrev, Number(max));
+		},
+		[showChapterChooser]
+	);
 
 	function bookCommented(book, length) {
 		if (book in commented) {

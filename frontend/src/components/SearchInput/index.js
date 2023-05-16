@@ -18,16 +18,19 @@ export default function SearchInput({
 
 	const onTextDebounce = debounce(handleText, 1000);
 
-	const handleSearchChange = useCallback((e) => {
-		const text = e.target.value;
-		if (text.length > 0) {
-			setIsTexting(true);
-			onTextDebounce(text);
-		} else {
-			setIsTexting(false);
-		}
-		setSearchText(text);
-	}, [onTextDebounce]);
+	const handleSearchChange = useCallback(
+		(e) => {
+			const text = e.target.value;
+			if (text.length > 0) {
+				setIsTexting(true);
+				onTextDebounce(text);
+			} else {
+				setIsTexting(false);
+			}
+			setSearchText(text);
+		},
+		[onTextDebounce]
+	);
 
 	const handleCleanSearch = useCallback(() => {
 		setIsTexting(false);
@@ -47,7 +50,8 @@ export default function SearchInput({
 				<CloseIcon
 					className="close-icon"
 					onKeyUp={handleCleanSearch}
-					onClick={handleCleanSearch} />
+					onClick={handleCleanSearch}
+				/>
 			</div>
 			<ul>
 				{searchResult.map((comment) => (

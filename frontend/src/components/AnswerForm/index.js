@@ -69,8 +69,14 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [replyText, selected, setAnswersToDiscussions,
-		handleCloseAnswers, handleNotification, canPostSomething]);
+	}, [
+		replyText,
+		selected,
+		setAnswersToDiscussions,
+		handleCloseAnswers,
+		handleNotification,
+		canPostSomething,
+	]);
 
 	const handlePostNewQuestion = useCallback(() => {
 		handleCloseNewPost();
@@ -108,12 +114,23 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [handleCloseNewPost, canPostSomething, handleNotification, replyText,
-		comment_reference, selected, comment_text, appendNewDiscussion]);
+	}, [
+		handleCloseNewPost,
+		canPostSomething,
+		handleNotification,
+		replyText,
+		comment_reference,
+		selected,
+		comment_text,
+		appendNewDiscussion,
+	]);
 
-	const handleChangeText = useCallback((value) => {
-		setReplyText(value);
-	}, [setReplyText]);
+	const handleChangeText = useCallback(
+		(value) => {
+			setReplyText(value);
+		},
+		[setReplyText]
+	);
 
 	return (
 		<div className="answersComponent" style={{ display: answersClass }}>
