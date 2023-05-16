@@ -10,8 +10,9 @@ module.exports = {
 
 		const comments = await connection("comments")
 			.whereLike("text", `%${text}%`)
-			.select("*");
-
+			.select("id", "text", "username",
+					"created_at", "book_reference");
+		
 		return response.json(comments);
 	},
 };

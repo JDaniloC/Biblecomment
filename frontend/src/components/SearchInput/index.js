@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 
 import { ReactComponent as CloseIcon } from "assets/x.svg";
 import SearchIcon from "assets/search.svg";
-import Comment from "models/Comment";
+import { SearchComment } from "models/Comment";
 
 export default function SearchInput({
 	handleText,
@@ -27,7 +27,7 @@ export default function SearchInput({
 			setIsTexting(false);
 		}
 		setSearchText(text);
-	}, []);
+	}, [onTextDebounce]);
 
 	const handleCleanSearch = useCallback(() => {
 		setIsTexting(false);
@@ -41,10 +41,13 @@ export default function SearchInput({
 				<input
 					type="text"
 					value={searchText}
-					placeholder="Buscar..."
+					placeholder="Buscar comentário..."
 					onChange={handleSearchChange}
 				/>
-				<CloseIcon onKeyUp={handleCleanSearch} onClick={handleCleanSearch} />
+				<CloseIcon
+					className="close-icon"
+					onKeyUp={handleCleanSearch}
+					onClick={handleCleanSearch} />
 			</div>
 			<ul>
 				{searchResult.map((comment) => (
@@ -53,7 +56,8 @@ export default function SearchInput({
 						onKeyUp={() => handleSelect(comment)}
 						onClick={() => handleSelect(comment)}
 					>
-						{comment.book_reference} - {comment.text}
+						<b> {comment.book_reference} </b>
+						&nbsp;{comment.text}
 					</li>
 				))}
 			</ul>
@@ -63,7 +67,7 @@ export default function SearchInput({
 SearchInput.propTypes = {
 	handleText: PropTypes.func.isRequired,
 	handleSelect: PropTypes.func.isRequired,
-	searchResult: PropTypes.arrayOf(Comment),
+	searchResult: PropTypes.arrayOf(SearchComment),
 };
 SearchInput.defaultProps = {
 	searchResult: [],

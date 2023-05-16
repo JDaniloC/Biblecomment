@@ -18,16 +18,16 @@ export default function ProfileConfig({ configDisplay, closeAccount }) {
 
 	const handleChangeState = useCallback((evt) => {
 		setStateName(evt.target.value);
-	});
+	}, [setStateName]);
 
 	const handleChangeBelief = useCallback((evt) => {
 		setBelief(evt.target.value);
-	});
+	}, [setBelief]);
 
 	const handleDeleteAccount = useCallback(() => {
 		deleteAccount();
 		closeAccount();
-	});
+	}, [deleteAccount, closeAccount]);
 
 	return (
 		<div className="user-config" style={{ display: configDisplay }}>

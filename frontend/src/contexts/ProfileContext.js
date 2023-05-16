@@ -117,7 +117,7 @@ export function ProfileProvider({ children }) {
 					logout();
 				});
 		}
-	}, []);
+	}, [handleNotification]);
 
 	async function updateAccount() {
 		try {

@@ -41,7 +41,7 @@ function ChapterChooser({
 		const { target } = event;
 		const chapterNumber = target.getAttribute("data-number");
 		handleChangePage(abbrev, Number(chapterNumber));
-	});
+	}, [handleChangePage, abbrev]);
 
 	return (
 		<div className={styles.chaptersContainer}>

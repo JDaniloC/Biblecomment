@@ -30,20 +30,20 @@ export default function AnswerForm({
 	const handleCloseAnswers = useCallback(() => {
 		setAnswersClass("none");
 		setBlurDisplay("none");
-	}, []);
+	}, [setAnswersClass, setBlurDisplay]);
 
 	const handleCloseNewPost = useCallback(() => {
 		setNewPostClass("invisible");
 		setNewAnswerClass("pop-up");
 		handleCloseAnswers();
-	}, []);
+	}, [setNewPostClass, setNewAnswerClass, handleCloseAnswers]);
 
-	function canPostSomething() {
+	const canPostSomething = useCallback(() => {
 		if (!isAuthenticated()) {
 			handleNotification("info", "Você precisa estar logado");
 		}
 		return replyText !== "" && isAuthenticated();
-	}
+	}, [replyText, handleNotification]);
 
 	const handlePostNewAnswer = useCallback(() => {
 		handleCloseAnswers();
@@ -69,7 +69,8 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [replyText]);
+	}, [replyText, selected, setAnswersToDiscussions,
+		handleCloseAnswers, handleNotification, canPostSomething]);
 
 	const handlePostNewQuestion = useCallback(() => {
 		handleCloseNewPost();
@@ -107,11 +108,12 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [replyText]);
+	}, [handleCloseNewPost, canPostSomething, handleNotification, replyText,
+		comment_reference, selected, comment_text, appendNewDiscussion]);
 
 	const handleChangeText = useCallback((value) => {
 		setReplyText(value);
-	}, []);
+	}, [setReplyText]);
 
 	return (
 		<div className="answersComponent" style={{ display: answersClass }}>

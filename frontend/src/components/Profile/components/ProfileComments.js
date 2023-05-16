@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext, useCallback } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Loading } from "components/Partials";
 import { Pagination } from "@material-ui/lab";
-import debounce from "lodash.debounce";
 
 import CommentRow from "./CommentRow";
 import PropTypes from "prop-types";
@@ -21,18 +20,6 @@ export default function ProfileComments({
 
 	const { commentaries } = useContext(ProfileContext);
 
-	function renderComments(page, forceComments = null, forceRender = false) {
-		const comments = forceComments || commentaries;
-		const inicio = (page - 1) * PAGE_LENGTH;
-		const final = inicio + PAGE_LENGTH;
-		const commentsToShow = comments.slice(inicio, final);
-		if (commentsToShow.length === 0 && (maxPages > 1 || forceRender)) {
-			// eslint-disable-next-line
-			emitRenderDebounced();
-		}
-		setCommentsLoaded(commentsToShow);
-	}
-
 	const handleLoadMore = useCallback(async () => {
 		setMaxPages(-1);
 		const page = currentPage > 0 ? currentPage : 1;
@@ -41,13 +28,20 @@ export default function ProfileComments({
 
 		if (currentPage > 1 && newComments.length > 0) {
 			setCurrentPage(currentPage - 1);
-		} else {
-			renderComments(1, allComments);
 		}
 		return allComments;
-	});
+	}, [currentPage, commentaries, getComments]);
 
-	const emitRenderDebounced = debounce(handleLoadMore, 100);
+	useEffect(() => {
+		const inicio = (currentPage - 1) * PAGE_LENGTH;
+		const final = inicio + PAGE_LENGTH;
+		const comments = commentaries.slice(inicio, final);
+		if (isAuthenticated() && comments.length === 0) {
+			handleLoadMore();
+		} else {
+			setCommentsLoaded(comments);
+		}
+	}, [currentPage, commentaries, handleLoadMore]);
 
 	useEffect(() => {
 		let totalPages = Math.ceil(commentaries.length / PAGE_LENGTH);
@@ -55,15 +49,9 @@ export default function ProfileComments({
 		setMaxPages(totalPages);
 	}, [commentaries]);
 
-	useEffect(() => {
-		if (isAuthenticated()) {
-			renderComments(currentPage, null, true);
-		}
-	}, [currentPage, commentaries]);
-
 	const handleChangePage = useCallback((_, page) => {
 		setCurrentPage(page);
-	});
+	}, [setCurrentPage]);
 
 	return (
 		<ul className="commentaries">

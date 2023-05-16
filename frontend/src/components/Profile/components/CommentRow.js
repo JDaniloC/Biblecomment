@@ -14,10 +14,10 @@ export default function CommentRow({
 }) {
 	const handleEditComment = useCallback(() => {
 		editCommentFunction(comment.id);
-	});
+	}, [comment.id, editCommentFunction]);
 	const handleDeleteComment = useCallback(() => {
 		deleteCommentFunction(comment.id);
-	});
+	}, [comment.id, deleteCommentFunction]);
 
 	return (
 		<li key={comment.id} className="comment-row">

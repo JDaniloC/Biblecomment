@@ -11,3 +11,13 @@ export default PropTypes.shape({
 	created_at: PropTypes.string.isRequired,
 	book_reference: PropTypes.string.isRequired,
 });
+
+const SearchComment = PropTypes.shape({
+	id: PropTypes.number.isRequired,
+	text: PropTypes.string.isRequired,
+	username: PropTypes.string.isRequired,
+	created_at: PropTypes.string.isRequired,
+	book_reference: PropTypes.string.isRequired,
+});
+
+export { SearchComment };

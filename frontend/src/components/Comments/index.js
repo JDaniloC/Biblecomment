@@ -27,12 +27,12 @@ export default function Comments({
 	const handleLike = useCallback((evt) => {
 		const id = evt.target.getAttribute("data-id");
 		likeFunction(parseInt(id, 10));
-	});
+	}, [likeFunction]);
 
 	const handleReport = useCallback((evt) => {
 		const id = evt.target.getAttribute("data-id");
 		reportFunction(parseInt(id, 10));
-	});
+	}, [reportFunction]);
 
 	const handleChat = useCallback((evt) => {
 		const comment_reference = evt.target.getAttribute("data-reference");
@@ -41,7 +41,7 @@ export default function Comments({
 		const comment_text = evt.target.getAttribute("data-text");
 		const reference = `${username} ${comment_reference}`;
 		discussionFunction(comment_id, comment_text, reference);
-	});
+	}, [discussionFunction]);
 
 	return (
 		<div className="sideComments">
