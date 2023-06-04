@@ -1,4 +1,4 @@
-import "./App.css";
+import "./App.scss";
 import "./Responsive.css";
 
 import { NotificationProvider } from "./contexts/NotificationContext";

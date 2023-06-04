@@ -35,6 +35,20 @@ button {
 	border-radius: 0 0 4px 4px;
 }
 
+@mixin overlay-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 3;
+	overflow: auto;
+}
+
 /* box center */
 .centro {
 	display: flex;
@@ -58,6 +72,18 @@ button {
 	top: 0;
 	left: 0;
 	background: rgba(244, 244, 244, 0.8);
+}
+
+.visible {
+	animation: fade-in 1s ease-out;
+	opacity: 1;
+}
+
+.invisible {
+	opacity: 0;
+	position: fixed;
+	z-index: -1;
+	pointer-events: none;
 }
 
 textarea {
@@ -129,4 +155,18 @@ input[type="checkbox"]:checked ~ div {
 }
 .load-btn:hover {
 	background-color: #7fffd4;
+}
+
+@keyframes fade-in {
+	0% {
+		right: 20%;
+		opacity: 0;
+	}
+	30% {
+		right: 0%;
+		opacity: 0.1;
+	}
+	100% {
+		opacity: 1;
+	}
 }

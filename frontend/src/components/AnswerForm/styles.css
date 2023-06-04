@@ -33,9 +33,3 @@
 	width: 100%;
 	height: 100%;
 }
-.invisible {
-	opacity: 0;
-	position: fixed;
-	z-index: -1;
-	pointer-events: none;
-}
