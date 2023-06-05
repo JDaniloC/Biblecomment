@@ -7,7 +7,7 @@ import PropTypes from "prop-types";
 import axios from "services/api";
 
 import SearchInput from "components/SearchInput";
-import BooksIndex from "components/BooksIndex";
+import BooksIndex from "components/BooksIndex/BooksIndex";
 import Login from "components/Login";
 
 import { ReactComponent as LogoIcon } from "assets/logo.svg";

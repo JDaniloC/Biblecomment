@@ -1,0 +1,28 @@
+.bookList {
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	max-width: 55em;
+	margin: 1em 0;
+
+	div {
+		text-align: center;
+	}
+	div p:nth-child(2) {
+		margin-top: 1em;
+	}
+
+	button {
+		border: none;
+		flex: 1 0 30%;
+		flex-grow: 1;
+		padding: 10px;
+		margin: 0.3%;
+		color: #000;
+		font-weight: 700;
+		text-align: center;
+		cursor: pointer;
+		background-color: #dadce2;
+		border-radius: 4px;
+	}
+}

@@ -2,7 +2,7 @@ import "./styles.css";
 
 import { HelpButton } from "components/Partials";
 
-import BooksIndex from "components/BooksIndex";
+import BooksIndex from "components/BooksIndex/BooksIndex";
 import logoImg from "assets/logo.png";
 import Login from "components/Login";
 import React from "react";

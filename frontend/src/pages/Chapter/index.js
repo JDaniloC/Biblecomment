@@ -107,6 +107,12 @@ export default class Chapter extends Component {
 	}
 
 	loadChapter(abbrev, chapter) {
+		chapterAPI.getBook(abbrev).then((response) => {
+			if (response.error) {
+				return this.handleNotification("error", response.error);
+			}
+			this.setState({ titleName: response.data.title });
+		});
 		chapterAPI.getChapterVerses(abbrev, chapter).then((response) => {
 			if (response.error) {
 				return this.handleNotification("error", response.error);

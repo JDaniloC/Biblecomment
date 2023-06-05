@@ -1,0 +1,47 @@
+.chaptersChooserContainer {
+	background-color: white;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	width: fit-content;
+	width: -moz-fit-content;
+	max-width: min(700px, 80vw);
+	height: fit-content;
+	padding: 20px;
+	margin: 5% auto;
+	border-radius: 3px;
+	min-width: 300px;
+
+	h2 {
+		align-self: center;
+	}
+	a {
+		flex: 1 0 20%;
+		flex-grow: 1;
+		padding: 10px;
+		color: #777;
+		font-weight: 700;
+		text-align: center;
+		cursor: pointer;
+		text-decoration: none;
+		border: 0.1px solid rgba(0, 0, 0, 0.2);
+	}
+
+	ul {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+
+		margin-top: 20px;
+		width: -webkit-fill-available;
+
+		a[data-visited="true"] {
+			background-color: lightgreen;
+		}
+		a:hover {
+			filter: brightness(95%);
+		}
+	}
+}

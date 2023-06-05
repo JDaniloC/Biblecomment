@@ -45,9 +45,8 @@ module.exports = {
 		if (typeof abbrev !== "undefined") {
 			const book = await connection("books")
 				.where("books.abbrev", abbrev)
+				.first()
 				.select("books.abbrev", "title", "length")
-				.join("verses")
-				.select("chapter", "verse_number", "text");
 
 			return response.json(book);
 		}

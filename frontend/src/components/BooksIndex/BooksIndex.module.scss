@@ -1,0 +1,25 @@
+@import 'App';
+
+.booksIndexContainer {
+	display: flex;
+	flex-direction: column;
+	margin: 1em 2em;
+	max-width: 85vw;
+	align-items: center;
+}
+
+.chapterChooser {
+	@include overlay-content;
+	animation: raise-up 0.2s ease-out;
+}
+
+@keyframes raise-up {
+	0% {
+		top: 100%;
+		opacity: 0;
+	}
+	100% {
+		top: 0%;
+		opacity: 1;
+	}
+}

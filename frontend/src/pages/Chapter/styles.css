@@ -41,19 +41,6 @@ button.entry:hover {
 	background: #1ad6b7;
 }
 
-/* generals */
-.visible {
-	animation: fade-in 1s ease-out;
-	opacity: 1;
-}
-
-.invisible {
-	opacity: 0;
-	position: fixed;
-	z-index: -1;
-	pointer-events: none;
-}
-
 /* verse commentaries */
 aside {
 	position: relative;
@@ -72,19 +59,4 @@ aside {
 	text-align: center;
 	font-size: large;
 	font-weight: normal;
-}
-
-/* animations */
-@keyframes fade-in {
-	0% {
-		right: 20%;
-		opacity: 0;
-	}
-	30% {
-		right: 0%;
-		opacity: 0.1;
-	}
-	100% {
-		opacity: 1;
-	}
 }
