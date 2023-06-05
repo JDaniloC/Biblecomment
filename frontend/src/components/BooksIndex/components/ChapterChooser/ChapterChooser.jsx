@@ -1,9 +1,4 @@
-import React, {
-	useState,
-	useEffect,
-	useContext,
-	useCallback,
-} from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 import { Link } from "react-router-dom";
 
@@ -29,28 +24,31 @@ function ChapterChooser({
 		setChapterCount(number_list);
 	}, [chaptersAmount]);
 
-	const isCommented = useCallback((chapter) => {
-		if (abbrev in commented) {
-			return commented[abbrev].indexOf(chapter) !== -1;
-		}
-		return false;
-	}, [abbrev, commented]);
+	const isCommented = useCallback(
+		(chapter) => {
+			if (abbrev in commented) {
+				return commented[abbrev].indexOf(chapter) !== -1;
+			}
+			return false;
+		},
+		[abbrev, commented]
+	);
 
-	const onChapterClick = useCallback((event) => {
-		event.preventDefault();
-		const { target } = event;
-		const chapterNumber = target.getAttribute("data-number");
-		onSelectChapter(abbrev, Number(chapterNumber));
-	}, [onSelectChapter, abbrev]);
+	const onChapterClick = useCallback(
+		(event) => {
+			event.preventDefault();
+			const { target } = event;
+			const chapterNumber = target.getAttribute("data-number");
+			onSelectChapter(abbrev, Number(chapterNumber));
+		},
+		[onSelectChapter, abbrev]
+	);
 
 	return (
 		<div className={`${className} ${styles.chaptersChooserContainer}`}>
 			<div className="top">
 				<h2> Escolha o capítulo </h2>
-				<button
-					type="button"
-					onClick={onCloseButtonClick}
-				>
+				<button type="button" onClick={onCloseButtonClick}>
 					<CloseIcon />
 				</button>
 			</div>

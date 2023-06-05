@@ -9,15 +9,13 @@ import styles from "./BooksIndex.module.scss";
 import BookChooser from "./components/BookChooser/BookChooser";
 import ChapterChooser from "./components/ChapterChooser/ChapterChooser";
 
-export default function BooksIndex({
-	changeChapter,
-	closeBookComponent,
-}) {
+export default function BooksIndex({ changeChapter, closeBookComponent }) {
 	const { handleNotification } = React.useContext(ProfileContext);
-	
+
 	const [books, setBooks] = useState([]);
 	const [selectedBook, setSelectedBook] = useState({
-		abbrev: "", chaptersAmount: 0,
+		abbrev: "",
+		chaptersAmount: 0,
 	});
 	const [isShowingChapters, setIsShowingChapters] = useState(false);
 
@@ -33,13 +31,12 @@ export default function BooksIndex({
 					`Problema no servidor: ${error.toString()}`
 				);
 			});
-		
 	}, [handleNotification]);
 
 	const showChapterChooser = useCallback((abbrev, chaptersAmount) => {
 		setSelectedBook({
 			abbrev,
-			chaptersAmount: parseInt(chaptersAmount, 10)
+			chaptersAmount: parseInt(chaptersAmount, 10),
 		});
 		setIsShowingChapters(true);
 	}, []);
@@ -48,26 +45,26 @@ export default function BooksIndex({
 		setIsShowingChapters(false);
 	}, []);
 
-	const handleChangePage = useCallback((chapter, number) => {
-		const changed = changeChapter(chapter, number);
-		if (changed) {
-			closeChaptersChooser();
-			closeBookComponent();
-			window.history.replaceState(
-				null,
-				`Bible Comment: ${chapter} ${number}`,
-				`/verses/${chapter}/${number}`
-			);
-		}
-	}, [changeChapter, closeBookComponent, closeChaptersChooser]);
+	const handleChangePage = useCallback(
+		(chapter, number) => {
+			const changed = changeChapter(chapter, number);
+			if (changed) {
+				closeChaptersChooser();
+				closeBookComponent();
+				window.history.replaceState(
+					null,
+					`Bible Comment: ${chapter} ${number}`,
+					`/verses/${chapter}/${number}`
+				);
+			}
+		},
+		[changeChapter, closeBookComponent, closeChaptersChooser]
+	);
 
 	return (
 		<div className={styles.booksIndexContainer}>
 			<h2> Escolha a meditação de hoje </h2>
-			<BookChooser
-				books={books}
-				onSelectBook={showChapterChooser}
-			/>
+			<BookChooser books={books} onSelectBook={showChapterChooser} />
 
 			{isShowingChapters && (
 				<>
