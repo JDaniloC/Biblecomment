@@ -46,7 +46,7 @@ module.exports = {
 			const book = await connection("books")
 				.where("books.abbrev", abbrev)
 				.first()
-				.select("books.abbrev", "title", "length")
+				.select("books.abbrev", "title", "length");
 
 			return response.json(book);
 		}

@@ -46,16 +46,19 @@ export default function Header({ changeChapter }) {
 		});
 	}, []);
 
-	const selectComment = useCallback((comment) => {
-		let [book, reference] = comment.book_reference.split(" ");
-		const [chapter, verse] = reference.split(":");
-		book = book.toLowerCase();
-		if (book === "jó") {
-			book = "job";
-		}
-		history.push(`/verses/${book}/${chapter}#${verse}`);
-		window.location.reload();
-	}, [history]);
+	const selectComment = useCallback(
+		(comment) => {
+			let [book, reference] = comment.book_reference.split(" ");
+			const [chapter, verse] = reference.split(":");
+			book = book.toLowerCase();
+			if (book === "jó") {
+				book = "job";
+			}
+			history.push(`/verses/${book}/${chapter}#${verse}`);
+			window.location.reload();
+		},
+		[history]
+	);
 
 	return (
 		<>
