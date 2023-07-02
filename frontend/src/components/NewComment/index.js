@@ -56,9 +56,8 @@ export default function NewComment(props) {
 			try {
 				const token = localStorage.getItem(TOKEN_KEY);
 				if (props.post) {
-					const verseID = props.verseID();
 					axios
-						.post(`/comments/${verseID}`, {
+						.post(`/comments/${props.verseID}`, {
 							on_title: props.isTitleComment,
 							text: commentText,
 							tags: tagList,
@@ -207,8 +206,8 @@ export default function NewComment(props) {
 }
 
 NewComment.propTypes = {
-	verseID: PropTypes.func,
 	text: PropTypes.string,
+	verseID: PropTypes.number,
 	commentID: PropTypes.number,
 	isTitleComment: PropTypes.bool,
 	post: PropTypes.bool.isRequired,
@@ -218,6 +217,6 @@ NewComment.propTypes = {
 };
 NewComment.defaultProps = {
 	text: "",
-	verseID: () => 0,
+	verseID: 0,
 	isTitleComment: false,
 };
