@@ -62,32 +62,34 @@ export default function Chapter(props) {
 	const [titleComments, setTitleComments] = useState([]);
 	const [newTitleComment, setNewTitleComment] = useState(false);
 
-	const loadChapter = useCallback((abbrev, chapter) => {
-		chapterAPI.getBook(abbrev).then((response) => {
-			if (response.error) {
-				return handleNotification("error", response.error);
-			}
-			setTitleName(response.data.title);
-		});
-		chapterAPI.getChapterVerses(abbrev, chapter).then((response) => {
-			if (response.error) {
-				return handleNotification("error", response.error);
-			}
-			setVerseList(response.data);
-		});
-		chapterAPI.getChapterComments(abbrev, chapter).then((response) => {
-			if (response.error) {
-				return handleNotification("error", response.error);
-			}
-			setAllComments(response.data.verseComments);
-			setTitleComments(response.data.titleComments);
-		});
+	const loadChapter = useCallback(
+		(abbrev, chapter) => {
+			chapterAPI.getBook(abbrev).then((response) => {
+				if (response.error) {
+					return handleNotification("error", response.error);
+				}
+				setTitleName(response.data.title);
+			});
+			chapterAPI.getChapterVerses(abbrev, chapter).then((response) => {
+				if (response.error) {
+					return handleNotification("error", response.error);
+				}
+				setVerseList(response.data);
+			});
+			chapterAPI.getChapterComments(abbrev, chapter).then((response) => {
+				if (response.error) {
+					return handleNotification("error", response.error);
+				}
+				setAllComments(response.data.verseComments);
+				setTitleComments(response.data.titleComments);
+			});
 
-		const newChapterNumber = chapter.length === 1 ?
-								 `0${chapter}` : chapter;
-		setChapterNumber(newChapterNumber);
-		return true;
-	}, [handleNotification]);
+			const newChapterNumber = chapter.length === 1 ? `0${chapter}` : chapter;
+			setChapterNumber(newChapterNumber);
+			return true;
+		},
+		[handleNotification]
+	);
 
 	useEffect(() => {
 		const { abbrev, number } = props.match.params;
@@ -112,10 +114,12 @@ export default function Chapter(props) {
 			setCurrentVerse(verseID);
 			setAsideClass("visible");
 			setMainClass("main comment");
-			setNavClass(navClass.includes("navHide") ?
-						navClass : `${navClass} navHide`);
-			setComments(allComments.filter((comment) =>
-						comment.verse_id === verseID));
+			setNavClass(
+				navClass.includes("navHide") ? navClass : `${navClass} navHide`
+			);
+			setComments(
+				allComments.filter((comment) => comment.verse_id === verseID)
+			);
 		}
 	}
 
@@ -254,8 +258,7 @@ export default function Chapter(props) {
 				<div className="chapter-container">
 					<div className={mainClass}>
 						<label htmlFor="toggle" style={{ display: "flex" }}>
-							{titleName} {chapterNumber}{" "}
-							{renderAmount(false)}
+							{titleName} {chapterNumber} {renderAmount(false)}
 						</label>
 						<input type="checkbox" id="toggle" />
 						<TitleComment
