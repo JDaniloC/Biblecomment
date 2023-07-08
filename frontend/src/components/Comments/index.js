@@ -3,6 +3,7 @@ import "./styles.css";
 import Comment from "models/Comment";
 import PropTypes from "prop-types";
 import React, { useCallback } from "react";
+import imageFunction from "shared/utils/icon-function";
 import { ReactComponent as CloseIcon } from "assets/x.svg";
 
 function getLikeCount(comment) {
@@ -17,11 +18,10 @@ function dateFormat(string) {
 
 export default function Comments({
 	comments,
+	onNewComment,
 	likeFunction,
-	imageFunction,
 	closeFunction,
 	reportFunction,
-	handleNewComment,
 	discussionFunction,
 }) {
 	const handleLike = useCallback((evt) => {
@@ -111,7 +111,7 @@ export default function Comments({
 				)}
 			</ul>
 			<div className="buttonContainer">
-				<button type="button" className="entry" onClick={handleNewComment}>
+				<button type="button" className="entry" onClick={onNewComment}>
 					Comentar
 				</button>
 			</div>
@@ -119,11 +119,10 @@ export default function Comments({
 	);
 }
 Comments.propTypes = {
+	onNewComment: PropTypes.func.isRequired,
 	likeFunction: PropTypes.func.isRequired,
 	closeFunction: PropTypes.func.isRequired,
-	imageFunction: PropTypes.func.isRequired,
 	reportFunction: PropTypes.func.isRequired,
-	handleNewComment: PropTypes.func.isRequired,
 	discussionFunction: PropTypes.func.isRequired,
 	comments: PropTypes.arrayOf(Comment).isRequired,
 };

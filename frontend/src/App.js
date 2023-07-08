@@ -1,7 +1,7 @@
 import "./App.scss";
 import "./Responsive.css";
 
-import { NotificationProvider } from "./contexts/NotificationContext";
+import NotificationProvider from "./contexts/NotificationContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
 import React, { useEffect } from "react";
 

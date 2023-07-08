@@ -52,6 +52,7 @@ export default function SearchInput({
 			<ul>
 				{searchResult.map((comment) => (
 					<li
+						role="button"
 						key={comment.id}
 						onKeyUp={() => handleSelect(comment)}
 						onClick={() => handleSelect(comment)}

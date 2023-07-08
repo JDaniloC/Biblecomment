@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useCallback, useState } from "react";
 import { Alert } from "@material-ui/lab";
 
 import PropTypes from "prop-types";
@@ -11,15 +11,15 @@ export function NotificationProvider({ children }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [severity, setSeverity] = useState("");
 
-	function _closeFunction() {
+	const _closeFunction = useCallback(() => {
 		setIsOpen(false);
-	}
+	}, []);
 
-	function handleNotification(newSeverity, newMessage) {
+	const handleNotification = useCallback((newSeverity, newMessage) => {
 		setSeverity(newSeverity);
 		setMessage(newMessage);
 		setIsOpen(true);
-	}
+	}, []);
 
 	return (
 		<NotificationContext.Provider
@@ -40,3 +40,5 @@ export function NotificationProvider({ children }) {
 NotificationProvider.propTypes = {
 	children: PropTypes.node.isRequired,
 };
+
+export default React.memo(NotificationProvider);

@@ -2,6 +2,7 @@ import React, { Component, createRef } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 
 import NewComment from "components/NewComment";
+import Modal from "shared/components/Modal/Modal";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileConfig from "./components/ProfileConfig";
 import ProfileComments from "./components/ProfileComments";
@@ -17,8 +18,6 @@ export default class Profile extends Component {
 		super(props);
 
 		this.state = {
-			editBox: "invisible",
-			blur: "none",
 			selected: 0,
 			perfilDisplay: "contents",
 			configDisplay: "none",
@@ -26,6 +25,7 @@ export default class Profile extends Component {
 
 			commentID: -1,
 			commentText: "",
+			showEditComment: false,
 		};
 
 		this.editComponent = createRef();
@@ -48,16 +48,15 @@ export default class Profile extends Component {
 		});
 
 		this.setState({
-			blur: "block",
 			selected: index,
 			commentText: selected,
 			commentID: identificador,
-			editBox: "visible centro",
+			showEditComment: true,
 		});
 	}
 	closeEditComment(evt) {
 		evt.preventDefault();
-		this.setState({ blur: "none", editBox: "invisible" });
+		this.setState({ showEditComment: false });
 	}
 
 	deleteComment(identificador) {
@@ -89,45 +88,44 @@ export default class Profile extends Component {
 
 	render() {
 		return (
-			<>
-				<section className={this.context.perfilClass}>
-					<ProfileHeader
-						username={this.context.name}
-						handleConfig={this.handleConfig}
-					/>
-					<ul style={{ display: this.state.perfilDisplay }}>
-						<li>
-							Total de livros comentados:&nbsp;
-							{this.context.booksCount} de 66
-						</li>
-						<li>
-							Total de capítulos comentados:&nbsp;
-							{this.context.chaptersCount} de 1.189
-						</li>
-						<li>
-							Total de comentários feitos:&nbsp;
-							{this.context.commentsCount}
-						</li>
+			<section className={this.context.perfilClass}>
+				<ProfileHeader
+					username={this.context.name}
+					handleConfig={this.handleConfig}
+				/>
+				<ul style={{ display: this.state.perfilDisplay }}>
+					<li>
+						Total de livros comentados:&nbsp;
+						{this.context.booksCount} de 66
+					</li>
+					<li>
+						Total de capítulos comentados:&nbsp;
+						{this.context.chaptersCount} de 1.189
+					</li>
+					<li>
+						Total de comentários feitos:&nbsp;
+						{this.context.commentsCount}
+					</li>
 
-						<ProfileComments
-							getComments={this.context.getComments}
-							editComment={this.editComment.bind(this)}
-							deleteComment={this.deleteComment.bind(this)}
-						/>
-					</ul>
-					<ProfileConfig
-						configDisplay={this.state.configDisplay}
-						closeAccount={this.props.closeAccount}
+					<ProfileComments
+						getComments={this.context.getComments}
+						editComment={this.editComment.bind(this)}
+						deleteComment={this.deleteComment.bind(this)}
 					/>
-					<button
-						style={{ display: this.state.buttonDisplay }}
-						onClick={this.props.closeAccount}
-					>
-						Sair
-					</button>
-				</section>
-
-				<div className={this.state.editBox}>
+				</ul>
+				<ProfileConfig
+					configDisplay={this.state.configDisplay}
+					closeAccount={this.props.closeAccount}
+				/>
+				<button
+					style={{ display: this.state.buttonDisplay }}
+					onClick={this.props.closeAccount}
+				>
+					Sair
+				</button>
+			
+				<Modal onHandleClose={this.closeEditComment}
+					show={this.state.showEditComment}>
 					<NewComment
 						post={false}
 						title="Editar comentário"
@@ -136,9 +134,8 @@ export default class Profile extends Component {
 						commentID={this.state.commentID}
 						addNewComment={this.handleCommentEdit}
 					/>
-				</div>
-				<div className="overlay" style={{ display: this.state.blur }} />
-			</>
+				</Modal>	
+			</section>
 		);
 	}
 }

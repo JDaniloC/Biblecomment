@@ -1,0 +1,32 @@
+.modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+
+	.modalMain {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+
+	.overlay {
+		background: rgba(244, 244, 244, 0.8);
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.showModal {
+  animation: fade-in 1s ease-out;
+	opacity: 1;
+}
+
+.hideModal {
+	opacity: 0;
+	position: fixed;
+	z-index: -1;
+	pointer-events: none;
+}

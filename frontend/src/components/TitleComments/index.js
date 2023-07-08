@@ -1,5 +1,6 @@
 import "./styles.css";
 
+import imageFunction from "shared/utils/icon-function";
 import Comment from "models/Comment";
 import PropTypes from "prop-types";
 import React from "react";
@@ -17,7 +18,6 @@ function dateFormat(string) {
 export default function TitleComment({
 	comments,
 	likeFunction,
-	imageFunction,
 	reportFunction,
 	handleNewComment,
 	discussionFunction,
@@ -103,7 +103,6 @@ export default function TitleComment({
 }
 TitleComment.propTypes = {
 	likeFunction: PropTypes.func.isRequired,
-	imageFunction: PropTypes.func.isRequired,
 	reportFunction: PropTypes.func.isRequired,
 	handleNewComment: PropTypes.func.isRequired,
 	discussionFunction: PropTypes.func.isRequired,

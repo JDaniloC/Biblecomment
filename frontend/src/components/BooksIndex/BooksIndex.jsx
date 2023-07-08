@@ -8,6 +8,7 @@ import PropTypes from "prop-types";
 import styles from "./BooksIndex.module.scss";
 import BookChooser from "./components/BookChooser/BookChooser";
 import ChapterChooser from "./components/ChapterChooser/ChapterChooser";
+import Modal from "shared/components/Modal/Modal";
 
 export default function BooksIndex({ changeChapter, closeBookComponent }) {
 	const { handleNotification } = React.useContext(ProfileContext);
@@ -64,20 +65,20 @@ export default function BooksIndex({ changeChapter, closeBookComponent }) {
 	return (
 		<div className={styles.booksIndexContainer}>
 			<h2> Escolha a meditação de hoje </h2>
-			<BookChooser books={books} onSelectBook={showChapterChooser} />
+			<BookChooser
+				books={books}
+				onSelectBook={showChapterChooser}
+			/>
 
-			{isShowingChapters && (
-				<>
-					<ChapterChooser
-						chaptersAmount={selectedBook.chaptersAmount}
-						onCloseButtonClick={closeChaptersChooser}
-						onSelectChapter={handleChangePage}
-						className={styles.chapterChooser}
-						abbrev={selectedBook.abbrev}
-					/>
-					<div className="overlay"></div>
-				</>
-			)}
+			<Modal show={isShowingChapters}
+					onHandleClose={closeChaptersChooser}>
+				<ChapterChooser
+					chaptersAmount={selectedBook.chaptersAmount}
+					onCloseButtonClick={closeChaptersChooser}
+					onSelectChapter={handleChangePage}
+					abbrev={selectedBook.abbrev}
+				/>
+			</Modal>
 		</div>
 	);
 }

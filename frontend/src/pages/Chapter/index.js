@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "services/api";
 import PropTypes from "prop-types";
 
@@ -9,48 +9,19 @@ import { isAuthenticated, TOKEN_KEY } from "services/auth";
 import { chapterAPI } from "./api";
 
 import TitleComment from "components/TitleComments";
+import Modal from "shared/components/Modal/Modal";
 import NewComment from "components/NewComment";
 import Comments from "components/Comments";
 import Header from "components/Header";
 
-import bookIcon from "assets/book.svg";
-import chatIcon from "assets/chat.svg";
-import handIcon from "assets/hand.svg";
-import heartIcon from "assets/heart.svg";
-import penIcon from "assets/pen.svg";
-import personIcon from "assets/person.svg";
-import warningIcon from "assets/warning.svg";
-
 import Verses from "./components/Verses";
-import { useCallback } from "react";
-
-function getIconImage(tag) {
-	switch (tag) {
-		case "heart":
-			return heartIcon;
-		case "warning":
-			return warningIcon;
-		case "chat":
-			return chatIcon;
-		case "devocional":
-			return handIcon;
-		case "inspirado":
-			return penIcon;
-		case "pessoal":
-			return personIcon;
-		default:
-			return bookIcon;
-	}
-}
 
 export default function Chapter(props) {
 	const { handleNotification } = React.useContext(NotificationContext);
 
-	const [newBoxClass, setNewBoxClass] = useState("invisible");
+	const [showNewComment, setShowNewComment] = useState(false);
 	const [asideClass, setAsideClass] = useState("invisible");
 	const [mainClass, setMainClass] = useState("main text");
-	const [navClass, setNavClass] = useState("visible");
-	const [blur, setBlur] = useState("none");
 
 	const [titleName, setTitleName] = useState("Chapter");
 	const [chapterNumber, setChapterNumber] = useState("0");
@@ -86,21 +57,12 @@ export default function Chapter(props) {
 		const newChapterNumber = chapter.length === 1 ?
 								 `0${chapter}` : chapter;
 		setChapterNumber(newChapterNumber);
-		return true;
 	}, [handleNotification]);
 
 	useEffect(() => {
 		const { abbrev, number } = props.match.params;
 		loadChapter(abbrev, number);
 	}, [loadChapter, props.match.params]);
-
-	function closeComments() {
-		setComments([]);
-		setCurrentVerse(-1);
-		setAsideClass("invisible");
-		setMainClass("main text");
-		setNavClass("visible");
-	}
 
 	function handleComments(event) {
 		const target = event.target;
@@ -112,29 +74,29 @@ export default function Chapter(props) {
 			setCurrentVerse(verseID);
 			setAsideClass("visible");
 			setMainClass("main comment");
-			setNavClass(navClass.includes("navHide") ?
-						navClass : `${navClass} navHide`);
 			setComments(allComments.filter((comment) =>
 						comment.verse_id === verseID));
 		}
 	}
 
-	function onHandleNewComment(evt, isTitle = false) {
+	function closeComments() {
+		setComments([]);
+		setCurrentVerse(-1);
+		setAsideClass("invisible");
+		setMainClass("main text");
+	}
+
+	function handleNewComment(evt, isTitle = false) {
 		evt.preventDefault();
 
-		setNewBoxClass("visible centro");
 		setNewTitleComment(isTitle);
-		setNavClass("invisible");
-		setBlur("block");
+		setShowNewComment(true);
+		if (isTitle) {
+			setCurrentVerse(verseList[0].id);
+		}
 	}
 
-	function closeNewCommentary(evt) {
-		evt.preventDefault();
-
-		setBlur("none");
-		setNavClass("visible");
-		setNewBoxClass("invisible");
-	}
+	const closeNewComment = useCallback(() => setShowNewComment(false), []);
 
 	function addNewComment(comment) {
 		if (comment.on_title) {
@@ -145,7 +107,7 @@ export default function Chapter(props) {
 		}
 	}
 
-	function renderAmount(index) {
+	function renderCommentAmount(index) {
 		const allCommentsLength = allComments.filter(
 			(comment) => comment.verse === index + 1
 		).length;
@@ -155,9 +117,7 @@ export default function Chapter(props) {
 			amount = allCommentsLength;
 		}
 
-		if (amount === 0) {
-			return <></>;
-		}
+		if (amount === 0) return;
 
 		const color =
 			amount === 1
@@ -176,7 +136,7 @@ export default function Chapter(props) {
 		);
 	}
 
-	function onHandleLike(identificador) {
+	function handleLike(identificador) {
 		function searchLike(comments) {
 			let commentFound = false;
 			comments.forEach((part, index, array) => {
@@ -213,7 +173,7 @@ export default function Chapter(props) {
 		}
 	}
 
-	function onHandleReport(identificador) {
+	function handleReport(identificador) {
 		if (isAuthenticated()) {
 			const token = localStorage.getItem(TOKEN_KEY);
 			const message = window.prompt("Qual o problema com o comentário?");
@@ -234,15 +194,15 @@ export default function Chapter(props) {
 		}
 	}
 
-	function onHandleDiscussion(comment_id, comment_text, comment_reference) {
+	function handleDiscussion(commentID, commentText, commentReference) {
 		const { abbrev } = props.match.params;
 		props.history.push({
 			pathname: `/discussion/${abbrev}`,
 			state: {
 				title: titleName,
-				comment_id: parseInt(comment_id, 10),
-				comment_text,
-				comment_reference,
+				commentReference,
+				commentText,
+				commentID,
 			},
 		});
 	}
@@ -255,49 +215,46 @@ export default function Chapter(props) {
 					<div className={mainClass}>
 						<label htmlFor="toggle" style={{ display: "flex" }}>
 							{titleName} {chapterNumber}{" "}
-							{renderAmount(false)}
+							{renderCommentAmount(false)}
 						</label>
 						<input type="checkbox" id="toggle" />
 						<TitleComment
 							comments={titleComments}
-							likeFunction={onHandleLike}
-							imageFunction={getIconImage}
-							reportFunction={onHandleReport}
-							handleNewComment={onHandleNewComment}
-							discussionFunction={onHandleDiscussion}
+							likeFunction={handleLike}
+							reportFunction={handleReport}
+							handleNewComment={handleNewComment}
+							discussionFunction={handleDiscussion}
 						/>
 						<Verses
 							verseList={verseList}
 							commentList={allComments}
 							currentVerse={currentVerse}
-							handleComments={handleComments}
+							onHandleComments={handleComments}
 						/>
 					</div>
 				</div>
 				<aside className={asideClass}>
 					<Comments
 						comments={comments}
-						likeFunction={onHandleLike}
-						imageFunction={getIconImage}
+						likeFunction={handleLike}
 						closeFunction={closeComments}
-						reportFunction={onHandleReport}
-						handleNewComment={onHandleNewComment}
-						discussionFunction={onHandleDiscussion}
+						reportFunction={handleReport}
+						onNewComment={handleNewComment}
+						discussionFunction={handleDiscussion}
 					/>
 				</aside>
 
-				<div className={newBoxClass}>
+				<Modal show={showNewComment}
+					onHandleClose={closeNewComment}>
 					<NewComment
 						post
 						verseID={currentVerse}
 						title="Criar comentário"
-						close={closeNewCommentary}
+						close={closeNewComment}
 						addNewComment={addNewComment}
 						isTitleComment={newTitleComment}
 					/>
-				</div>
-
-				<div className="overlay" style={{ display: blur }} />
+				</Modal>
 			</div>
 		</>
 	);

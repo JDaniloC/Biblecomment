@@ -10,7 +10,7 @@ export default function Verses({
 	verseList,
 	commentList,
 	currentVerse,
-	handleComments,
+	onHandleComments,
 }) {
 	function renderAmount(verseID) {
 		const amount = commentList.filter(
@@ -45,10 +45,11 @@ export default function Verses({
 					<li key={verse.id} id={verse.verse_number}>
 						<sup> {verse.verse_number} </sup>
 						<p
+						 	role="button"
 							className="verse-text"
 							data-index={verse.id}
-							onClick={handleComments}
-							onKeyUp={handleComments}
+							onClick={onHandleComments}
+							onKeyUp={onHandleComments}
 							data-active={currentVerse === verse.id}
 						>
 							{verse.text}
@@ -65,6 +66,6 @@ export default function Verses({
 Verses.propTypes = {
 	commentList: PropTypes.arrayOf(Comment).isRequired,
 	verseList: PropTypes.arrayOf(Verse).isRequired,
+	onHandleComments: PropTypes.func.isRequired,
 	currentVerse: PropTypes.number.isRequired,
-	handleComments: PropTypes.func.isRequired,
 };

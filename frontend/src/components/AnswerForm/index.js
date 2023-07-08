@@ -14,29 +14,23 @@ import "./styles.css";
 export default function AnswerForm({
 	answers,
 	selected,
-	comment_text,
-	setBlurDisplay,
-	comment_reference,
+	commentText,
+	onCloseAnswers,
+	commentReference,
 	appendNewDiscussion,
 	setAnswersToDiscussions,
 }) {
 	const [newAnswerClass, setNewAnswerClass] = useState("invisible");
 	const [newPostClass, setNewPostClass] = useState("pop-up");
-	const [answersClass, setAnswersClass] = useState("flex");
 	const [replyText, setReplyText] = useState("");
 
 	const { handleNotification } = useContext(NotificationContext);
 
-	const handleCloseAnswers = useCallback(() => {
-		setAnswersClass("none");
-		setBlurDisplay("none");
-	}, [setAnswersClass, setBlurDisplay]);
-
 	const handleCloseNewPost = useCallback(() => {
 		setNewPostClass("invisible");
 		setNewAnswerClass("pop-up");
-		handleCloseAnswers();
-	}, [setNewPostClass, setNewAnswerClass, handleCloseAnswers]);
+		onCloseAnswers();
+	}, [setNewPostClass, setNewAnswerClass, onCloseAnswers]);
 
 	const canPostSomething = useCallback(() => {
 		if (!isAuthenticated()) {
@@ -46,7 +40,7 @@ export default function AnswerForm({
 	}, [replyText, handleNotification]);
 
 	const handlePostNewAnswer = useCallback(() => {
-		handleCloseAnswers();
+		onCloseAnswers();
 		const hasPermissionToPost = canPostSomething();
 		if (hasPermissionToPost) {
 			try {
@@ -70,22 +64,22 @@ export default function AnswerForm({
 			}
 		}
 	}, [replyText, selected, setAnswersToDiscussions,
-		handleCloseAnswers, handleNotification, canPostSomething]);
+		onCloseAnswers, handleNotification, canPostSomething]);
 
 	const handlePostNewQuestion = useCallback(() => {
 		handleCloseNewPost();
 		const hasPermissionToPost = canPostSomething();
 		if (hasPermissionToPost) {
 			try {
-				const [username, abbrev, verse_reference] =
-					comment_reference.split(" ");
+				const [username, abbrev, verseReference] =
+					commentReference.split(" ");
 
 				axios
 					.post(`/discussion/${abbrev}/`, {
-						verse_reference,
+						verseReference,
 						question: replyText,
 						comment_id: selected,
-						verse_text: comment_text,
+						verse_text: commentText,
 						token: localStorage.getItem(TOKEN_KEY),
 					})
 					.then((response) => {
@@ -109,18 +103,18 @@ export default function AnswerForm({
 			}
 		}
 	}, [handleCloseNewPost, canPostSomething, handleNotification, replyText,
-		comment_reference, selected, comment_text, appendNewDiscussion]);
+		commentReference, selected, commentText, appendNewDiscussion]);
 
 	const handleChangeText = useCallback((value) => {
 		setReplyText(value);
 	}, [setReplyText]);
 
 	return (
-		<div className="answersComponent" style={{ display: answersClass }}>
+		<div className="answersComponent">
 			<div className={newAnswerClass}>
 				<div className="top">
 					<h1> Respostas </h1>
-					<button onClick={handleCloseAnswers} type="button">
+					<button onClick={onCloseAnswers} type="button">
 						<CloseIcon />
 					</button>
 				</div>
@@ -169,40 +163,32 @@ export default function AnswerForm({
 				</div>
 			</div>
 
-			{comment_text !== "" && (
-				<>
-					<div className={newPostClass}>
-						<div className="top">
-							<h1> Postar novo ponto </h1>
-							<button type="button" onClick={handleCloseNewPost}>
-								<CloseIcon />
-							</button>
-						</div>
-
-						<h2> {comment_reference} </h2>
-						<p className="verse-text">{comment_text}</p>
-
-						<div className="reply-area">
-							<div>
-								<MDEditor value={replyText} onChange={handleChangeText} />
-								<MDEditor.Markdown value={replyText} />
-							</div>
-							<button
-								type="button"
-								className="answer-btn"
-								onClick={handlePostNewQuestion}
-							>
-								Postar
-							</button>
-						</div>
+			{commentText !== "" && (
+				<div className={newPostClass}>
+					<div className="top">
+						<h1> Postar novo ponto </h1>
+						<button type="button" onClick={handleCloseNewPost}>
+							<CloseIcon />
+						</button>
 					</div>
-					<div
-						role="button"
-						aria-hidden="true"
-						className="answerBlur"
-						onClick={handleCloseNewPost}
-					/>
-				</>
+
+					<h2> {commentReference} </h2>
+					<p className="verse-text">{commentText}</p>
+
+					<div className="reply-area">
+						<div>
+							<MDEditor value={replyText} onChange={handleChangeText} />
+							<MDEditor.Markdown value={replyText} />
+						</div>
+						<button
+							type="button"
+							className="answer-btn"
+							onClick={handlePostNewQuestion}
+						>
+							Postar
+						</button>
+					</div>
+				</div>
 			)}
 		</div>
 	);
@@ -210,9 +196,9 @@ export default function AnswerForm({
 AnswerForm.propTypes = {
 	answers: PropTypes.arrayOf(Answer),
 	selected: PropTypes.number.isRequired,
-	setBlurDisplay: PropTypes.func.isRequired,
-	comment_text: PropTypes.string.isRequired,
-	comment_reference: PropTypes.string.isRequired,
+	commentText: PropTypes.string.isRequired,
+	onCloseAnswers: PropTypes.func.isRequired,
+	commentReference: PropTypes.string.isRequired,
 	appendNewDiscussion: PropTypes.func.isRequired,
 	setAnswersToDiscussions: PropTypes.func.isRequired,
 };

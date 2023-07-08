@@ -10,7 +10,6 @@ function ChapterChooser({
 	onCloseButtonClick,
 	onSelectChapter,
 	chaptersAmount,
-	className,
 	abbrev,
 }) {
 	const [chapterCount, setChapterCount] = useState([]);
@@ -45,7 +44,7 @@ function ChapterChooser({
 	);
 
 	return (
-		<div className={`${className} ${styles.chaptersChooserContainer}`}>
+		<div className={styles.chaptersChooserContainer}>
 			<div className="top">
 				<h2> Escolha o capítulo </h2>
 				<button type="button" onClick={onCloseButtonClick}>
@@ -74,9 +73,5 @@ ChapterChooser.propTypes = {
 	chaptersAmount: PropTypes.number.isRequired,
 	onSelectChapter: PropTypes.func.isRequired,
 	abbrev: PropTypes.string.isRequired,
-	className: PropTypes.string,
-};
-ChapterChooser.defaultProps = {
-	className: "",
 };
 export default React.memo(ChapterChooser);

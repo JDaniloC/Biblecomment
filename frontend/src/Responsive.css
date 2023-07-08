@@ -52,9 +52,6 @@
 	.chapter-container {
 		margin-left: 0;
 	}
-	.navHide {
-		display: none;
-	}
 }
 
 @media (max-width: 600px) {

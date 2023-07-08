@@ -56,9 +56,11 @@ export default function NewComment(props) {
 			try {
 				const token = localStorage.getItem(TOKEN_KEY);
 				if (props.post) {
+					const verseID = props.verseID;
+					const isTitle = props.isTitleComment;
 					axios
-						.post(`/comments/${props.verseID}`, {
-							on_title: props.isTitleComment,
+						.post(`/comments/${verseID}`, {
+							on_title: isTitle,
 							text: commentText,
 							tags: tagList,
 							token,

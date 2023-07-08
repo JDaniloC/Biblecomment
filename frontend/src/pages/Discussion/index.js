@@ -10,6 +10,7 @@ import AnswerForm from "components/AnswerForm";
 
 import "./styles.css";
 import Header from "components/Header";
+import Modal from "shared/components/Modal/Modal";
 
 export default class Discussion extends Component {
 	static contextType = NotificationContext;
@@ -19,44 +20,44 @@ export default class Discussion extends Component {
 
 		const location = this.props.location;
 		let title = "Não encontrado...",
-			comment_id = -1,
-			comment_text = "",
-			comment_reference = "";
+			commentID = -1,
+			commentText = "",
+			commentReference = "";
 
 		if (location !== undefined) {
 			const {
 				title: newTitle,
-				comment_id: newComment_id,
-				comment_text: newComment_text,
-				comment_reference: newComment_reference,
+				commentID: newCommentID,
+				commentText: newCommentText,
+				commentReference: newCommentReference,
 			} = location.state;
 
 			title = newTitle;
-			comment_id = newComment_id;
-			comment_text = newComment_text;
-			comment_reference = newComment_reference;
+			commentID = newCommentID;
+			commentText = newCommentText;
+			commentReference = newCommentReference;
 		}
 
 		const { abbrev } = this.props.match.params;
 
 		this.state = {
-			blurDisplay: "block",
+			showAnswerForm: true,
 
 			title,
 			abbrev,
 			discussions: [],
 			answers: [],
 
-			selected: comment_id,
-			comment_reference,
-			comment_text,
+			selected: commentID,
+			comment_text: commentText,
+			comment_reference: commentReference,
 
 			totalPages: 2,
 			currentPage: 1,
 			loadedPages: [1],
 		};
 
-		this.setBlurDisplay = this.setBlurDisplay.bind(this);
+		this.closeAnswers = this.closeAnswers.bind(this);
 		this.appendNewDiscussion = this.appendNewDiscussion.bind(this);
 		this.setAnswersToDiscussions = this.setAnswersToDiscussions.bind(this);
 	}
@@ -137,16 +138,13 @@ export default class Discussion extends Component {
 	openAnswers(identificador, answers) {
 		this.setState({
 			selected: Math.abs(identificador),
-			answersClass: "centro",
+			showAnswerForm: true,
 			answers: answers,
 		});
-		this.setBlurDisplay("block");
 	}
 
-	setBlurDisplay(display) {
-		this.setState({
-			blurDisplay: display,
-		});
+	closeAnswers() {
+		this.setState({ showAnswerForm: false });
 	}
 
 	handlePaginate(_, page) {
@@ -250,23 +248,19 @@ export default class Discussion extends Component {
 					</div>
 				</div>
 
-				<AnswerForm
-					answers={this.state.answers}
-					selected={this.state.selected}
-					closeAnswers={this.closeAnswers}
-					setBlurDisplay={this.setBlurDisplay}
-					comment_text={this.state.comment_text}
-					postNewQuestion={this.postNewQuestion}
-					appendNewDiscussion={this.appendNewDiscussion}
-					comment_reference={this.state.comment_reference}
-					setAnswersToDiscussions={this.setAnswersToDiscussions}
-				/>
-				<div
-					className="overlay"
-					style={{
-						display: this.state.blurDisplay,
-					}}
-				/>
+				<Modal show={this.state.showAnswerForm}
+					onHandleClose={this.closeAnswers}>
+					<AnswerForm
+						answers={this.state.answers}
+						selected={this.state.selected}
+						onCloseAnswers={this.closeAnswers}
+						commentText={this.state.comment_text}
+						postNewQuestion={this.postNewQuestion}
+						appendNewDiscussion={this.appendNewDiscussion}
+						commentReference={this.state.comment_reference}
+						setAnswersToDiscussions={this.setAnswersToDiscussions}
+					/>
+				</Modal>
 			</>
 		);
 	}
