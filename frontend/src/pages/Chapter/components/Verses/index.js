@@ -14,7 +14,7 @@ export default function Verses({
 }) {
 	function renderAmount(verseID) {
 		const amount = commentList.filter(
-			(comment) => comment.verse_id === verseID
+			(comment) => comment.verse_id === verseID,
 		).length;
 
 		if (amount === 0) {
@@ -45,7 +45,7 @@ export default function Verses({
 					<li key={verse.id} id={verse.verse_number}>
 						<sup> {verse.verse_number} </sup>
 						<p
-						 	role="button"
+							role="button"
 							className="verse-text"
 							data-index={verse.id}
 							onClick={onHandleComments}

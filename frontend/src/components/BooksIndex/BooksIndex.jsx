@@ -29,7 +29,7 @@ export default function BooksIndex({ changeChapter, closeBookComponent }) {
 			.catch((error) => {
 				handleNotification(
 					"error",
-					`Problema no servidor: ${error.toString()}`
+					`Problema no servidor: ${error.toString()}`,
 				);
 			});
 	}, [handleNotification]);
@@ -55,23 +55,19 @@ export default function BooksIndex({ changeChapter, closeBookComponent }) {
 				window.history.replaceState(
 					null,
 					`Bible Comment: ${chapter} ${number}`,
-					`/verses/${chapter}/${number}`
+					`/verses/${chapter}/${number}`,
 				);
 			}
 		},
-		[changeChapter, closeBookComponent, closeChaptersChooser]
+		[changeChapter, closeBookComponent, closeChaptersChooser],
 	);
 
 	return (
 		<div className={styles.booksIndexContainer}>
 			<h2> Escolha a meditação de hoje </h2>
-			<BookChooser
-				books={books}
-				onSelectBook={showChapterChooser}
-			/>
+			<BookChooser books={books} onSelectBook={showChapterChooser} />
 
-			<Modal show={isShowingChapters}
-					onHandleClose={closeChaptersChooser}>
+			<Modal show={isShowingChapters} onHandleClose={closeChaptersChooser}>
 				<ChapterChooser
 					chaptersAmount={selectedBook.chaptersAmount}
 					onCloseButtonClick={closeChaptersChooser}

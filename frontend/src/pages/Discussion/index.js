@@ -248,8 +248,10 @@ export default class Discussion extends Component {
 					</div>
 				</div>
 
-				<Modal show={this.state.showAnswerForm}
-					onHandleClose={this.closeAnswers}>
+				<Modal
+					show={this.state.showAnswerForm}
+					onHandleClose={this.closeAnswers}
+				>
 					<AnswerForm
 						answers={this.state.answers}
 						selected={this.state.selected}
