@@ -55,9 +55,11 @@ export default function Chapter(props) {
 				setTitleComments(response.data.titleComments);
 			});
 
-		const newChapterNumber = chapter.length === 1 ? `0${chapter}` : chapter;
-		setChapterNumber(newChapterNumber);
-	}, [handleNotification]);
+			const newChapterNumber = chapter.length === 1 ? `0${chapter}` : chapter;
+			setChapterNumber(newChapterNumber);
+		},
+		[handleNotification],
+	);
 
 	useEffect(() => {
 		const { abbrev, number } = props.match.params;
@@ -74,8 +76,9 @@ export default function Chapter(props) {
 			setCurrentVerse(verseID);
 			setAsideClass("visible");
 			setMainClass("main comment");
-			setComments(allComments.filter((comment) =>
-						comment.verse_id === verseID));
+			setComments(
+				allComments.filter((comment) => comment.verse_id === verseID),
+			);
 		}
 	}
 
@@ -109,7 +112,7 @@ export default function Chapter(props) {
 
 	function renderCommentAmount(index) {
 		const allCommentsLength = allComments.filter(
-			(comment) => comment.verse === index + 1
+			(comment) => comment.verse === index + 1,
 		).length;
 
 		let amount = titleComments.length;
@@ -214,8 +217,7 @@ export default function Chapter(props) {
 				<div className="chapter-container">
 					<div className={mainClass}>
 						<label htmlFor="toggle" style={{ display: "flex" }}>
-							{titleName} {chapterNumber}{" "}
-							{renderCommentAmount(false)}
+							{titleName} {chapterNumber} {renderCommentAmount(false)}
 						</label>
 						<input type="checkbox" id="toggle" />
 						<TitleComment
@@ -244,8 +246,7 @@ export default function Chapter(props) {
 					/>
 				</aside>
 
-				<Modal show={showNewComment}
-					onHandleClose={closeNewComment}>
+				<Modal show={showNewComment} onHandleClose={closeNewComment}>
 					<NewComment
 						post
 						verseID={currentVerse}

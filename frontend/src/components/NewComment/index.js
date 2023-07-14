@@ -44,7 +44,7 @@ export default function NewComment(props) {
 			} else if (commentText.length < 200 || commentText.length > 1000) {
 				return handleNotification(
 					"info",
-					"Reescreva o comentário entre 200-1000 caracteres!"
+					"Reescreva o comentário entre 200-1000 caracteres!",
 				);
 			}
 			const tagList = [];
@@ -94,7 +94,7 @@ export default function NewComment(props) {
 			setCommentText("");
 			props.close(evt);
 		},
-		[addNewComment, commentText, tags, handleNotification, props]
+		[addNewComment, commentText, tags, handleNotification, props],
 	);
 
 	const handleChange = useCallback(
@@ -116,7 +116,7 @@ export default function NewComment(props) {
 				setCommentText(value);
 			}
 		},
-		[buttonDisabled, tags, setTags, setButtonDisabled, setCommentText]
+		[buttonDisabled, tags, setTags, setButtonDisabled, setCommentText],
 	);
 
 	return (

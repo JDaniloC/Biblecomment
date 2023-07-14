@@ -63,16 +63,21 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [replyText, selected, setAnswersToDiscussions,
-		onCloseAnswers, handleNotification, canPostSomething]);
+	}, [
+		replyText,
+		selected,
+		setAnswersToDiscussions,
+		onCloseAnswers,
+		handleNotification,
+		canPostSomething,
+	]);
 
 	const handlePostNewQuestion = useCallback(() => {
 		handleCloseNewPost();
 		const hasPermissionToPost = canPostSomething();
 		if (hasPermissionToPost) {
 			try {
-				const [username, abbrev, verseReference] =
-					commentReference.split(" ");
+				const [username, abbrev, verseReference] = commentReference.split(" ");
 
 				axios
 					.post(`/discussion/${abbrev}/`, {
@@ -89,7 +94,7 @@ export default function AnswerForm({
 							appendNewDiscussion(response.data);
 							handleNotification(
 								"success",
-								`Comentário enviado à ${username}!`
+								`Comentário enviado à ${username}!`,
 							);
 						} else {
 							handleNotification("warning", response.data.error);
@@ -102,12 +107,23 @@ export default function AnswerForm({
 				handleNotification("error", error.toString());
 			}
 		}
-	}, [handleCloseNewPost, canPostSomething, handleNotification, replyText,
-		commentReference, selected, commentText, appendNewDiscussion]);
+	}, [
+		handleCloseNewPost,
+		canPostSomething,
+		handleNotification,
+		replyText,
+		commentReference,
+		selected,
+		commentText,
+		appendNewDiscussion,
+	]);
 
-	const handleChangeText = useCallback((value) => {
-		setReplyText(value);
-	}, [setReplyText]);
+	const handleChangeText = useCallback(
+		(value) => {
+			setReplyText(value);
+		},
+		[setReplyText],
+	);
 
 	return (
 		<div className="answersComponent">

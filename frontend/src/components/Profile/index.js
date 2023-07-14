@@ -64,7 +64,7 @@ export default class Profile extends Component {
 			this.context.setCommentaries(
 				this.context.commentaries.filter((item) => {
 					return item.id !== identificador;
-				})
+				}),
 			);
 			this.props.deleteComment(identificador);
 		}
@@ -123,9 +123,11 @@ export default class Profile extends Component {
 				>
 					Sair
 				</button>
-			
-				<Modal onHandleClose={this.closeEditComment}
-					show={this.state.showEditComment}>
+
+				<Modal
+					onHandleClose={this.closeEditComment}
+					show={this.state.showEditComment}
+				>
 					<NewComment
 						post={false}
 						title="Editar comentário"
@@ -134,7 +136,7 @@ export default class Profile extends Component {
 						commentID={this.state.commentID}
 						addNewComment={this.handleCommentEdit}
 					/>
-				</Modal>	
+				</Modal>
 			</section>
 		);
 	}
