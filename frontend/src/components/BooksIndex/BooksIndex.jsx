@@ -10,7 +10,7 @@ import BookChooser from "./components/BookChooser/BookChooser";
 import ChapterChooser from "./components/ChapterChooser/ChapterChooser";
 import Modal from "shared/components/Modal/Modal";
 
-export default function BooksIndex({ changeChapter, closeBookComponent }) {
+export default function BooksIndex({ onChangeChapter, closeBookComponent }) {
 	const { handleNotification } = React.useContext(ProfileContext);
 
 	const [books, setBooks] = useState([]);
@@ -48,7 +48,7 @@ export default function BooksIndex({ changeChapter, closeBookComponent }) {
 
 	const handleChangePage = useCallback(
 		(chapter, number) => {
-			const changed = changeChapter(chapter, number);
+			const changed = onChangeChapter(chapter, number);
 			if (changed) {
 				closeChaptersChooser();
 				closeBookComponent();
@@ -59,7 +59,7 @@ export default function BooksIndex({ changeChapter, closeBookComponent }) {
 				);
 			}
 		},
-		[changeChapter, closeBookComponent, closeChaptersChooser]
+		[onChangeChapter, closeBookComponent, closeChaptersChooser]
 	);
 
 	return (
@@ -83,10 +83,10 @@ export default function BooksIndex({ changeChapter, closeBookComponent }) {
 	);
 }
 BooksIndex.propTypes = {
-	changeChapter: PropTypes.func,
+	onChangeChapter: PropTypes.func,
 	closeBookComponent: PropTypes.func,
 };
 BooksIndex.defaultProps = {
-	changeChapter: (a, b) => a && b && false,
+	onChangeChapter: (a, b) => a && b && false,
 	closeBookComponent: () => false,
 };

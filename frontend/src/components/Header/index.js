@@ -15,7 +15,7 @@ import BooksIcon from "assets/books.svg";
 import ArrowIcon from "assets/arrow.svg";
 import PersonIcon from "assets/person.svg";
 
-export default function Header({ changeChapter }) {
+export default function Header({ onChangeChapter }) {
 	const [booksIndexClass, setBooksIndexClass] = useState("invisible");
 	const [loginClass, setLoginClass] = useState("invisible");
 	const [comments, setComments] = useState([]);
@@ -95,7 +95,7 @@ export default function Header({ changeChapter }) {
 			</section>
 			<section className={booksIndexClass}>
 				<BooksIndex
-					changeChapter={changeChapter}
+					onChangeChapter={onChangeChapter}
 					closeBookComponent={toggleBooksComponent}
 				/>
 			</section>
@@ -103,9 +103,9 @@ export default function Header({ changeChapter }) {
 	);
 }
 Header.propTypes = {
-	changeChapter: PropTypes.func,
+	onChangeChapter: PropTypes.func,
 };
 Header.defaultProps = {
 	// eslint-disable-next-line
-	changeChapter: (...[]) => false,
+	onChangeChapter: (...[]) => false,
 };

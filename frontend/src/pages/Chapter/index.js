@@ -33,30 +33,30 @@ export default function Chapter(props) {
 	const [titleComments, setTitleComments] = useState([]);
 	const [newTitleComment, setNewTitleComment] = useState(false);
 
-	const loadChapter = useCallback(
-		(abbrev, chapter) => {
-			chapterAPI.getBook(abbrev).then((response) => {
-				if (response.error) {
-					return handleNotification("error", response.error);
-				}
-				setTitleName(response.data.title);
-			});
-			chapterAPI.getChapterVerses(abbrev, chapter).then((response) => {
-				if (response.error) {
-					return handleNotification("error", response.error);
-				}
-				setVerseList(response.data);
-			});
-			chapterAPI.getChapterComments(abbrev, chapter).then((response) => {
-				if (response.error) {
-					return handleNotification("error", response.error);
-				}
-				setAllComments(response.data.verseComments);
-				setTitleComments(response.data.titleComments);
-			});
+	const loadChapter = useCallback((abbrev, chapter) => {
+		chapterAPI.getBook(abbrev).then((response) => {
+			if (response.error) {
+				return handleNotification("error", response.error);
+			}
+			setTitleName(response.data.title);
+		});
+		chapterAPI.getChapterVerses(abbrev, chapter).then((response) => {
+			if (response.error) {
+				return handleNotification("error", response.error);
+			}
+			setVerseList(response.data);
+		});
+		chapterAPI.getChapterComments(abbrev, chapter).then((response) => {
+			if (response.error) {
+				return handleNotification("error", response.error);
+			}
+			setAllComments(response.data.verseComments);
+			setTitleComments(response.data.titleComments);
+		});
 
 		const newChapterNumber = chapter.length === 1 ? `0${chapter}` : chapter;
 		setChapterNumber(newChapterNumber);
+		return newChapterNumber;
 	}, [handleNotification]);
 
 	useEffect(() => {
@@ -209,7 +209,7 @@ export default function Chapter(props) {
 
 	return (
 		<>
-			<Header changeChapter={loadChapter} />
+			<Header onChangeChapter={loadChapter} />
 			<div className="container">
 				<div className="chapter-container">
 					<div className={mainClass}>

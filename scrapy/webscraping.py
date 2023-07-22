@@ -1,10 +1,10 @@
 import re, json, time, requests, os
-from requests.api import options
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
 
 token = "YOUR TOKEN HERE"
 API_URL = "https://www.abibliadigital.com.br/api"
+book_list = []
 
 class PageLoaded(object):
     def __init__(self, oldId):
@@ -37,7 +37,6 @@ def versesTotal(abbrev, chapter, token):
     result = response.json()
     return result["chapter"]["verses"]
 
-book_list = []
 
 opcoes = ChromeOptions()
 opcoes.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
@@ -95,12 +94,6 @@ for abbrev in book_list:
             encoding="utf-8") as file:
             json.dump(book, file, ensure_ascii=False, indent = 2)
 
-        # Add the chapters number in the books.json
-        # with open("books.json", encoding="utf-8") as file:
-        #     books = json.load(file)
-        # with open("books.json", "w", encoding="utf-8") as file:
-        #     books.update({abbrev: totalChapters})
-        #     json.dump(books, file, ensure_ascii=False, indent = 2)
         print("Files created!")
 
 browser.quit()

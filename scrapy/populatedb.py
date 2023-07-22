@@ -13,16 +13,17 @@ for abbrev, (title, length) in books.items():
             "title": title,
             "abbrev": abbrev,
             "length": length
-    })
+        })
     print(response.json())
-    with open(f"chapters/{abbrev}.json", encoding = "utf-8") as chapter:
-        verses = json.load(chapter)
+    with open(f"chapters/{abbrev}.json", encoding = "utf-8") as book:
+        chapters = json.load(book)
 
-        for number in verses:
-            print(f"Populating {abbrev}:{number} = ", end = "")
-            response = requests.post(
-            f"{baseurl}/books/{abbrev}/chapters/{number}", json = {
-                "verses": verses[number]
-            })
-            print(response.json())
+        for chapter in chapters:
+            print(f"Populating {abbrev}:{chapter} = ", end = "")
+            for verse, text in enumerate(chapters[chapter]):
+                response = requests.post(
+                f"{baseurl}/books/{abbrev}/verses/{chapter}/{verse + 1}/", json = {
+                    "text": text
+                })
+                print(response.json())
             time.sleep(0.5)
