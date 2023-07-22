@@ -57,7 +57,7 @@ export default function Header({ onChangeChapter }) {
 			history.push(`/verses/${book}/${chapter}#${verse}`);
 			window.location.reload();
 		},
-		[history]
+		[history],
 	);
 
 	return (
