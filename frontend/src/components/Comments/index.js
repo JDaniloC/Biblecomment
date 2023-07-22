@@ -24,24 +24,33 @@ export default function Comments({
 	reportFunction,
 	discussionFunction,
 }) {
-	const handleLike = useCallback((evt) => {
-		const id = evt.target.getAttribute("data-id");
-		likeFunction(parseInt(id, 10));
-	}, [likeFunction]);
+	const handleLike = useCallback(
+		(evt) => {
+			const id = evt.target.getAttribute("data-id");
+			likeFunction(parseInt(id, 10));
+		},
+		[likeFunction],
+	);
 
-	const handleReport = useCallback((evt) => {
-		const id = evt.target.getAttribute("data-id");
-		reportFunction(parseInt(id, 10));
-	}, [reportFunction]);
+	const handleReport = useCallback(
+		(evt) => {
+			const id = evt.target.getAttribute("data-id");
+			reportFunction(parseInt(id, 10));
+		},
+		[reportFunction],
+	);
 
-	const handleChat = useCallback((evt) => {
-		const comment_reference = evt.target.getAttribute("data-reference");
-		const comment_id = parseInt(evt.target.getAttribute("data-id"), 10);
-		const username = evt.target.getAttribute("data-username");
-		const comment_text = evt.target.getAttribute("data-text");
-		const reference = `${username} ${comment_reference}`;
-		discussionFunction(comment_id, comment_text, reference);
-	}, [discussionFunction]);
+	const handleChat = useCallback(
+		(evt) => {
+			const comment_reference = evt.target.getAttribute("data-reference");
+			const comment_id = parseInt(evt.target.getAttribute("data-id"), 10);
+			const username = evt.target.getAttribute("data-username");
+			const comment_text = evt.target.getAttribute("data-text");
+			const reference = `${username} ${comment_reference}`;
+			discussionFunction(comment_id, comment_text, reference);
+		},
+		[discussionFunction],
+	);
 
 	return (
 		<div className="sideComments">

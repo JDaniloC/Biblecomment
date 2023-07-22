@@ -7,9 +7,7 @@ export default function Modal({ show, children, onHandleClose }) {
 	return (
 		<div className={`${styles.modal} ${showClassName}`}>
 			<section className={styles.modalMain}>{children}</section>
-			<div className={styles.overlay}
-				 onClick={onHandleClose}
-				 role="button"/>
+			<div className={styles.overlay} onClick={onHandleClose} role="button" />
 		</div>
 	);
 }

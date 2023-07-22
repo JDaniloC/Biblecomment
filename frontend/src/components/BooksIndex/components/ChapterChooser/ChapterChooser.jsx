@@ -30,7 +30,7 @@ function ChapterChooser({
 			}
 			return false;
 		},
-		[abbrev, commented]
+		[abbrev, commented],
 	);
 
 	const onChapterClick = useCallback(
@@ -40,7 +40,7 @@ function ChapterChooser({
 			const chapterNumber = target.getAttribute("data-number");
 			onSelectChapter(abbrev, Number(chapterNumber));
 		},
-		[onSelectChapter, abbrev]
+		[onSelectChapter, abbrev],
 	);
 
 	return (
