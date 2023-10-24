@@ -1,0 +1,34 @@
+.commentCount {
+	height: 25px;
+	min-width: 25px;
+	border-radius: 4px;
+
+	align-self: center;
+	text-align: center;
+	font-weight: normal;
+	margin-left: auto;
+	font-size: large;
+
+	background-color: attr(data-color color);
+
+	&[data-color=""] {
+		display: none;
+	}
+	&[data-color="lighter"] {
+		background-color: #cbe4f9;
+	}
+	&[data-color="light"] {
+		background-color: #a6cff3;
+	}
+	&[data-color="normal"] {
+		background-color: #82bbed;
+	}
+	&[data-color="dark"] {
+		background-color: #5da6e7;
+		color: white;
+	}
+	&[data-color="darker"] {
+		background-color: #3892e1;
+		color: white;
+	}
+}

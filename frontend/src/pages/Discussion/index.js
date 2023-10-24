@@ -10,7 +10,7 @@ import AnswerForm from "components/AnswerForm";
 
 import "./styles.css";
 import Header from "components/Header";
-import Modal from "shared/components/Modal/Modal";
+import { Modal } from "shared/components";
 
 export default class Discussion extends Component {
 	static contextType = NotificationContext;

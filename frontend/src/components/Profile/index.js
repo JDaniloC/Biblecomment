@@ -2,10 +2,10 @@ import React, { Component, createRef } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
 
 import NewComment from "components/NewComment";
-import Modal from "shared/components/Modal/Modal";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileConfig from "./components/ProfileConfig";
 import ProfileComments from "./components/ProfileComments";
+import { Modal } from "shared/components";
 
 import PropTypes from "prop-types";
 
