@@ -16,13 +16,19 @@ export default function ProfileConfig({ configDisplay, closeAccount }) {
 		deleteAccount,
 	} = useContext(ProfileContext);
 
-	const handleChangeState = useCallback((evt) => {
-		setStateName(evt.target.value);
-	}, [setStateName]);
+	const handleChangeState = useCallback(
+		(evt) => {
+			setStateName(evt.target.value);
+		},
+		[setStateName],
+	);
 
-	const handleChangeBelief = useCallback((evt) => {
-		setBelief(evt.target.value);
-	}, [setBelief]);
+	const handleChangeBelief = useCallback(
+		(evt) => {
+			setBelief(evt.target.value);
+		},
+		[setBelief],
+	);
 
 	const handleDeleteAccount = useCallback(() => {
 		deleteAccount();

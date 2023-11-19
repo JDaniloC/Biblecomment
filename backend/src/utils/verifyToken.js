@@ -18,7 +18,7 @@ module.exports = function verifyToken(request) {
 	try {
 		const { exp, email, username, moderator } = jwt.verify(
 			token,
-			process.env.SECRET
+			process.env.SECRET,
 		);
 
 		if (!exp || exp < 0) {

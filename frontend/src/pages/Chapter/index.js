@@ -127,12 +127,12 @@ export default function Chapter(props) {
 			amount === 1
 				? "lightgray"
 				: amount < 3
-				? "lightblue"
-				: amount < 5
-				? "lightgreen"
-				: amount < 10
-				? "gold"
-				: "lightcoral";
+				  ? "lightblue"
+				  : amount < 5
+				    ? "lightgreen"
+				    : amount < 10
+				      ? "gold"
+				      : "lightcoral";
 		return (
 			<div className="amount" style={{ backgroundColor: color }}>
 				{amount}

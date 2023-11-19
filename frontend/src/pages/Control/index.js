@@ -170,7 +170,7 @@ export default class Control extends Component {
 				if (typeof response.data.error === "undefined") {
 					this.setState((prevState) => ({
 						discussions: prevState.discussions.filter(
-							(discussion) => discussion.id !== id
+							(discussion) => discussion.id !== id,
 						),
 					}));
 				}

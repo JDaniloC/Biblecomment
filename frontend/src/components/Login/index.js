@@ -80,7 +80,7 @@ export default class Login extends Component {
 				.then(() => {
 					this.handleNotification(
 						"success",
-						"Comentário excluído com sucesso."
+						"Comentário excluído com sucesso.",
 					);
 				})
 				.catch(({ response }) => {

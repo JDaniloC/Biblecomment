@@ -49,9 +49,12 @@ export default function ProfileComments({
 		setMaxPages(totalPages);
 	}, [commentaries]);
 
-	const handleChangePage = useCallback((_, page) => {
-		setCurrentPage(page);
-	}, [setCurrentPage]);
+	const handleChangePage = useCallback(
+		(_, page) => {
+			setCurrentPage(page);
+		},
+		[setCurrentPage],
+	);
 
 	return (
 		<ul className="commentaries">

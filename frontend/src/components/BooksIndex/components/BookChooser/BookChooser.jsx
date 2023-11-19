@@ -15,7 +15,7 @@ function BookChooser({ books, onSelectBook }) {
 			const max = event.target.getAttribute("data-length");
 			onSelectBook(abbrev, parseInt(max, 10));
 		},
-		[onSelectBook]
+		[onSelectBook],
 	);
 
 	const bookBackgroundStyle = useCallback(
@@ -28,7 +28,7 @@ function BookChooser({ books, onSelectBook }) {
 								lightgreen ${percentage}%,
 								#DADCE2 0%)`;
 		},
-		[commented]
+		[commented],
 	);
 
 	return (
