@@ -9,14 +9,14 @@ export default function CommentCount({ commentsCount, currentIndex }) {
 		amount === 0
 			? ""
 			: amount < 2
-			? "lighter"
-			: amount < 3
-			? "light"
-			: amount < 5
-			? "normal"
-			: amount < 10
-			? "dark"
-			: "darker";
+			  ? "lighter"
+			  : amount < 3
+			    ? "light"
+			    : amount < 5
+			      ? "normal"
+			      : amount < 10
+			        ? "dark"
+			        : "darker";
 
 	return (
 		<div className={Styles.commentCount} data-color={color}>
