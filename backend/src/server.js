@@ -22,7 +22,7 @@ app.options(
 			"https://www.biblecomment.com.br",
 		],
 		optionsSuccessStatus: 200,
-	})
+	}),
 );
 app.use(cors());
 app.disable("x-powered-by");
