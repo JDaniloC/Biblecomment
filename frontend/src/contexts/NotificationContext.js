@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useState } from "react";
-import { Alert } from "@material-ui/lab";
+import Alert from '@mui/material/Alert';
 
 import PropTypes from "prop-types";
-import Snackbar from "@material-ui/core/Snackbar";
+import Snackbar from "@mui/material/Snackbar";
 
 export const NotificationContext = createContext({});
 

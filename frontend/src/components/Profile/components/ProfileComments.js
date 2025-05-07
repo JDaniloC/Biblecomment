@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import { ProfileContext } from "contexts/ProfileContext";
+import Pagination from '@mui/material/Pagination';
 import { Loading } from "components/Partials";
-import { Pagination } from "@material-ui/lab";
 
 import CommentRow from "./CommentRow";
 import PropTypes from "prop-types";

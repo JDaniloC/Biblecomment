@@ -1,5 +1,5 @@
 {
-	"name": "BibleComment",
+	"name": "bible-comment",
 	"version": "1.0.0",
 	"description": "A bible comment app",
 	"main": "index.js",
@@ -12,10 +12,9 @@
 	"engines": {
 		"node": "14.x"
 	},
-	"repository": "https://github.com/JDaniloC/Individual-Community-Bible.git",
-	"private": false,
+	"repository": "https://github.com/JDaniloC/Biblecomment.git",
 	"devDependencies": {
-		"eslint": "^7.32.0",
+		"eslint": "9.26.0",
 		"eslint-plugin-react": "^7.26.0"
 	}
 }

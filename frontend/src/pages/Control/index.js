@@ -1,7 +1,7 @@
 import "./styles.css";
 
 import React, { Component } from "react";
-import { Pagination } from "@material-ui/lab";
+import Pagination from '@mui/material/Pagination';
 import { isAuthenticated } from "../../services/auth";
 
 import axios from "../../services/api";
