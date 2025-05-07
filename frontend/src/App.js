@@ -1,8 +1,8 @@
 import "./App.scss";
 import "./Responsive.css";
 
-import { makeStyles } from "@mui/styles"
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { makeStyles } from "@mui/styles";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 import NotificationProvider from "./contexts/NotificationContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
 import React, { useEffect } from "react";

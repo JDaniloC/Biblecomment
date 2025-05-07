@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import Pagination from '@mui/material/Pagination';
+import Pagination from "@mui/material/Pagination";
 import { NotificationContext } from "contexts/NotificationContext";
 
 import axios from "services/api";
