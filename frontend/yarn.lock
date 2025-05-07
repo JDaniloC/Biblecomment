@@ -13980,16 +13980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "semver@npm:6.0.0"
-  bin:
-    semver: ./bin/semver
-  checksum: 10c0/b6541d5a780767aeeadc601dc14db31f6db34ec44163cc0f4e555db691dc1d6964790009740501ddbb904e60ea855b84864953cda85334bf742619574e2b534f
-  languageName: node
-  linkType: hard
-
-"semver@npm:^6.3.0, semver@npm:^6.3.1":
+"semver@npm:^6.0.0, semver@npm:^6.3.0, semver@npm:^6.3.1":
   version: 6.3.1
   resolution: "semver@npm:6.3.1"
   bin:
