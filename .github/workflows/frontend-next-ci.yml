@@ -1,0 +1,34 @@
+name: frontend-next CI
+
+on:
+  push:
+    paths:
+      - 'frontend-next/**'
+      - '.github/workflows/frontend-next-ci.yml'
+  pull_request:
+    paths:
+      - 'frontend-next/**'
+      - '.github/workflows/frontend-next-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-next
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'frontend-next/package-lock.json'
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm i; fi
+      - name: Lint
+        run: npm run lint --if-present
+      - name: Typecheck
+        run: npm run typecheck --if-present
+      - name: Build
+        run: npm run build
