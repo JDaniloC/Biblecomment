@@ -6171,9 +6171,9 @@ __metadata:
   linkType: hard
 
 "diff@npm:^5.0.0":
-  version: 5.1.0
-  resolution: "diff@npm:5.1.0"
-  checksum: 77a0d9beb9ed54796154ac2511872288432124ac90a1cabb1878783c9b4d81f1847f3b746a0630b1e836181461d2c76e1e6b95559bef86ed16294d114862e364
+  version: 5.2.2
+  resolution: "diff@npm:5.2.2"
+  checksum: 8/a1af5d6322ca6312279369665b5a9e6d54cd2aed42729a30523e174ccd14661a752bf10d75deec8763964cab3df3787fe816f88e9de7ee8fe774852007269d88
   languageName: node
   linkType: hard
 
