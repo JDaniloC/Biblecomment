@@ -1,0 +1,77 @@
+name: Cypress
+
+on:
+  push:
+    branches:
+      - master
+      - "feat/**"
+  pull_request:
+    branches:
+      - master
+
+defaults:
+  run:
+    working-directory: nextjs
+
+jobs:
+  cypress:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      MONGODB_URI: mongodb://localhost:27017/biblecomment-cypress
+      NEXTAUTH_SECRET: cypress-test-secret-not-for-prod
+      NEXTAUTH_URL: http://localhost:5000
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: nextjs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests (Vitest)
+        run: npm test
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: nextjs
+          start: npm start
+          wait-on: "http://localhost:5000"
+          wait-on-timeout: 120
+          browser: chrome
+          install: false
+        env:
+          MONGODB_URI: ${{ env.MONGODB_URI }}
+          NEXTAUTH_SECRET: ${{ env.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ env.NEXTAUTH_URL }}
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: nextjs/cypress/screenshots
+          if-no-files-found: ignore
+          retention-days: 7

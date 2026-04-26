@@ -16,3 +16,6 @@ venv
 nextjs/.next
 nextjs/.next/
 nextjs/tsconfig.tsbuildinfo
+nextjs/cypress/tsconfig.tsbuildinfo
+nextjs/cypress/screenshots/
+nextjs/cypress/videos/
