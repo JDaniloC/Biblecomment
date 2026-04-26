@@ -29,8 +29,12 @@ const DiscussionSchema = new Schema<IDiscussionDocument>(
     commentId:      { type: Schema.Types.ObjectId, ref: "Comment" },
     username:       { type: String, required: true },
     verseReference: { type: String, required: true },
-    verseText:      { type: String, required: true },
-    commentText:    { type: String, required: true },
+    // verseText and commentText are descriptive context that may be
+    // empty (the user can omit them in the discussion form). The Zod
+    // schema defaults them to "" — without this relaxation the Mongoose
+    // required check rejects the empty string and throws a 500.
+    verseText:      { type: String, default: "" },
+    commentText:    { type: String, default: "" },
     question:       { type: String, required: true },
     answers:        { type: [AnswerSchema], default: [] },
   },
