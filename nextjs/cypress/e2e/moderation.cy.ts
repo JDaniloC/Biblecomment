@@ -139,7 +139,7 @@ describe("Moderation endpoints", () => {
           });
 
           // The comment itself is still there (only reports were cleared).
-          cy.request("/api/comments/verse/gn/1/1").then((listRes) => {
+          cy.request("/api/comments/chapter/gn/1/1").then((listRes) => {
             const all = [
               ...(listRes.body.titleComments ?? []),
               ...(listRes.body.verseComments ?? []),

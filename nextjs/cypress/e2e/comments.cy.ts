@@ -49,7 +49,7 @@ describe("Comments — full lifecycle", () => {
         });
       });
 
-      cy.request("/api/comments/verse/gn/1/1").then((res) => {
+      cy.request("/api/comments/chapter/gn/1/1").then((res) => {
         const all = [...(res.body.titleComments ?? []), ...(res.body.verseComments ?? [])];
         const mine = all.find((c: { username: string }) => c.username === "alice");
         expect(mine, "alice's comment should appear in the verse listing").to.exist;

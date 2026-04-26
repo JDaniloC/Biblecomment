@@ -110,33 +110,32 @@ describe("Unified search", () => {
   describe("UI — header search input", () => {
     it("typing < 2 chars does NOT open the dropdown", () => {
       cy.loginAs(users.alice.email, users.alice.password);
-      cy.visit("/home");
+      // The shared <Header> with SearchInput lives on / (root). /home has
+      // its own page-specific header without the search component.
+      cy.visit("/");
 
       cy.get('input[placeholder*="versículo" i], input[placeholder*="verse" i]')
         .first()
         .type("D");
 
-      // Dropdown shouldn't render. Different markup uses different
-      // wrappers; the cheapest signal is "no result row anywhere".
       cy.contains("Escrituras").should("not.exist");
     });
 
     it("typing 2+ chars debounces and shows verse results in the dropdown", () => {
       cy.loginAs(users.alice.email, users.alice.password);
-      cy.visit("/home");
+      cy.visit("/");
 
       cy.get('input[placeholder*="versículo" i], input[placeholder*="verse" i]')
         .first()
         .type("Deus");
 
-      // 400ms debounce + network roundtrip; give it generous breathing room.
       cy.contains("Escrituras", { timeout: 5000 }).should("be.visible");
       cy.contains("No princípio, Deus criou", { timeout: 5000 }).should("be.visible");
     });
 
     it("clicking a verse result navigates to /verses/<abbrev>/<chapter>", () => {
       cy.loginAs(users.alice.email, users.alice.password);
-      cy.visit("/home");
+      cy.visit("/");
 
       cy.get('input[placeholder*="versículo" i], input[placeholder*="verse" i]')
         .first()
