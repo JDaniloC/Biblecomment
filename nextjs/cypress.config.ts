@@ -1,5 +1,5 @@
 import { defineConfig } from "cypress";
-import { resetDatabase, seedDatabase } from "./cypress/tasks/db";
+import { resetDatabase, seedDatabase, findUserByEmail } from "./cypress/tasks/db";
 
 export default defineConfig({
   e2e: {
@@ -19,6 +19,9 @@ export default defineConfig({
         async "db:seed"(payload: Parameters<typeof seedDatabase>[0]) {
           await seedDatabase(payload);
           return null;
+        },
+        async "db:findUser"(email: string) {
+          return await findUserByEmail(email);
         },
       });
     },
