@@ -13,8 +13,21 @@
 		"node": "14.x"
 	},
 	"repository": "https://github.com/JDaniloC/Biblecomment.git",
-	"devDependencies": {
-		"eslint": "9.26.0",
-		"eslint-plugin-react": "^7.26.0"
+	"devDependencies": {},
+	"dependencies": {
+		"@emotion/react": "^11.14.0",
+		"@emotion/styled": "^11.14.1",
+		"@mui/material": "^7.3.9",
+		"@uiw/react-md-editor": "^4.0.11",
+		"ajv": "^8.18.0",
+		"axios": "^1.13.6",
+		"balloon-css": "^1.2.0",
+		"prop-types": "^15.8.1",
+		"react": "^19.2.4",
+		"react-dom": "^19.2.4",
+		"react-loading": "^2.0.3",
+		"react-router-dom": "^7.13.2",
+		"react-scripts": "^5.0.1",
+		"sass": "^1.98.0"
 	}
 }

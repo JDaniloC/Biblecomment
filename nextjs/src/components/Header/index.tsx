@@ -1,0 +1,83 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import SearchInput from "@/components/SearchInput";
+import BooksIndex from "@/components/BooksIndex/BooksIndex";
+import Login from "@/components/Login";
+import Modal from "@/components/Modal";
+
+interface Props {
+  onChangeChapter?: (abbrev: string, chapter: number) => boolean | void;
+}
+
+export default function Header({ onChangeChapter }: Props) {
+  const [showBooks, setShowBooks] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+
+  const openBooks = useCallback(() => {
+    setShowBooks(true);
+    setShowLogin(false);
+  }, []);
+
+  const openLogin = useCallback(() => {
+    setShowLogin(true);
+    setShowBooks(false);
+  }, []);
+
+  const closeBooks = useCallback(() => setShowBooks(false), []);
+  const closeLogin = useCallback(() => setShowLogin(false), []);
+
+  return (
+    <>
+      <header className="bg-white shadow-sm sticky top-0 z-20">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/" className="flex items-center gap-2 shrink-0">
+              <Image src="/assets/logo.svg" alt="Bible Comment" width={36} height={36} />
+              <div className="hidden sm:block">
+                <h1 className="text-sm font-bold text-gray-800 leading-tight">Bible Comment</h1>
+                <sub className="text-xs text-gray-500">A Program for His Glory</sub>
+              </div>
+            </Link>
+            <SearchInput />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={openBooks}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 px-2 py-1 rounded hover:bg-gray-100 transition"
+            >
+              <span>Livros</span>
+              <Image src="/assets/books.svg" alt="Livros" width={16} height={16} />
+            </button>
+            <button
+              type="button"
+              onClick={openLogin}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 px-2 py-1 rounded hover:bg-gray-100 transition"
+            >
+              <span>Perfil</span>
+              <Image src="/assets/person.svg" alt="Perfil" width={16} height={16} />
+            </button>
+            <Link
+              href="/help"
+              title="Sobre o Bible Comment"
+              className="flex items-center justify-center w-7 h-7 rounded-full border border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition text-sm font-bold leading-none"
+            >
+              ?
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <Modal show={showBooks} onClose={closeBooks} size="2xl" noPadding>
+        <BooksIndex onChangeChapter={onChangeChapter} closeBookComponent={closeBooks} />
+      </Modal>
+
+      <Modal show={showLogin} onClose={closeLogin} title="Conta" size="sm">
+        <Login />
+      </Modal>
+    </>
+  );
+}

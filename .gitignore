@@ -3,7 +3,13 @@ node_modules
 /frontend/node_modules/
 .DS_Store
 .env
+.env.*
+!.env.*.example
 venv
 
 .yarn
 .pnp.*
+
+nextjs/.next
+nextjs/.next/
+nextjs/tsconfig.tsbuildinfo

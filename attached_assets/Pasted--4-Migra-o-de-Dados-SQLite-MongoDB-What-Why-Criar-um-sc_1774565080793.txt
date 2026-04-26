@@ -1,0 +1,48 @@
+#4 - Migração de Dados: SQLite → MongoDB
+What & Why
+Criar um script de migração único que lê todos os dados do banco SQLite atual (backend/src/database/db.sqlite) e os insere no MongoDB, transformando os dados para os schemas Mongoose definidos na Tarefa 1. Isto inclui transformar campos JSON armazenados como strings (likes, tags, reports, answers) em arrays/objetos nativos do MongoDB.
+
+Esta tarefa é independente das demais e pode rodar após a Tarefa 1 estar concluída (precisa dos modelos Mongoose). Deve ser executada uma vez em ambiente de produção para mover os dados reais.
+
+Done looks like
+Script nextjs/scripts/migrate-sqlite-to-mongo.ts (ou .js) que pode ser executado com npx ts-node scripts/migrate-sqlite-to-mongo.ts (ou equivalente)
+O script migra, em ordem:
+books — abbrev, title, length, created_at
+users — email, username, password (mantido como MD5; upgrade para bcrypt acontece no primeiro login via NextAuth), moderator, state, belief, created_at
+verses — abbrev, chapter, verse_number, text (com mapeamento de id SQLite → ObjectId MongoDB, guardando o sqliteId para referência cruzada)
+comments — verse_id mapeado para o ObjectId MongoDB do verso correspondente, username, text, on_title, book_reference, created_at; likes/tags/reports convertidos de JSON string para arrays nativos
+discussions — book_abbrev, comment_id, username, question, verse_text, verse_reference, comment_text; answers convertido de JSON string para array de objetos { name, text }
+O script exibe progresso por coleção (ex: "Migrating 66 books... done", "Migrating 31102 verses... done")
+O script é idempotente: verifica antes de inserir e pula documentos já existentes (usando upsert ou verificação por campo único)
+Ao final, exibe contagens de documentos migrados vs total no SQLite
+Um comando npm script adicionado no package.json do nextjs/: "migrate:data": "ts-node scripts/migrate-sqlite-to-mongo.ts"
+Documentação de como executar inclusa no README ou como comentário no topo do script
+Out of scope
+Migração contínua ou sincronização em tempo real (é uma migração única)
+Alteração de qualquer código do frontend/ ou backend/ existentes
+Migração de arquivos/assets
+Tasks
+Ler dados do SQLite — No script, usar better-sqlite3 (ou sqlite3) para conectar ao backend/src/database/db.sqlite e ler todas as tabelas em memória. Construir um mapa de sqliteId → ObjectId para verses (necessário para mapear verse_id em comments).
+
+Migrar books e users — Inserir books e users no MongoDB via modelos Mongoose. Usar findOneAndUpdate com upsert: true tendo abbrev (books) e email (users) como chaves únicas.
+
+Migrar verses — Inserir verses com mapeamento de IDs. Construir e manter um dicionário { sqliteVerseId: mongoVerseObjectId } em memória para uso na etapa seguinte.
+
+Migrar comments — Para cada comment, converter verse_id SQLite para o ObjectId MongoDB correspondente usando o dicionário da etapa anterior. Converter likes, tags, reports de JSON string para arrays. Inserir com upsert por combinação de username + verse_id + created_at.
+
+Migrar discussions — Converter answers de JSON string para array de objetos. Inserir com upsert por comment_id + username.
+
+Verificação e relatório — Ao final, comparar contagens entre SQLite e MongoDB para cada coleção e imprimir o relatório.
+
+Relevant files
+backend/src/database/db.sqlite
+backend/src/database/migrations/20200801164916_books.js
+backend/src/database/migrations/20200801233805_chapter.js
+backend/src/database/migrations/20200801314859_user.js
+backend/src/database/migrations/20200802013906_comment.js
+backend/src/database/migrations/20201008213304_discussion.js
+backend/src/database/migrations/20211219023246_remove-users-columns.js
+backend/src/database/migrations/20220719124042_verses.js
+backend/src/database/migrations/20220719141932_drop-chapters-table.js
+backend/src/utils/parseComments.js
+backend/knexfile.js

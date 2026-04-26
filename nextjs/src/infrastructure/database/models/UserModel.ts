@@ -1,0 +1,29 @@
+import mongoose, { Schema, Document, Model } from "mongoose";
+
+export interface IUserDocument extends Document {
+  email: string;
+  username: string;
+  password: string;
+  passwordType: "md5" | "bcrypt";
+  state?: string;
+  belief?: string;
+  moderator?: boolean;
+}
+
+const UserSchema = new Schema<IUserDocument>(
+  {
+    email:        { type: String, required: true, unique: true, lowercase: true, trim: true },
+    username:     { type: String, required: true, trim: true },
+    password:     { type: String, required: true },
+    passwordType: { type: String, enum: ["md5", "bcrypt"], default: "md5" },
+    state:        { type: String },
+    belief:       { type: String },
+    moderator:    { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+UserSchema.index({ username: 1 });
+
+export const UserModel: Model<IUserDocument> =
+  mongoose.models.User || mongoose.model<IUserDocument>("User", UserSchema);

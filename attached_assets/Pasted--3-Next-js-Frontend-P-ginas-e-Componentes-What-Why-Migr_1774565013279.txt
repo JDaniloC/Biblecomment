@@ -1,0 +1,121 @@
+#3 - Next.js Frontend - Páginas e Componentes
+What & Why
+Migrar todas as páginas e componentes do React + React Router para Next.js App Router com TypeScript e TailwindCSS, usando Server-Side Rendering (Server Components) sempre que possível. O design visual original deve ser mantido fiel — apenas tradução para Tailwind, não redesign. Class components são convertidos para function components com hooks. Componentes com interatividade recebem 'use client'.
+
+Regra de SSR: Usar Server Components como padrão. Marcar com 'use client' apenas componentes que usam: estado (useState), efeitos (useEffect), eventos de browser, localStorage, ou contextos de cliente. Dados estáticos como a lista de livros e versículos devem ser buscados no servidor.
+
+Done looks like
+Layout raiz (src/app/layout.tsx) com providers MUI Theme, NotificationProvider e ProfileProvider como Client Components, metadados e importação do CSS global do Tailwind
+Página principal / — Server Component que busca a lista de livros no servidor (sem loading spinner). Painel esquerdo (logo, login) e painel direito (grade de livros) com TailwindCSS. Login e BooksIndex como Client Components onde necessário.
+Página de capítulo /verses/[abbrev]/[number] — A lista de versículos e comentários do capítulo são buscados no servidor (page.tsx Server Component). A interatividade (abrir sidebar, like, report, modal de novo comentário) fica em um Client Component filho. A URL /verses/gn/1 deve funcionar diretamente (SSR da primeira carga).
+Página de discussão /discussion/[abbrev] — Server Component busca as discussões da primeira página no servidor. Paginação e abertura de modal de resposta como Client Component. Estado compartilhado vindo do Chapter page (commentID, commentText, commentReference) passado via query params na URL.
+Página admin /admin — Server Component verifica a sessão no servidor e redireciona se não for moderador. Lista de usuários e comentários reportados carregados via SSR.
+Página de ajuda /help — Totalmente Server Component (sem interatividade de cliente). Renderiza as seções estáticas de ajuda.
+Todos os componentes migrados para TypeScript com TailwindCSS equivalente ao visual original:
+Header (Client: búsca, menu)
+Login / registro (Client: formulário)
+Profile e sub-componentes (Client: tabs, formulários)
+BooksIndex, BookChooser, ChapterChooser (Client: seleção interativa)
+Comments, TitleComments (Client: interações)
+NewComment (Client: formulário com MDEditor)
+AnswerForm (Client: formulário)
+Modal (Client: estado de aberto/fechado)
+CommentCount, SearchInput, Partials/HelpButton (podem ser Server)
+Contextos NotificationContext e ProfileContext convertidos para TypeScript com 'use client'
+Serviço de API (src/services/api.ts) usando fetch nativo nas Server Actions/Server Components e axios nos Client Components, todos com URL base /api/...
+Serviço de auth (src/services/auth.ts) usando useSession() do NextAuth no cliente e auth() no servidor — substituindo localStorage
+Assets (SVGs, logo PNG) copiados para nextjs/public/assets/
+Navegação entre páginas usa useRouter do Next.js e <Link>. Passagem de estado do Chapter → Discussion via query params (ex: /discussion/gn?commentId=5&ref=Gn+1:1&text=...)
+Out of scope
+Redesign ou criação de novas funcionalidades
+Manter os arquivos CSS/SCSS originais (substituídos por Tailwind)
+Qualquer alteração nos arquivos do frontend/ ou backend/ existentes
+Tasks
+Layout raiz e providers — Criar src/app/layout.tsx com ThemeProvider do MUI, NotificationProvider e ProfileProvider como Client Components. Converter ambos os contexts para TypeScript. Importar CSS global do Tailwind.
+
+Serviços de API e Auth — Criar src/services/api.ts (axios configurado com /api como base URL e interceptor de token da sessão NextAuth) e src/services/auth.ts (wrappers de useSession/signIn/signOut do NextAuth para uso nos componentes). Criar tipos TypeScript para todos os modelos (Book, Verse, Comment, Discussion, User).
+
+Componentes base — Migrar Modal, CommentCount, utilitário de ícones (icon-function) e HelpButton para TypeScript com Tailwind.
+
+Header e SearchInput — Migrar Header (Client Component: busca ativa, menu de usuário) e SearchInput para TypeScript com Tailwind.
+
+BooksIndex — Migrar BooksIndex, BookChooser e ChapterChooser para TypeScript com Tailwind, mantendo o comportamento de seleção de livro → capítulo → navegação.
+
+Login e Profile — Migrar Login (usando signIn/signOut do NextAuth) e Profile com todos os sub-componentes (ProfileHeader, ProfileComments, ProfileConfig, CommentRow, FavoriteRow) para TypeScript com Tailwind. Substituir chamadas de localStorage por useSession.
+
+Componentes de comentários — Migrar Comments, TitleComments, NewComment e AnswerForm para TypeScript com Tailwind.
+
+Página principal / — Criar src/app/page.tsx como Server Component que busca a lista de livros no servidor. Layout com painel de login (Client Component) e grade de livros.
+
+Página de capítulo /verses/[abbrev]/[number] — Criar src/app/verses/[abbrev]/[number]/page.tsx como Server Component para o carregamento inicial de versículos e comentários. Extrair a lógica interativa (sidebar, like, report, modal) para um Client Component filho ChapterClient.tsx.
+
+Página de discussão /discussion/[abbrev] — Criar src/app/discussion/[abbrev]/page.tsx como Server Component que busca discussões da página 1 no servidor. Client Component filho para paginação e modal de resposta. Receber dados do Chapter via query params.
+
+Páginas Admin e Help — Criar src/app/admin/page.tsx (verifica sessão no servidor via auth(), redireciona se não moderador, carrega dados via SSR) e src/app/help/page.tsx (Server Component puro com sub-componentes: Introduction, AboutComment, AboutActions, HelpAccount, ExampleComments, ExampleForm, ExampleCommentButtons).
+
+Assets — Copiar todos os arquivos de frontend/src/assets/ para nextjs/public/assets/. Copiar frontend/src/data/collections.json para uso no BooksIndex.
+
+Relevant files
+frontend/src/App.js
+frontend/src/App.scss
+frontend/src/Responsive.css
+frontend/src/routes.js
+frontend/src/contexts/NotificationContext.js
+frontend/src/contexts/ProfileContext.js
+frontend/src/services/api.js
+frontend/src/services/auth.js
+frontend/src/models/Book.js
+frontend/src/models/Comment.js
+frontend/src/models/Verse.js
+frontend/src/models/Answer.js
+frontend/src/models/Favorite.js
+frontend/src/pages/Main/index.js
+frontend/src/pages/Main/styles.css
+frontend/src/pages/Chapter/index.js
+frontend/src/pages/Chapter/styles.css
+frontend/src/pages/Chapter/api.js
+frontend/src/pages/Chapter/components/Verses/index.jsx
+frontend/src/pages/Chapter/components/Verses/styles.scss
+frontend/src/pages/Discussion/index.js
+frontend/src/pages/Discussion/styles.css
+frontend/src/pages/Control/index.js
+frontend/src/pages/Control/styles.css
+frontend/src/pages/Help/index.js
+frontend/src/pages/Help/styles.css
+frontend/src/pages/Help/AboutActions.js
+frontend/src/pages/Help/AboutComment.js
+frontend/src/pages/Help/HelpAccount.js
+frontend/src/pages/Help/Introduction.js
+frontend/src/pages/Help/components/ExampleCommentButtons.js
+frontend/src/pages/Help/components/ExampleComments.js
+frontend/src/pages/Help/components/ExampleForm.js
+frontend/src/components/BooksIndex/BooksIndex.jsx
+frontend/src/components/BooksIndex/BooksIndex.module.scss
+frontend/src/components/BooksIndex/components/BookChooser/BookChooser.jsx
+frontend/src/components/BooksIndex/components/ChapterChooser/ChapterChooser.jsx
+frontend/src/components/Comments/index.js
+frontend/src/components/Comments/styles.css
+frontend/src/components/Header/index.js
+frontend/src/components/Header/styles.css
+frontend/src/components/Login/index.js
+frontend/src/components/Login/styles.css
+frontend/src/components/NewComment/index.js
+frontend/src/components/NewComment/styles.css
+frontend/src/components/TitleComments/index.js
+frontend/src/components/TitleComments/styles.css
+frontend/src/components/AnswerForm/index.js
+frontend/src/components/AnswerForm/styles.css
+frontend/src/components/Profile/index.js
+frontend/src/components/Profile/styles.css
+frontend/src/components/Profile/components/CommentRow.js
+frontend/src/components/Profile/components/FavoriteRow.js
+frontend/src/components/Profile/components/ProfileComments.js
+frontend/src/components/Profile/components/ProfileConfig.js
+frontend/src/components/Profile/components/ProfileHeader.js
+frontend/src/components/SearchInput/index.js
+frontend/src/components/Partials/index.js
+frontend/src/shared/components/Modal/Modal.jsx
+frontend/src/shared/components/CommentCount/comment-count.jsx
+frontend/src/shared/utils/icon-function.jsx
+frontend/src/data/collections.json
+frontend/src/assets/

@@ -1,0 +1,17 @@
+import { Comment } from "../entities/Comment";
+
+export interface ICommentRepository {
+  findByVerseId(verseId: string): Promise<Comment[]>;
+  findByUsername(username: string): Promise<Comment[]>;
+  findById(id: string): Promise<Comment | null>;
+  findAllPaginated(page: number, pageSize: number): Promise<Comment[]>;
+  findFavoritesByUsername(username: string, page: number, pageSize: number): Promise<Comment[]>;
+  create(comment: Omit<Comment, "_id" | "createdAt" | "updatedAt">): Promise<Comment>;
+  update(id: string, data: Partial<Comment>): Promise<Comment | null>;
+  delete(id: string): Promise<void>;
+  addLike(id: string, username: string): Promise<Comment | null>;
+  removeLike(id: string, username: string): Promise<Comment | null>;
+  addReport(id: string, username: string): Promise<Comment | null>;
+  findAll(): Promise<Comment[]>;
+  searchByText(query: string): Promise<Comment[]>;
+}
