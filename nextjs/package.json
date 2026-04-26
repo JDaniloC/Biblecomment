@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
+    "cy:test": "node scripts/cy-test.js",
+    "cy:test:dev": "node scripts/cy-test.js dev",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status",
@@ -51,6 +53,8 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "cypress": "^15.14.1",
+    "mongodb-memory-server": "^11.0.1",
+    "start-server-and-test": "^3.0.2",
     "typescript": "^6.0.2",
     "vitest": "^4.1.5"
   }

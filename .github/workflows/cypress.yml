@@ -17,23 +17,6 @@ jobs:
   cypress:
     runs-on: ubuntu-latest
 
-    services:
-      mongo:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      MONGODB_URI: mongodb://localhost:27017/biblecomment-cypress
-      NEXTAUTH_SECRET: cypress-test-secret-not-for-prod
-      NEXTAUTH_URL: http://localhost:5000
-      NODE_ENV: test
-
     steps:
       - uses: actions/checkout@v4
 
@@ -50,22 +33,8 @@ jobs:
       - name: Run unit tests (Vitest)
         run: npm test
 
-      - name: Build Next.js
-        run: npm run build
-
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
-        with:
-          working-directory: nextjs
-          start: npm start
-          wait-on: "http://localhost:5000"
-          wait-on-timeout: 120
-          browser: chrome
-          install: false
-        env:
-          MONGODB_URI: ${{ env.MONGODB_URI }}
-          NEXTAUTH_SECRET: ${{ env.NEXTAUTH_SECRET }}
-          NEXTAUTH_URL: ${{ env.NEXTAUTH_URL }}
+      - name: Cypress (full pipeline — Mongo memory + build + start + run)
+        run: npm run cy:test
 
       - name: Upload screenshots on failure
         if: failure()

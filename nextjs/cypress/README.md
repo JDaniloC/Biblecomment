@@ -27,25 +27,30 @@ NEXTAUTH_URL=http://localhost:5000
 
 ## Running
 
+The fastest path is the all-in-one command. It boots an in-process
+Mongo (no docker), exports the env vars, builds + starts Next.js, runs
+Cypress, and tears everything down — exits with the cypress exit code.
+
 ```bash
-# Interactive (recommended for writing/debugging specs)
+# Headless full pipeline (CI-equivalent). ~1-2 min cold; ~30s after build cache.
+npm run cy:test          # or: yarn cy:test
+
+# Interactive (next dev + cypress open). Live reloads, slower spec startup.
+npm run cy:test:dev
+
+# Already have a server up? Skip the orchestrator and run cypress only.
 npm run cy:open
-
-# Headless (CI mode)
 npm run cy:run
-
-# Headless, single spec
 npx cypress run --spec cypress/e2e/idor-and-rbac.cy.ts
 ```
 
-You need the dev server running on port 5000 in another terminal:
+The first time `cy:test` runs it will download a Mongo binary (~80MB)
+to `%LOCALAPPDATA%\.cache\mongodb-binaries` (Windows) or
+`~/.cache/mongodb-binaries` (Linux/macOS). Cached for subsequent runs.
 
-```bash
-npm run dev
-```
-
-Or use `start-server-and-test` if you want a single command (not yet
-configured here).
+If you'd rather use a Mongo you already have running (faster, no
+download), set `MONGODB_URI` yourself and use `cy:open` / `cy:run`
+directly.
 
 ## Specs
 
