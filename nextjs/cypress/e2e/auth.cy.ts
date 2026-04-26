@@ -115,19 +115,13 @@ describe("Authentication", () => {
 
   describe("Private route guard", () => {
     it("redirects unauthenticated visitors to /login", () => {
-      cy.request({
-        method: "GET",
-        url: "/profile",
-        followRedirect: false,
-        failOnStatusCode: false,
-      }).then((res) => {
-        // Next.js redirect() emits 307. The Location header (or final URL)
-        // must point at /login.
-        const location = (res.headers["location"] as string | undefined) ?? "";
-        const redirected = res.status === 307 || res.status === 302 || res.redirects?.length;
-        expect(redirected, "expected a redirect for /profile").to.be.ok;
-        expect(location + (res.redirects?.[0] ?? "")).to.match(/\/login/);
-      });
+      // Drive the route through a real browser navigation. Next.js 14
+      // server-component redirect() in production mode returns a 200 with
+      // an RSC payload (not a 307), so cy.request can't see the redirect —
+      // only the browser hydration follows it. cy.visit + cy.url is the
+      // reliable assertion.
+      cy.visit("/profile", { failOnStatusCode: false });
+      cy.url({ timeout: 10000 }).should("include", "/login");
     });
 
     it("allows access to /profile after login", () => {

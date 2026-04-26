@@ -76,6 +76,29 @@ export interface SeedPayload {
   verses?: SeedVerse[];
 }
 
+export async function findUserByEmail(email: string): Promise<{
+  exists: boolean;
+  passwordHashLength: number;
+  passwordType: string | null;
+  username: string | null;
+}> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const doc = await db
+    .collection("users")
+    .findOne({ email: email.toLowerCase().trim() });
+  if (!doc) {
+    return { exists: false, passwordHashLength: 0, passwordType: null, username: null };
+  }
+  return {
+    exists: true,
+    passwordHashLength: typeof doc.password === "string" ? doc.password.length : 0,
+    passwordType: typeof doc.passwordType === "string" ? doc.passwordType : null,
+    username: typeof doc.username === "string" ? doc.username : null,
+  };
+}
+
 export async function seedDatabase(payload: SeedPayload): Promise<void> {
   await ensureConnected();
   const db = mongoose.connection.db;

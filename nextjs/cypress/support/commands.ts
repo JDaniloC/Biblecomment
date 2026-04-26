@@ -37,6 +37,27 @@ Cypress.Commands.add("seedDb", (payload: SeedPayload) => {
 });
 
 Cypress.Commands.add("loginAs", (email: string, password: string) => {
+  // Pre-flight: confirm the user is actually in the test DB with a bcrypt hash.
+  // Without this, Auth.js's authorize() returns null and we get an opaque
+  // CredentialsSignin error with no actionable info.
+  cy.task<{
+    exists: boolean;
+    passwordHashLength: number;
+    passwordType: string | null;
+    username: string | null;
+  }>("db:findUser", email).then((u) => {
+    expect(u.exists, `loginAs(${email}) — user not in test DB. Forgot cy.seedDb()?`).to.be.true;
+    expect(
+      u.passwordType,
+      `loginAs(${email}) — passwordType must be "bcrypt", got ${u.passwordType}`,
+    ).to.eq("bcrypt");
+    // bcrypt hashes are exactly 60 chars: $2[aby]$<cost>$<22-char salt><31-char hash>.
+    expect(
+      u.passwordHashLength,
+      `loginAs(${email}) — stored password is not bcrypt-shaped (length ${u.passwordHashLength}, expected 60)`,
+    ).to.eq(60);
+  });
+
   cy.request("/api/auth/csrf").then((csrfRes) => {
     expect(csrfRes.status, "GET /api/auth/csrf").to.eq(200);
     const csrfToken = csrfRes.body.csrfToken as string;
