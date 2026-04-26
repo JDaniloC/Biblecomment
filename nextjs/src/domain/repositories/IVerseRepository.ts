@@ -5,4 +5,6 @@ export interface IVerseRepository {
   findById(id: string): Promise<Verse | null>;
   findByAbbrevChapterVerse(abbrev: string, chapter: number, verseNumber: number): Promise<Verse | null>;
   searchByText(query: string, limit?: number): Promise<Verse[]>;
+  create(verse: Omit<Verse, "_id">): Promise<Verse>;
+  update(id: string, data: Partial<Pick<Verse, "text" | "reference">>): Promise<Verse | null>;
 }

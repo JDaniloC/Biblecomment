@@ -124,6 +124,26 @@ export class MongoCommentRepository implements ICommentRepository {
     return doc ? toEntity(doc) : null;
   }
 
+  async findReported(page: number, pageSize: number): Promise<Comment[]> {
+    await connectToDatabase();
+    const docs = await CommentModel.find({ "reports.0": { $exists: true } })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    return docs.map(toEntity);
+  }
+
+  async clearReports(id: string): Promise<Comment | null> {
+    await connectToDatabase();
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const doc = await CommentModel.findByIdAndUpdate(
+      id,
+      { $set: { reports: [] } },
+      { new: true }
+    );
+    return doc ? toEntity(doc) : null;
+  }
+
   async findAll(): Promise<Comment[]> {
     await connectToDatabase();
     const docs = await CommentModel.find({});

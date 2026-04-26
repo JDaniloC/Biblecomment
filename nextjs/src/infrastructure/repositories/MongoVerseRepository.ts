@@ -39,6 +39,19 @@ export class MongoVerseRepository implements IVerseRepository {
     return doc ? toEntity(doc) : null;
   }
 
+  async create(verse: Omit<Verse, "_id">): Promise<Verse> {
+    await connectToDatabase();
+    const doc = await VerseModel.create(verse);
+    return toEntity(doc);
+  }
+
+  async update(id: string, data: Partial<Pick<Verse, "text" | "reference">>): Promise<Verse | null> {
+    await connectToDatabase();
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const doc = await VerseModel.findByIdAndUpdate(id, { $set: data }, { new: true });
+    return doc ? toEntity(doc) : null;
+  }
+
   async searchByText(query: string, limit = 50): Promise<Verse[]> {
     await connectToDatabase();
     const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

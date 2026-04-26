@@ -21,6 +21,28 @@ export const DeleteUserSchema = z.object({
   email: z.string().email(),
 });
 
+export const SetModeratorSchema = z.object({
+  email: z.string().email(),
+  moderator: z.boolean(),
+});
+
+export const CreateVerseSchema = z.object({
+  abbrev: z.string().min(1).max(20),
+  chapter: z.number().int().positive().max(200),
+  verseNumber: z.number().int().positive().max(200),
+  text: z.string().min(1).max(5000),
+  reference: z.string().max(200).optional(),
+});
+
+export const UpdateVerseSchema = z
+  .object({
+    text: z.string().min(1).max(5000).optional(),
+    reference: z.string().max(200).optional(),
+  })
+  .refine((v) => v.text !== undefined || v.reference !== undefined, {
+    message: "text ou reference é obrigatório",
+  });
+
 export const CreateCommentSchema = z.object({
   text: z.string().min(1).max(5000),
   tags: z.array(z.string().max(50)).max(20).default([]),

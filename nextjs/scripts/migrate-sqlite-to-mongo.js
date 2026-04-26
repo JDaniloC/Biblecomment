@@ -307,12 +307,13 @@ async function run() {
   const commentIdMap   = {};
   let   commentsMigrated = 0;
   let   commentsSkipped  = 0;
+  const skippedComments  = [];
   const commentOps     = [];
 
   for (const c of sqliteComments) {
     const verseObjId = verseIdMap[c.verse_id];
     if (!verseObjId) {
-      console.warn(`   ⚠️  Skipping comment id=${c.id}: verse_id=${c.verse_id} not found`);
+      skippedComments.push({ id: c.id, reason: `verse_id=${c.verse_id} not found` });
       commentsSkipped++;
       continue;
     }
@@ -357,12 +358,13 @@ async function run() {
   console.log(`\n🗣️  Migrating ${sqliteDiscussions.length} discussions...`);
 
   let discussionsMigrated = 0;
+  const skippedDiscussions = [];
   const discussionOps = [];
 
   for (const d of sqliteDiscussions) {
     const commentObjId = d.comment_id ? commentIdMap[d.comment_id] || null : null;
     if (d.comment_id && !commentObjId) {
-      console.warn(`   ⚠️  Discussion id=${d.id}: comment_id=${d.comment_id} not mapped`);
+      skippedDiscussions.push({ id: d.id, reason: `comment_id=${d.comment_id} not mapped` });
     }
 
     const rawAnswers = parseJsonArray(d.answers);
@@ -401,7 +403,60 @@ async function run() {
   console.log(`   ✅ Done (${discussionsMigrated} migrated).`);
 
   // =========================================================================
-  // 6. Final report
+  // 6. Smoke test: sample 5 random verses + 5 random comments and compare
+  // =========================================================================
+  console.log("\n🔬 Running smoke test (5 verses + 5 comments)...");
+  const smokeFailures = [];
+
+  function pickRandom(arr, n) {
+    const copy = arr.slice();
+    const out = [];
+    while (out.length < Math.min(n, copy.length)) {
+      const idx = Math.floor(Math.random() * copy.length);
+      out.push(copy.splice(idx, 1)[0]);
+    }
+    return out;
+  }
+
+  for (const sv of pickRandom(sqliteVerses, 5)) {
+    const mv = await VerseModel.findOne({
+      abbrev: sv.abbrev,
+      chapter: sv.chapter,
+      verseNumber: sv.verse_number,
+    }).lean();
+    if (!mv) {
+      smokeFailures.push(`verse ${sv.abbrev} ${sv.chapter}:${sv.verse_number} missing in Mongo`);
+      continue;
+    }
+    if ((sv.text || "") !== mv.text) {
+      smokeFailures.push(`verse ${sv.abbrev} ${sv.chapter}:${sv.verse_number} text mismatch`);
+    }
+  }
+
+  const sqliteCommentsWithVerse = sqliteComments.filter((c) => verseIdMap[c.verse_id]);
+  for (const sc of pickRandom(sqliteCommentsWithVerse, 5)) {
+    const mc = await CommentModel.findOne({ sourceId: sc.id }).lean();
+    if (!mc) {
+      smokeFailures.push(`comment sourceId=${sc.id} missing in Mongo`);
+      continue;
+    }
+    if ((sc.text || "") !== mc.text) {
+      smokeFailures.push(`comment sourceId=${sc.id} text mismatch`);
+    }
+    if ((sc.username || "") !== mc.username) {
+      smokeFailures.push(`comment sourceId=${sc.id} username mismatch`);
+    }
+  }
+
+  if (smokeFailures.length) {
+    console.warn(`   ⚠️  Smoke test found ${smokeFailures.length} discrepancies:`);
+    for (const f of smokeFailures) console.warn(`      - ${f}`);
+  } else {
+    console.log("   ✅ Smoke test passed (no discrepancies in sampled records).");
+  }
+
+  // =========================================================================
+  // 7. Final report
   // =========================================================================
   const [mBooks, mUsers, mVerses, mComments, mDiscussions] = await Promise.all([
     BookModel.countDocuments(),
@@ -431,8 +486,47 @@ async function run() {
   }
   console.log(ln);
 
+  if (skippedComments.length || skippedDiscussions.length) {
+    console.log("\n  SKIPPED RECORDS");
+    console.log("  " + "-".repeat(35));
+    if (skippedComments.length) {
+      console.log(`  Comments (${skippedComments.length}):`);
+      for (const s of skippedComments.slice(0, 50)) {
+        console.log(`    - id=${s.id}: ${s.reason}`);
+      }
+      if (skippedComments.length > 50) {
+        console.log(`    ... and ${skippedComments.length - 50} more`);
+      }
+    }
+    if (skippedDiscussions.length) {
+      console.log(`  Discussions (${skippedDiscussions.length}):`);
+      for (const s of skippedDiscussions.slice(0, 50)) {
+        console.log(`    - id=${s.id}: ${s.reason}`);
+      }
+      if (skippedDiscussions.length > 50) {
+        console.log(`    ... and ${skippedDiscussions.length - 50} more`);
+      }
+    }
+    console.log(ln);
+  }
+
+  if (smokeFailures.length) {
+    console.log("\n  SMOKE TEST DISCREPANCIES");
+    console.log("  " + "-".repeat(35));
+    for (const f of smokeFailures) {
+      console.log(`    - ${f}`);
+    }
+    console.log(ln);
+  }
+
   sqliteDb.close();
   await mongoose.disconnect();
+
+  if (smokeFailures.length) {
+    console.error("\n❌ Migration finished with smoke test discrepancies.\n");
+    process.exit(2);
+  }
+
   console.log("\n✅ Migration complete.\n");
 }
 

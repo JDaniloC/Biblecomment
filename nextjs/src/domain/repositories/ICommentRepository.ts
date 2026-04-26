@@ -13,6 +13,8 @@ export interface ICommentRepository {
   addLike(id: string, username: string): Promise<Comment | null>;
   removeLike(id: string, username: string): Promise<Comment | null>;
   addReport(id: string, username: string): Promise<Comment | null>;
+  findReported(page: number, pageSize: number): Promise<Comment[]>;
+  clearReports(id: string): Promise<Comment | null>;
   findAll(): Promise<Comment[]>;
   searchByText(query: string): Promise<Comment[]>;
 }

@@ -24,3 +24,27 @@ export class GetVersesByChapterUseCase {
     return this.verseRepo.findByAbbrevAndChapter(abbrev, chapter);
   }
 }
+
+export class CreateVerseUseCase {
+  constructor(private readonly verseRepo: IVerseRepository) {}
+
+  async execute(input: Omit<Verse, "_id">): Promise<Verse> {
+    const existing = await this.verseRepo.findByAbbrevChapterVerse(
+      input.abbrev,
+      input.chapter,
+      input.verseNumber,
+    );
+    if (existing) throw new Error("Verse already exists");
+    return this.verseRepo.create(input);
+  }
+}
+
+export class UpdateVerseUseCase {
+  constructor(private readonly verseRepo: IVerseRepository) {}
+
+  async execute(id: string, data: Partial<Pick<Verse, "text" | "reference">>): Promise<Verse> {
+    const updated = await this.verseRepo.update(id, data);
+    if (!updated) throw new Error("Verse not found");
+    return updated;
+  }
+}

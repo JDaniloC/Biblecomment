@@ -111,6 +111,24 @@ export class ReportCommentUseCase {
   }
 }
 
+export class ListReportedCommentsUseCase {
+  constructor(private readonly commentRepo: ICommentRepository) {}
+
+  async execute(page: number, pageSize: number): Promise<Comment[]> {
+    return this.commentRepo.findReported(page, pageSize);
+  }
+}
+
+export class ClearReportsUseCase {
+  constructor(private readonly commentRepo: ICommentRepository) {}
+
+  async execute(id: string): Promise<Comment> {
+    const updated = await this.commentRepo.clearReports(id);
+    if (!updated) throw new Error("Comment not found");
+    return updated;
+  }
+}
+
 export class GetUserCommentsUseCase {
   constructor(private readonly commentRepo: ICommentRepository) {}
 
