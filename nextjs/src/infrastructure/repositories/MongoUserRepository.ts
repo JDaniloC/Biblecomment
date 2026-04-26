@@ -29,6 +29,13 @@ export class MongoUserRepository implements IUserRepository {
     return doc ? toEntity(doc) : null;
   }
 
+  async findByUsernames(usernames: string[]): Promise<User[]> {
+    if (usernames.length === 0) return [];
+    await connectToDatabase();
+    const docs = await UserModel.find({ username: { $in: usernames } });
+    return docs.map(toEntity);
+  }
+
   async findAll(): Promise<User[]> {
     await connectToDatabase();
     const docs = await UserModel.find({});

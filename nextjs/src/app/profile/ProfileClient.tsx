@@ -32,16 +32,10 @@ interface UserProfile {
   commentsCount: number;
 }
 
+import { getTagMetaOrNeutral } from "@/lib/tag-meta";
+
 type Tab = "overview" | "comments" | "favorites" | "config";
 type TypeFilter = "Todos" | "Exegese" | "Devocional" | "Pessoal" | "Inspirado";
-
-const TYPE_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  exegetico: { label: "Exegese",   color: "#0d9488", bg: "rgba(13,148,136,0.08)"  },
-  exegese:   { label: "Exegese",   color: "#0d9488", bg: "rgba(13,148,136,0.08)"  },
-  devocional:{ label: "Devocional",color: "#4f46e5", bg: "rgba(79,70,229,0.08)"   },
-  pessoal:   { label: "Pessoal",   color: "#d97706", bg: "rgba(217,119,6,0.08)"   },
-  inspirado: { label: "Inspirado", color: "#7c3aed", bg: "rgba(124,58,237,0.08)"  },
-};
 
 const TYPE_FILTERS: TypeFilter[] = ["Todos", "Exegese", "Devocional", "Pessoal", "Inspirado"];
 
@@ -74,10 +68,7 @@ function parseBookRef(ref: string): { abbrev: string; chapter: number; verse: nu
 }
 
 function getCommentType(tags: string[]) {
-  for (const tag of tags) {
-    if (TYPE_MAP[tag]) return TYPE_MAP[tag];
-  }
-  return { label: "Comentário", color: "#64748b", bg: "rgba(100,116,139,0.08)" };
+  return getTagMetaOrNeutral(tags);
 }
 
 /* ─────────────────── Shared search bar ─────────────────── */

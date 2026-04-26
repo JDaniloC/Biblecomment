@@ -3,6 +3,7 @@ import { User } from "../entities/User";
 export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
+  findByUsernames(usernames: string[]): Promise<User[]>;
   findAll(): Promise<User[]>;
   findAllPaginated(page: number, pageSize: number): Promise<User[]>;
   create(user: Omit<User, "_id">): Promise<User>;

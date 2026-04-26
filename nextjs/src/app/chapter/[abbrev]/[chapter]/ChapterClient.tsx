@@ -9,6 +9,7 @@ import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/components/CommentCard";
 import OmniSearch from "@/app/_components/OmniSearch";
+import { TAG_META, TAG_ORDER, getTagMeta } from "@/lib/tag-meta";
 
 interface SessionUser {
   name: string;
@@ -24,24 +25,8 @@ interface Props {
   user: SessionUser;
 }
 
-const TAG_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  devocional: { label: "Devocional", color: "#4f46e5", bg: "rgba(79,70,229,0.08)",   border: "#4f46e5" },
-  exegese:   { label: "Exegese",    color: "#0d9488", bg: "rgba(13,148,136,0.08)",  border: "#0d9488" },
-  pessoal:   { label: "Pessoal",    color: "#d97706", bg: "rgba(217,119,6,0.08)",   border: "#d97706" },
-  inspirado: { label: "Inspirado",  color: "#7c3aed", bg: "rgba(124,58,237,0.08)",  border: "#8b5cf6" },
-};
-
-const TAG_ORDER = ["devocional", "exegese", "pessoal", "inspirado"];
-
 const MIN_LEN = 200;
 const MAX_LEN = 1000;
-
-function getTagMeta(tags: string[]) {
-  for (const t of TAG_ORDER) {
-    if (tags.includes(t)) return TAG_META[t];
-  }
-  return null;
-}
 
 function dateFormat(str: string) {
   try {

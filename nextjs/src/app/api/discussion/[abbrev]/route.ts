@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
   GetDiscussionsUseCase,
   CreateDiscussionUseCase,
   AddAnswerUseCase,
   DeleteDiscussionUseCase,
 } from "@/application/use-cases/DiscussionUseCases";
+import { CreateNotificationUseCase } from "@/application/use-cases/NotificationUseCases";
+import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import { getSessionUser, unauthorized, forbidden, notFound, serverError } from "@/lib/get-session";
 import { parseBody } from "@/lib/parse-body";
 import { CreateDiscussionSchema, AddAnswerSchema } from "@/lib/schemas";
@@ -73,6 +77,32 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     const repo = new MongoDiscussionRepository();
     const useCase = new AddAnswerUseCase(repo);
     const discussion = await useCase.execute(id, { name: user.username, text: parsed.data.text });
+
+    const notifRepo = new MongoNotificationRepository();
+    const userRepo = new MongoUserRepository();
+    const url = `/discussion/${discussion.bookAbbrev}/${id}`;
+
+    const notifyOwner = new CreateNotificationUseCase(notifRepo);
+    await notifyOwner.execute({
+      recipient: discussion.username,
+      actor: user.username,
+      type: "discussion_answer",
+      resourceType: "discussion",
+      resourceId: id,
+      message: `@${user.username} respondeu sua discussão`,
+      url,
+    });
+
+    const notifyMentions = new NotifyMentionsUseCase(userRepo, notifRepo);
+    await notifyMentions.execute({
+      text: parsed.data.text,
+      actor: user.username,
+      type: "answer_mention",
+      resourceType: "discussion",
+      resourceId: id,
+      url,
+    });
+
     return NextResponse.json(discussion);
   } catch (err) {
     if (err instanceof Error && err.message === "Discussion not found") {

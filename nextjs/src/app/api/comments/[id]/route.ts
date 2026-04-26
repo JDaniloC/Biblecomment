@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
   CreateCommentUseCase,
   UpdateCommentUseCase,
@@ -8,6 +10,7 @@ import {
   ToggleLikeUseCase,
   ReportCommentUseCase,
 } from "@/application/use-cases/CommentUseCases";
+import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import { getSessionUser, unauthorized, forbidden, badRequest, notFound, serverError } from "@/lib/get-session";
 import { parseBody } from "@/lib/parse-body";
 import { CreateCommentSchema, UpdateCommentSchema } from "@/lib/schemas";
@@ -30,6 +33,23 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     const useCase = new CreateCommentUseCase(commentRepo, verseRepo);
 
     const comment = await useCase.execute(verseId, user.username, text, tags, titleFlag);
+
+    const verse = await verseRepo.findById(verseId);
+    if (verse && comment._id) {
+      const notifyMentions = new NotifyMentionsUseCase(
+        new MongoUserRepository(),
+        new MongoNotificationRepository(),
+      );
+      await notifyMentions.execute({
+        text,
+        actor: user.username,
+        type: "comment_mention",
+        resourceType: "comment",
+        resourceId: comment._id,
+        url: `/verses/${verse.abbrev}/${verse.chapter}#${verse.verseNumber}`,
+      });
+    }
+
     return NextResponse.json(comment, { status: 201 });
   } catch (err) {
     if (err instanceof Error && err.message === "Verse not found") {
