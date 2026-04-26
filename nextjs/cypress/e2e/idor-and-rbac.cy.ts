@@ -139,12 +139,15 @@ describe("Security regressions: IDOR & RBAC", () => {
 
       // The acid test: try to log in with the planted MD5 password.
       // Auth must reject it because the route replaced the hash with a
-      // random bcrypt placeholder.
-      cy.request({
-        method: "POST",
-        url: "/api/auth/csrf",
-      }).then((csrfRes) => {
+      // random bcrypt placeholder. We can't use cy.loginAs here — its
+      // pre-flight asserts the user logs in successfully, which is the
+      // opposite of what we want.
+      cy.clearCookies(); // drop the moderator session before the attempt
+
+      cy.request("/api/auth/csrf").then((csrfRes) => {
+        expect(csrfRes.status).to.eq(200);
         const csrfToken = csrfRes.body.csrfToken as string;
+
         cy.request({
           method: "POST",
           url: "/api/auth/callback/credentials",
@@ -159,20 +162,33 @@ describe("Security regressions: IDOR & RBAC", () => {
           followRedirect: false,
           failOnStatusCode: false,
         }).then((loginRes) => {
-          // NextAuth returns 200 with an error in the URL on bad creds;
-          // the important thing is we did NOT get a session cookie that
-          // grants moderator powers.
-          cy.request({
-            method: "GET",
-            url: "/api/backup/users",
-            failOnStatusCode: false,
-          }).then((checkRes) => {
+          // Auth.js with json:true returns 200 with body.url pointing
+          // at /api/auth/error?error=CredentialsSignin when creds are
+          // rejected. Any other shape means our defense isn't holding.
+          if (
+            loginRes.body &&
+            typeof loginRes.body === "object" &&
+            typeof loginRes.body.url === "string"
+          ) {
             expect(
-              checkRes.status,
-              "planted MD5 backdoor must not yield moderator access",
-            ).to.eq(403);
-          });
+              loginRes.body.url,
+              "planted MD5 password must be rejected",
+            ).to.match(/\/api\/auth\/error/);
+          }
         });
+      });
+
+      // Acid test #2: no session cookie was issued for the planted user.
+      cy.getCookies().then((cookies) => {
+        const session = cookies.find((c) =>
+          /authjs\.session-token|next-auth\.session-token/.test(c.name),
+        );
+        expect(
+          session,
+          `planted backdoor must NOT yield a session cookie. Cookies: ${cookies
+            .map((c) => c.name)
+            .join(", ") || "none"}`,
+        ).to.not.exist;
       });
     });
   });
