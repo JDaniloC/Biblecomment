@@ -7,6 +7,7 @@ export interface ICommentRepository {
   findAllPaginated(page: number, pageSize: number): Promise<Comment[]>;
   findFavoritesByUsername(username: string, page: number, pageSize: number): Promise<Comment[]>;
   create(comment: Omit<Comment, "_id" | "createdAt" | "updatedAt">): Promise<Comment>;
+  createMany(comments: Omit<Comment, "_id" | "createdAt" | "updatedAt">[]): Promise<number>;
   update(id: string, data: Partial<Comment>): Promise<Comment | null>;
   delete(id: string): Promise<void>;
   addLike(id: string, username: string): Promise<Comment | null>;

@@ -49,6 +49,13 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
     return toEntity(doc);
   }
 
+  async createMany(discussions: Omit<Discussion, "_id" | "createdAt" | "updatedAt">[]): Promise<number> {
+    if (discussions.length === 0) return 0;
+    await connectToDatabase();
+    const inserted = await DiscussionModel.insertMany(discussions, { ordered: false });
+    return inserted.length;
+  }
+
   async addAnswer(id: string, answer: DiscussionAnswer): Promise<Discussion | null> {
     await connectToDatabase();
     if (!mongoose.Types.ObjectId.isValid(id)) return null;

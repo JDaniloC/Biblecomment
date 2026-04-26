@@ -6,6 +6,8 @@ import { Comment } from "@/domain/entities/Comment";
 import { Discussion } from "@/domain/entities/Discussion";
 
 export type BackupUser = Omit<User, "password" | "passwordType">;
+export type ImportableComment = Omit<Comment, "_id" | "createdAt" | "updatedAt">;
+export type ImportableDiscussion = Omit<Discussion, "_id" | "createdAt" | "updatedAt">;
 
 export class BackupUsersUseCase {
   constructor(private readonly userRepo: IUserRepository) {}
@@ -29,5 +31,23 @@ export class BackupDiscussionsUseCase {
 
   async execute(): Promise<Discussion[]> {
     return this.discussionRepo.findAll();
+  }
+}
+
+export class ImportCommentsUseCase {
+  constructor(private readonly commentRepo: ICommentRepository) {}
+
+  async execute(items: ImportableComment[]): Promise<number> {
+    if (items.length === 0) return 0;
+    return this.commentRepo.createMany(items);
+  }
+}
+
+export class ImportDiscussionsUseCase {
+  constructor(private readonly discussionRepo: IDiscussionRepository) {}
+
+  async execute(items: ImportableDiscussion[]): Promise<number> {
+    if (items.length === 0) return 0;
+    return this.discussionRepo.createMany(items);
   }
 }

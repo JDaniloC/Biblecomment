@@ -68,6 +68,17 @@ export class MongoCommentRepository implements ICommentRepository {
     return toEntity(doc);
   }
 
+  async createMany(comments: Omit<Comment, "_id" | "createdAt" | "updatedAt">[]): Promise<number> {
+    if (comments.length === 0) return 0;
+    await connectToDatabase();
+    const docs = comments
+      .filter((c) => mongoose.Types.ObjectId.isValid(c.verseId))
+      .map((c) => ({ ...c, verseId: new mongoose.Types.ObjectId(c.verseId) }));
+    if (docs.length === 0) return 0;
+    const inserted = await CommentModel.insertMany(docs, { ordered: false });
+    return inserted.length;
+  }
+
   async update(id: string, data: Partial<Comment>): Promise<Comment | null> {
     await connectToDatabase();
     if (!mongoose.Types.ObjectId.isValid(id)) return null;

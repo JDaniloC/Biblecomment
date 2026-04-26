@@ -7,7 +7,9 @@ import {
   AddAnswerUseCase,
   DeleteDiscussionUseCase,
 } from "@/application/use-cases/DiscussionUseCases";
-import { getSessionUser, unauthorized, forbidden, badRequest, notFound, serverError } from "@/lib/get-session";
+import { getSessionUser, unauthorized, forbidden, notFound, serverError } from "@/lib/get-session";
+import { parseBody } from "@/lib/parse-body";
+import { CreateDiscussionSchema, AddAnswerSchema } from "@/lib/schemas";
 
 type Params = { abbrev: string };
 
@@ -37,18 +39,9 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     if (!user) return unauthorized();
 
     const { abbrev } = await params;
-    const body = (await req.json()) as {
-      verseReference?: string;
-      verseText?: string;
-      commentText?: string;
-      question?: string;
-      commentId?: string;
-    };
-    const { verseReference, verseText = "", commentText = "", question, commentId } = body;
-
-    if (!verseReference || !question) {
-      return badRequest("Campos obrigatórios: verseReference, question");
-    }
+    const parsed = await parseBody(req, CreateDiscussionSchema);
+    if (!parsed.ok) return parsed.response;
+    const { verseReference, verseText, commentText, question, commentId } = parsed.data;
 
     const repo = new MongoDiscussionRepository();
     const useCase = new CreateDiscussionUseCase(repo);
@@ -74,13 +67,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     if (!user) return unauthorized();
 
     const { abbrev: id } = await params;
-    const body = (await req.json()) as { text?: string };
-    const { text } = body;
-    if (!text) return badRequest("text é obrigatório");
+    const parsed = await parseBody(req, AddAnswerSchema);
+    if (!parsed.ok) return parsed.response;
 
     const repo = new MongoDiscussionRepository();
     const useCase = new AddAnswerUseCase(repo);
-    const discussion = await useCase.execute(id, { name: user.username, text });
+    const discussion = await useCase.execute(id, { name: user.username, text: parsed.data.text });
     return NextResponse.json(discussion);
   } catch (err) {
     if (err instanceof Error && err.message === "Discussion not found") {

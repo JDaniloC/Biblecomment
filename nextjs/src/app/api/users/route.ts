@@ -2,10 +2,16 @@ import { NextResponse } from "next/server";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { RegisterUserUseCase } from "@/application/use-cases/AuthUseCases";
 import { UpdateUserProfileUseCase, DeleteUserUseCase } from "@/application/use-cases/UserUseCases";
-import { getSessionUser, unauthorized, forbidden, badRequest, serverError } from "@/lib/get-session";
+import { getSessionUser, unauthorized, forbidden, serverError } from "@/lib/get-session";
 import { UserModel } from "@/infrastructure/database/models/UserModel";
 import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
+import { parseBody } from "@/lib/parse-body";
+import {
+  RegisterUserSchema,
+  UpdateProfileSchema,
+  DeleteUserSchema,
+} from "@/lib/schemas";
 
 const PAGE_SIZE = 5;
 
@@ -52,11 +58,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { email?: string; username?: string; password?: string };
-    const { email, username, password } = body;
-    if (!email || !username || !password) {
-      return badRequest("Campos obrigatórios: email, username, password");
-    }
+    const parsed = await parseBody(req, RegisterUserSchema);
+    if (!parsed.ok) return parsed.response;
+    const { email, username, password } = parsed.data;
 
     const repo = new MongoUserRepository();
     const useCase = new RegisterUserUseCase(repo);
@@ -77,13 +81,12 @@ export async function PATCH(req: Request) {
     const user = await getSessionUser();
     if (!user) return unauthorized();
 
-    const body = (await req.json()) as { state?: string; belief?: string };
-    const { state, belief } = body;
-    if (!state && !belief) return badRequest("Campos obrigatórios: state ou belief");
+    const parsed = await parseBody(req, UpdateProfileSchema);
+    if (!parsed.ok) return parsed.response;
 
     const repo = new MongoUserRepository();
     const useCase = new UpdateUserProfileUseCase(repo);
-    const updated = await useCase.execute(user.email, { state, belief });
+    const updated = await useCase.execute(user.email, parsed.data);
     const { password: _pw, ...safeUser } = updated;
     return NextResponse.json(safeUser);
   } catch {
@@ -96,13 +99,12 @@ export async function DELETE(req: Request) {
     const user = await getSessionUser();
     if (!user) return unauthorized();
 
-    const body = (await req.json()) as { email?: string };
-    const { email } = body;
-    if (!email) return badRequest("Campos obrigatórios: email");
+    const parsed = await parseBody(req, DeleteUserSchema);
+    if (!parsed.ok) return parsed.response;
 
     const repo = new MongoUserRepository();
     const useCase = new DeleteUserUseCase(repo);
-    await useCase.execute(user.email, email, user.moderator);
+    await useCase.execute(user.email, parsed.data.email, user.moderator);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof Error && err.message === "Unauthorized") {

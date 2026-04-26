@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
-import { BackupDiscussionsUseCase } from "@/application/use-cases/BackupUseCases";
+import {
+  BackupDiscussionsUseCase,
+  ImportDiscussionsUseCase,
+} from "@/application/use-cases/BackupUseCases";
 import { getSessionUser, forbidden, serverError } from "@/lib/get-session";
-import { Discussion } from "@/domain/entities/Discussion";
+import { parseBody } from "@/lib/parse-body";
+import { BackupDiscussionsSchema } from "@/lib/schemas";
 
 export async function GET() {
   try {
@@ -22,24 +26,12 @@ export async function POST(req: Request) {
     const user = await getSessionUser();
     if (!user?.moderator) return forbidden();
 
-    const body = (await req.json()) as { discussions?: Discussion[] };
-    const { discussions = [] } = body;
+    const parsed = await parseBody(req, BackupDiscussionsSchema);
+    if (!parsed.ok) return parsed.response;
 
-    const repo = new MongoDiscussionRepository();
-    for (const d of discussions) {
-      await repo.create({
-        bookAbbrev: d.bookAbbrev,
-        commentId: d.commentId,
-        username: d.username,
-        verseReference: d.verseReference,
-        verseText: d.verseText,
-        commentText: d.commentText,
-        question: d.question,
-        answers: d.answers ?? [],
-      });
-    }
-
-    return NextResponse.json({ imported: discussions.length }, { status: 201 });
+    const useCase = new ImportDiscussionsUseCase(new MongoDiscussionRepository());
+    const imported = await useCase.execute(parsed.data.discussions);
+    return NextResponse.json({ imported }, { status: 201 });
   } catch {
     return serverError();
   }

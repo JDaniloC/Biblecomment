@@ -1,6 +1,12 @@
-import { describe, it, expect } from "vitest";
-import { BackupUsersUseCase } from "./BackupUseCases";
+import { describe, it, expect, vi } from "vitest";
+import {
+  BackupUsersUseCase,
+  ImportCommentsUseCase,
+  ImportDiscussionsUseCase,
+} from "./BackupUseCases";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import type { User } from "@/domain/entities/User";
 
 function fakeUser(overrides: Partial<User> = {}): User {
@@ -61,5 +67,64 @@ describe("BackupUsersUseCase", () => {
     expect(u.state).toBe("RJ");
     expect(u.belief).toBe("atheist");
     expect(u.moderator).toBe(true);
+  });
+});
+
+describe("ImportCommentsUseCase", () => {
+  it("returns 0 and skips repo call when input is empty", async () => {
+    const createMany = vi.fn();
+    const repo = { createMany } as unknown as ICommentRepository;
+    const useCase = new ImportCommentsUseCase(repo);
+
+    const result = await useCase.execute([]);
+
+    expect(result).toBe(0);
+    expect(createMany).not.toHaveBeenCalled();
+  });
+
+  it("delegates to createMany once and returns the count", async () => {
+    const createMany = vi.fn().mockResolvedValue(3);
+    const repo = { createMany } as unknown as ICommentRepository;
+    const useCase = new ImportCommentsUseCase(repo);
+
+    const items = [
+      { verseId: "v1", username: "a", onTitle: false, bookReference: "Gn 1", text: "x", tags: [], reports: [], likes: [] },
+      { verseId: "v2", username: "b", onTitle: false, bookReference: "Gn 2", text: "y", tags: [], reports: [], likes: [] },
+      { verseId: "v3", username: "c", onTitle: false, bookReference: "Gn 3", text: "z", tags: [], reports: [], likes: [] },
+    ];
+    const result = await useCase.execute(items);
+
+    expect(result).toBe(3);
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(createMany).toHaveBeenCalledWith(items);
+  });
+});
+
+describe("ImportDiscussionsUseCase", () => {
+  it("returns 0 and skips repo call when input is empty", async () => {
+    const createMany = vi.fn();
+    const repo = { createMany } as unknown as IDiscussionRepository;
+    const useCase = new ImportDiscussionsUseCase(repo);
+
+    const result = await useCase.execute([]);
+
+    expect(result).toBe(0);
+    expect(createMany).not.toHaveBeenCalled();
+  });
+
+  it("delegates to createMany once and returns the count", async () => {
+    const createMany = vi.fn().mockResolvedValue(2);
+    const repo = { createMany } as unknown as IDiscussionRepository;
+    const useCase = new ImportDiscussionsUseCase(repo);
+
+    const items = [
+      { bookAbbrev: "gn", username: "a", verseReference: "Gn 1", verseText: "", commentText: "", question: "?", answers: [] },
+      { bookAbbrev: "ex", username: "b", verseReference: "Ex 1", verseText: "", commentText: "", question: "?", answers: [] },
+    ];
+    const result = await useCase.execute(items);
+
+    expect(result).toBe(2);
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(createMany).toHaveBeenCalledWith(items);
   });
 });

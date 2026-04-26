@@ -9,6 +9,8 @@ import {
   ReportCommentUseCase,
 } from "@/application/use-cases/CommentUseCases";
 import { getSessionUser, unauthorized, forbidden, badRequest, notFound, serverError } from "@/lib/get-session";
+import { parseBody } from "@/lib/parse-body";
+import { CreateCommentSchema, UpdateCommentSchema } from "@/lib/schemas";
 
 type Params = { id: string };
 
@@ -18,16 +20,16 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     if (!user) return unauthorized();
 
     const { id: verseId } = await params;
-    const body = (await req.json()) as { text?: string; tags?: string[]; on_title?: boolean };
-    const { text, tags = [], on_title = false } = body;
-
-    if (!text) return badRequest("Campos obrigatórios: text");
+    const parsed = await parseBody(req, CreateCommentSchema);
+    if (!parsed.ok) return parsed.response;
+    const { text, tags, on_title, onTitle } = parsed.data;
+    const titleFlag = onTitle ?? on_title ?? false;
 
     const commentRepo = new MongoCommentRepository();
     const verseRepo = new MongoVerseRepository();
     const useCase = new CreateCommentUseCase(commentRepo, verseRepo);
 
-    const comment = await useCase.execute(verseId, user.username, text, tags, on_title);
+    const comment = await useCase.execute(verseId, user.username, text, tags, titleFlag);
     return NextResponse.json(comment, { status: 201 });
   } catch (err) {
     if (err instanceof Error && err.message === "Verse not found") {
@@ -43,12 +45,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     if (!user) return unauthorized();
 
     const { id } = await params;
-    const body = (await req.json()) as {
-      text?: string;
-      tags?: string[];
-      action?: "like" | "report";
-    };
-    const { text, tags = [], action } = body;
+    const parsed = await parseBody(req, UpdateCommentSchema);
+    if (!parsed.ok) return parsed.response;
+    const { text, tags, action } = parsed.data;
 
     const repo = new MongoCommentRepository();
 
@@ -64,7 +63,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
 
     if (!text) return badRequest("text é obrigatório");
     const useCase = new UpdateCommentUseCase(repo);
-    return NextResponse.json(await useCase.execute(id, user.username, text, tags));
+    return NextResponse.json(await useCase.execute(id, user.username, text, tags ?? []));
   } catch (err) {
     if (err instanceof Error) {
       if (err.message === "Unauthorized") return forbidden();

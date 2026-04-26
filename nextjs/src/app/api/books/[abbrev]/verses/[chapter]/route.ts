@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { GetVersesByChapterUseCase } from "@/application/use-cases/BookUseCases";
 import { badRequest, serverError } from "@/lib/get-session";
+import { logger } from "@/lib/logger";
 
 type Params = { abbrev: string; chapter: string };
 
@@ -15,7 +16,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
     const verses = await useCase.execute(abbrev, chapterNum);
     return NextResponse.json(verses);
   } catch (err) {
-    console.error("GET /api/books/[abbrev]/verses/[chapter] error:", err);
+    logger.error({ err, route: "GET /api/books/[abbrev]/verses/[chapter]" }, "verses fetch failed");
     return serverError();
   }
 }

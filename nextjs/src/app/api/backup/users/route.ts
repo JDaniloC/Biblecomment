@@ -3,17 +3,8 @@ import bcrypt from "bcryptjs";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { BackupUsersUseCase } from "@/application/use-cases/BackupUseCases";
 import { getSessionUser, forbidden, serverError } from "@/lib/get-session";
-
-interface BackupUserInput {
-  email?: unknown;
-  username?: unknown;
-  state?: unknown;
-  belief?: unknown;
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.length > 0;
-}
+import { parseBody } from "@/lib/parse-body";
+import { BackupUsersSchema } from "@/lib/schemas";
 
 export async function GET() {
   try {
@@ -33,15 +24,13 @@ export async function POST(req: Request) {
     const user = await getSessionUser();
     if (!user?.moderator) return forbidden();
 
-    const body = (await req.json()) as { users?: BackupUserInput[] };
-    const incoming = Array.isArray(body.users) ? body.users : [];
+    const parsed = await parseBody(req, BackupUsersSchema);
+    if (!parsed.ok) return parsed.response;
 
     const repo = new MongoUserRepository();
     let imported = 0;
 
-    for (const raw of incoming) {
-      if (!isNonEmptyString(raw.email) || !isNonEmptyString(raw.username)) continue;
-
+    for (const raw of parsed.data.users) {
       const existing = await repo.findByEmail(raw.email);
       if (existing) continue;
 
@@ -53,8 +42,8 @@ export async function POST(req: Request) {
       await repo.create({
         email: raw.email,
         username: raw.username,
-        state: isNonEmptyString(raw.state) ? raw.state : undefined,
-        belief: isNonEmptyString(raw.belief) ? raw.belief : undefined,
+        state: raw.state,
+        belief: raw.belief,
         password: placeholder,
         passwordType: "bcrypt",
         moderator: false,
