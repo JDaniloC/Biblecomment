@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/infrastructure/database/connection";
 
 function toEntity(doc: IUserDocument): User {
   return {
-    _id: doc._id.toString(),
+    _id: doc._id?.toString(),
     email: doc.email,
     username: doc.username,
     password: doc.password,

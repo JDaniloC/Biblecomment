@@ -69,7 +69,7 @@ export default function DiscussionDetailClient({
     setSubmitting(true);
     try {
       const res = await axios.patch<Discussion>(
-        `/api/discussion/${discussion._id}`,
+        `/api/discussion/${book.abbrev}/${discussion._id}`,
         { text: answerText }
       );
       setDiscussion(res.data);

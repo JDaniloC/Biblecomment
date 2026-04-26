@@ -14,8 +14,8 @@ export async function GET() {
     const repo = new MongoCommentRepository();
     const useCase = new GetAllCommentsUseCase(repo);
     return NextResponse.json(await useCase.execute());
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
 
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const useCase = new ImportCommentsUseCase(new MongoCommentRepository());
     const imported = await useCase.execute(parsed.data.comments);
     return NextResponse.json({ imported }, { status: 201 });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

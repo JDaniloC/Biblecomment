@@ -33,6 +33,6 @@ export async function PATCH(req: Request) {
     if (err instanceof Error && err.message === "User not found") {
       return notFound("User not found");
     }
-    return serverError();
+    return serverError(err);
   }
 }

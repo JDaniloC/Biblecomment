@@ -39,7 +39,7 @@ export async function GET() {
     };
 
     return NextResponse.json(safeUser);
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

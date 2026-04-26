@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 
 function toEntity(doc: IVerseDocument): Verse {
   return {
-    _id: doc._id.toString(),
+    _id: doc._id?.toString(),
     reference: doc.reference,
     abbrev: doc.abbrev,
     chapter: doc.chapter,

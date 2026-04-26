@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     const items = await useCase.execute(page, PAGE_SIZE);
 
     return NextResponse.json({ page, pageSize: PAGE_SIZE, items });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

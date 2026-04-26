@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     const repo = new MongoDiscussionRepository();
     const useCase = new GetAllDiscussionsPaginatedUseCase(repo);
     return NextResponse.json(await useCase.execute(page, PAGE_SIZE));
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

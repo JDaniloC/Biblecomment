@@ -28,6 +28,6 @@ export async function POST(req: Request) {
     if (err instanceof Error && err.message === "Verse already exists") {
       return NextResponse.json({ error: err.message }, { status: 409 });
     }
-    return serverError();
+    return serverError(err);
   }
 }

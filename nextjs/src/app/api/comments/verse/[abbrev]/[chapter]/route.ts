@@ -47,7 +47,7 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
       likes: comment.likes,
       onTitle: comment.onTitle,
     }, { status: 201 });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

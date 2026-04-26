@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     const repo = new MongoCommentRepository();
     const useCase = new GetAllCommentsPaginatedUseCase(repo);
     return NextResponse.json(await useCase.execute(page, PAGE_SIZE));
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

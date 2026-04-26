@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     const comments = userComments.slice(start, start + PAGE_SIZE);
 
     return NextResponse.json({ comments });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

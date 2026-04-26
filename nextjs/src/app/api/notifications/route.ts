@@ -21,8 +21,8 @@ export async function GET(req: Request) {
     const { items, unread } = await useCase.execute(user.username, page, PAGE_SIZE);
 
     return NextResponse.json({ page, pageSize: PAGE_SIZE, items, unread });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const useCase = new MarkAllNotificationsReadUseCase(repo);
     const updated = await useCase.execute(user.username);
     return NextResponse.json({ updated });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

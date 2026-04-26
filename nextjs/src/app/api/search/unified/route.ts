@@ -53,7 +53,7 @@ export async function GET(req: Request) {
         };
       }),
     });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

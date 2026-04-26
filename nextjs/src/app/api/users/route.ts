@@ -51,8 +51,8 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json(result);
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
 
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: err.message }, { status: 409 });
       }
     }
-    return serverError();
+    return serverError(err);
   }
 }
 
@@ -89,8 +89,8 @@ export async function PATCH(req: Request) {
     const updated = await useCase.execute(user.email, parsed.data);
     const { password: _pw, ...safeUser } = updated;
     return NextResponse.json(safeUser);
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
 
@@ -110,6 +110,6 @@ export async function DELETE(req: Request) {
     if (err instanceof Error && err.message === "Unauthorized") {
       return forbidden();
     }
-    return serverError();
+    return serverError(err);
   }
 }

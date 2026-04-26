@@ -21,7 +21,7 @@ export async function GET(req: Request) {
         text: v.text,
       }))
     );
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

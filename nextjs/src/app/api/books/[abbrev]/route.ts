@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
     const book = await useCase.execute(abbrev);
     if (!book) return notFound("Livro não encontrado");
     return NextResponse.json(book);
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

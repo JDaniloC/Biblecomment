@@ -31,6 +31,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     if (err instanceof Error && err.message === "Verse not found") {
       return notFound("Verse not found");
     }
-    return serverError();
+    return serverError(err);
   }
 }

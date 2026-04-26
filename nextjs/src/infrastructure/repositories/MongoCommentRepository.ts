@@ -6,8 +6,8 @@ import mongoose from "mongoose";
 
 function toEntity(doc: ICommentDocument): Comment {
   return {
-    _id: doc._id.toString(),
-    verseId: doc.verseId.toString(),
+    _id: doc._id?.toString(),
+    verseId: doc.verseId?.toString() ?? "",
     username: doc.username,
     onTitle: doc.onTitle,
     bookReference: doc.bookReference,

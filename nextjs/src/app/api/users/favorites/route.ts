@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     const useCase = new GetUserFavoritesUseCase(repo);
     const favorites = await useCase.execute(user.username, page, PAGE_SIZE);
     return NextResponse.json({ favorites });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

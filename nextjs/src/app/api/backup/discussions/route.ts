@@ -16,8 +16,8 @@ export async function GET() {
     const repo = new MongoDiscussionRepository();
     const useCase = new BackupDiscussionsUseCase(repo);
     return NextResponse.json(await useCase.execute());
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
 
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const useCase = new ImportDiscussionsUseCase(new MongoDiscussionRepository());
     const imported = await useCase.execute(parsed.data.discussions);
     return NextResponse.json({ imported }, { status: 201 });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

@@ -55,7 +55,7 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     if (err instanceof Error && err.message === "Verse not found") {
       return badRequest("Versículo não encontrado");
     }
-    return serverError();
+    return serverError(err);
   }
 }
 
@@ -89,7 +89,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
       if (err.message === "Unauthorized") return forbidden();
       if (err.message === "Comment not found") return notFound("Comentário não encontrado");
     }
-    return serverError();
+    return serverError(err);
   }
 }
 
@@ -108,6 +108,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
       if (err.message === "Unauthorized") return forbidden();
       if (err.message === "Comment not found") return notFound("Comentário não encontrado");
     }
-    return serverError();
+    return serverError(err);
   }
 }

@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
     const verseComments = comments.filter((c) => !c.onTitle);
 
     return NextResponse.json({ titleComments, verseComments });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

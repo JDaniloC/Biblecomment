@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export type SessionUser = {
   name: string;
@@ -30,6 +31,13 @@ export function notFound(message = "Not found") {
   return NextResponse.json({ error: message }, { status: 404 });
 }
 
-export function serverError(message = "Internal server error") {
-  return NextResponse.json({ error: message }, { status: 500 });
+export function serverError(errOrMessage?: unknown) {
+  const isString = typeof errOrMessage === "string";
+  if (errOrMessage !== undefined && !isString) {
+    logger.error({ err: errOrMessage }, "request failed");
+  }
+  return NextResponse.json(
+    { error: isString ? errOrMessage : "Internal server error" },
+    { status: 500 },
+  );
 }

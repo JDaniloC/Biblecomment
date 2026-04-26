@@ -21,7 +21,7 @@ export async function GET(req: Request) {
         created_at: c.createdAt,
       }))
     );
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

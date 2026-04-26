@@ -14,8 +14,8 @@ export async function GET() {
     const repo = new MongoUserRepository();
     const useCase = new BackupUsersUseCase(repo);
     return NextResponse.json(await useCase.execute());
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ imported }, { status: 201 });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

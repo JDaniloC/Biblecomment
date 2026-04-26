@@ -5,6 +5,9 @@ node_modules
 .env
 .env.*
 !.env.*.example
+
+attached_assets/
+screenshots/
 venv
 
 .yarn

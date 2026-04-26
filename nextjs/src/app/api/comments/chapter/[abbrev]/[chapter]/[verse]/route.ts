@@ -48,7 +48,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
       }));
 
     return NextResponse.json({ titleComments, verseComments });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }

@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 
 function toEntity(doc: IDiscussionDocument): Discussion {
   return {
-    _id: doc._id.toString(),
+    _id: doc._id?.toString(),
     bookAbbrev: doc.bookAbbrev,
     commentId: doc.commentId?.toString(),
     username: doc.username,

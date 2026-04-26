@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/infrastructure/database/connection";
 
 function toEntity(doc: IBookDocument): Book {
   return {
-    _id: doc._id.toString(),
+    _id: doc._id?.toString(),
     abbrev: doc.abbrev,
     author: doc.author,
     backdrop: doc.backdrop,

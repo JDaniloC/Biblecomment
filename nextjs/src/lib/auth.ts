@@ -39,6 +39,11 @@ export const authConfig: NextAuthConfig = {
           valid = await bcrypt.compare(rawPassword, user.password);
         }
 
+        // The JWT only carries id, email, username, moderator (see return below).
+        // It does not include passwordType / password, so the MD5 -> bcrypt upgrade
+        // above does not desynchronize the session. The next login (and all
+        // subsequent ones) will hit the bcrypt branch.
+
         if (!valid) return null;
 
         return {

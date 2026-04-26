@@ -19,6 +19,6 @@ export async function PATCH(_req: Request, { params }: { params: Promise<Params>
     if (err instanceof Error && err.message === "Notification not found") {
       return notFound("Notification not found");
     }
-    return serverError();
+    return serverError(err);
   }
 }

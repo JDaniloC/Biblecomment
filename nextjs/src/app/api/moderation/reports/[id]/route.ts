@@ -26,6 +26,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     if (err instanceof Error && err.message === "Comment not found") {
       return notFound("Comment not found");
     }
-    return serverError();
+    return serverError(err);
   }
 }

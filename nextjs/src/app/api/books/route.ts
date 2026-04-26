@@ -8,8 +8,8 @@ export async function GET() {
     const repo = new MongoBookRepository();
     const useCase = new GetAllBooksUseCase(repo);
     return NextResponse.json(await useCase.execute());
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
 
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     const useCase = new CreateBookUseCase(repo);
     const book = await useCase.execute(name, abbrev, chapters);
     return NextResponse.json(book, { status: 201 });
-  } catch {
-    return serverError();
+  } catch (err) {
+    return serverError(err);
   }
 }
