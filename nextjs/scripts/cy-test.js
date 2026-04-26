@@ -34,6 +34,11 @@ async function main() {
     MONGODB_URI: uri,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "cypress-test-secret-not-for-prod",
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:5000",
+    // Auth.js v5 refuses requests to non-allowlisted hosts in production
+    // mode (next start). localhost isn't auto-trusted — without this,
+    // /api/auth/session throws UntrustedHost. Test-time only; real
+    // deploys don't pass through this script.
+    AUTH_TRUST_HOST: "true",
     NODE_ENV: MODE === "dev" ? "development" : "production",
   };
 

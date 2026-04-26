@@ -50,7 +50,10 @@ to `%LOCALAPPDATA%\.cache\mongodb-binaries` (Windows) or
 
 If you'd rather use a Mongo you already have running (faster, no
 download), set `MONGODB_URI` yourself and use `cy:open` / `cy:run`
-directly.
+directly. In that case **also export `AUTH_TRUST_HOST=true`** before
+starting `next start` — Auth.js v5 refuses requests to non-allowlisted
+hosts in production mode, and `localhost` is not auto-trusted. The
+`cy:test` orchestrator handles this for you automatically.
 
 ## Specs
 
