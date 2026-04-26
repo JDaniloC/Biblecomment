@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { VerseModel } from "@/infrastructure/database/models/VerseModel";
-import { getSessionUser, unauthorized, badRequest, serverError } from "@/lib/get-session";
+import { getSessionUser, unauthorized, badRequest, notFound, serverError } from "@/lib/get-session";
 
 type Params = { abbrev: string; chapter: string };
 
@@ -13,7 +13,7 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
 
     const { abbrev, chapter } = await params;
     const chapterNum = parseInt(chapter, 10);
-    if (isNaN(chapterNum)) return NextResponse.json({ error: "Invalid chapter" }, { status: 400 });
+    if (isNaN(chapterNum)) return badRequest("Invalid chapter");
 
     const body = (await req.json()) as { text?: string; tags?: string[]; onTitle?: boolean };
     const { text, tags = [], onTitle = true } = body;
@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     await connectToDatabase();
 
     const verse = await VerseModel.findOne({ abbrev, chapter: chapterNum }).sort({ verseNumber: 1 });
-    if (!verse) return NextResponse.json({ error: "Verse not found" }, { status: 404 });
+    if (!verse) return notFound("Verse not found");
 
     const bookRef = verse.reference ?? `${abbrev.toUpperCase()} ${chapterNum}`;
 

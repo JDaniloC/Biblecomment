@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/infrastructure/database/connection";
 import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { VerseModel } from "@/infrastructure/database/models/VerseModel";
 import mongoose from "mongoose";
-import { serverError } from "@/lib/get-session";
+import { badRequest, serverError } from "@/lib/get-session";
 
 type Params = { abbrev: string; chapter: string };
 
@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
   try {
     const { abbrev, chapter } = await params;
     const chapterNum = parseInt(chapter, 10);
-    if (isNaN(chapterNum)) return NextResponse.json({ error: "Invalid chapter" }, { status: 400 });
+    if (isNaN(chapterNum)) return badRequest("Invalid chapter");
 
     await connectToDatabase();
 

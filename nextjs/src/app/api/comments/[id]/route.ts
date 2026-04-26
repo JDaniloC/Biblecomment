@@ -8,7 +8,7 @@ import {
   ToggleLikeUseCase,
   ReportCommentUseCase,
 } from "@/application/use-cases/CommentUseCases";
-import { getSessionUser, unauthorized, badRequest, notFound, serverError } from "@/lib/get-session";
+import { getSessionUser, unauthorized, forbidden, badRequest, notFound, serverError } from "@/lib/get-session";
 
 type Params = { id: string };
 
@@ -67,7 +67,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     return NextResponse.json(await useCase.execute(id, user.username, text, tags));
   } catch (err) {
     if (err instanceof Error) {
-      if (err.message === "Unauthorized") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (err.message === "Unauthorized") return forbidden();
       if (err.message === "Comment not found") return notFound("Comentário não encontrado");
     }
     return serverError();
@@ -86,7 +86,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof Error) {
-      if (err.message === "Unauthorized") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (err.message === "Unauthorized") return forbidden();
       if (err.message === "Comment not found") return notFound("Comentário não encontrado");
     }
     return serverError();

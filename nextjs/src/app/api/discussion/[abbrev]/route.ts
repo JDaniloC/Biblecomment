@@ -7,7 +7,7 @@ import {
   AddAnswerUseCase,
   DeleteDiscussionUseCase,
 } from "@/application/use-cases/DiscussionUseCases";
-import { getSessionUser, unauthorized, badRequest, notFound, serverError } from "@/lib/get-session";
+import { getSessionUser, unauthorized, forbidden, badRequest, notFound, serverError } from "@/lib/get-session";
 
 type Params = { abbrev: string };
 
@@ -102,7 +102,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof Error) {
-      if (err.message === "Unauthorized") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (err.message === "Unauthorized") return forbidden();
       if (err.message === "Discussion not found") return notFound("Discussão não encontrada");
     }
     return serverError();

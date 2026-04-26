@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { VerseModel } from "@/infrastructure/database/models/VerseModel";
-import { getSessionUser, unauthorized, badRequest, serverError } from "@/lib/get-session";
+import { getSessionUser, unauthorized, badRequest, notFound, serverError } from "@/lib/get-session";
 
 type Params = { abbrev: string; chapter: string; verse: string };
 
@@ -14,9 +14,7 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     const { abbrev, chapter, verse } = await params;
     const chapterNum = parseInt(chapter, 10);
     const verseNum = parseInt(verse, 10);
-    if (isNaN(chapterNum) || isNaN(verseNum)) {
-      return NextResponse.json({ error: "Invalid params" }, { status: 400 });
-    }
+    if (isNaN(chapterNum) || isNaN(verseNum)) return badRequest("Invalid params");
 
     const body = (await req.json()) as { text?: string; tags?: string[]; onTitle?: boolean };
     const { text, tags = [], onTitle = false } = body;
@@ -25,7 +23,7 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     await connectToDatabase();
 
     const verseDoc = await VerseModel.findOne({ abbrev, chapter: chapterNum, verseNumber: verseNum });
-    if (!verseDoc) return NextResponse.json({ error: "Verse not found" }, { status: 404 });
+    if (!verseDoc) return notFound("Verse not found");
 
     const bookRef = verseDoc.reference ?? `${abbrev.toUpperCase()} ${chapterNum}:${verseNum}`;
 

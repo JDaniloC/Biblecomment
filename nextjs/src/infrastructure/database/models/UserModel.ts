@@ -23,7 +23,7 @@ const UserSchema = new Schema<IUserDocument>(
   { timestamps: true }
 );
 
-UserSchema.index({ username: 1 });
+UserSchema.index({ username: 1 }, { unique: true });
 
 export const UserModel: Model<IUserDocument> =
   mongoose.models.User || mongoose.model<IUserDocument>("User", UserSchema);

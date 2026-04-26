@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start -p 5000",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status",
@@ -20,6 +22,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.9",
+    "@sentry/nextjs": "^10.50.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@uiw/react-md-editor": "^4.0.11",
     "autoprefixer": "^10.4.27",
@@ -42,6 +45,7 @@
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.5"
   }
 }

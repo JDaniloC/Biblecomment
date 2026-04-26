@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { RegisterUserUseCase } from "@/application/use-cases/AuthUseCases";
 import { UpdateUserProfileUseCase, DeleteUserUseCase } from "@/application/use-cases/UserUseCases";
-import { getSessionUser, unauthorized, badRequest, serverError } from "@/lib/get-session";
+import { getSessionUser, unauthorized, forbidden, badRequest, serverError } from "@/lib/get-session";
 import { UserModel } from "@/infrastructure/database/models/UserModel";
 import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
@@ -106,7 +106,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof Error && err.message === "Unauthorized") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return forbidden();
     }
     return serverError();
   }
