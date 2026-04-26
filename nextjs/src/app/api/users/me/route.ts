@@ -5,6 +5,8 @@ import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { VerseModel } from "@/infrastructure/database/models/VerseModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const user = await getSessionUser();

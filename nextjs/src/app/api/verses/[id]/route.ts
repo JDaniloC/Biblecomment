@@ -8,6 +8,8 @@ import { logger } from "@/lib/logger";
 
 type Params = { id: string };
 
+export const dynamic = "force-dynamic";
+
 export async function PATCH(req: Request, { params }: { params: Promise<Params> }) {
   try {
     const user = await getSessionUser();

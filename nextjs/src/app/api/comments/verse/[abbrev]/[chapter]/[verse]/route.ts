@@ -6,6 +6,8 @@ import { getSessionUser, unauthorized, badRequest, notFound, serverError } from 
 
 type Params = { abbrev: string; chapter: string; verse: string };
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request, { params }: { params: Promise<Params> }) {
   try {
     const user = await getSessionUser();

@@ -5,6 +5,8 @@ import { serverError } from "@/lib/get-session";
 
 const PAGE_SIZE = 5;
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);

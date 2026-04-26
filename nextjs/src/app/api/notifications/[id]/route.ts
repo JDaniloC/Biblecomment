@@ -5,6 +5,8 @@ import { getSessionUser, unauthorized, notFound, serverError } from "@/lib/get-s
 
 type Params = { id: string };
 
+export const dynamic = "force-dynamic";
+
 export async function PATCH(_req: Request, { params }: { params: Promise<Params> }) {
   try {
     const user = await getSessionUser();

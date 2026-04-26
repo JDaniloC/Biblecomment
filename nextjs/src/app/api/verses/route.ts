@@ -6,6 +6,8 @@ import { parseBody } from "@/lib/parse-body";
 import { CreateVerseSchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
     const user = await getSessionUser();

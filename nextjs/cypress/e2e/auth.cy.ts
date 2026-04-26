@@ -93,22 +93,23 @@ describe("Authentication", () => {
   describe("Login UI", () => {
     it("logs in via the form and redirects to the protected area", () => {
       cy.visit("/login");
-      cy.findByLabelText(/e-?mail/i).type(users.alice.email);
-      cy.findByLabelText(/senha|password/i).type(users.alice.password);
-      cy.findByRole("button", { name: /entrar|sign in|login/i }).click();
+      cy.get("input#login-email").type(users.alice.email);
+      cy.get("input#login-password").type(users.alice.password);
+      cy.get('button[type="submit"]').click();
 
-      // After successful login, NextAuth should redirect away from /login.
+      // After successful login, the page redirects to /home.
       cy.url({ timeout: 10000 }).should("not.include", "/login");
       cy.request("/api/users/me").its("status").should("eq", 200);
     });
 
     it("rejects bad credentials and stays on /login", () => {
       cy.visit("/login");
-      cy.findByLabelText(/e-?mail/i).type(users.alice.email);
-      cy.findByLabelText(/senha|password/i).type("wrong-password-on-purpose");
-      cy.findByRole("button", { name: /entrar|sign in|login/i }).click();
+      cy.get("input#login-email").type(users.alice.email);
+      cy.get("input#login-password").type("wrong-password-on-purpose");
+      cy.get('button[type="submit"]').click();
 
-      cy.url({ timeout: 5000 }).should("include", "/login");
+      cy.contains(/Email ou senha inválidos/i, { timeout: 5000 }).should("be.visible");
+      cy.url().should("include", "/login");
     });
   });
 

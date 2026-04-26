@@ -5,6 +5,8 @@ import { getSessionUser, unauthorized, serverError } from "@/lib/get-session";
 
 const PAGE_SIZE = 50;
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const user = await getSessionUser();

@@ -17,6 +17,8 @@ import { CreateCommentSchema, UpdateCommentSchema } from "@/lib/schemas";
 
 type Params = { id: string };
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request, { params }: { params: Promise<Params> }) {
   try {
     const user = await getSessionUser();

@@ -6,6 +6,8 @@ import { getSessionUser, forbidden, serverError } from "@/lib/get-session";
 import { parseBody } from "@/lib/parse-body";
 import { BackupUsersSchema } from "@/lib/schemas";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const user = await getSessionUser();

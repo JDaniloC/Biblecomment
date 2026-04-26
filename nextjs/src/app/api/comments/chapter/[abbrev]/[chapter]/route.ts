@@ -9,6 +9,8 @@ import { badRequest, serverError } from "@/lib/get-session";
 
 type Params = { abbrev: string; chapter: string };
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_req: Request, { params }: { params: Promise<Params> }) {
   try {
     const { abbrev, chapter } = await params;

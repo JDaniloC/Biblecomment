@@ -37,9 +37,11 @@ Cypress.Commands.add("seedDb", (payload: SeedPayload) => {
 });
 
 Cypress.Commands.add("loginAs", (email: string, password: string) => {
-  // Hit the NextAuth credentials provider directly. We need the CSRF token first.
   cy.request("/api/auth/csrf").then((csrfRes) => {
+    expect(csrfRes.status, "GET /api/auth/csrf").to.eq(200);
     const csrfToken = csrfRes.body.csrfToken as string;
+    expect(csrfToken, "csrfToken from /api/auth/csrf").to.be.a("string").and.not.be.empty;
+
     cy.request({
       method: "POST",
       url: "/api/auth/callback/credentials",
@@ -52,6 +54,30 @@ Cypress.Commands.add("loginAs", (email: string, password: string) => {
         json: "true",
       },
       followRedirect: false,
+      failOnStatusCode: false,
+    }).then((res) => {
+      expect(
+        res.status,
+        `POST /api/auth/callback/credentials (got ${res.status})`,
+      ).to.be.oneOf([200, 302]);
+
+      if (res.body && typeof res.body === "object" && typeof res.body.url === "string") {
+        expect(
+          res.body.url,
+          `loginAs(${email}) — Auth.js rejected creds (URL: ${res.body.url})`,
+        ).to.not.match(/\/api\/auth\/error/);
+      }
+    });
+
+    cy.getCookies().then((cookies) => {
+      const session = cookies.find((c) =>
+        /authjs\.session-token|next-auth\.session-token/.test(c.name),
+      );
+      expect(
+        session,
+        `loginAs(${email}) — expected a session cookie. ` +
+          `Cookies: ${cookies.map((c) => c.name).join(", ") || "none"}`,
+      ).to.exist;
     });
   });
 });

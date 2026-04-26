@@ -3,6 +3,8 @@ import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepo
 import { GetAllBooksUseCase, CreateBookUseCase } from "@/application/use-cases/BookUseCases";
 import { getSessionUser, forbidden, badRequest, serverError } from "@/lib/get-session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const repo = new MongoBookRepository();

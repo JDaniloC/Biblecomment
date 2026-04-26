@@ -15,6 +15,8 @@ import { AddAnswerSchema } from "@/lib/schemas";
 
 type Params = { abbrev: string; id: string };
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_req: Request, { params }: { params: Promise<Params> }) {
   try {
     const { id } = await params;

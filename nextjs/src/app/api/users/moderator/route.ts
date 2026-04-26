@@ -6,6 +6,8 @@ import { parseBody } from "@/lib/parse-body";
 import { SetModeratorSchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
 export async function PATCH(req: Request) {
   try {
     const actor = await getSessionUser();

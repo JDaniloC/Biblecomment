@@ -11,6 +11,8 @@ import { CreateDiscussionSchema } from "@/lib/schemas";
 
 type Params = { abbrev: string };
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request, { params }: { params: Promise<Params> }) {
   try {
     const { abbrev } = await params;

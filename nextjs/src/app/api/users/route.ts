@@ -15,6 +15,8 @@ import {
 
 const PAGE_SIZE = 5;
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const sessionUser = await getSessionUser();

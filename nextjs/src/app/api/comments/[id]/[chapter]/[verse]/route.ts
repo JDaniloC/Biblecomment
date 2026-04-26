@@ -6,6 +6,8 @@ import { notFound, serverError } from "@/lib/get-session";
 
 type Params = { id: string; chapter: string; verse: string };
 
+export const dynamic = "force-dynamic";
+
 export async function GET(_req: Request, { params }: { params: Promise<Params> }) {
   try {
     const { id: abbrev, chapter, verse } = await params;

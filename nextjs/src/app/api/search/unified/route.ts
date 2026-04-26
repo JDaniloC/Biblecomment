@@ -18,6 +18,8 @@ function parseBookRef(bookRef: string): { abbrev: string; chapter: number; verse
   return { abbrev, chapter, verse };
 }
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
