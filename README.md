@@ -2,15 +2,13 @@
   <img src=".github/title.png">
 </p>
 
-> A web site to read and share comments about bible versicles.
-> Over +500 comments in +150 chapters.
+> A web site to read and share comments about Bible verses.
 
-<p align = "center">
-  <img src="https://img.shields.io/badge/-Python-black?style=flat&logo=python"/>
-  <img src="https://img.shields.io/badge/-React-black?style=flat&logo=react"/>
-  </br>
-  <img src = "https://deepsource.io/gh/JDaniloC/Biblecomment.svg/?label=resolved+issues&token=FYMaOHvBGRHQpqm0Yr6vJvji"/>
-  <img src = "https://api.netlify.com/api/v1/badges/39368106-a270-4767-9045-e217a6256136/deploy-status"/>
+<p align="center">
+  <img src="https://img.shields.io/badge/-Next.js-black?style=flat&logo=next.js"/>
+  <img src="https://img.shields.io/badge/-MongoDB-black?style=flat&logo=mongodb"/>
+  <img src="https://img.shields.io/badge/-NextAuth-black?style=flat&logo=auth0"/>
+  <img src="https://img.shields.io/badge/-Cypress-black?style=flat&logo=cypress"/>
 </p>
 
 <p align="center">
@@ -19,76 +17,60 @@
 
 ## Motivation
 
-I usually make notes in the bible in order to remember important aspects for understanding the text. With free time due to the pandemic of 2020, starting a comment in another bible and wanting to use the weekend hours in a useful way, the biblecomment was born, with the objective of sharing interpretations of the bible and answering difficult verses in an accessible and intuitive way.
+This project started in 2020 as a place to share interpretations of the
+Bible and answer difficult verses, born from personal note-taking on
+Bible margins. It now lives as a Next.js + MongoDB application under
+[`nextjs/`](./nextjs).
 
-## Webscrapping using Python
+## Stack
 
-To capture the bible chapters in ARA version, was used Selenium and [BibleAPI](https://www.abibliadigital.com.br/) to make a script that returns a json file with the versicles from [biblia.com.br](http://biblia.com.br/).
+- **Next.js 14** (App Router) — pages, server components, route handlers
+- **MongoDB** via Mongoose — persistence layer
+- **NextAuth.js v5** — credentials auth, MD5 → bcrypt upgrade on first
+  login from legacy data
+- **TailwindCSS 4** — styling
+- **Vitest** — unit tests (use cases + helpers, ~56 tests)
+- **Cypress** — integration + E2E (auth, RBAC, comments, discussions,
+  notifications, mentions, search, SEO; ~63 tests)
+- **pino** — structured server logs
+- **Sentry** — optional error reporting (no-op without `SENTRY_DSN`)
 
-### How to use
-
-First, you need to install the requirements (selenium and requests).
-
-```bash
-cd scrapy
-pip install -r requirements
-```
-
-You need a token from the [BibleAPI](https://www.abibliadigital.com.br/) to get more than _20 requests/hour/ip_, because this requests returns how much versicles it's necessary to capture for each chapter. Fill the _token_ variable at [webscraping.py](scrapy/webscraping.py), and write the books to capture in the _book_list_ variable, in the same file.
-
-```py
-token = "YOUR TOKEN HERE"
-
-book_list = []
-```
-
-This script captures all chapters of the chosen books and save json files in the chapters folder, adding the chapter amount in the book.json file.
-
-Lastly, the [reader.py](scrapy/reader.py) file is to read the json file produced by this process, and the [populatedb.py](scrapy/populatedb.py) is used to populate the database with the data from chapters folder. It's necessary to fill the _baseurl_ variable.
-
-```py
-baseurl = "http://localhost:3333"
-```
-
-![main](.github/main.png)
-
-## The backend server
-
-It's required the npm to install yarn. To init the express server, enter in the backend folder, and run this command to install the node modules:
+## Getting started
 
 ```bash
-cd frontend
-npm install yarn
-yarn
+cd nextjs
+cp .env.local.example .env.local   # edit MONGODB_URI / NEXTAUTH_SECRET
+npm install
+npm run dev                          # http://localhost:5000
 ```
 
-Finally run this command to start the development server, currently the project is using Node v16, so if you need to use the new version, downgrade or access this [solution](https://stackoverflow.com/questions/69692842/error-message-error0308010cdigital-envelope-routinesunsupported)
-
-### To migrate
+Run the unit tests:
 
 ```bash
-npx knex migrate:latest
+npm test
 ```
+
+Run the Cypress integration suite end-to-end with an in-memory Mongo:
 
 ```bash
-yarn dev
+npm run cy:test          # headless (CI-equivalent)
+npm run cy:test:dev      # interactive (next dev + cypress open)
 ```
 
-## The web site
+See [`nextjs/cypress/README.md`](./nextjs/cypress/README.md) for the
+full Cypress setup, fixtures, and which specs are wired up.
 
-It's required the npm to install yarn. To init the react, enter in the frontend folder, and run this command to install the node modules:
+## History
 
-```bash
-cd frontend
-npm install yarn
-yarn install
-```
-
-In the same directory you can run the developer server using:
-
-```bash
-yarn start
-```
+The original architecture (a Python webscraper, a React frontend in
+`frontend/`, an Express + SQLite backend in `backend/`) was migrated
+fully to Next.js + MongoDB. The legacy directories were removed; the
+SQLite snapshot used to seed the new database is preserved at
+[`nextjs/scripts/legacy-data/db.sqlite`](./nextjs/scripts/legacy-data)
+and the migration script lives at
+[`nextjs/scripts/migrate-sqlite-to-mongo.js`](./nextjs/scripts/migrate-sqlite-to-mongo.js).
+The Python scraper that originally populated the SQLite remains in
+[`scrapy/`](./scrapy).
 
 ---
 

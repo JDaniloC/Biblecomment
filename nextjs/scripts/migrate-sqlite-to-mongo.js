@@ -20,7 +20,7 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-const SQLITE_PATH = path.join(__dirname, "../../backend/src/database/db.sqlite");
+const SQLITE_PATH = path.join(__dirname, "legacy-data/db.sqlite");
 const BATCH_SIZE  = 500;
 
 const BOOK_META = {
