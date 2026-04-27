@@ -7,6 +7,16 @@ export const RegisterUserSchema = z.object({
 });
 export type RegisterUserInput = z.infer<typeof RegisterUserSchema>;
 
+export const ChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(200),
+    newPassword: z.string().min(6).max(200),
+  })
+  .refine((v) => v.currentPassword !== v.newPassword, {
+    message: "A nova senha deve ser diferente da atual",
+    path: ["newPassword"],
+  });
+
 export const UpdateProfileSchema = z
   .object({
     state: z.string().max(100).optional(),

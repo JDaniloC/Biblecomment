@@ -54,7 +54,7 @@ export class MongoNotificationRepository implements INotificationRepository {
     const doc = await NotificationModel.findOneAndUpdate(
       { _id: id, recipient },
       { $set: { read: true } },
-      { new: true },
+      { returnDocument: "after" },
     );
     return doc ? toEntity(doc) : null;
   }

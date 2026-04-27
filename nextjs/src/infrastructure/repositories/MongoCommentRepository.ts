@@ -82,7 +82,7 @@ export class MongoCommentRepository implements ICommentRepository {
   async update(id: string, data: Partial<Comment>): Promise<Comment | null> {
     await connectToDatabase();
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const doc = await CommentModel.findByIdAndUpdate(id, { $set: data }, { new: true });
+    const doc = await CommentModel.findByIdAndUpdate(id, { $set: data }, { returnDocument: "after" });
     return doc ? toEntity(doc) : null;
   }
 
@@ -97,7 +97,7 @@ export class MongoCommentRepository implements ICommentRepository {
     const doc = await CommentModel.findByIdAndUpdate(
       id,
       { $addToSet: { likes: username } },
-      { new: true }
+      { returnDocument: "after" }
     );
     return doc ? toEntity(doc) : null;
   }
@@ -108,7 +108,7 @@ export class MongoCommentRepository implements ICommentRepository {
     const doc = await CommentModel.findByIdAndUpdate(
       id,
       { $pull: { likes: username } },
-      { new: true }
+      { returnDocument: "after" }
     );
     return doc ? toEntity(doc) : null;
   }
@@ -119,7 +119,7 @@ export class MongoCommentRepository implements ICommentRepository {
     const doc = await CommentModel.findByIdAndUpdate(
       id,
       { $addToSet: { reports: username } },
-      { new: true }
+      { returnDocument: "after" }
     );
     return doc ? toEntity(doc) : null;
   }
@@ -139,7 +139,7 @@ export class MongoCommentRepository implements ICommentRepository {
     const doc = await CommentModel.findByIdAndUpdate(
       id,
       { $set: { reports: [] } },
-      { new: true }
+      { returnDocument: "after" }
     );
     return doc ? toEntity(doc) : null;
   }

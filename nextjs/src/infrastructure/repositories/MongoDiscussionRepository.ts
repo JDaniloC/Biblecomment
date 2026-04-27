@@ -62,7 +62,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
     const doc = await DiscussionModel.findByIdAndUpdate(
       id,
       { $push: { answers: answer } },
-      { new: true }
+      { returnDocument: "after" }
     );
     return doc ? toEntity(doc) : null;
   }

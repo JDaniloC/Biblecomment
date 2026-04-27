@@ -67,7 +67,7 @@ export class MongoUserRepository implements IUserRepository {
     const doc = await UserModel.findOneAndUpdate(
       { email: email.toLowerCase() },
       { $set: data },
-      { new: true }
+      { returnDocument: "after" }
     );
     return doc ? toEntity(doc) : null;
   }

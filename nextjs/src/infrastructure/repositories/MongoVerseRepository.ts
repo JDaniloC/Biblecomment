@@ -48,7 +48,7 @@ export class MongoVerseRepository implements IVerseRepository {
   async update(id: string, data: Partial<Pick<Verse, "text" | "reference">>): Promise<Verse | null> {
     await connectToDatabase();
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const doc = await VerseModel.findByIdAndUpdate(id, { $set: data }, { new: true });
+    const doc = await VerseModel.findByIdAndUpdate(id, { $set: data }, { returnDocument: "after" });
     return doc ? toEntity(doc) : null;
   }
 
