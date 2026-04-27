@@ -2,6 +2,12 @@ import type { MetadataRoute } from "next";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { logger } from "@/lib/logger";
 
+// Without this, Next.js 14 statically renders the sitemap at `next build`
+// time. The book list is captured then — empty in CI before the seed,
+// stale in prod after new books land. force-dynamic re-runs the function
+// per request so the chapter URLs always reflect current DB state.
+export const dynamic = "force-dynamic";
+
 const STATIC_CHANGE_FREQ: MetadataRoute.Sitemap[number]["changeFrequency"] = "monthly";
 const CHAPTER_CHANGE_FREQ: MetadataRoute.Sitemap[number]["changeFrequency"] = "weekly";
 
