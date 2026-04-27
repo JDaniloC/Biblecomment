@@ -78,6 +78,10 @@ export const AddAnswerSchema = z.object({
   text: z.string().min(1).max(5000),
 });
 
+export const UpdateAnswerSchema = z.object({
+  text: z.string().min(1).max(5000),
+});
+
 const BackupUserItemSchema = z.object({
   email: z.string().email(),
   username: z.string().min(2).max(40),

@@ -9,7 +9,7 @@ export interface IDiscussionDocument extends Document {
   verseText: string;
   commentText: string;
   question: string;
-  answers: Array<{ name: string; text: string }>;
+  answers: Array<{ _id?: mongoose.Types.ObjectId; name: string; text: string }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,7 +19,11 @@ const AnswerSchema = new Schema(
     name: { type: String, required: true },
     text: { type: String, required: true },
   },
-  { _id: false }
+  // _id default true: each answer gets an ObjectId so it can be edited
+  // or referenced individually. Pre-existing answers from the legacy
+  // SQLite migration lack _id and remain uneditable — acceptable
+  // limitation, surfaces as 404 if attempted.
+  { _id: true, timestamps: true },
 );
 
 const DiscussionSchema = new Schema<IDiscussionDocument>(

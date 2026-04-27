@@ -43,6 +43,19 @@ export const discussionsService = {
     return res.data;
   },
 
+  async updateAnswer(
+    bookAbbrev: string,
+    discussionId: string,
+    answerId: string,
+    text: string,
+  ): Promise<Discussion> {
+    const res = await axios.patch<Discussion>(
+      `/api/discussion/${bookAbbrev}/${discussionId}/answers/${answerId}`,
+      { text },
+    );
+    return res.data;
+  },
+
   async delete(bookAbbrev: string, id: string): Promise<void> {
     await axios.delete(`/api/discussion/${bookAbbrev}/${id}`);
   },

@@ -69,6 +69,18 @@ describe("discussionsService", () => {
     expect(result.answers).toHaveLength(1);
   });
 
+  it("updateAnswer PATCHes /api/discussion/:abbrev/:id/answers/:answerId", async () => {
+    mockedAxios.patch.mockResolvedValueOnce({
+      data: { ...sampleDiscussion, answers: [{ _id: "a1", name: "bob", text: "edited" }] },
+    });
+    const result = await discussionsService.updateAnswer("gn", "d1", "a1", "edited");
+    expect(mockedAxios.patch).toHaveBeenCalledWith(
+      "/api/discussion/gn/d1/answers/a1",
+      { text: "edited" },
+    );
+    expect(result.answers[0].text).toBe("edited");
+  });
+
   it("delete DELETEs /api/discussion/:abbrev/:id", async () => {
     mockedAxios.delete.mockResolvedValueOnce({ data: { success: true } });
     await discussionsService.delete("gn", "d1");

@@ -133,6 +133,153 @@ describe("Discussions — create, answer, notify, delete", () => {
     });
   });
 
+  describe("Update answer", () => {
+    it("answer owner can edit their own answer text", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.request({
+        method: "POST",
+        url: "/api/discussion/gn",
+        body: { verseReference: "Gn 1:1", question: "hi" },
+      }).then((createRes) => {
+        const discussionId = createRes.body._id as string;
+
+        cy.clearCookies();
+        cy.loginAs(users.bob.email, users.bob.password);
+        cy.request({
+          method: "PATCH",
+          url: `/api/discussion/gn/${discussionId}`,
+          body: { text: "first version" },
+        }).then((patchRes) => {
+          const answerId = (patchRes.body.answers as Array<{ _id: string }>)[0]._id;
+
+          // bob edits his own answer
+          cy.request({
+            method: "PATCH",
+            url: `/api/discussion/gn/${discussionId}/answers/${answerId}`,
+            body: { text: "edited version" },
+          }).then((editRes) => {
+            expect(editRes.status).to.eq(200);
+            const updated = (editRes.body.answers as Array<{ _id: string; text: string }>).find(
+              (a) => a._id === answerId,
+            );
+            expect(updated?.text).to.eq("edited version");
+          });
+        });
+      });
+    });
+
+    it("non-owner gets 403 when editing someone else's answer", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.request({
+        method: "POST",
+        url: "/api/discussion/gn",
+        body: { verseReference: "Gn 1:1", question: "hi" },
+      }).then((createRes) => {
+        const discussionId = createRes.body._id as string;
+
+        cy.clearCookies();
+        cy.loginAs(users.bob.email, users.bob.password);
+        cy.request({
+          method: "PATCH",
+          url: `/api/discussion/gn/${discussionId}`,
+          body: { text: "bob's answer" },
+        }).then((patchRes) => {
+          const answerId = (patchRes.body.answers as Array<{ _id: string }>)[0]._id;
+
+          // alice tries to edit bob's answer — must fail
+          cy.clearCookies();
+          cy.loginAs(users.alice.email, users.alice.password);
+          cy.request({
+            method: "PATCH",
+            url: `/api/discussion/gn/${discussionId}/answers/${answerId}`,
+            body: { text: "hijack attempt" },
+            failOnStatusCode: false,
+          }).then((res) => {
+            expect(res.status).to.eq(403);
+          });
+        });
+      });
+    });
+
+    it("moderator can edit any answer", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.request({
+        method: "POST",
+        url: "/api/discussion/gn",
+        body: { verseReference: "Gn 1:1", question: "hi" },
+      }).then((createRes) => {
+        const discussionId = createRes.body._id as string;
+
+        cy.clearCookies();
+        cy.loginAs(users.bob.email, users.bob.password);
+        cy.request({
+          method: "PATCH",
+          url: `/api/discussion/gn/${discussionId}`,
+          body: { text: "bob's answer" },
+        }).then((patchRes) => {
+          const answerId = (patchRes.body.answers as Array<{ _id: string }>)[0]._id;
+
+          cy.clearCookies();
+          cy.loginAs(users.mod.email, users.mod.password);
+          cy.request({
+            method: "PATCH",
+            url: `/api/discussion/gn/${discussionId}/answers/${answerId}`,
+            body: { text: "moderated content" },
+          }).then((res) => {
+            expect(res.status).to.eq(200);
+          });
+        });
+      });
+    });
+
+    it("404 when answerId doesn't exist", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.request({
+        method: "POST",
+        url: "/api/discussion/gn",
+        body: { verseReference: "Gn 1:1", question: "hi" },
+      }).then((createRes) => {
+        const discussionId = createRes.body._id as string;
+        cy.request({
+          method: "PATCH",
+          url: `/api/discussion/gn/${discussionId}/answers/507f1f77bcf86cd799439011`,
+          body: { text: "x" },
+          failOnStatusCode: false,
+        }).then((res) => {
+          expect(res.status).to.eq(404);
+        });
+      });
+    });
+
+    it("400 with empty text", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.request({
+        method: "POST",
+        url: "/api/discussion/gn",
+        body: { verseReference: "Gn 1:1", question: "hi" },
+      }).then((createRes) => {
+        const discussionId = createRes.body._id as string;
+
+        cy.request({
+          method: "PATCH",
+          url: `/api/discussion/gn/${discussionId}`,
+          body: { text: "first" },
+        }).then((patchRes) => {
+          const answerId = (patchRes.body.answers as Array<{ _id: string }>)[0]._id;
+
+          cy.request({
+            method: "PATCH",
+            url: `/api/discussion/gn/${discussionId}/answers/${answerId}`,
+            body: { text: "" },
+            failOnStatusCode: false,
+          }).then((res) => {
+            expect(res.status).to.eq(400);
+          });
+        });
+      });
+    });
+  });
+
   describe("Delete", () => {
     it("owner can delete their own discussion", () => {
       cy.loginAs(users.alice.email, users.alice.password);

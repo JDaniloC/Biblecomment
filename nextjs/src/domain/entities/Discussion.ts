@@ -1,4 +1,5 @@
 export interface DiscussionAnswer {
+  _id?: string;
   name: string;
   text: string;
 }
@@ -16,3 +17,4 @@ export interface Discussion {
   createdAt?: Date;
   updatedAt?: Date;
 }
+

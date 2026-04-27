@@ -60,6 +60,32 @@ export class AddAnswerUseCase {
   }
 }
 
+export class UpdateAnswerUseCase {
+  constructor(private readonly discussionRepo: IDiscussionRepository) {}
+
+  async execute(
+    discussionId: string,
+    answerId: string,
+    requesterUsername: string,
+    isModerator: boolean,
+    text: string,
+  ): Promise<Discussion> {
+    const discussion = await this.discussionRepo.findById(discussionId);
+    if (!discussion) throw new Error("Discussion not found");
+
+    const answer = discussion.answers.find((a) => a._id === answerId);
+    if (!answer) throw new Error("Answer not found");
+
+    if (!isModerator && answer.name !== requesterUsername) {
+      throw new Error("Unauthorized");
+    }
+
+    const updated = await this.discussionRepo.updateAnswer(discussionId, answerId, text);
+    if (!updated) throw new Error("Discussion not found");
+    return updated;
+  }
+}
+
 export class DeleteDiscussionUseCase {
   constructor(private readonly discussionRepo: IDiscussionRepository) {}
 

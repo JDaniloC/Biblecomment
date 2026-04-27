@@ -14,7 +14,11 @@ function toEntity(doc: IDiscussionDocument): Discussion {
     verseText: doc.verseText,
     commentText: doc.commentText,
     question: doc.question,
-    answers: doc.answers,
+    answers: doc.answers.map((a) => ({
+      _id: a._id?.toString(),
+      name: a.name,
+      text: a.text,
+    })),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -45,24 +49,60 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 
   async create(discussion: Omit<Discussion, "_id" | "createdAt" | "updatedAt">): Promise<Discussion> {
     await connectToDatabase();
-    const doc = await DiscussionModel.create(discussion);
+    const doc = await DiscussionModel.create({
+      ...discussion,
+      // Domain's DiscussionAnswer has _id: string. On insert we let
+      // Mongo assign fresh ObjectIds — strip any incoming _id rather
+      // than fight the type.
+      answers: discussion.answers.map(({ _id: _omit, ...rest }) => rest),
+    });
     return toEntity(doc);
   }
 
   async createMany(discussions: Omit<Discussion, "_id" | "createdAt" | "updatedAt">[]): Promise<number> {
     if (discussions.length === 0) return 0;
     await connectToDatabase();
-    const inserted = await DiscussionModel.insertMany(discussions, { ordered: false });
+    const sanitized = discussions.map((d) => ({
+      ...d,
+      answers: d.answers.map(({ _id: _omit, ...rest }) => rest),
+    }));
+    const inserted = await DiscussionModel.insertMany(sanitized, { ordered: false });
     return inserted.length;
   }
 
   async addAnswer(id: string, answer: DiscussionAnswer): Promise<Discussion | null> {
     await connectToDatabase();
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const { _id: _omit, ...answerData } = answer;
     const doc = await DiscussionModel.findByIdAndUpdate(
       id,
-      { $push: { answers: answer } },
+      { $push: { answers: answerData } },
       { returnDocument: "after" }
+    );
+    return doc ? toEntity(doc) : null;
+  }
+
+  async updateAnswer(
+    discussionId: string,
+    answerId: string,
+    text: string,
+  ): Promise<Discussion | null> {
+    await connectToDatabase();
+    if (
+      !mongoose.Types.ObjectId.isValid(discussionId) ||
+      !mongoose.Types.ObjectId.isValid(answerId)
+    ) {
+      return null;
+    }
+    // arrayFilters lets Mongo update the matching subdocument by its _id
+    // without reading-modifying-writing the whole answers array.
+    const doc = await DiscussionModel.findByIdAndUpdate(
+      discussionId,
+      { $set: { "answers.$[ans].text": text } },
+      {
+        arrayFilters: [{ "ans._id": new mongoose.Types.ObjectId(answerId) }],
+        returnDocument: "after",
+      },
     );
     return doc ? toEntity(doc) : null;
   }
