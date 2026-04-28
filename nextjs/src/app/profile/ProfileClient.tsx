@@ -35,6 +35,7 @@ interface UserProfile {
 import { getTagMetaOrNeutral } from "@/lib/tag-meta";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { usersService } from "@/services/users";
 
 type Tab = "overview" | "comments" | "favorites" | "config";
 type TypeFilter = "Todos" | "Exegese" | "Devocional" | "Pessoal" | "Inspirado";
@@ -290,6 +291,104 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (v: 
         }`}
       />
     </button>
+  );
+}
+
+/* ─────────────────── Change-password card ─────────────────── */
+function ChangePasswordCard() {
+  const { handleNotification } = useNotification();
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (next.length < 6) {
+      handleNotification("error", "A nova senha deve ter ao menos 6 caracteres.");
+      return;
+    }
+    if (next !== confirm) {
+      handleNotification("error", "A confirmação não bate com a nova senha.");
+      return;
+    }
+    if (next === current) {
+      handleNotification("error", "A nova senha deve ser diferente da atual.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await usersService.changePassword(current, next);
+      handleNotification("success", "Senha atualizada.");
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 403) handleNotification("error", "Senha atual incorreta.");
+      else if (status === 400) handleNotification("error", "Senha inválida (mínimo 6 caracteres, deve diferir da atual).");
+      else handleNotification("error", "Erro ao atualizar senha.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6"
+    >
+      <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-4">
+        Trocar senha
+      </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+            Senha atual
+          </label>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            className="w-full h-[38.833px] border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 text-[13px] outline-none focus:border-brand"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+            Nova senha
+          </label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            minLength={6}
+            className="w-full h-[38.833px] border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 text-[13px] outline-none focus:border-brand"
+          />
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">Mínimo 6 caracteres.</p>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+            Confirmar nova senha
+          </label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="w-full h-[38.833px] border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 text-[13px] outline-none focus:border-brand"
+          />
+        </div>
+      </div>
+      <button
+        type="submit"
+        disabled={submitting || !current || !next || !confirm}
+        className="mt-5 h-[35.5px] px-5 bg-brand text-white rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:opacity-90 transition disabled:opacity-50"
+      >
+        {submitting ? "Atualizando…" : "Atualizar senha"}
+      </button>
+    </form>
   );
 }
 
@@ -564,6 +663,21 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                 </button>
               );
             })}
+            {user.moderator && (
+              <Link
+                href="/admin/moderation"
+                className="flex items-center gap-2.5 h-[37.5px] pl-3 rounded-md no-underline transition-colors text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              >
+                <span className="flex items-center shrink-0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </span>
+                <span className="text-[13px] leading-[19.5px] whitespace-nowrap font-semibold">
+                  Moderação
+                </span>
+              </Link>
+            )}
           </nav>
         </aside>
 
@@ -781,6 +895,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                   </div>
                 </div>
               </div>
+
+              {/* ── Card: Trocar senha ── */}
+              <ChangePasswordCard />
 
               {/* ── Card 3: Zona de Perigo ── */}
               <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/40 rounded-xl px-6 pt-5 pb-6">

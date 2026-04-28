@@ -63,4 +63,8 @@ export const usersService = {
     );
     return res.data;
   },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await axios.post("/api/users/me/password", { currentPassword, newPassword });
+  },
 };

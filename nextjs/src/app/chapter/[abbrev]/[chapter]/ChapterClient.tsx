@@ -263,6 +263,30 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
   const showSidebar = selectedVerse !== null || isTitleMode;
 
+  // Keyboard navigation: ← / → for chapters, Esc to close the comment
+  // sidebar. Skip when the user is typing in an input/textarea or when a
+  // modifier key is pressed (so browser shortcuts still work).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+      if (e.key === "Escape" && showSidebar) {
+        e.preventDefault();
+        handleClose();
+      } else if (e.key === "ArrowRight" && nextChapter && !showSidebar) {
+        e.preventDefault();
+        router.push(`/verses/${book.abbrev}/${nextChapter}`);
+      } else if (e.key === "ArrowLeft" && prevChapter && !showSidebar) {
+        e.preventDefault();
+        router.push(`/verses/${book.abbrev}/${prevChapter}`);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showSidebar, nextChapter, prevChapter, book.abbrev, router, handleClose]);
+
   // Swipe-to-navigate (touch only, mobile). Threshold ~60px horizontal,
   // ignored if vertical movement dominates (avoids hijacking scrolls)
   // or if the sidebar is open (would conflict with closing the drawer).
@@ -371,6 +395,18 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                   </span>
                   <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300">Configurações</span>
                 </Link>
+                {user.moderator && (
+                  <Link
+                    href="/admin/moderation"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
+                  >
+                    <span className="text-amber-600 dark:text-amber-400 flex">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </span>
+                    <span className="font-medium text-[13px] text-amber-700 dark:text-amber-300">Moderação</span>
+                  </Link>
+                )}
                 <Link
                   href="/api/auth/signout"
                   className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
