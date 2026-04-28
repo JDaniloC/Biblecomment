@@ -1,3 +1,7 @@
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -6,6 +10,22 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+  },
+  async headers() {
+    return [
+      {
+        source: "/assets/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        source: "/:all*(svg|png|jpg|jpeg|webp|ico|woff2)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
   },
   webpack(config, { isServer }) {
     // @sentry/nextjs (server) pulls @sentry/node which auto-loads
@@ -25,4 +45,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withBundleAnalyzer(nextConfig);

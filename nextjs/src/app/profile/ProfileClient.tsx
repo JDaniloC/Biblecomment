@@ -33,6 +33,8 @@ interface UserProfile {
 }
 
 import { getTagMetaOrNeutral } from "@/lib/tag-meta";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 type Tab = "overview" | "comments" | "favorites" | "config";
 type TypeFilter = "Todos" | "Exegese" | "Devocional" | "Pessoal" | "Inspirado";
@@ -82,39 +84,20 @@ function SearchBar({
   placeholder: string;
 }) {
   return (
-    <div style={{ position: "relative", width: "100%", flexShrink: 0 }}>
-      <div
-        style={{
-          background: "#fff",
-          border: "0.667px solid #e2e8f0",
-          borderRadius: 8,
-          height: 40.833,
-          display: "flex",
-          alignItems: "center",
-          paddingLeft: 36,
-          paddingRight: 12,
-          overflow: "hidden"
-        }}
-      >
+    <div className="relative w-full flex-shrink-0">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg h-[40.833px] flex items-center pl-9 pr-3 overflow-hidden">
         <input
           type="text"
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
-          style={{
-            flex: 1,
-            fontSize: 13,
-            color: "#1e293b",
-            background: "transparent",
-            border: "none",
-            outline: "none"
-          }}
+          className="flex-1 text-[13px] text-slate-800 dark:text-slate-100 bg-transparent border-none outline-none"
         />
         {value && (
           <button
             type="button"
             onClick={() => onChange("")}
-            style={{ color: "#94a3b8", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}
+            className="text-slate-400 dark:text-slate-500 bg-transparent border-none cursor-pointer flex items-center"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -125,7 +108,7 @@ function SearchBar({
       <svg
         width="14" height="14" viewBox="0 0 24 24" fill="none"
         stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+        className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
       >
         <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
       </svg>
@@ -148,45 +131,49 @@ function ProfileCommentCard({
 
   return (
     <div
-      style={{
-        background: "#fff",
-        borderLeftWidth: 4,
-        borderLeftStyle: "solid",
-        borderLeftColor: type.color,
-        borderTop: "0.667px solid #e2e8f0",
-        borderRight: "0.667px solid #e2e8f0",
-        borderBottom: "0.667px solid #e2e8f0",
-        borderRadius: "0 10px 10px 0",
-        boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.05)",
-        padding: "14px 18px 14px"
-      }}
+      className="bg-white dark:bg-slate-900 border-l-4 border-y border-r border-slate-200 dark:border-slate-700 rounded-r-[10px] shadow-sm py-3.5 px-[18px]"
+      style={{ borderLeftColor: type.color }}
     >
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", background: type.bg, borderRadius: 10, padding: "2px 8px", height: 20.5, flexShrink: 0 }}>
-          <span style={{ fontWeight: 600, fontSize: 11, color: type.color, lineHeight: "16.5px", whiteSpace: "nowrap" }}>
+      <div className="flex items-center gap-2 mb-2.5">
+        <span
+          className="inline-flex items-center rounded-[10px] px-2 h-[20.5px] shrink-0"
+          style={{ background: type.bg }}
+        >
+          <span
+            className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap"
+            style={{ color: type.color }}
+          >
             {type.label}
           </span>
         </span>
         {comment.bookReference && (
-          <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.06)", borderRadius: 4, padding: "1px 7px", height: 20, flexShrink: 0 }}>
-            <span style={{ fontWeight: 700, fontSize: 12, color: "#137ddb", lineHeight: "18px", whiteSpace: "nowrap" }}>
+          <span className="inline-flex items-center bg-brand-wash rounded px-[7px] h-5 shrink-0">
+            <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
               {comment.bookReference}
             </span>
           </span>
         )}
-        <span style={{ marginLeft: "auto", fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>
+        <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
           {dateFormat(comment.createdAt)}
         </span>
         {(onEdit || onDelete) && (
-          <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
+          <div className="flex gap-1.5 ml-2">
             {onEdit && (
-              <button type="button" onClick={() => onEdit(comment)} style={{ fontSize: 11, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: 4 }}>
+              <button
+                type="button"
+                onClick={() => onEdit(comment)}
+                className="text-[11px] text-slate-400 dark:text-slate-500 bg-transparent border-none cursor-pointer px-1 py-0.5 rounded hover:text-slate-600 dark:hover:text-slate-300 transition"
+              >
                 Editar
               </button>
             )}
             {onDelete && (
-              <button type="button" onClick={() => onDelete(comment._id)} style={{ fontSize: 11, color: "#f87171", background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: 4 }}>
+              <button
+                type="button"
+                onClick={() => onDelete(comment._id)}
+                className="text-[11px] text-red-400 dark:text-red-500 bg-transparent border-none cursor-pointer px-1 py-0.5 rounded hover:text-red-600 dark:hover:text-red-400 transition"
+              >
                 Excluir
               </button>
             )}
@@ -195,13 +182,16 @@ function ProfileCommentCard({
       </div>
 
       {/* Text */}
-      <p style={{ fontSize: 13, color: "#374151", lineHeight: "22.75px", margin: "0 0 10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      <p className="text-[13px] text-gray-700 dark:text-gray-300 leading-[22.75px] m-0 mb-2.5 line-clamp-2">
         {comment.text}
       </p>
 
       {/* Context link */}
       {nav && (
-        <Link href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 11, color: "#137ddb", textDecoration: "none" }}>
+        <Link
+          href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`}
+          className="inline-flex items-center gap-1.5 font-semibold text-[11px] text-brand no-underline hover:underline"
+        >
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
             <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
@@ -221,57 +211,56 @@ function FavoriteCard({ comment }: { comment: CommentData }) {
 
   return (
     <div
-      style={{
-        background: "#fff",
-        borderLeftWidth: 4,
-        borderLeftStyle: "solid",
-        borderLeftColor: type.color,
-        borderTop: "0.667px solid #e2e8f0",
-        borderRight: "0.667px solid #e2e8f0",
-        borderBottom: "0.667px solid #e2e8f0",
-        borderRadius: "0 10px 10px 0",
-        boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.05)",
-        padding: "14px 18px 14px"
-      }}
+      className="bg-white dark:bg-slate-900 border-l-4 border-y border-r border-slate-200 dark:border-slate-700 rounded-r-[10px] shadow-sm py-3.5 px-[18px]"
+      style={{ borderLeftColor: type.color }}
     >
       {/* Header — avatar + username + type badge + verse + date */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+      <div className="flex items-center gap-2 mb-2.5">
         {/* Author avatar */}
-        <div style={{ width: 26, height: 26, borderRadius: 13, background: "rgba(19,125,219,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: 10, color: "#137ddb", lineHeight: "15px" }}>
+        <div className="w-[26px] h-[26px] rounded-[13px] bg-brand-light flex items-center justify-center shrink-0">
+          <span className="font-bold text-[10px] text-brand leading-[15px]">
             {initials}
           </span>
         </div>
         {/* Username */}
-        <span style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", whiteSpace: "nowrap", flexShrink: 0 }}>
+        <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 whitespace-nowrap shrink-0">
           {comment.username}
         </span>
         {/* Type badge */}
-        <span style={{ display: "inline-flex", alignItems: "center", background: type.bg, borderRadius: 10, padding: "2px 8px", height: 20.5, flexShrink: 0 }}>
-          <span style={{ fontWeight: 600, fontSize: 11, color: type.color, lineHeight: "16.5px", whiteSpace: "nowrap" }}>
+        <span
+          className="inline-flex items-center rounded-[10px] px-2 h-[20.5px] shrink-0"
+          style={{ background: type.bg }}
+        >
+          <span
+            className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap"
+            style={{ color: type.color }}
+          >
             {type.label}
           </span>
         </span>
         {/* Verse */}
         {comment.bookReference && (
-          <span style={{ fontWeight: 700, fontSize: 11, color: "#137ddb", whiteSpace: "nowrap", flexShrink: 0 }}>
+          <span className="font-bold text-[11px] text-brand whitespace-nowrap shrink-0">
             {comment.bookReference}
           </span>
         )}
         {/* Date */}
-        <span style={{ marginLeft: "auto", fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>
+        <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
           {dateFormat(comment.createdAt)}
         </span>
       </div>
 
       {/* Text */}
-      <p style={{ fontSize: 13, color: "#374151", lineHeight: "22.75px", margin: "0 0 10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      <p className="text-[13px] text-gray-700 dark:text-gray-300 leading-[22.75px] m-0 mb-2.5 line-clamp-2">
         {comment.text}
       </p>
 
       {/* Context link */}
       {nav && (
-        <Link href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 11, color: "#137ddb", textDecoration: "none" }}>
+        <Link
+          href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`}
+          className="inline-flex items-center gap-1.5 font-semibold text-[11px] text-brand no-underline hover:underline"
+        >
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
             <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
@@ -291,32 +280,14 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (v: 
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      style={{
-        flexShrink: 0,
-        width: 36,
-        height: 20,
-        borderRadius: 10,
-        background: checked ? "#137ddb" : "#cbd5e0",
-        border: "none",
-        cursor: "pointer",
-        position: "relative",
-        transition: "background 0.2s",
-        padding: 0,
-        marginTop: 1
-      }}
+      className={`shrink-0 w-9 h-5 rounded-[10px] border-none cursor-pointer relative transition-colors duration-200 p-0 mt-px ${
+        checked ? "bg-brand" : "bg-slate-300 dark:bg-slate-600"
+      }`}
     >
       <span
-        style={{
-          position: "absolute",
-          top: 3,
-          left: checked ? 17 : 3,
-          width: 14,
-          height: 14,
-          borderRadius: 7,
-          background: "#fff",
-          boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.2)",
-          transition: "left 0.2s"
-        }}
+        className={`absolute top-[3px] w-[14px] h-[14px] rounded-[7px] bg-white shadow transition-[left] duration-200 ${
+          checked ? "left-[17px]" : "left-[3px]"
+        }`}
       />
     </button>
   );
@@ -326,19 +297,19 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (v: 
 function StatCard({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div className="bg-white border border-slate-200 rounded-xl px-6 py-5 flex-1 min-w-0">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5 flex-1 min-w-0">
       <div
         className="text-[28px] font-extrabold leading-none"
         style={{ color }}
       >
         {value.toLocaleString("pt-BR")}
       </div>
-      <div className={`text-xs text-slate-400 mt-1 ${max > 0 ? "mb-3" : ""}`}>
+      <div className={`text-xs text-slate-400 dark:text-slate-500 mt-1 ${max > 0 ? "mb-3" : ""}`}>
         {label}
-        {max > 0 && <span className="text-slate-300"> de {max.toLocaleString("pt-BR")}</span>}
+        {max > 0 && <span className="text-slate-300 dark:text-slate-600"> de {max.toLocaleString("pt-BR")}</span>}
       </div>
       {max > 0 && (
-        <div className="h-1 bg-slate-100 rounded-sm overflow-hidden">
+        <div className="h-1 bg-slate-100 dark:bg-slate-800 rounded-sm overflow-hidden">
           <div
             className="h-full rounded-sm transition-[width] duration-500 ease-out"
             style={{ width: `${pct}%`, background: color }}
@@ -520,55 +491,55 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
   /* ── Render ── */
   return (
-    <div style={{ minHeight: "100vh", background: "#f9f9f7" }}>
+    <div className="min-h-screen bg-[#f9f9f7] dark:bg-slate-950">
 
       {/* ── Header ── */}
-      <header style={{ position: "sticky", top: 0, zIndex: 20, background: "#fff", borderBottom: "0.667px solid #e2e8f0", height: 60, display: "flex", alignItems: "center", padding: "0 24px", gap: 12 }}>
+      <header className="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 h-[60px] flex items-center px-6 gap-3">
         <Link
           href="/"
-          style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", borderRadius: 6, color: "#64748b", fontSize: 13, fontWeight: 500, textDecoration: "none" }}
-          onMouseEnter={e => (e.currentTarget.style.background = "#f1f5f9")}
-          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          className="flex items-center gap-[7px] px-2 py-[5px] rounded-md text-[13px] font-medium text-slate-500 dark:text-slate-400 no-underline hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
           Voltar à leitura
         </Link>
-        <div style={{ width: 1, height: 18, background: "#e2e8f0", margin: "0 4px" }} />
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#1e293b" }}>BibleComment</span>
-        <div style={{ flex: 1 }} />
-        <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}>
+        <div className="w-px h-[18px] bg-slate-200 dark:bg-slate-700 mx-1" />
+        <span className="text-[15px] font-bold text-slate-800 dark:text-slate-100">BibleComment</span>
+        <div className="flex-1" />
+        <NotificationsBell />
+        <ThemeToggle />
+        <button onClick={() => signOut({ callbackUrl: "/login" })} className="text-[13px] text-slate-400 dark:text-slate-500 bg-transparent border-none cursor-pointer hover:text-slate-600 dark:hover:text-slate-300">
           Sair
         </button>
       </header>
 
       {/* ── Body ── */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 64px", display: "flex", gap: 24, alignItems: "flex-start" }}>
+      <div className="max-w-[1100px] mx-auto pt-8 px-6 pb-16 flex gap-6 items-start">
 
         {/* Sidebar */}
-        <aside style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        <aside className="w-60 flex-shrink-0 flex flex-col gap-2">
           {/* User card */}
-          <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "24px 20px 20px" }}>
-            <div style={{ width: 68, height: 68, borderRadius: 34, background: "rgba(19,125,219,0.13)", border: "2.667px solid rgba(19,125,219,0.19)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
-              <span style={{ fontWeight: 800, fontSize: 22, color: "#137ddb", lineHeight: 1 }}>{initials}</span>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pt-6 px-5 pb-5">
+            <div className="w-[68px] h-[68px] rounded-[34px] bg-brand/15 border-[2.667px] border-[rgba(19,125,219,0.19)] flex items-center justify-center mb-[18px]">
+              <span className="font-extrabold text-[22px] text-brand leading-none">{initials}</span>
             </div>
-            <div style={{ fontWeight: 700, fontSize: 16, color: "#1e293b", lineHeight: "24px", marginBottom: 2 }}>{user.name}</div>
-            <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginBottom: 12 }}>@{user.username}</div>
+            <div className="font-bold text-base text-slate-800 dark:text-slate-100 leading-6 mb-0.5">{user.name}</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mb-3">@{user.username}</div>
             {profile?.belief && (
-              <div style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.07)", borderRadius: 12, padding: "3px 9px", marginBottom: 8 }}>
-                <span style={{ fontWeight: 600, fontSize: 11, color: "#137ddb", lineHeight: "16.5px", whiteSpace: "nowrap" }}>{profile.belief}</span>
+              <div className="inline-flex items-center bg-brand-tint rounded-xl px-2.5 py-0.5 mb-2">
+                <span className="font-semibold text-[11px] text-brand leading-[16.5px] whitespace-nowrap">{profile.belief}</span>
               </div>
             )}
             {profile?.createdAt && (
-              <div style={{ fontSize: 11, color: "#cbd5e0", lineHeight: "16.5px" }}>
+              <div className="text-[11px] text-slate-300 dark:text-slate-600 leading-[16.5px]">
                 Membro desde {formatMemberSince(profile.createdAt)}
               </div>
             )}
           </div>
 
           {/* Navigation */}
-          <nav style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "6.667px 8.667px", display: "flex", flexDirection: "column", gap: 2 }}>
+          <nav className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-[6.667px] px-[8.667px] flex flex-col gap-0.5">
             {NAV_ITEMS.map(({ id, label, icon }) => {
               const active = tab === id;
               return (
@@ -576,12 +547,20 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                   key={id}
                   type="button"
                   onClick={() => setTab(id)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, height: 37.5, paddingLeft: 12, borderRadius: 7, background: active ? "rgba(19,125,219,0.06)" : "transparent", border: "none", cursor: "pointer", width: "100%", textAlign: "left", color: active ? "#137ddb" : "#64748b" }}
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f8fafc"; }}
-                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(19,125,219,0.06)" : "transparent"; }}
+                  className={`flex items-center gap-2.5 h-[37.5px] pl-3 rounded-md border-none cursor-pointer w-full text-left transition-colors ${
+                    active
+                      ? "bg-brand-wash text-brand"
+                      : "bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  }`}
                 >
-                  <span style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>
-                  <span style={{ fontWeight: active ? 600 : 400, fontSize: 13, lineHeight: "19.5px", whiteSpace: "nowrap" }}>{label}</span>
+                  <span className="flex items-center shrink-0">{icon}</span>
+                  <span
+                    className={`text-[13px] leading-[19.5px] whitespace-nowrap ${
+                      active ? "font-semibold" : "font-normal"
+                    }`}
+                  >
+                    {label}
+                  </span>
                 </button>
               );
             })}
@@ -589,21 +568,21 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
         </aside>
 
         {/* ── Main content ── */}
-        <main style={{ flex: 1, minWidth: 0 }}>
+        <main className="flex-1 min-w-0">
 
           {/* OVERVIEW */}
           {tab === "overview" && (
             <div>
-              <div style={{ marginBottom: 24 }}>
-                <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: "0 0 4px" }}>
+              <div className="mb-6">
+                <h2 className="font-bold text-xl text-slate-800 dark:text-slate-100 m-0 mb-1">
                   Olá, {user.name.split(" ")[0]} 👋
                 </h2>
-                <p style={{ fontSize: 13, color: "#94a3b8", margin: 0 }}>
+                <p className="text-[13px] text-slate-400 dark:text-slate-500 m-0">
                   Aqui está um resumo da sua atividade no BibleComment.
                 </p>
               </div>
               {profile ? (
-                <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
+                <div className="flex gap-3 mb-7">
                   <StatCard label="Comentários" value={profile.commentsCount} max={0} color="#137ddb" />
                   <StatCard label="Livros comentados" value={profile.booksCount} max={66} color="#7c3aed" />
                   <StatCard label="Capítulos comentados" value={profile.chaptersCount} max={1189} color="#059669" />
@@ -613,15 +592,19 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               )}
               {comments.length > 0 && (
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                    <h3 style={{ fontWeight: 600, fontSize: 12, color: "#94a3b8", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-xs text-slate-400 dark:text-slate-500 m-0 uppercase tracking-wider">
                       Comentários recentes
                     </h3>
-                    <button type="button" onClick={() => setTab("comments")} style={{ fontSize: 12, color: "#137ddb", background: "none", border: "none", cursor: "pointer" }}>
+                    <button
+                      type="button"
+                      onClick={() => setTab("comments")}
+                      className="text-xs text-brand bg-transparent border-none cursor-pointer hover:underline"
+                    >
                       Ver todos
                     </button>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div className="flex flex-col gap-2.5">
                     {comments.slice(0, 3).map(c => <ProfileCommentCard key={c._id} comment={c} />)}
                   </div>
                 </div>
@@ -631,19 +614,19 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
           {/* COMMENTS */}
           {tab === "comments" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
+            <div className="flex flex-col gap-5">
+              <h2 className="font-bold text-xl text-slate-800 dark:text-slate-100 m-0">
                 Meus Comentários
               </h2>
               <SearchBar value={commentSearch} onChange={setCommentSearch} placeholder="Buscar nos meus comentários…" />
               {loading && comments.length === 0 ? (
                 <Loading />
               ) : filteredComments.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "40px 0", fontSize: 14 }}>
+                <div className="text-center text-slate-400 dark:text-slate-500 py-10 text-sm">
                   {commentSearch ? `Nenhum resultado para "${commentSearch}".` : "Nenhum comentário ainda."}
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div className="flex flex-col gap-2.5">
                   {filteredComments.map(c => (
                     <ProfileCommentCard key={c._id} comment={c} onEdit={setEditingComment} onDelete={handleDelete} />
                   ))}
@@ -654,8 +637,8 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
           {/* FAVORITES */}
           {tab === "favorites" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
+            <div className="flex flex-col gap-5">
+              <h2 className="font-bold text-xl text-slate-800 dark:text-slate-100 m-0">
                 Favoritos
               </h2>
 
@@ -663,7 +646,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               <SearchBar value={favSearch} onChange={setFavSearch} placeholder="Buscar nos favoritos…" />
 
               {/* Type filter pills */}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="flex gap-2 flex-wrap">
                 {TYPE_FILTERS.map(f => {
                   const active = favTypeFilter === f;
                   return (
@@ -671,19 +654,11 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                       key={f}
                       type="button"
                       onClick={() => setFavTypeFilter(f)}
-                      style={{
-                        height: 28,
-                        padding: "0 14px",
-                        borderRadius: 20,
-                        border: "none",
-                        cursor: "pointer",
-                        background: active ? "#137ddb" : "#f1f5f9",
-                        color: active ? "#fff" : "#64748b",
-                        fontWeight: active ? 600 : 400,
-                        fontSize: 12,
-                        lineHeight: "18px",
-                        transition: "background 0.15s"
-                      }}
+                      className={`h-7 px-3.5 rounded-[20px] text-xs leading-[18px] transition-colors duration-150 ${
+                        active
+                          ? "bg-brand text-white font-semibold"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-normal"
+                      }`}
                     >
                       {f}
                     </button>
@@ -693,35 +668,26 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
               {/* Autores Favoritos card */}
               {favoriteAuthors.length > 0 && (
-                <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "16px 20px 16px" }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", marginBottom: 12 }}>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-5 py-4">
+                  <div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 mb-3">
                     Autores Favoritos
                   </div>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <div className="flex gap-2.5 flex-wrap">
                     {favoriteAuthors.map(({ username, count }) => {
                       const ini = getInitials(username);
                       return (
                         <div
                           key={username}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            background: "#f8fafc",
-                            border: "0.667px solid #e2e8f0",
-                            borderRadius: 8,
-                            padding: "6px 12px 6px 12px",
-                            height: 46.333
-                          }}
+                          className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 h-[46.333px]"
                         >
                           {/* Avatar */}
-                          <div style={{ width: 28, height: 28, borderRadius: 14, background: "rgba(19,125,219,0.09)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <span style={{ fontWeight: 700, fontSize: 11, color: "#137ddb", lineHeight: "16.5px" }}>{ini}</span>
+                          <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
+                            <span className="font-bold text-[11px] text-brand leading-[16.5px]">{ini}</span>
                           </div>
                           {/* Username + like count */}
-                          <div style={{ display: "flex", flexDirection: "column" }}>
-                            <span style={{ fontWeight: 600, fontSize: 12, color: "#1e293b", whiteSpace: "nowrap" }}>@{username}</span>
-                            <span style={{ fontSize: 10, color: "#94a3b8" }}>{count} curtido{count !== 1 ? "s" : ""}</span>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 whitespace-nowrap">@{username}</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500">{count} curtido{count !== 1 ? "s" : ""}</span>
                           </div>
                         </div>
                       );
@@ -734,13 +700,13 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               {loading && favorites.length === 0 ? (
                 <Loading />
               ) : filteredFavorites.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "40px 0", fontSize: 14 }}>
+                <div className="text-center text-slate-400 dark:text-slate-500 py-10 text-sm">
                   {favSearch || favTypeFilter !== "Todos"
                     ? "Nenhum favorito encontrado com esses filtros."
                     : "Nenhum favorito ainda."}
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div className="flex flex-col gap-2.5">
                   {filteredFavorites.map(c => <FavoriteCard key={c._id} comment={c} />)}
                 </div>
               )}
@@ -749,89 +715,67 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
           {/* CONFIG */}
           {tab === "config" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div className="flex flex-col gap-5">
               {/* Title */}
-              <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
+              <h2 className="font-bold text-xl text-slate-800 dark:text-slate-100 m-0">
                 Configurações &amp; Privacidade
               </h2>
 
               {/* ── Card 1: Informações da Conta ── */}
-              <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "20px 24px 24px" }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", marginBottom: 20 }}>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
+                <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-5">
                   Informações da Conta
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
-                  <label style={{ fontWeight: 600, fontSize: 13, color: "#1e293b" }}>
+                <div className="flex flex-col gap-1.5 mb-5">
+                  <label className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
                     Crença / Denominação
                   </label>
                   <select
                     value={belief}
                     onChange={e => setBelief(e.target.value)}
-                    style={{
-                      width: "100%",
-                      height: 38.833,
-                      border: "0.667px solid #e2e8f0",
-                      borderRadius: 8,
-                      padding: "0 12px",
-                      fontSize: 13,
-                      outline: "none",
-                      color: "#1e293b",
-                      background: "#fff",
-                      cursor: "pointer"
-                    }}
+                    className="w-full h-[38.833px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 text-[13px] text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 outline-none cursor-pointer"
                   >
                     {beliefs.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </div>
                 <button
                   onClick={handleUpdateAccount}
-                  style={{
-                    height: 35.5,
-                    padding: "0 20px",
-                    background: "#137ddb",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 7,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap"
-                  }}
+                  className="h-[35.5px] px-5 bg-brand text-white rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer"
                 >
                   Salvar alterações
                 </button>
               </div>
 
               {/* ── Card 2: Privacidade ── */}
-              <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "20px 24px" }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", marginBottom: 16 }}>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5">
+                <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-4">
                   Privacidade
                 </div>
 
                 {/* Toggle 1 */}
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 14, paddingBottom: 16 }}>
+                <div className="flex items-start gap-3.5 pb-4">
                   <PrivacyToggle checked={showReligion} onChange={setShowReligion} />
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", lineHeight: "19.5px" }}>
+                    <div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-[19.5px]">
                       Mostrar minha religião no perfil público
                     </div>
-                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginTop: 2 }}>
+                    <div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mt-0.5">
                       Outros usuários poderão ver sua denominação na sua página de perfil.
                     </div>
                   </div>
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: 1, background: "#f7fafc", margin: "0 0 16px" }} />
+                <div className="h-px bg-slate-50 dark:bg-slate-800 mb-4" />
 
                 {/* Toggle 2 */}
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                <div className="flex items-start gap-3.5">
                   <PrivacyToggle checked={showHistory} onChange={setShowHistory} />
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", lineHeight: "19.5px" }}>
+                    <div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-[19.5px]">
                       Permitir que outros vejam meu histórico de comentários
                     </div>
-                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginTop: 2 }}>
+                    <div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mt-0.5">
                       Se desativado, seus comentários ficam anônimos para outros leitores.
                     </div>
                   </div>
@@ -839,28 +783,17 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               </div>
 
               {/* ── Card 3: Zona de Perigo ── */}
-              <div style={{ background: "#fff", border: "0.667px solid #fed7d7", borderRadius: 12, padding: "20px 24px 24px" }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#c53030", marginBottom: 12 }}>
+              <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/40 rounded-xl px-6 pt-5 pb-6">
+                <div className="font-bold text-sm text-red-700 dark:text-red-300 mb-3">
                   Zona de Perigo
                 </div>
-                <p style={{ fontSize: 13, color: "#718096", lineHeight: "19.5px", margin: "0 0 20px" }}>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-5 mt-0">
                   A exclusão da conta é permanente e irrecuperável.
                   {comments.length > 0 && ` Todos os seus ${comments.length} comentário${comments.length !== 1 ? "s" : ""} serão deletados.`}
                 </p>
                 <button
                   onClick={handleDeleteAccount}
-                  style={{
-                    height: 36.167,
-                    padding: "0 20px",
-                    background: "none",
-                    color: "#e53e3e",
-                    border: "1.333px solid #e53e3e",
-                    borderRadius: 7,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap"
-                  }}
+                  className="h-[36.167px] px-5 bg-transparent text-red-600 dark:text-red-400 border-[1.333px] border-red-600 dark:border-red-400 rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer"
                 >
                   Excluir minha conta
                 </button>

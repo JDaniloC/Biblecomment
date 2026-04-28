@@ -58,19 +58,19 @@ export default async function RootPage() {
   const isLoggedIn = !!session?.user;
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="min-h-screen bg-stone-50 dark:bg-slate-950 flex flex-col">
       <Header />
 
       {!isLoggedIn && (
-        <div className="bg-amber-50 border-b border-amber-200">
+        <div className="bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-900/40">
           <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4 flex-wrap">
-            <p className="text-sm text-amber-800">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
               Crie uma conta gratuita para comentar, favoritar versículos e participar dos debates.
             </p>
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 href="/login"
-                className="text-sm font-medium text-amber-900 hover:underline"
+                className="text-sm font-medium text-amber-900 dark:text-amber-200 hover:underline"
               >
                 Entrar
               </Link>
@@ -86,12 +86,12 @@ export default async function RootPage() {
       )}
 
       <main className="flex-1">
-        <section className="bg-gradient-to-b from-white to-stone-50 pt-12 pb-10 px-4">
+        <section className="bg-gradient-to-b from-white to-stone-50 dark:from-slate-900 dark:to-slate-950 pt-12 pb-10 px-4">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-8">
-            <h1 className="text-4xl font-bold text-stone-800 tracking-tight leading-tight">
+            <h1 className="text-4xl font-bold text-stone-800 dark:text-stone-100 tracking-tight leading-tight">
               Sua Biblioteca Bíblica
             </h1>
-            <p className="text-stone-500 text-lg">
+            <p className="text-stone-500 dark:text-stone-400 text-lg">
               30.000+ versículos · Comentários · Reflexões
             </p>
           </div>
@@ -102,44 +102,41 @@ export default async function RootPage() {
           <section className="px-4 pb-10">
             <div className="max-w-3xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
-                <div className="h-px flex-1 bg-stone-200" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-stone-400">
+                <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
                   Versículo do Dia
                 </span>
-                <div className="h-px flex-1 bg-stone-200" />
+                <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 md:p-8 shadow-sm">
-                <blockquote
-                  className="text-xl md:text-2xl leading-relaxed text-stone-800 mb-4"
-                  style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
-                >
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl p-6 md:p-8 shadow-sm">
+                <blockquote className="font-lora text-xl md:text-2xl leading-relaxed text-stone-800 dark:text-stone-100 mb-4">
                   &ldquo;{verse.text}&rdquo;
                 </blockquote>
-                <cite className="block text-sm font-semibold text-amber-700 not-italic mb-5">
+                <cite className="block text-sm font-semibold text-amber-700 dark:text-amber-300 not-italic mb-5">
                   — {formatReference(verse)}
                 </cite>
 
                 {comment && (
-                  <div className="border-t border-amber-200 pt-4">
-                    <p className="text-xs uppercase tracking-wider text-amber-600 font-semibold mb-2">
+                  <div className="border-t border-amber-200 dark:border-amber-900/40 pt-4">
+                    <p className="text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 font-semibold mb-2">
                       {comment.tags.includes("exegetico")
                         ? "Comentário Exegético"
                         : comment.tags.includes("devocional")
                         ? "Comentário Devocional"
                         : "Comentário em destaque"}
                     </p>
-                    <p className="text-sm text-stone-600 leading-relaxed line-clamp-4">
+                    <p className="text-sm text-stone-600 dark:text-stone-300 leading-relaxed line-clamp-4">
                       {comment.text}
                     </p>
-                    <p className="text-xs text-stone-400 mt-2">por {comment.username}</p>
+                    <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">por {comment.username}</p>
                   </div>
                 )}
 
                 <div className="mt-5 flex items-center gap-4 flex-wrap">
                   <Link
                     href={`/verses/${verse.abbrev}/${verse.chapter}#${verse.verseNumber}`}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 hover:text-amber-900 hover:underline transition"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-200 hover:underline transition"
                   >
                     Ler o capítulo completo
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -161,23 +158,23 @@ export default async function RootPage() {
               </span>
               <div className="h-px flex-1 bg-stone-200" />
             </div>
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 shadow-sm p-6">
               <BooksIndex initialBooks={books} />
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-stone-200 bg-white py-6 px-4">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-400">
+      <footer className="border-t border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-400 dark:text-stone-500">
           <div className="flex items-center gap-2">
             <Image src="/assets/logo.svg" alt="Bible Comment" width={20} height={20} className="opacity-60" />
             <span>Bible Comment &mdash; A Program for His Glory</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/help" className="hover:text-stone-600 transition">Sobre</Link>
+            <Link href="/help" className="hover:text-stone-600 dark:hover:text-stone-300 transition">Sobre</Link>
             {isLoggedIn && (
-              <Link href="/profile" className="hover:text-stone-600 transition">Perfil</Link>
+              <Link href="/profile" className="hover:text-stone-600 dark:hover:text-stone-300 transition">Perfil</Link>
             )}
           </div>
         </div>

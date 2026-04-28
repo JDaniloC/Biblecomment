@@ -12,15 +12,7 @@ export function HighlightText({ text, query }: HighlightTextProps) {
   return (
     <span>
       {text.slice(0, idx)}
-      <span
-        style={{
-          background: "rgba(19,125,219,0.12)",
-          color: "#137ddb",
-          borderRadius: 2,
-          paddingLeft: 1,
-          paddingRight: 1
-        }}
-      >
+      <span className="bg-brand-soft text-brand rounded-sm px-px">
         {text.slice(idx, idx + query.length)}
       </span>
       {text.slice(idx + query.length)}
@@ -44,18 +36,12 @@ export function UserAvatar({ username, size = 20 }: { username: string; size?: n
   const color = AVATAR_COLORS[initial.charCodeAt(0) % AVATAR_COLORS.length];
   return (
     <span
+      className="inline-flex items-center justify-center rounded-full text-white font-bold flex-shrink-0"
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
         width: size,
         height: size,
-        borderRadius: "50%",
         background: color,
-        color: "#fff",
-        fontSize: Math.max(9, Math.round(size / 2)),
-        fontWeight: 700,
-        flexShrink: 0
+        fontSize: Math.max(9, Math.round(size / 2))
       }}
     >
       {initial}
@@ -63,4 +49,3 @@ export function UserAvatar({ username, size = 20 }: { username: string; size?: n
   );
 }
 
-export const SEARCH_SPIN_KEYFRAMES = `@keyframes spin { to { transform: rotate(360deg); } }`;

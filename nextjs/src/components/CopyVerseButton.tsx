@@ -27,13 +27,15 @@ export function CopyVerseButton({ verse, className = "", label = "Copiar com ref
     }
   }, [verse, handleNotification]);
 
+  const accessibleLabel = label || "Copiar versículo com referência";
+
   return (
     <button
       type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={`inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition px-2 py-1 rounded hover:bg-gray-100 ${className}`}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      title={accessibleLabel}
+      aria-label={accessibleLabel}
+      className={`inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-brand dark:hover:text-brand transition px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 ${className}`}
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         {copied ? (
@@ -45,7 +47,8 @@ export function CopyVerseButton({ verse, className = "", label = "Copiar com ref
           </>
         )}
       </svg>
-      <span>{copied ? "Copiado!" : label}</span>
+      {label && <span>{copied ? "Copiado!" : label}</span>}
+      {!label && copied && <span className="sr-only">Copiado!</span>}
     </button>
   );
 }

@@ -60,6 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
+      suppressHydrationWarning
       className={`${inter.variable} ${merriweather.variable} ${lora.variable}`}
     >
       <body className="font-sans">

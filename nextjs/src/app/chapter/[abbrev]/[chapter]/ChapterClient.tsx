@@ -9,6 +9,10 @@ import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/components/CommentCard";
 import OmniSearch from "@/app/_components/OmniSearch";
+import { CopyVerseButton } from "@/components/CopyVerseButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationsBell } from "@/components/NotificationsBell";
+import { FontSizeControl } from "@/components/FontSizeControl";
 import { TAG_META, TAG_ORDER, getTagMeta } from "@/lib/tag-meta";
 import {
   toggleLikeAction,
@@ -259,6 +263,27 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
   const showSidebar = selectedVerse !== null || isTitleMode;
 
+  // Swipe-to-navigate (touch only, mobile). Threshold ~60px horizontal,
+  // ignored if vertical movement dominates (avoids hijacking scrolls)
+  // or if the sidebar is open (would conflict with closing the drawer).
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (showSidebar) return;
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+  }, [showSidebar]);
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0 && nextChapter) router.push(`/verses/${book.abbrev}/${nextChapter}`);
+    else if (dx > 0 && prevChapter) router.push(`/verses/${book.abbrev}/${prevChapter}`);
+  }, [book.abbrev, nextChapter, prevChapter, router]);
+
   const sidebarTitle = isTitleMode
     ? `${book.name} ${chapter}`
     : selectedVerse
@@ -270,83 +295,54 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
   const initials = getInitials(user.name || user.username || "U");
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#f9f9f7" }}>
+    <div className="min-h-screen flex flex-col bg-[#f9f9f7] dark:bg-slate-950">
 
       {/* ── Navbar ── */}
-      <header style={{
-        height: 68,
-        background: "#fff",
-        borderBottom: "0.667px solid #e2e8f0",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 24px",
-        gap: 32,
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        flexShrink: 0
-      }}>
+      <header className="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-3 md:px-6 gap-3 md:gap-8 sticky top-0 z-50 flex-shrink-0">
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-          <img src="/assets/logo.svg" alt="BibleComment" width={42} height={42} style={{ display: "block" }} />
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#1e293b", lineHeight: "22.5px", whiteSpace: "nowrap" }}>BibleComment</div>
-            <div style={{ fontWeight: 300, fontSize: 11, color: "#888", lineHeight: "16.5px", whiteSpace: "nowrap" }}>A Program for His Glory</div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <img src="/assets/logo.svg" alt="BibleComment" width={42} height={42} className="block w-9 h-9 md:w-[42px] md:h-[42px]" />
+          <div className="hidden sm:block">
+            <div className="font-bold text-[15px] text-slate-800 dark:text-slate-100 leading-[22.5px] whitespace-nowrap">BibleComment</div>
+            <div className="font-light text-[11px] text-[#888] dark:text-slate-400 leading-[16.5px] whitespace-nowrap">A Program for His Glory</div>
           </div>
         </div>
 
         {/* Nav links */}
-        <nav style={{ display: "flex", gap: 20, flexShrink: 0 }}>
-          <Link href="/home" style={{ fontWeight: 500, fontSize: 14, color: "#1e293b", textDecoration: "none" }}>Livros</Link>
-          <Link href="/discussions" style={{ fontWeight: 500, fontSize: 14, color: "#1e293b", textDecoration: "none" }}>Discussões</Link>
+        <nav className="hidden md:flex gap-5 flex-shrink-0">
+          <Link href="/home" className="font-medium text-sm text-slate-800 dark:text-slate-100 no-underline">Livros</Link>
+          <Link href="/discussions" className="font-medium text-sm text-slate-800 dark:text-slate-100 no-underline">Discussões</Link>
         </nav>
 
         {/* OmniSearch */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex-1 min-w-0">
           <OmniSearch />
         </div>
 
+        <div className="hidden md:inline-flex"><FontSizeControl /></div>
+        <NotificationsBell />
+        <ThemeToggle />
+
         {/* UserDropdown */}
-        <div style={{ position: "relative", flexShrink: 0 }}>
+        <div className="relative flex-shrink-0">
           <button
             type="button"
             onClick={() => setShowUserMenu((v) => !v)}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              background: "#137ddb",
-              border: "2px solid #137ddb",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer"
-            }}
+            className="w-9 h-9 rounded-[18px] bg-brand border-2 border-brand flex items-center justify-center cursor-pointer"
           >
-            <span style={{ fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: "13px" }}>{initials}</span>
+            <span className="font-bold text-[13px] text-white leading-[13px]">{initials}</span>
           </button>
 
           {showUserMenu && (
             <>
               {/* Backdrop */}
-              <div style={{ position: "fixed", inset: 0, zIndex: 49 }} onClick={() => setShowUserMenu(false)} />
+              <div className="fixed inset-0 z-[49]" onClick={() => setShowUserMenu(false)} />
               {/* Dropdown */}
-              <div style={{
-                position: "absolute",
-                right: 0,
-                top: 44,
-                width: 200,
-                background: "#fff",
-                border: "0.667px solid #e2e8f0",
-                borderRadius: 10,
-                boxShadow: "0px 8px 30px 0px rgba(0,0,0,0.14), 0px 2px 8px 0px rgba(0,0,0,0.06)",
-                overflow: "hidden",
-                zIndex: 50
-              }}>
+              <div className="absolute right-0 top-11 w-[200px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-[0px_8px_30px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] overflow-hidden z-50">
                 {/* Header */}
-                <div style={{ padding: "12px 16px 10px", borderBottom: "0.667px solid #f1f5f9" }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", lineHeight: "21px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
-                  <div style={{ fontWeight: 400, fontSize: 12, color: "#94a3b8", lineHeight: "18px" }}>@{user.username}</div>
+                <div className="px-4 pt-3 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                  <div className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-[21px] whitespace-nowrap overflow-hidden text-ellipsis">{user.name}</div>
+                  <div className="font-normal text-xs text-slate-400 dark:text-slate-500 leading-[18px]">@{user.username}</div>
                 </div>
                 {/* Items */}
                 {[
@@ -358,31 +354,31 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                     key={label}
                     href={href}
                     onClick={() => setShowUserMenu(false)}
-                    style={{ display: "flex", alignItems: "center", gap: 10, height: 35.5, padding: "0 0 0 16px", textDecoration: "none" }}
+                    className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
                   >
-                    <span style={{ color: "#475569", display: "flex" }}>{icon}</span>
-                    <span style={{ fontWeight: 500, fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>{label}</span>
+                    <span className="text-slate-600 dark:text-slate-300 flex">{icon}</span>
+                    <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">{label}</span>
                   </Link>
                 ))}
-                <div style={{ height: 1, background: "#f1f5f9", margin: "0" }} />
+                <div className="h-px bg-slate-100 dark:bg-slate-800" />
                 <Link
                   href="/profile?tab=config"
                   onClick={() => setShowUserMenu(false)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, height: 35.5, padding: "0 0 0 16px", textDecoration: "none" }}
+                  className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
                 >
-                  <span style={{ color: "#475569", display: "flex" }}>
+                  <span className="text-slate-600 dark:text-slate-300 flex">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>
                   </span>
-                  <span style={{ fontWeight: 500, fontSize: 13, color: "#475569" }}>Configurações</span>
+                  <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300">Configurações</span>
                 </Link>
                 <Link
                   href="/api/auth/signout"
-                  style={{ display: "flex", alignItems: "center", gap: 10, height: 35.5, padding: "0 0 0 16px", textDecoration: "none" }}
+                  className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
                 >
-                  <span style={{ color: "#e53e3e", display: "flex" }}>
+                  <span className="text-red-600 dark:text-red-400 flex">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                   </span>
-                  <span style={{ fontWeight: 500, fontSize: 13, color: "#e53e3e" }}>Sair</span>
+                  <span className="font-medium text-[13px] text-red-600 dark:text-red-400">Sair</span>
                 </Link>
               </div>
             </>
@@ -390,19 +386,23 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
         </div>
       </header>
 
-      <div className="flex flex-1 relative" style={{ minHeight: 0 }}>
-        <main className="flex-1 overflow-y-auto" style={{ paddingRight: showSidebar ? "420px" : "0" }}>
+      <div className="flex flex-1 relative min-h-0">
+        <main
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          className={`flex-1 overflow-y-auto transition-[padding] duration-200 ${showSidebar ? "md:pr-[420px]" : ""}`}
+        >
           <div className="max-w-[680px] mx-auto px-6 py-10">
-            <div className="flex items-center gap-4 mb-2 text-sm text-gray-400">
-              <Link href="/home" className="hover:text-blue-600 transition">← Livros</Link>
+            <div className="flex items-center gap-4 mb-2 text-sm text-gray-400 dark:text-gray-500">
+              <Link href="/home" className="hover:text-blue-600 dark:hover:text-blue-400 transition">← Livros</Link>
               {prevChapter && (
-                <Link href={`/verses/${book.abbrev}/${prevChapter}`} className="hover:text-blue-600 transition">
+                <Link href={`/verses/${book.abbrev}/${prevChapter}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                   Cap. {prevChapter}
                 </Link>
               )}
               <span className="flex-1" />
               {nextChapter && (
-                <Link href={`/verses/${book.abbrev}/${nextChapter}`} className="hover:text-blue-600 transition">
+                <Link href={`/verses/${book.abbrev}/${nextChapter}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                   Cap. {nextChapter}
                 </Link>
               )}
@@ -415,8 +415,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                 className="flex items-center gap-2 hover:opacity-80 transition"
               >
                 <h1
-                  className="font-['Merriweather',serif] font-bold text-[#1e293b] tracking-widest uppercase"
-                  style={{ fontSize: "clamp(24px, 4vw, 38px)", letterSpacing: "1.9px" }}
+                  className="font-serif font-bold text-slate-800 dark:text-slate-100 tracking-[1.9px] uppercase text-[clamp(24px,4vw,38px)]"
                 >
                   {book.name} {chapter}
                 </h1>
@@ -430,20 +429,17 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
               <button
                 type="button"
                 onClick={openTitlePanel}
-                className="flex items-center gap-3 w-full mb-6 px-4 py-2.5 rounded-r-md text-left transition hover:bg-black/5"
+                className="flex items-center gap-3 w-full mb-6 px-4 py-2.5 rounded-r-md text-left transition hover:bg-black/5 bg-black/[0.02] border-l-4 border-solid"
                 style={{
-                  background: "rgba(0,0,0,0.02)",
-                  borderLeftWidth: "4px",
-                  borderLeftStyle: "solid",
                   borderLeftColor: isTitleMode ? "#137ddb" : "rgba(0,0,0,0)"
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                <span className="text-[14px] text-slate-500 flex-1">Visão Geral do Capítulo</span>
+                <span className="text-[14px] text-slate-500 dark:text-slate-400 flex-1">Visão Geral do Capítulo</span>
                 {titleCount > 0 && (
-                  <span className="bg-[#137ddb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center">
+                  <span className="bg-brand text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center">
                     {titleCount}
                   </span>
                 )}
@@ -455,8 +451,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
             <div className="relative">
               <div
-                className="absolute left-[-40px] top-0 font-['Merriweather',serif] select-none pointer-events-none"
-                style={{ fontSize: 80, lineHeight: "80px", fontWeight: 900, color: "#1e293b", opacity: 0.8, userSelect: "none" }}
+                className="hidden md:block absolute left-[-40px] top-0 font-serif select-none pointer-events-none text-[80px] leading-[80px] font-black text-slate-800 dark:text-slate-100 opacity-80"
               >
                 {chapter}
               </div>
@@ -466,42 +461,51 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                   const count = verse._id ? (countMap[verse._id] ?? 0) : 0;
                   const isSelected = selectedVerse?._id === verse._id && !isTitleMode;
                   return (
-                    <li key={verse._id}>
+                    <li key={verse._id} id={String(verse.verseNumber)} className="group relative">
                       <button
                         type="button"
                         onClick={() => openVersePanel(verse)}
-                        className="flex items-start gap-3 w-full text-left rounded-r-[4px] transition group"
+                        className="flex items-start gap-3 md:gap-3 gap-2 w-full text-left rounded-r-[4px] transition border-l-4 border-solid pt-3 pr-2.5 pb-3 pl-3 md:pt-2 md:pb-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 min-h-[44px]"
                         style={{
-                          borderLeftWidth: "4px",
-                          borderLeftStyle: "solid",
                           borderLeftColor: isSelected ? "#137ddb" : "transparent",
-                          padding: "8px 10px 8px 12px",
-                          background: isSelected ? "rgba(19,125,219,0.04)" : "transparent"
+                          background: isSelected ? "rgba(19,125,219,0.04)" : undefined
                         }}
                       >
                         <span
-                          className="font-['Inter',sans-serif] font-bold text-[13px] w-5 flex-shrink-0 text-right mt-[2px] transition"
+                          className="font-sans font-bold text-[14px] md:text-[13px] w-7 md:w-5 flex-shrink-0 text-right mt-[2px] transition"
                           style={{ color: isSelected ? "#137ddb" : "#94a3b8" }}
                         >
                           {verse.verseNumber}
                         </span>
                         <span
-                          className="flex-1 font-['Merriweather',serif] text-[17px] leading-[1.85] transition"
-                          style={{ color: isSelected ? "#1a1a1a" : "#1a1a1a" }}
+                          className="flex-1 font-serif leading-[1.85] transition text-[#1a1a1a] dark:text-slate-100"
+                          style={{ fontSize: "calc(17px * var(--bc-text-scale, 1))" }}
                         >
                           {verse.text}
                         </span>
                         {count > 0 && (
                           <span
-                            style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4, height: 15, padding: "0 8px", borderRadius: 20, background: "#137ddb" }}
+                            className="flex-shrink-0 flex items-center gap-1 h-[15px] px-2 rounded-[20px] bg-brand"
                           >
                             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                             </svg>
-                            <span style={{ fontWeight: 700, fontSize: 11, color: "#fff", lineHeight: "11px" }}>{count}</span>
+                            <span className="font-bold text-[11px] text-white leading-[11px]">{count}</span>
                           </span>
                         )}
                       </button>
+                      <div className="absolute right-1 top-1 opacity-60 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        <CopyVerseButton
+                          verse={{
+                            abbrev: book.abbrev,
+                            chapter,
+                            verseNumber: verse.verseNumber,
+                            text: verse.text,
+                          }}
+                          label=""
+                          className="!px-1.5 !py-1"
+                        />
+                      </div>
                     </li>
                   );
                 })}
@@ -510,12 +514,12 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
             <div className="mt-10 flex justify-between">
               {prevChapter && (
-                <Link href={`/verses/${book.abbrev}/${prevChapter}`} className="text-sm px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600">
+                <Link href={`/verses/${book.abbrev}/${prevChapter}`} className="text-sm px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition text-gray-600 dark:text-slate-300">
                   ← Capítulo {prevChapter}
                 </Link>
               )}
               {nextChapter && (
-                <Link href={`/verses/${book.abbrev}/${nextChapter}`} className="text-sm px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-600 ml-auto">
+                <Link href={`/verses/${book.abbrev}/${nextChapter}`} className="text-sm px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition text-gray-600 dark:text-slate-300 ml-auto">
                   Capítulo {nextChapter} →
                 </Link>
               )}
@@ -526,15 +530,14 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
         {showSidebar && (
           <aside
             ref={sidebarRef2}
-            className="fixed right-0 bg-white border-l border-[#e2e8f0] z-30 flex flex-col"
-            style={{ width: "420px", top: 68, height: "calc(100vh - 68px)" }}
+            className="fixed inset-0 md:inset-auto md:right-0 bg-white dark:bg-slate-900 md:border-l border-slate-200 dark:border-slate-700 z-30 flex flex-col md:w-[420px] md:top-[68px] md:h-[calc(100vh-68px)]"
           >
-            <div className="border-b border-[#e2e8f0] px-5 py-3.5 flex items-center gap-3">
+            <div className="border-b border-slate-200 dark:border-slate-700 px-5 py-3.5 flex items-center gap-3">
               <div className="flex-1">
-                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Comentários</p>
+                <p className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase">Comentários</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[13px] font-semibold text-slate-700">{sidebarTitle}</span>
-                  <span style={{ background: "rgba(19,125,219,0.09)", color: "#137ddb", fontSize: 11, fontWeight: 600, borderRadius: 10, minWidth: 21, height: 18.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 7px" }}>
+                  <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">{sidebarTitle}</span>
+                  <span className="bg-[rgba(19,125,219,0.09)] text-brand text-[11px] font-semibold rounded-[10px] min-w-[21px] h-[18.5px] inline-flex items-center justify-center px-[7px]">
                     {activeComments.length}
                   </span>
                 </div>
@@ -542,21 +545,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
               <button
                 type="button"
                 onClick={() => { if (composing) resetCompose(); else setComposing(true); }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  height: 30.667,
-                  padding: "0 11px",
-                  border: "1.333px solid #137ddb",
-                  borderRadius: 6,
-                  background: "none",
-                  color: "#137ddb",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap"
-                }}
+                className="flex items-center gap-[5px] h-[30.667px] px-[11px] border-[1.333px] border-brand rounded-md bg-transparent text-brand text-xs font-semibold cursor-pointer whitespace-nowrap"
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -566,7 +555,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
               <button
                 type="button"
                 onClick={handleClose}
-                className="text-slate-400 hover:text-slate-600 transition ml-1"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition ml-1"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -576,36 +565,22 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
             <div className="flex-1 overflow-y-auto">
               {composing && (
-                <div style={{ padding: "16px 24px 20px" }}>
+                <div className="px-6 pt-4 pb-5">
                   {/* Composer card */}
-                  <div style={{
-                    background: "#fff",
-                    border: "0.667px solid #d1d9e8",
-                    borderRadius: 10,
-                    boxShadow: "0px 4px 20px 0px rgba(19,125,219,0.10)",
-                    overflow: "hidden"
-                  }}>
+                  <div className="bg-white dark:bg-slate-900 border border-[#d1d9e8] dark:border-slate-700 rounded-[10px] shadow-[0px_4px_20px_0px_rgba(19,125,219,0.10)] overflow-hidden">
                     {/* Header bar: "Comentando em Ref [Alterar]" */}
-                    <div style={{
-                      background: "rgba(26,54,93,0.04)",
-                      borderBottom: "0.667px solid #e2e8f0",
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "11px 16px 10px",
-                      gap: 4,
-                      minHeight: 41.167
-                    }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <div className="bg-[rgba(26,54,93,0.04)] dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 pt-[11px] pb-[10px] gap-1 min-h-[41.167px]">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
-                      <span style={{ fontWeight: 400, fontSize: 12, color: "#64748b", marginLeft: 6 }}>Comentando em</span>
-                      <span style={{ fontWeight: 700, fontSize: 12, color: "#1e293b", marginLeft: 4 }}>{sidebarTitle}</span>
+                      <span className="font-normal text-xs text-slate-500 dark:text-slate-400 ml-1.5">Comentando em</span>
+                      <span className="font-bold text-xs text-slate-800 dark:text-slate-100 ml-1">{sidebarTitle}</span>
                       {selectedVerse && !isTitleMode && (
                         <button
                           type="button"
                           onClick={() => openVersePanel(selectedVerse)}
-                          style={{ fontWeight: 500, fontSize: 11, color: "#0d9488", background: "none", border: "none", cursor: "pointer", marginLeft: 8, textDecoration: "underline" }}
+                          className="font-medium text-[11px] text-tag-exegese bg-transparent border-none cursor-pointer ml-2 underline"
                         >
                           Alterar
                         </button>
@@ -614,22 +589,16 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
                     {/* Verse quote */}
                     {selectedVerse && !isTitleMode && (
-                      <div style={{
-                        margin: "12px 16px 0",
-                        background: "#f8fafc",
-                        borderLeft: "2.667px solid #cbd5e0",
-                        borderRadius: "0 6px 6px 0",
-                        padding: "9px 12px"
-                      }}>
-                        <p style={{ fontSize: 13, color: "#475569", lineHeight: "20px", margin: 0 }}>
+                      <div className="mt-3 mx-4 bg-slate-50 dark:bg-slate-800 border-l-[2.667px] border-solid border-slate-300 dark:border-slate-600 rounded-r-md py-[9px] px-3">
+                        <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-5 m-0">
                           {selectedVerse.verseNumber}. {selectedVerse.text}
                         </p>
                       </div>
                     )}
 
                     {/* Type CategoryCards */}
-                    <div style={{ padding: "12px 16px 0" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    <div className="pt-3 px-4">
+                      <div className="grid grid-cols-2 gap-1.5">
                         {TAG_ORDER.map((tag) => {
                           const meta = TAG_META[tag];
                           const active = composeTags[tag];
@@ -638,20 +607,14 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                               key={tag}
                               type="button"
                               onClick={() => setComposeTags((prev) => ({ ...prev, [tag]: !prev[tag] }))}
+                              className="flex items-center gap-2 h-[41.5px] px-[14px] rounded-[7px] border-2 border-solid cursor-pointer"
                               style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                                height: 41.5,
-                                padding: "0 14px",
-                                borderRadius: 7,
-                                border: `2px solid ${active ? meta.border : "#e2e8f0"}`,
-                                background: active ? meta.bg : "#fafafa",
-                                cursor: "pointer"
+                                borderColor: active ? meta.border : "#e2e8f0",
+                                background: active ? meta.bg : "#fafafa"
                               }}
                             >
-                              <span style={{ width: 8, height: 8, borderRadius: 4, background: meta.border, flexShrink: 0, display: "block" }} />
-                              <span style={{ fontWeight: 400, fontSize: 13, color: active ? meta.color : "#64748b" }}>{meta.label}</span>
+                              <span className="w-2 h-2 rounded-sm flex-shrink-0 block" style={{ background: meta.border }} />
+                              <span className="font-normal text-[13px]" style={{ color: active ? meta.color : "#64748b" }}>{meta.label}</span>
                             </button>
                           );
                         })}
@@ -659,11 +622,15 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                     </div>
 
                     {/* Format toolbar + Textarea */}
-                    <div style={{ padding: "12px 16px 0", overflow: "hidden" }}>
+                    <div className="pt-3 px-4 overflow-hidden">
                       {/* Toolbar */}
-                      <div style={{ display: "flex", gap: 2, paddingBottom: 8, borderBottom: "0.667px solid #f1f5f9", marginBottom: 8 }}>
+                      <div className="flex gap-0.5 pb-2 border-b border-slate-100 mb-2">
                         {["B", "I", "\u201C"].map((ch, i) => (
-                          <button key={i} type="button" style={{ width: 28, height: 26, borderRadius: 4, border: "none", background: "none", cursor: "pointer", fontFamily: i === 1 ? "Georgia, serif" : "Inter, sans-serif", fontStyle: i === 1 ? "italic" : "normal", fontWeight: i === 0 ? 700 : 500, fontSize: i === 2 ? 15 : 13, color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <button
+                            key={i}
+                            type="button"
+                            className={`w-7 h-[26px] rounded border-none bg-transparent cursor-pointer text-slate-500 dark:text-slate-400 flex items-center justify-center ${i === 1 ? "font-serif italic" : "font-sans not-italic"} ${i === 0 ? "font-bold" : "font-medium"} ${i === 2 ? "text-[15px]" : "text-[13px]"}`}
+                          >
                             {ch}
                           </button>
                         ))}
@@ -678,55 +645,38 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           }}
                           placeholder="Escreva seu comentário aqui…"
                           rows={4}
-                          style={{
-                            width: "100%",
-                            border: "none",
-                            outline: "none",
-                            resize: "none",
-                            fontSize: 14,
-                            color: "rgba(26,26,26,0.85)",
-                            lineHeight: "25.2px",
-                            background: "transparent",
-                            boxSizing: "border-box"
-                          }}
+                          className="w-full border-none outline-none resize-none text-[14px] text-[rgba(26,26,26,0.85)] dark:text-slate-100 leading-[25.2px] bg-transparent box-border"
                         />
                         {/* Footer */}
-                        <div style={{ borderTop: "0.667px solid #f1f5f9", display: "flex", alignItems: "center", gap: 8, padding: "12px 0 16px", marginTop: 4 }}>
+                        <div className="border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 pt-3 pb-4 mt-1">
                           <button
                             type="button"
                             onClick={resetCompose}
-                            style={{ fontWeight: 500, fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
+                            className="font-medium text-[13px] text-slate-400 dark:text-slate-500 bg-transparent border-none cursor-pointer"
                           >
                             Cancelar
                           </button>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 8 }}>
-                            <div style={{ width: 32, height: 18, borderRadius: 9, background: "#cbd5e0", padding: 2, cursor: "pointer" }}>
-                              <div style={{ width: 14, height: 14, borderRadius: 7, background: "#fff", boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.2)" }} />
+                          <div className="flex items-center gap-1.5 ml-2">
+                            <div className="w-8 h-[18px] rounded-[9px] bg-slate-300 dark:bg-slate-600 p-0.5 cursor-pointer">
+                              <div className="w-3.5 h-3.5 rounded-[7px] bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.2)]" />
                             </div>
-                            <span style={{ fontWeight: 400, fontSize: 11, color: "#94a3b8" }}>Anônimo</span>
+                            <span className="font-normal text-[11px] text-slate-400 dark:text-slate-500">Anônimo</span>
                           </div>
                           <button
                             type="submit"
                             disabled={composeText.length < MIN_LEN || composeText.length > MAX_LEN || composeSubmitting}
+                            className="ml-auto h-9 px-4 rounded-[7px] border-none font-semibold text-[13px] whitespace-nowrap"
                             style={{
-                              marginLeft: "auto",
-                              height: 36,
-                              padding: "0 16px",
-                              borderRadius: 7,
-                              border: "none",
                               cursor: composeText.length >= MIN_LEN ? "pointer" : "default",
                               background: composeText.length >= MIN_LEN && !composeSubmitting ? "#137ddb" : "#f1f5f9",
-                              color: composeText.length >= MIN_LEN && !composeSubmitting ? "#fff" : "#a0aec0",
-                              fontWeight: 600,
-                              fontSize: 13,
-                              whiteSpace: "nowrap"
+                              color: composeText.length >= MIN_LEN && !composeSubmitting ? "#fff" : "#a0aec0"
                             }}
                           >
                             {composeSubmitting ? "Publicando…" : "Publicar comentário"}
                           </button>
                         </div>
                         {composeText.length < MIN_LEN && composeText.length > 0 && (
-                          <p style={{ fontSize: 11, color: "#f59e0b", margin: "0 0 8px", textAlign: "right" }}>
+                          <p className="text-[11px] text-amber-500 dark:text-amber-400 mt-0 mx-0 mb-2 text-right">
                             Mínimo {MIN_LEN} caracteres ({composeText.length}/{MIN_LEN})
                           </p>
                         )}
@@ -742,8 +692,8 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                 </div>
               ) : activeComments.length === 0 && !composing ? (
                 <div className="text-center py-12 px-6">
-                  <p className="text-slate-400 text-sm">Nenhum comentário ainda.</p>
-                  <p className="text-slate-300 text-xs mt-1">Seja o primeiro a comentar!</p>
+                  <p className="text-slate-400 dark:text-slate-500 text-sm">Nenhum comentário ainda.</p>
+                  <p className="text-slate-300 dark:text-slate-600 text-xs mt-1">Seja o primeiro a comentar!</p>
                   <button
                     type="button"
                     onClick={() => setComposing(true)}
@@ -760,8 +710,8 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
                     if (editingComment?._id === comment._id) {
                       return (
-                        <div key={comment._id} className="bg-white rounded-xl border border-[#e2e8f0] p-4">
-                          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Editando</p>
+                        <div key={comment._id} className="bg-white dark:bg-slate-900 rounded-xl border border-[#e2e8f0] dark:border-slate-700 p-4">
+                          <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-2">Editando</p>
                           <div className="grid grid-cols-2 gap-2 mb-3">
                             {TAG_ORDER.map((tag) => {
                               const tm = TAG_META[tag];
@@ -785,10 +735,10 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                               value={editText}
                               onChange={(e) => setEditText(e.target.value)}
                               rows={4}
-                              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-[14px] text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#137ddb]/30 focus:border-[#137ddb] transition"
+                              className="w-full border border-[#e2e8f0] dark:border-slate-700 rounded-lg px-3 py-2 text-[14px] text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#137ddb]/30 focus:border-[#137ddb] transition"
                             />
                             <div className="flex gap-2 mt-2 justify-end">
-                              <button type="button" onClick={() => setEditingComment(null)} className="text-[13px] text-slate-500 hover:text-slate-700">Cancelar</button>
+                              <button type="button" onClick={() => setEditingComment(null)} className="text-[13px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Cancelar</button>
                               <button type="submit" className="bg-[#137ddb] text-white text-[13px] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#0f69c0] transition">Salvar</button>
                             </div>
                           </form>
@@ -800,56 +750,46 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                     return (
                       <div
                         key={comment._id}
-                        style={{
-                          background: "#fff",
-                          borderStyle: "solid",
-                          borderLeftWidth: 4,
-                          borderTopWidth: 0.667,
-                          borderRightWidth: 0.667,
-                          borderBottomWidth: 0.667,
-                          borderColor,
-                          borderRadius: "0 8px 8px 0",
-                          overflow: "hidden",
-                          boxShadow: "0px 1px 4px 0px rgba(0,0,0,0.06)"
-                        }}
+                        className="bg-white dark:bg-slate-900 border-l-4 border border-solid rounded-r-lg overflow-hidden shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)]"
+                        style={{ borderColor }}
                       >
                         {/* Header row: icon + type + username + date */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "16px 18px 0", height: 36 }}>
+                        <div className="flex items-center pt-4 px-[18px] h-9">
                           {/* Book icon */}
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={borderColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={borderColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                           </svg>
                           {/* Type label */}
                           {meta && (
-                            <span style={{ fontWeight: 600, fontSize: 12, color: meta.color, marginLeft: 8, whiteSpace: "nowrap" }}>
+                            <span className="font-semibold text-xs ml-2 whitespace-nowrap" style={{ color: meta.color }}>
                               {meta.label}
                             </span>
                           )}
                           {/* Username */}
-                          <span style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", marginLeft: "auto", whiteSpace: "nowrap" }}>
+                          <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto whitespace-nowrap">
                             {comment.username}
                           </span>
                           {/* Date */}
-                          <span style={{ fontWeight: 400, fontSize: 12, color: "#94a3b8", marginLeft: 12, whiteSpace: "nowrap" }}>
+                          <span className="font-normal text-xs text-slate-400 dark:text-slate-500 ml-3 whitespace-nowrap">
                             {dateFormat(comment.createdAt)}
                           </span>
                         </div>
 
                         {/* Paragraph */}
-                        <div style={{ padding: "10px 18px 0" }}>
-                          <p style={{ fontWeight: 400, fontSize: 14, color: "#374151", lineHeight: "25.2px", margin: 0, whiteSpace: "pre-wrap" }}>
+                        <div className="pt-2.5 px-[18px]">
+                          <p className="font-normal text-[14px] text-gray-700 dark:text-gray-300 leading-[25.2px] m-0 whitespace-pre-wrap">
                             {comment.text}
                           </p>
                         </div>
 
                         {/* Footer actions */}
-                        <div style={{ borderTop: "0.667px solid #f7fafc", margin: "12px 18px 0", display: "flex", alignItems: "center", gap: 0, height: 50.667 }}>
+                        <div className="border-t border-[#f7fafc] dark:border-slate-800 mt-3 mx-[18px] flex items-center h-[50.667px]">
                           {/* Útil button */}
                           <button
                             type="button"
                             onClick={() => handleLike(comment._id)}
-                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 8px", height: 26, borderRadius: 5, border: "none", background: "none", cursor: "pointer", fontWeight: 500, fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap" }}
+                            className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap"
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -861,7 +801,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           <button
                             type="button"
                             onClick={() => handleDiscussion(comment._id, comment.text, `${comment.username} ${comment.bookReference}`)}
-                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 8px", height: 26, borderRadius: 5, border: "none", background: "none", cursor: "pointer", fontWeight: 500, fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap", marginLeft: 2 }}
+                            className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap ml-0.5"
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="9 17 4 12 9 7" /><path d="M20 18v-2a4 4 0 0 0-4-4H4" />
@@ -870,19 +810,17 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           </button>
 
                           {/* N Perspectiva badge */}
-                          <div
-                            style={{ marginLeft: "auto", background: "rgba(19,125,219,0.07)", borderRadius: 12, height: 22.5, display: "flex", alignItems: "center", padding: "0 10px", whiteSpace: "nowrap" }}
-                          >
-                            <span style={{ fontWeight: 600, fontSize: 11, color: "#137ddb" }}>
+                          <div className="ml-auto bg-brand-tint rounded-[12px] h-[22.5px] flex items-center px-2.5 whitespace-nowrap">
+                            <span className="font-semibold text-[11px] text-brand">
                               {comment.likes.length > 0 ? `${comment.likes.length} Perspectiva${comment.likes.length !== 1 ? "s" : ""}` : "0 Perspectivas"}
                             </span>
                           </div>
 
                           {/* ··· more options */}
-                          <div style={{ position: "relative", marginLeft: 4 }}>
+                          <div className="relative ml-1">
                             <button
                               type="button"
-                              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 5, border: "none", background: "none", cursor: "pointer", fontFamily: "Courier New, monospace", fontSize: 15, color: "#94a3b8", letterSpacing: "1.2px" }}
+                              className="flex items-center justify-center w-7 h-7 rounded-[5px] border-none bg-transparent cursor-pointer font-mono text-[15px] text-slate-400 dark:text-slate-500 tracking-[1.2px]"
                               onClick={() => {
                                 if (isOwner) startEdit(comment);
                                 else handleReport(comment._id);

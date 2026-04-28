@@ -104,24 +104,21 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
         key={book.abbrev}
         type="button"
         onClick={() => handleBookClick(book)}
-        className="flex items-center gap-[5px] w-full rounded-[4px] transition-colors text-left px-[6px] py-[4px] hover:bg-[#f7fafc] group"
-        style={{ minHeight: "27.5px" }}
+        className="flex items-center gap-[5px] w-full rounded-[4px] min-h-[27.5px] transition-colors text-left px-1.5 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 group"
       >
         <span
-          className="rounded-[2.5px] flex-shrink-0"
-          style={{
-            width: 5,
-            height: 5,
-            background: isSelected ? "#137ddb" : featured ? "#ed8936" : "transparent",
-            border: isSelected || featured ? "none" : "1px solid #e2e8f0",
-          }}
+          className={`w-[5px] h-[5px] rounded-[2.5px] flex-shrink-0 ${
+            isSelected
+              ? "bg-brand"
+              : featured
+                ? "bg-orange-400"
+                : "bg-transparent border border-slate-200 dark:border-slate-700"
+          }`}
         />
         <span
-          className="text-[13px] leading-[19.5px] truncate transition-colors"
-          style={{
-            color: isSelected ? "#137ddb" : "#333",
-            fontWeight: isSelected ? 600 : featured ? 600 : 400,
-          }}
+          className={`text-[13px] leading-[19.5px] truncate transition-colors ${
+            isSelected ? "text-brand font-semibold" : featured ? "text-[#333] dark:text-slate-100 font-semibold" : "text-[#333] dark:text-slate-100 font-normal"
+          }`}
         >
           {book.name}
         </span>
@@ -134,8 +131,8 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
     if (colBooks.length === 0) return null;
     return (
       <div key={col.label} className="flex flex-col gap-[6px] min-w-[130px]">
-        <div className="border-b border-[#f1f5f9] pb-[5px]">
-          <p className="text-[10px] font-semibold text-[#a0aec0] uppercase tracking-[1px] whitespace-nowrap">
+        <div className="border-b border-[#f1f5f9] dark:border-slate-800 pb-[5px]">
+          <p className="text-[10px] font-semibold text-[#a0aec0] dark:text-slate-500 uppercase tracking-[1px] whitespace-nowrap">
             {col.label}
           </p>
         </div>
@@ -147,7 +144,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
   }
 
   return (
-    <div className="flex flex-col" style={{ width: "min(900px, 95vw)" }}>
+    <div className="flex flex-col w-[min(900px,95vw)]">
       <div className="flex items-center gap-3 px-5 py-3">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -159,7 +156,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSelectedBook(null); }}
             placeholder="Busque um livro, capítulo ou palavra-chave…"
-            className="w-full text-[17px] text-[#1a1a1a] placeholder:text-[rgba(26,26,26,0.5)] outline-none bg-transparent"
+            className="w-full text-[17px] text-[#1a1a1a] dark:text-slate-100 placeholder:text-[rgba(26,26,26,0.5)] dark:placeholder:text-slate-500 outline-none bg-transparent"
           />
         </form>
         {(query || closeBookComponent) && (
@@ -169,7 +166,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
               if (query) { setQuery(""); setSelectedBook(null); searchRef.current?.focus(); }
               else closeBookComponent?.();
             }}
-            className="text-slate-400 hover:text-slate-600 transition flex-shrink-0"
+            className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition flex-shrink-0"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -178,7 +175,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
         )}
       </div>
 
-      <div className="h-px bg-[#e2e8f0] mx-0" />
+      <div className="h-px bg-[#e2e8f0] dark:bg-slate-700 mx-0" />
 
       <div className="flex-1 overflow-y-auto">
         {selectedBook ? (
@@ -187,14 +184,14 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
               <button
                 type="button"
                 onClick={() => setSelectedBook(null)}
-                className="text-slate-400 hover:text-slate-600 transition"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
-              <h3 className="font-semibold text-slate-800 text-[15px]">{selectedBook.name}</h3>
-              <span className="text-slate-400 text-sm">— Escolha o capítulo</span>
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-[15px]">{selectedBook.name}</h3>
+              <span className="text-slate-400 dark:text-slate-500 text-sm">— Escolha o capítulo</span>
             </div>
             <div className="grid grid-cols-8 gap-1.5">
               {Array.from({ length: selectedBook.chapters }, (_, i) => i + 1).map((ch) => (
@@ -202,7 +199,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
                   key={ch}
                   type="button"
                   onClick={() => handleChapterClick(ch)}
-                  className="text-center text-sm py-2 rounded-lg border border-[#e2e8f0] text-slate-600 font-medium hover:border-[#137ddb] hover:bg-blue-50 hover:text-[#137ddb] transition"
+                  className="text-center text-sm py-2 rounded-lg border border-[#e2e8f0] dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium hover:border-[#137ddb] hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-[#137ddb] transition"
                 >
                   {ch}
                 </button>
@@ -212,7 +209,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
         ) : filteredBooks ? (
           <div className="p-5">
             {filteredBooks.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-6">Nenhum livro encontrado para &ldquo;{query}&rdquo;</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-6">Nenhum livro encontrado para &ldquo;{query}&rdquo;</p>
             ) : (
               <div className="flex flex-col gap-1">
                 {filteredBooks.map((book) => (
@@ -220,14 +217,15 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
                     key={book.abbrev}
                     type="button"
                     onClick={() => { setQuery(""); handleBookClick(book); }}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f7fafc] transition text-left"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f7fafc] dark:hover:bg-slate-800 transition text-left"
                   >
                     <span
-                      className="w-1.5 h-1.5 rounded-sm flex-shrink-0"
-                      style={{ background: FEATURED.has(book.abbrev) ? "#ed8936" : "#e2e8f0" }}
+                      className={`w-1.5 h-1.5 rounded-sm flex-shrink-0 ${
+                        FEATURED.has(book.abbrev) ? "bg-orange-400" : "bg-slate-200 dark:bg-slate-700"
+                      }`}
                     />
-                    <span className="text-[14px] text-slate-700 font-medium">{book.name}</span>
-                    <span className="text-[12px] text-slate-400 ml-auto">{book.chapters} capítulos</span>
+                    <span className="text-[14px] text-slate-700 dark:text-slate-200 font-medium">{book.name}</span>
+                    <span className="text-[12px] text-slate-400 dark:text-slate-500 ml-auto">{book.chapters} capítulos</span>
                   </button>
                 ))}
               </div>
@@ -236,14 +234,14 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
         ) : (
           <div className="px-5 py-5 flex flex-col gap-[20px] overflow-x-auto">
             <div className="flex flex-col gap-[14px]">
-              <p className="text-[10px] font-bold text-[#cbd5e0] uppercase tracking-[1.2px]">Antigo Testamento</p>
+              <p className="text-[10px] font-bold text-[#cbd5e0] dark:text-slate-500 uppercase tracking-[1.2px]">Antigo Testamento</p>
               <div className="flex gap-8 flex-wrap">
                 {AT_COLUMNS.map(renderColumn)}
               </div>
             </div>
 
             <div className="flex flex-col gap-[14px]">
-              <p className="text-[10px] font-bold text-[#cbd5e0] uppercase tracking-[1.2px]">Novo Testamento</p>
+              <p className="text-[10px] font-bold text-[#cbd5e0] dark:text-slate-500 uppercase tracking-[1.2px]">Novo Testamento</p>
               <div className="flex gap-8 flex-wrap">
                 {NT_COLUMNS.map(renderColumn)}
               </div>

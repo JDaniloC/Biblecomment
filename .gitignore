@@ -19,3 +19,6 @@ nextjs/tsconfig.tsbuildinfo
 nextjs/cypress/tsconfig.tsbuildinfo
 nextjs/cypress/screenshots/
 nextjs/cypress/videos/
+nextjs/.tmp-screenshots/
+.claude/
+plan_*.md

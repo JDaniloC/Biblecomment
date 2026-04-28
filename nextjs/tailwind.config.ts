@@ -1,30 +1,16 @@
 import type { Config } from "tailwindcss";
 
+// Tailwind v4: theme tokens live in `src/app/globals.css` under `@theme`.
+// This file is kept only so `next lint` and existing tooling can resolve
+// the `tailwind.config.ts` import path. Do NOT add `theme.extend.colors`
+// here — v4 ignores it, and we hit a bug where `bg-brand` silently failed
+// because the rule was never generated.
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: {
-    extend: {
-      colors: {
-        tag: {
-          devocional: "#4f46e5",
-          exegese:    "#0d9488",
-          pessoal:    "#d97706",
-          inspirado:  "#7c3aed",
-        },
-      },
-      fontFamily: {
-        // CSS variables come from next/font/google in app/layout.tsx.
-        // Falls back to system fonts if a variable isn't set.
-        sans:  ["var(--font-inter)",        "system-ui",  "sans-serif"],
-        serif: ["var(--font-merriweather)", "Georgia",     "serif"],
-        lora:  ["var(--font-lora)",         "Georgia",     "serif"],
-      },
-    },
-  },
   plugins: [],
 };
 

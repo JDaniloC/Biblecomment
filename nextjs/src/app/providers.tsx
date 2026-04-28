@@ -1,45 +1,33 @@
 "use client";
 
 import { SessionProvider as NextAuthSessionProvider } from "next-auth/react";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#2563eb",
-    },
-    secondary: {
-      main: "#7c3aed",
-    },
+    primary: { main: "#2563eb" },
+    secondary: { main: "#7c3aed" },
   },
-  typography: {
-    fontFamily: "inherit",
-  },
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          backgroundColor: "#f9fafb",
-        },
-      },
-    },
-  },
+  typography: { fontFamily: "inherit" },
 });
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   return (
     <NextAuthSessionProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline enableColorScheme />
-        <NotificationProvider>
-          <ProfileProvider>
-            {children}
-          </ProfileProvider>
-        </NotificationProvider>
-      </ThemeProvider>
+      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+        <MuiThemeProvider theme={theme}>
+          <CssBaseline enableColorScheme />
+          <NotificationProvider>
+            <ProfileProvider>
+              {children}
+            </ProfileProvider>
+          </NotificationProvider>
+        </MuiThemeProvider>
+      </NextThemesProvider>
     </NextAuthSessionProvider>
   );
 }
