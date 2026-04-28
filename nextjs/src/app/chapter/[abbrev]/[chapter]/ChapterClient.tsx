@@ -10,6 +10,11 @@ import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/components/CommentCard";
 import OmniSearch from "@/app/_components/OmniSearch";
 import { TAG_META, TAG_ORDER, getTagMeta } from "@/lib/tag-meta";
+import {
+  toggleLikeAction,
+  reportCommentAction,
+  deleteCommentAction,
+} from "@/app/actions/comments";
 
 interface SessionUser {
   name: string;
@@ -186,35 +191,39 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
   }, [composeText, composeTags, isTitleMode, book.abbrev, chapter, selectedVerse, handleNotification, resetCompose]);
 
   const handleLike = useCallback(async (id: string) => {
-    try {
-      const res = await axios.patch<CommentData>(`/api/comments/${id}`, { action: "like" });
-      const updater = (prev: CommentData[]) => prev.map((c) => c._id === id ? res.data : c);
-      setComments(updater);
-      setTitleComments(updater);
-    } catch {
+    const result = await toggleLikeAction(id);
+    if (!result.ok) {
       handleNotification("error", "Erro ao curtir.");
+      return;
     }
+    // The Server Action returns the domain Comment (Date typed as Date),
+    // but Next.js serializes Date → string at the boundary, matching
+    // CommentData. The double cast acknowledges that.
+    const updater = (prev: CommentData[]) =>
+      prev.map((c) => (c._id === id ? (result.data as unknown as CommentData) : c));
+    setComments(updater);
+    setTitleComments(updater);
   }, [handleNotification]);
 
   const handleReport = useCallback(async (id: string) => {
-    try {
-      await axios.patch(`/api/comments/${id}`, { action: "report" });
-      handleNotification("info", "Comentário reportado.");
-    } catch {
+    const result = await reportCommentAction(id);
+    if (!result.ok) {
       handleNotification("error", "Erro ao reportar.");
+      return;
     }
+    handleNotification("info", "Comentário reportado.");
   }, [handleNotification]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Excluir este comentário?")) return;
-    try {
-      await axios.delete(`/api/comments/${id}`);
-      setComments((prev) => prev.filter((c) => c._id !== id));
-      setTitleComments((prev) => prev.filter((c) => c._id !== id));
-      handleNotification("success", "Comentário excluído.");
-    } catch {
-      handleNotification("error", "Erro ao excluir.");
+    const result = await deleteCommentAction(id);
+    if (!result.ok) {
+      handleNotification("error", result.error === "Forbidden" ? "Sem permissão." : "Erro ao excluir.");
+      return;
     }
+    setComments((prev) => prev.filter((c) => c._id !== id));
+    setTitleComments((prev) => prev.filter((c) => c._id !== id));
+    handleNotification("success", "Comentário excluído.");
   }, [handleNotification]);
 
   const startEdit = useCallback((comment: CommentData) => {
