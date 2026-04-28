@@ -326,17 +326,23 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (v: 
 function StatCard({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "20px 24px", flex: 1, minWidth: 0 }}>
-      <div style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>
+    <div className="bg-white border border-slate-200 rounded-xl px-6 py-5 flex-1 min-w-0">
+      <div
+        className="text-[28px] font-extrabold leading-none"
+        style={{ color }}
+      >
         {value.toLocaleString("pt-BR")}
       </div>
-      <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4, marginBottom: max > 0 ? 12 : 0 }}>
+      <div className={`text-xs text-slate-400 mt-1 ${max > 0 ? "mb-3" : ""}`}>
         {label}
-        {max > 0 && <span style={{ color: "#cbd5e0" }}> de {max.toLocaleString("pt-BR")}</span>}
+        {max > 0 && <span className="text-slate-300"> de {max.toLocaleString("pt-BR")}</span>}
       </div>
       {max > 0 && (
-        <div style={{ height: 4, background: "#f1f5f9", borderRadius: 2, overflow: "hidden" }}>
-          <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 2, transition: "width 0.6s ease" }} />
+        <div className="h-1 bg-slate-100 rounded-sm overflow-hidden">
+          <div
+            className="h-full rounded-sm transition-[width] duration-500 ease-out"
+            style={{ width: `${pct}%`, background: color }}
+          />
         </div>
       )}
     </div>
