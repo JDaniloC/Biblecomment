@@ -117,4 +117,20 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
     const docs = await DiscussionModel.find({});
     return docs.map(toEntity);
   }
+
+  async anonymizeByUsername(oldUsername: string, replacement: string): Promise<number> {
+    await connectToDatabase();
+    const [topLevel, embedded] = await Promise.all([
+      DiscussionModel.updateMany(
+        { username: oldUsername },
+        { $set: { username: replacement } },
+      ),
+      DiscussionModel.updateMany(
+        { "answers.name": oldUsername },
+        { $set: { "answers.$[ans].name": replacement } },
+        { arrayFilters: [{ "ans.name": oldUsername }] },
+      ),
+    ]);
+    return (topLevel.modifiedCount ?? 0) + (embedded.modifiedCount ?? 0);
+  }
 }

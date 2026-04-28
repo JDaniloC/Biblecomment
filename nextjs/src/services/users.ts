@@ -13,6 +13,7 @@ export interface RegisterInput {
   email: string;
   username: string;
   password: string;
+  acceptedTerms: true;
 }
 
 export interface UserProfile {

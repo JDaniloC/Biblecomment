@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
   UpdateUserProfileUseCase,
   DeleteUserUseCase,
@@ -56,8 +59,12 @@ export async function deleteSelfAction(
   if (!session?.user) return authError();
 
   try {
-    const repo = new MongoUserRepository();
-    const useCase = new DeleteUserUseCase(repo);
+    const useCase = new DeleteUserUseCase(
+      new MongoUserRepository(),
+      new MongoCommentRepository(),
+      new MongoDiscussionRepository(),
+      new MongoNotificationRepository(),
+    );
     await useCase.execute(session.user.email, email, session.user.moderator);
     revalidatePath("/profile", "page");
     return { ok: true, data: { deleted: true } };

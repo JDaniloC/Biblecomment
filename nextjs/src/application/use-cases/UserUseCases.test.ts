@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { SetModeratorUseCase, DeleteUserUseCase } from "./UserUseCases";
+import { SetModeratorUseCase, DeleteUserUseCase, ANONYMIZED_USERNAME } from "./UserUseCases";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
+import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { User } from "@/domain/entities/User";
 
 function fakeUser(overrides: Partial<User> = {}): User {
@@ -13,6 +16,25 @@ function fakeUser(overrides: Partial<User> = {}): User {
     moderator: false,
     ...overrides,
   };
+}
+
+function noopCommentRepo() {
+  return {
+    anonymizeByUsername: vi.fn().mockResolvedValue(0),
+    removeUserReferences: vi.fn().mockResolvedValue(undefined),
+  } as unknown as ICommentRepository;
+}
+
+function noopDiscussionRepo() {
+  return {
+    anonymizeByUsername: vi.fn().mockResolvedValue(0),
+  } as unknown as IDiscussionRepository;
+}
+
+function noopNotificationRepo() {
+  return {
+    deleteForUser: vi.fn().mockResolvedValue(0),
+  } as unknown as INotificationRepository;
 }
 
 describe("SetModeratorUseCase", () => {
@@ -49,10 +71,10 @@ describe("SetModeratorUseCase", () => {
 
 describe("DeleteUserUseCase", () => {
   it("allows a moderator to delete any user", async () => {
-    const findByEmail = vi.fn().mockResolvedValue(fakeUser({ email: "victim@example.com" }));
+    const findByEmail = vi.fn().mockResolvedValue(fakeUser({ email: "victim@example.com", username: "victim" }));
     const del = vi.fn().mockResolvedValue(undefined);
-    const repo = { findByEmail, delete: del } as unknown as IUserRepository;
-    const useCase = new DeleteUserUseCase(repo);
+    const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
+    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopDiscussionRepo(), noopNotificationRepo());
 
     await useCase.execute("mod@example.com", "victim@example.com", true);
 
@@ -62,8 +84,8 @@ describe("DeleteUserUseCase", () => {
   it("allows a regular user to delete only themselves", async () => {
     const findByEmail = vi.fn().mockResolvedValue(fakeUser({ email: "alice@example.com" }));
     const del = vi.fn().mockResolvedValue(undefined);
-    const repo = { findByEmail, delete: del } as unknown as IUserRepository;
-    const useCase = new DeleteUserUseCase(repo);
+    const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
+    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopDiscussionRepo(), noopNotificationRepo());
 
     await useCase.execute("alice@example.com", "alice@example.com", false);
 
@@ -73,12 +95,31 @@ describe("DeleteUserUseCase", () => {
   it("throws Unauthorized when a non-moderator targets another user", async () => {
     const findByEmail = vi.fn().mockResolvedValue(fakeUser({ email: "victim@example.com" }));
     const del = vi.fn();
-    const repo = { findByEmail, delete: del } as unknown as IUserRepository;
-    const useCase = new DeleteUserUseCase(repo);
+    const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
+    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopDiscussionRepo(), noopNotificationRepo());
 
     await expect(
       useCase.execute("attacker@example.com", "victim@example.com", false),
     ).rejects.toThrow("Unauthorized");
     expect(del).not.toHaveBeenCalled();
+  });
+
+  it("anonymizes comments/discussions and removes notifications before deleting the user (LGPD cascade)", async () => {
+    const findByEmail = vi.fn().mockResolvedValue(fakeUser({ username: "alice" }));
+    const del = vi.fn().mockResolvedValue(undefined);
+    const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
+
+    const commentRepo = noopCommentRepo();
+    const discussionRepo = noopDiscussionRepo();
+    const notifRepo = noopNotificationRepo();
+
+    const useCase = new DeleteUserUseCase(userRepo, commentRepo, discussionRepo, notifRepo);
+    await useCase.execute("alice@example.com", "alice@example.com", false);
+
+    expect(commentRepo.anonymizeByUsername).toHaveBeenCalledWith("alice", ANONYMIZED_USERNAME);
+    expect(commentRepo.removeUserReferences).toHaveBeenCalledWith("alice");
+    expect(discussionRepo.anonymizeByUsername).toHaveBeenCalledWith("alice", ANONYMIZED_USERNAME);
+    expect(notifRepo.deleteForUser).toHaveBeenCalledWith("alice");
+    expect(del).toHaveBeenCalledWith("alice@example.com");
   });
 });

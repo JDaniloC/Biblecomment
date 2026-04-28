@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { RegisterUserUseCase } from "@/application/use-cases/AuthUseCases";
 import { UpdateUserProfileUseCase, DeleteUserUseCase } from "@/application/use-cases/UserUseCases";
 import { getSessionUser, unauthorized, forbidden, serverError } from "@/lib/get-session";
@@ -104,8 +107,12 @@ export async function DELETE(req: Request) {
     const parsed = await parseBody(req, DeleteUserSchema);
     if (!parsed.ok) return parsed.response;
 
-    const repo = new MongoUserRepository();
-    const useCase = new DeleteUserUseCase(repo);
+    const useCase = new DeleteUserUseCase(
+      new MongoUserRepository(),
+      new MongoCommentRepository(),
+      new MongoDiscussionRepository(),
+      new MongoNotificationRepository(),
+    );
     await useCase.execute(user.email, parsed.data.email, user.moderator);
     return NextResponse.json({ success: true });
   } catch (err) {

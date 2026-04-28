@@ -10,4 +10,5 @@ export interface IDiscussionRepository {
   updateAnswer(discussionId: string, answerId: string, text: string): Promise<Discussion | null>;
   delete(id: string): Promise<void>;
   findAll(): Promise<Discussion[]>;
+  anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
 }

@@ -4,6 +4,12 @@ export const RegisterUserSchema = z.object({
   email: z.string().email(),
   username: z.string().min(2).max(40),
   password: z.string().min(6).max(200),
+  // LGPD: explicit consent to Terms + Privacy Policy is mandatory at signup.
+  // Validated at the API boundary; the value is not persisted (the act of
+  // creating the account is itself the record of consent at this timestamp).
+  acceptedTerms: z.literal(true, {
+    message: "É necessário aceitar os Termos de Uso e a Política de Privacidade.",
+  }),
 });
 export type RegisterUserInput = z.infer<typeof RegisterUserSchema>;
 

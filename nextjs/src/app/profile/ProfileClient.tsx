@@ -897,14 +897,34 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               {/* ── Card: Trocar senha ── */}
               <ChangePasswordCard />
 
+              {/* ── Card: Meus dados (LGPD Art. 18 - portabilidade) ── */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
+                <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
+                  Meus dados
+                </div>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-4 mt-0">
+                  Baixe um arquivo JSON com tudo que armazenamos sobre você
+                  (perfil, comentários, discussões, respostas e notificações).
+                </p>
+                <a
+                  href="/api/users/me/export"
+                  className="inline-block h-[35.5px] px-5 leading-[35.5px] bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition"
+                >
+                  Exportar meus dados (JSON)
+                </a>
+              </div>
+
               {/* ── Card 3: Zona de Perigo ── */}
               <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/40 rounded-xl px-6 pt-5 pb-6">
                 <div className="font-bold text-sm text-red-700 dark:text-red-300 mb-3">
                   Zona de Perigo
                 </div>
                 <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-5 mt-0">
-                  A exclusão da conta é permanente e irrecuperável.
-                  {comments.length > 0 && ` Todos os seus ${comments.length} comentário${comments.length !== 1 ? "s" : ""} serão deletados.`}
+                  A exclusão da conta é permanente e irrecuperável. Seu cadastro
+                  é apagado e seus comentários e discussões ficam anônimos sob
+                  &ldquo;[usuário removido]&rdquo;, preservando o contexto das
+                  conversas para outros leitores.
+                  {comments.length > 0 && ` Total de comentários a serem anonimizados: ${comments.length}.`}
                 </p>
                 <button
                   onClick={handleDeleteAccount}

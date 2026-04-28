@@ -25,7 +25,7 @@ describe("Authentication", () => {
       cy.request({
         method: "POST",
         url: "/api/users",
-        body: { email, username, password },
+        body: { email, username, password, acceptedTerms: true },
       }).then((res) => {
         expect(res.status).to.eq(201);
         expect(res.body).to.have.property("email", email);
@@ -51,6 +51,7 @@ describe("Authentication", () => {
           email: users.alice.email,
           username: "alice-copy",
           password: "another-pass-123",
+          acceptedTerms: true,
         },
         failOnStatusCode: false,
       }).then((res) => {
@@ -66,6 +67,7 @@ describe("Authentication", () => {
           email: "not-an-email",
           username: "ghost",
           password: "secret-123",
+          acceptedTerms: true,
         },
         failOnStatusCode: false,
       }).then((res) => {
@@ -82,6 +84,38 @@ describe("Authentication", () => {
           email: "shortpw@cypress.test",
           username: "shortpw",
           password: "abc",
+          acceptedTerms: true,
+        },
+        failOnStatusCode: false,
+      }).then((res) => {
+        expect(res.status).to.eq(400);
+      });
+    });
+
+    it("rejects registration without LGPD consent (acceptedTerms missing) with 400", () => {
+      cy.request({
+        method: "POST",
+        url: "/api/users",
+        body: {
+          email: "noconsent@cypress.test",
+          username: "noconsent",
+          password: "secret-123",
+        },
+        failOnStatusCode: false,
+      }).then((res) => {
+        expect(res.status).to.eq(400);
+      });
+    });
+
+    it("rejects registration with acceptedTerms=false with 400", () => {
+      cy.request({
+        method: "POST",
+        url: "/api/users",
+        body: {
+          email: "falseconsent@cypress.test",
+          username: "falseconsent",
+          password: "secret-123",
+          acceptedTerms: false,
         },
         failOnStatusCode: false,
       }).then((res) => {

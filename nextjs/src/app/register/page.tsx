@@ -3,26 +3,33 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
+import { usersService } from "@/services/users";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
+    if (!acceptedTerms) {
+      setError("É necessário aceitar os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
+
+    setLoading(true);
     try {
-      await axios.post("/api/users", { email, username, password });
+      await usersService.register({ email, username, password, acceptedTerms: true });
       router.push("/login");
-    } catch (err: any) {
-      setError(err.response?.data?.error ?? "Erro ao cadastrar.");
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      setError(e.response?.data?.error ?? e.message ?? "Erro ao cadastrar.");
     } finally {
       setLoading(false);
     }
@@ -39,7 +46,7 @@ export default function RegisterPage() {
         </h2>
 
         {error && (
-          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm">
+          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm" role="alert">
             {error}
           </div>
         )}
@@ -88,9 +95,31 @@ export default function RegisterPage() {
             />
           </div>
 
+          <div className="flex items-start gap-2 pt-1">
+            <input
+              id="register-consent"
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              required
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
+            />
+            <label htmlFor="register-consent" className="text-sm text-gray-600 leading-snug">
+              Li e aceito a{" "}
+              <Link href="/privacy" className="text-blue-600 hover:underline" target="_blank">
+                Política de Privacidade
+              </Link>{" "}
+              e os{" "}
+              <Link href="/terms" className="text-blue-600 hover:underline" target="_blank">
+                Termos de Uso
+              </Link>
+              .
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !acceptedTerms}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
           >
             {loading ? "Cadastrando..." : "Cadastrar"}

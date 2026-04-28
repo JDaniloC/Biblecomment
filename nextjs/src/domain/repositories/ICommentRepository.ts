@@ -17,4 +17,6 @@ export interface ICommentRepository {
   clearReports(id: string): Promise<Comment | null>;
   findAll(): Promise<Comment[]>;
   searchByText(query: string): Promise<Comment[]>;
+  anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
+  removeUserReferences(username: string): Promise<void>;
 }

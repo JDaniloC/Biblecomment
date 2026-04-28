@@ -67,4 +67,12 @@ export class MongoNotificationRepository implements INotificationRepository {
     );
     return result.modifiedCount ?? 0;
   }
+
+  async deleteForUser(username: string): Promise<number> {
+    await connectToDatabase();
+    const result = await NotificationModel.deleteMany({
+      $or: [{ recipient: username }, { actor: username }],
+    });
+    return result.deletedCount ?? 0;
+  }
 }

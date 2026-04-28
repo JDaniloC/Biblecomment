@@ -390,8 +390,16 @@ export default async function RootPage() {
             <Image src="/assets/logo.svg" alt="Bible Comment" width={20} height={20} className="opacity-60" />
             <span>Bible Comment &mdash; A Program for His Glory</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
             <Link href="/#sobre" className="hover:text-stone-600 dark:hover:text-stone-300 transition">Sobre</Link>
+            <Link href="/privacy" className="hover:text-stone-600 dark:hover:text-stone-300 transition">Privacidade</Link>
+            <Link href="/terms" className="hover:text-stone-600 dark:hover:text-stone-300 transition">Termos</Link>
+            <a
+              href="mailto:jdsc@cin.ufpe.br"
+              className="hover:text-stone-600 dark:hover:text-stone-300 transition"
+            >
+              Contato LGPD
+            </a>
             <a
               href="https://github.com/JDaniloC/Biblecomment"
               target="_blank"

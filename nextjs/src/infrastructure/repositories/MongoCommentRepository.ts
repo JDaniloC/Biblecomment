@@ -160,6 +160,23 @@ export class MongoCommentRepository implements ICommentRepository {
     return docs.map(toEntity);
   }
 
+  async anonymizeByUsername(oldUsername: string, replacement: string): Promise<number> {
+    await connectToDatabase();
+    const result = await CommentModel.updateMany(
+      { username: oldUsername },
+      { $set: { username: replacement } },
+    );
+    return result.modifiedCount ?? 0;
+  }
+
+  async removeUserReferences(username: string): Promise<void> {
+    await connectToDatabase();
+    await CommentModel.updateMany(
+      { $or: [{ likes: username }, { reports: username }] },
+      { $pull: { likes: username, reports: username } },
+    );
+  }
+
   async findDailyFeatured(dayIndex: number): Promise<Comment | null> {
     await connectToDatabase();
     const filter = { onTitle: false, $expr: { $gte: [{ $strLenCP: "$text" }, 40] } };
