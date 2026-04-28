@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
+import { usersService } from "@/services/users";
 import Loading from "@/components/Loading";
 
 interface SessionUser {
@@ -32,7 +32,7 @@ export default function UsersClient({ user }: { user: SessionUser }) {
   const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const { data } = await axios.get<UserItem[]>(`/api/users?pages=${p}`);
+      const data = (await usersService.list(p)) as unknown as UserItem[];
       if (p === 1) setUsers(data);
       else setUsers((prev) => [...prev, ...data]);
       if (data.length < 5) setHasMore(false);

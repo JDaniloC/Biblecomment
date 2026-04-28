@@ -3,8 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
+import { commentsService } from "@/services/comments";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/components/CommentCard";
@@ -87,11 +87,9 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
   const loadCounts = useCallback(async () => {
     try {
-      const res = await axios.get<{ titleComments: CommentData[]; verseComments: CommentData[] }>(
-        `/api/comments/chapter/${book.abbrev}/${chapter}`
-      );
-      const tc = res.data.titleComments ?? [];
-      const vc = res.data.verseComments ?? [];
+      const res = await commentsService.getForChapter(book.abbrev, chapter);
+      const tc = (res.titleComments ?? []) as unknown as CommentData[];
+      const vc = (res.verseComments ?? []) as unknown as CommentData[];
       setTitleCount(tc.length);
       const map: Record<string, number> = {};
       vc.forEach((c) => {
@@ -112,10 +110,8 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
     setComposing(false);
     setLoadingComments(true);
     try {
-      const res = await axios.get<{ titleComments: CommentData[]; verseComments: CommentData[] }>(
-        `/api/comments/chapter/${book.abbrev}/${chapter}`
-      );
-      setTitleComments(res.data.titleComments ?? []);
+      const res = await commentsService.getForChapter(book.abbrev, chapter);
+      setTitleComments((res.titleComments ?? []) as unknown as CommentData[]);
     } catch {
       handleNotification("error", "Erro ao carregar comentários do capítulo.");
     } finally {
@@ -134,11 +130,8 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
     setComposing(false);
     setLoadingComments(true);
     try {
-      const res = await axios.get<{ titleComments: CommentData[]; verseComments: CommentData[] }>(
-        `/api/comments/chapter/${book.abbrev}/${chapter}/${verse.verseNumber}`
-      );
-      const arr = res.data.verseComments ?? (Array.isArray(res.data) ? (res.data as CommentData[]) : []);
-      setComments(arr);
+      const res = await commentsService.getForVerse(book.abbrev, chapter, verse.verseNumber);
+      setComments((res.verseComments ?? []) as unknown as CommentData[]);
     } catch {
       handleNotification("error", "Erro ao carregar comentários.");
     } finally {

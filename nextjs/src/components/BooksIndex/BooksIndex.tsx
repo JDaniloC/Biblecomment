@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useNotification } from "@/contexts/NotificationContext";
 import { Book } from "@/domain/entities/Book";
-import api from "@/services/api";
+import axios from "axios";
 
 interface Props {
   initialBooks?: Book[];
@@ -41,7 +41,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
 
   useEffect(() => {
     if (books.length === 0) {
-      api.get<Book[]>("/books")
+      axios.get<Book[]>("/api/books")
         .then(({ data }) => setBooks(data))
         .catch(() => handleNotification("error", "Erro ao carregar livros."));
     }

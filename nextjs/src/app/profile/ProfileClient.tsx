@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
 import { commentsService } from "@/services/comments";
 import { usersService } from "@/services/users";
@@ -484,7 +483,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   /* ── Data loaders ── */
   const loadProfile = useCallback(async () => {
     try {
-      const { data } = await axios.get<UserProfile>("/api/users/me");
+      const data = await usersService.getMe();
       setProfile(data);
       setBelief(data.belief ?? "");
       setStateName(data.stateName ?? "");
@@ -496,8 +495,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   const loadComments = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await axios.get<{ comments: CommentData[] } | CommentData[]>("/api/users/comments?pages=1");
-      const data = Array.isArray(res.data) ? res.data : (res.data as { comments: CommentData[] }).comments;
+      const data = (await usersService.listMyComments()) as unknown as CommentData[];
       setComments(data);
     } catch {
       handleNotification("error", "Erro ao carregar comentários.");
@@ -509,8 +507,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   const loadFavorites = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await axios.get<{ favorites: CommentData[] } | CommentData[]>("/api/users/favorites?pages=1");
-      const data = Array.isArray(res.data) ? res.data : (res.data as { favorites: CommentData[] }).favorites;
+      const data = (await usersService.listMyFavorites()) as unknown as CommentData[];
       setFavorites(data);
     } catch {
       handleNotification("error", "Erro ao carregar favoritos.");

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
+import { discussionsService } from "@/services/discussions";
 import Loading from "@/components/Loading";
 
 interface SessionUser {
@@ -33,7 +33,7 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
   const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const { data } = await axios.get<DiscussionSummary[]>(`/api/discussions?pages=${p}`);
+      const data = (await discussionsService.listAll(p)) as unknown as DiscussionSummary[];
       if (p === 1) setDiscussions(data);
       else setDiscussions((prev) => [...prev, ...data]);
       if (data.length < 5) setHasMore(false);

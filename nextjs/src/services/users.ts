@@ -56,6 +56,20 @@ export const usersService = {
     return res.data;
   },
 
+  async listMyComments(page: number = 1): Promise<unknown[]> {
+    const res = await axios.get<{ comments: unknown[] } | unknown[]>(
+      `/api/users/comments?pages=${page}`,
+    );
+    return Array.isArray(res.data) ? res.data : (res.data as { comments: unknown[] }).comments;
+  },
+
+  async listMyFavorites(page: number = 1): Promise<unknown[]> {
+    const res = await axios.get<{ favorites: unknown[] } | unknown[]>(
+      `/api/users/favorites?pages=${page}`,
+    );
+    return Array.isArray(res.data) ? res.data : (res.data as { favorites: unknown[] }).favorites;
+  },
+
   async updateProfile(updates: ProfileUpdateInput): Promise<void> {
     const result = await updateProfileAction(updates);
     if (!result.ok) actionError(result.error);
