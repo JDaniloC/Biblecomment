@@ -7,7 +7,7 @@ import { useNotification } from "@/contexts/NotificationContext";
 import { commentsService } from "@/services/comments";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
-import type { CommentData } from "@/components/CommentCard";
+import type { CommentData } from "@/lib/comment-data";
 import OmniSearch from "@/app/_components/OmniSearch";
 import { CopyVerseButton } from "@/components/CopyVerseButton";
 import { ThemeToggle } from "@/components/ThemeToggle";

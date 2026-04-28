@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { commentsService } from "@/services/comments";
 import { usersService } from "@/services/users";
-import type { CommentData } from "@/components/CommentCard";
+import type { CommentData } from "@/lib/comment-data";
 import Modal from "@/components/Modal";
 import NewCommentForm from "@/components/NewCommentForm";
 import Loading from "@/components/Loading";

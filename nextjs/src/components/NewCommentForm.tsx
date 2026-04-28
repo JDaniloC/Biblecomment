@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useCallback } from "react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { commentsService } from "@/services/comments";
-import type { CommentData } from "./CommentCard";
+import type { CommentData } from "@/lib/comment-data";
 
 const TAGS = [
   { key: "devocional", icon: "/assets/hand.svg", label: "Devocional" },
