@@ -2,6 +2,13 @@
 
 import axios from "axios";
 import type { Discussion } from "@/domain/entities/Discussion";
+import {
+  createDiscussionAction,
+  addAnswerAction,
+  updateAnswerAction,
+  deleteDiscussionAction,
+} from "@/app/actions/discussions";
+import { actionError } from "./_action-error";
 
 export interface DiscussionDraft {
   verseReference: string;
@@ -24,8 +31,9 @@ export interface DiscussionSummary {
 
 export const discussionsService = {
   async createForBook(bookAbbrev: string, draft: DiscussionDraft): Promise<Discussion> {
-    const res = await axios.post<Discussion>(`/api/discussion/${bookAbbrev}`, draft);
-    return res.data;
+    const result = await createDiscussionAction(bookAbbrev, draft);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async getForBook(bookAbbrev: string, page: number = 1): Promise<Discussion[]> {
@@ -39,8 +47,9 @@ export const discussionsService = {
   },
 
   async addAnswer(bookAbbrev: string, id: string, text: string): Promise<Discussion> {
-    const res = await axios.patch<Discussion>(`/api/discussion/${bookAbbrev}/${id}`, { text });
-    return res.data;
+    const result = await addAnswerAction(bookAbbrev, id, text);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async updateAnswer(
@@ -49,15 +58,14 @@ export const discussionsService = {
     answerId: string,
     text: string,
   ): Promise<Discussion> {
-    const res = await axios.patch<Discussion>(
-      `/api/discussion/${bookAbbrev}/${discussionId}/answers/${answerId}`,
-      { text },
-    );
-    return res.data;
+    const result = await updateAnswerAction(bookAbbrev, discussionId, answerId, text);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async delete(bookAbbrev: string, id: string): Promise<void> {
-    await axios.delete(`/api/discussion/${bookAbbrev}/${id}`);
+    const result = await deleteDiscussionAction(bookAbbrev, id);
+    if (!result.ok) actionError(result.error);
   },
 
   async listAll(page: number = 1): Promise<DiscussionSummary[]> {

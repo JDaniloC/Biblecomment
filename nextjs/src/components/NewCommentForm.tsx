@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useState, useCallback } from "react";
-import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
+import { commentsService } from "@/services/comments";
 import type { CommentData } from "./CommentCard";
 
 const TAGS = [
@@ -66,24 +66,18 @@ export default function NewCommentForm(props: Props) {
     const tagList = Object.entries(tags).filter(([, v]) => v).map(([k]) => k);
     setSubmitting(true);
     try {
-      let res;
-      if (props.post) {
-        res = await axios.post<CommentData>(`/api/comments/verse/${props.verseId}`, {
-          onTitle: props.onTitle ?? false,
-          text,
-          tags: tagList,
-        });
-      } else {
-        res = await axios.patch<CommentData>(`/api/comments/${props.commentId}`, {
-          text,
-          tags: tagList,
-        });
-      }
+      const saved = props.post
+        ? await commentsService.createForVerse(props.verseId, {
+            text,
+            tags: tagList,
+            onTitle: props.onTitle ?? false,
+          })
+        : await commentsService.update(props.commentId, { text, tags: tagList });
       handleNotification("success", props.post ? "Comentário enviado!" : "Comentário editado!");
-      props.onSaved(res.data);
+      props.onSaved(saved as unknown as CommentData);
       props.onClose();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Erro ao salvar.";
+      const msg = (err as Error)?.message ?? "Erro ao salvar.";
       handleNotification("error", msg);
     } finally {
       setSubmitting(false);

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
+import { commentsService } from "@/services/comments";
+import { usersService } from "@/services/users";
 import type { CommentData } from "@/components/CommentCard";
 import Modal from "@/components/Modal";
 import NewCommentForm from "@/components/NewCommentForm";
@@ -35,7 +37,6 @@ interface UserProfile {
 import { getTagMetaOrNeutral } from "@/lib/tag-meta";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
-import { usersService } from "@/services/users";
 
 type Tab = "overview" | "comments" | "favorites" | "config";
 type TypeFilter = "Todos" | "Exegese" | "Devocional" | "Pessoal" | "Inspirado";
@@ -525,7 +526,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Excluir este comentário?")) return;
     try {
-      await axios.delete(`/api/comments/${id}`);
+      await commentsService.delete(id);
       setComments(prev => prev.filter(c => c._id !== id));
       handleNotification("success", "Comentário excluído.");
     } catch {
@@ -535,7 +536,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
   const handleUpdateAccount = useCallback(async () => {
     try {
-      await axios.patch("/api/users", { belief, state: stateName });
+      await usersService.updateProfile({ belief, state: stateName });
       handleNotification("success", "Conta atualizada!");
     } catch {
       handleNotification("error", "Erro ao atualizar.");
@@ -545,7 +546,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   const handleDeleteAccount = useCallback(async () => {
     if (!confirm("Tem certeza que quer excluir sua conta? Esta ação é irreversível.")) return;
     try {
-      await axios.delete("/api/users", { data: { email: user.email } });
+      await usersService.deleteSelf(user.email);
       handleNotification("success", "Conta excluída.");
       await signOut({ callbackUrl: "/login" });
     } catch {

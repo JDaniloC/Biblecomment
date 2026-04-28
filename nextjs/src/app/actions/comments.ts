@@ -3,11 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
   ToggleLikeUseCase,
   ReportCommentUseCase,
   DeleteCommentUseCase,
+  CreateCommentUseCase,
+  UpdateCommentUseCase,
 } from "@/application/use-cases/CommentUseCases";
+import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import type { Comment } from "@/domain/entities/Comment";
 import { logger } from "@/lib/logger";
 
@@ -76,6 +82,124 @@ export async function reportCommentAction(
 }
 
 /**
+ * Create a comment on a verse (or chapter title).
+ * Replaces axios.post(/api/comments/verse/:slug). The slug may be:
+ *   - "<abbrev>/<chapter>/<verse>" — comment on a specific verse
+ *   - "<abbrev>/<chapter>"         — title comment (uses first verse of chapter)
+ *
+ * Mirrors the API route in /api/comments/verse/[abbrev]/[chapter][/[verse]]
+ * including NotifyMentionsUseCase wiring.
+ */
+export async function createCommentAction(
+  verseId: string,
+  draft: { text: string; tags?: string[]; onTitle?: boolean },
+): Promise<ActionResult<Comment>> {
+  const session = await auth();
+  if (!session?.user) return authError();
+
+  if (!draft.text || !draft.text.trim()) {
+    return { ok: false, error: "text é obrigatório" };
+  }
+
+  try {
+    const parts = verseId.split("/").filter(Boolean);
+    if (parts.length < 2 || parts.length > 3) {
+      return { ok: false, error: "Invalid verse slug" };
+    }
+
+    const abbrev = parts[0].toLowerCase();
+    const chapter = parseInt(parts[1], 10);
+    const verseNum = parts.length === 3 ? parseInt(parts[2], 10) : null;
+    if (isNaN(chapter) || (verseNum !== null && isNaN(verseNum))) {
+      return { ok: false, error: "Invalid verse slug" };
+    }
+
+    const verseRepo = new MongoVerseRepository();
+    const titleSlug = parts.length === 2;
+    let verse;
+    if (titleSlug) {
+      const verses = await verseRepo.findByAbbrevAndChapter(abbrev, chapter);
+      verse = verses[0] ?? null;
+    } else {
+      verse = await verseRepo.findByAbbrevChapterVerse(abbrev, chapter, verseNum!);
+    }
+    if (!verse || !verse._id) {
+      return { ok: false, error: "Verse not found" };
+    }
+
+    // Title slug forces onTitle=true (matches the chapter-level POST route).
+    const onTitle = titleSlug ? true : (draft.onTitle ?? false);
+    const tags = draft.tags ?? [];
+
+    const commentRepo = new MongoCommentRepository();
+    const useCase = new CreateCommentUseCase(commentRepo, verseRepo);
+    const comment = await useCase.execute(
+      verse._id,
+      session.user.username,
+      draft.text,
+      tags,
+      onTitle,
+    );
+
+    if (comment._id) {
+      const notifyMentions = new NotifyMentionsUseCase(
+        new MongoUserRepository(),
+        new MongoNotificationRepository(),
+      );
+      await notifyMentions.execute({
+        text: draft.text,
+        actor: session.user.username,
+        type: "comment_mention",
+        resourceType: "comment",
+        resourceId: comment._id,
+        url: `/verses/${verse.abbrev}/${verse.chapter}#${verse.verseNumber}`,
+      });
+    }
+
+    revalidatePath("/verses/[abbrev]/[number]", "page");
+    return { ok: true, data: comment };
+  } catch (err) {
+    logger.error({ err, action: "createCommentAction", verseId }, "create comment failed");
+    return appError(err, "Erro ao criar comentário.");
+  }
+}
+
+/**
+ * Update a comment's text/tags. Owner only — UpdateCommentUseCase enforces.
+ */
+export async function updateCommentAction(
+  commentId: string,
+  draft: { text: string; tags?: string[] },
+): Promise<ActionResult<Comment>> {
+  const session = await auth();
+  if (!session?.user) return authError();
+
+  if (!draft.text || !draft.text.trim()) {
+    return { ok: false, error: "text é obrigatório" };
+  }
+
+  try {
+    const repo = new MongoCommentRepository();
+    const useCase = new UpdateCommentUseCase(repo);
+    const updated = await useCase.execute(
+      commentId,
+      session.user.username,
+      draft.text,
+      draft.tags ?? [],
+    );
+    revalidatePath("/verses/[abbrev]/[number]", "page");
+    return { ok: true, data: updated };
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
+      if (err.message === "Comment not found") return { ok: false, error: "NotFound" };
+    }
+    logger.error({ err, action: "updateCommentAction", commentId }, "update comment failed");
+    return appError(err, "Erro ao atualizar comentário.");
+  }
+}
+
+/**
  * Delete a comment. Owner OR moderator only — the use case enforces.
  */
 export async function deleteCommentAction(
@@ -91,8 +215,9 @@ export async function deleteCommentAction(
     revalidatePath("/verses/[abbrev]/[number]", "page");
     return { ok: true, data: { deleted: true } };
   } catch (err) {
-    if (err instanceof Error && err.message === "Unauthorized") {
-      return { ok: false, error: "Forbidden" };
+    if (err instanceof Error) {
+      if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
+      if (err.message === "Comment not found") return { ok: false, error: "NotFound" };
     }
     logger.error({ err, action: "deleteCommentAction", commentId }, "delete failed");
     return appError(err, "Erro ao excluir.");

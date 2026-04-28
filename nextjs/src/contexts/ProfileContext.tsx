@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useState } from "react";
 import axios from "axios";
+import { usersService } from "@/services/users";
 import { useNotification } from "./NotificationContext";
 
 export interface CommentItem {
@@ -64,7 +65,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
   const updateAccount = useCallback(async (updateData: { belief?: string; stateName?: string }) => {
     try {
-      await axios.patch("/api/users/me", updateData);
+      await usersService.updateProfile({ belief: updateData.belief, state: updateData.stateName });
       handleNotification("success", "Conta atualizada!");
     } catch {
       handleNotification("error", "Erro ao atualizar conta.");
@@ -72,12 +73,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }, [handleNotification]);
 
   const deleteAccount = useCallback(async () => {
-    try {
-      await axios.delete("/api/users/me");
-      handleNotification("success", "Conta excluída.");
-    } catch {
-      handleNotification("error", "Erro ao excluir conta.");
-    }
+    handleNotification("error", "Use o painel de perfil para excluir a conta.");
   }, [handleNotification]);
 
   return (

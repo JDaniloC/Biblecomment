@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
 import { Book } from "@/domain/entities/Book";
 import { Discussion } from "@/domain/entities/Discussion";
 import { discussionsService } from "@/services/discussions";
@@ -93,13 +92,13 @@ export default function DiscussionDetailClient({
     if (!newVerseRef.trim() || !newQuestion.trim()) return;
     setCreating(true);
     try {
-      const res = await axios.post<Discussion>(`/api/discussion/${book.abbrev}`, {
+      const created = await discussionsService.createForBook(book.abbrev, {
         verseReference: newVerseRef,
         verseText: newVerseText,
         commentText: newCommentText,
         question: newQuestion,
       });
-      router.push(`/discussion/${book.abbrev}/${res.data._id}`);
+      router.push(`/discussion/${book.abbrev}/${created._id}`);
     } catch {
       alert("Erro ao criar discussão.");
     } finally {
@@ -108,14 +107,11 @@ export default function DiscussionDetailClient({
   }
 
   async function handleAddAnswer() {
-    if (!discussion || !answerText.trim()) return;
+    if (!discussion?._id || !answerText.trim()) return;
     setSubmitting(true);
     try {
-      const res = await axios.patch<Discussion>(
-        `/api/discussion/${book.abbrev}/${discussion._id}`,
-        { text: answerText }
-      );
-      setDiscussion(res.data);
+      const updated = await discussionsService.addAnswer(book.abbrev, discussion._id, answerText);
+      setDiscussion(updated);
       setAnswerText("");
     } catch {
       alert("Erro ao enviar resposta.");

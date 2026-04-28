@@ -1,6 +1,13 @@
 "use client";
 
 import axios from "axios";
+import {
+  updateProfileAction,
+  deleteSelfAction,
+  changePasswordAction,
+  setModeratorAction,
+} from "@/app/actions/users";
+import { actionError } from "./_action-error";
 
 export interface RegisterInput {
   email: string;
@@ -33,6 +40,7 @@ export interface ProfileUpdateInput {
 }
 
 export const usersService = {
+  // Register stays on axios — anonymous flow, no session, never a Server Action target.
   async register(input: RegisterInput): Promise<{ email: string; username: string }> {
     const res = await axios.post<{ email: string; username: string }>("/api/users", input);
     return res.data;
@@ -49,22 +57,23 @@ export const usersService = {
   },
 
   async updateProfile(updates: ProfileUpdateInput): Promise<void> {
-    await axios.patch("/api/users", updates);
+    const result = await updateProfileAction(updates);
+    if (!result.ok) actionError(result.error);
   },
 
   async deleteSelf(email: string): Promise<void> {
-    await axios.delete("/api/users", { data: { email } });
+    const result = await deleteSelfAction(email);
+    if (!result.ok) actionError(result.error);
   },
 
   async setModerator(email: string, moderator: boolean): Promise<{ email: string; username: string; moderator: boolean }> {
-    const res = await axios.patch<{ email: string; username: string; moderator: boolean }>(
-      "/api/users/moderator",
-      { email, moderator },
-    );
-    return res.data;
+    const result = await setModeratorAction(email, moderator);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    await axios.post("/api/users/me/password", { currentPassword, newPassword });
+    const result = await changePasswordAction(currentPassword, newPassword);
+    if (!result.ok) actionError(result.error);
   },
 };

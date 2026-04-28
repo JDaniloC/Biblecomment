@@ -2,6 +2,11 @@
 
 import axios from "axios";
 import type { Notification } from "@/domain/entities/Notification";
+import {
+  markNotificationReadAction,
+  markAllNotificationsReadAction,
+} from "@/app/actions/notifications";
+import { actionError } from "./_action-error";
 
 export interface NotificationsPage {
   page: number;
@@ -17,12 +22,14 @@ export const notificationsService = {
   },
 
   async markRead(id: string): Promise<Notification> {
-    const res = await axios.patch<Notification>(`/api/notifications/${id}`);
-    return res.data;
+    const result = await markNotificationReadAction(id);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async markAllRead(): Promise<number> {
-    const res = await axios.post<{ updated: number }>(`/api/notifications?action=mark-all-read`);
-    return res.data.updated;
+    const result = await markAllNotificationsReadAction();
+    if (!result.ok) actionError(result.error);
+    return result.data.updated;
   },
 };

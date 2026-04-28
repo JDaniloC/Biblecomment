@@ -2,6 +2,9 @@
 
 import axios from "axios";
 import type { Comment } from "@/domain/entities/Comment";
+import { clearReportsAction } from "@/app/actions/moderation";
+import { setModeratorAction } from "@/app/actions/users";
+import { actionError } from "./_action-error";
 
 export interface ReportsPage {
   page: number;
@@ -16,17 +19,14 @@ export const moderationService = {
   },
 
   async clearReports(commentId: string): Promise<{ _id: string; reports: string[] }> {
-    const res = await axios.delete<{ _id: string; reports: string[] }>(
-      `/api/moderation/reports/${commentId}`,
-    );
-    return res.data;
+    const result = await clearReportsAction(commentId);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async setModerator(email: string, moderator: boolean): Promise<{ email: string; username: string; moderator: boolean }> {
-    const res = await axios.patch<{ email: string; username: string; moderator: boolean }>(
-      `/api/users/moderator`,
-      { email, moderator },
-    );
-    return res.data;
+    const result = await setModeratorAction(email, moderator);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 };

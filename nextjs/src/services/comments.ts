@@ -2,6 +2,14 @@
 
 import axios from "axios";
 import type { Comment } from "@/domain/entities/Comment";
+import {
+  toggleLikeAction,
+  reportCommentAction,
+  deleteCommentAction,
+  createCommentAction,
+  updateCommentAction,
+} from "@/app/actions/comments";
+import { actionError } from "./_action-error";
 
 export interface CommentDraft {
   text: string;
@@ -17,45 +25,49 @@ export interface ChapterCommentsResponse {
 /**
  * Single source of truth for /api/comments/* HTTP calls.
  *
- * Why not call axios directly from components?
- *  - Centralized URL / payload shape; renaming a field touches one file.
- *  - Typed end-to-end with the domain entity.
- *  - Drop-in replacement target when these become Server Actions.
+ * Mutations now invoke Server Actions (Phase 5). Reads stay on axios for
+ * now since they often run under cache:"no-store" in client effects.
  *
- * Implementation note: stays on axios for now to match the rest of the
- * client. A future Phase 5 round flips internals to Server Actions
- * without changing the call sites.
+ * Error semantics: actions return a discriminated union; we re-throw a
+ * synthetic `Error & { response: { status } }` so existing catch blocks
+ * that read `(err as { response?: { status?: number } })?.response?.status`
+ * continue to work unchanged.
  */
 export const commentsService = {
   async createForVerse(verseId: string, draft: CommentDraft): Promise<Comment> {
-    const res = await axios.post<Comment>(`/api/comments/verse/${verseId}`, {
+    const result = await createCommentAction(verseId, {
       text: draft.text,
       tags: draft.tags ?? [],
       onTitle: draft.onTitle,
     });
-    return res.data;
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async update(id: string, draft: { text: string; tags?: string[] }): Promise<Comment> {
-    const res = await axios.patch<Comment>(`/api/comments/${id}`, {
+    const result = await updateCommentAction(id, {
       text: draft.text,
       tags: draft.tags ?? [],
     });
-    return res.data;
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async toggleLike(id: string): Promise<Comment> {
-    const res = await axios.patch<Comment>(`/api/comments/${id}`, { action: "like" });
-    return res.data;
+    const result = await toggleLikeAction(id);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async report(id: string): Promise<Comment> {
-    const res = await axios.patch<Comment>(`/api/comments/${id}`, { action: "report" });
-    return res.data;
+    const result = await reportCommentAction(id);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async delete(id: string): Promise<void> {
-    await axios.delete(`/api/comments/${id}`);
+    const result = await deleteCommentAction(id);
+    if (!result.ok) actionError(result.error);
   },
 
   async getForChapter(abbrev: string, chapter: number): Promise<ChapterCommentsResponse> {

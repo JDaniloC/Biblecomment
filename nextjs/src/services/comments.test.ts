@@ -12,7 +12,28 @@ vi.mock("axios", () => ({
   },
 }));
 
+vi.mock("@/app/actions/comments", () => ({
+  toggleLikeAction: vi.fn(),
+  reportCommentAction: vi.fn(),
+  deleteCommentAction: vi.fn(),
+  createCommentAction: vi.fn(),
+  updateCommentAction: vi.fn(),
+}));
+
 const mockedAxios = vi.mocked(axios, true);
+import {
+  toggleLikeAction,
+  reportCommentAction,
+  deleteCommentAction,
+  createCommentAction,
+  updateCommentAction,
+} from "@/app/actions/comments";
+
+const mockedToggleLike = vi.mocked(toggleLikeAction);
+const mockedReport = vi.mocked(reportCommentAction);
+const mockedDelete = vi.mocked(deleteCommentAction);
+const mockedCreate = vi.mocked(createCommentAction);
+const mockedUpdate = vi.mocked(updateCommentAction);
 
 function fakeComment(overrides: Partial<Comment> = {}): Comment {
   return {
@@ -35,8 +56,8 @@ describe("commentsService", () => {
   });
 
   describe("createForVerse", () => {
-    it("POSTs draft to /api/comments/verse/:verseId and returns the created comment", async () => {
-      mockedAxios.post.mockResolvedValueOnce({ data: fakeComment({ text: "new" }) });
+    it("delegates to createCommentAction with the slug + draft and returns the created comment", async () => {
+      mockedCreate.mockResolvedValueOnce({ ok: true, data: fakeComment({ text: "new" }) });
 
       const result = await commentsService.createForVerse("v1", {
         text: "new",
@@ -44,7 +65,7 @@ describe("commentsService", () => {
         onTitle: true,
       });
 
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/comments/verse/v1", {
+      expect(mockedCreate).toHaveBeenCalledWith("v1", {
         text: "new",
         tags: ["devocional"],
         onTitle: true,
@@ -53,39 +74,40 @@ describe("commentsService", () => {
     });
 
     it("defaults tags to [] when omitted", async () => {
-      mockedAxios.post.mockResolvedValueOnce({ data: fakeComment() });
+      mockedCreate.mockResolvedValueOnce({ ok: true, data: fakeComment() });
       await commentsService.createForVerse("v1", { text: "x" });
-      expect(mockedAxios.post).toHaveBeenCalledWith("/api/comments/verse/v1", {
+      expect(mockedCreate).toHaveBeenCalledWith("v1", {
         text: "x",
         tags: [],
         onTitle: undefined,
       });
     });
+
   });
 
   describe("toggleLike", () => {
-    it("PATCHes /api/comments/:id with action: like", async () => {
-      mockedAxios.patch.mockResolvedValueOnce({ data: fakeComment({ likes: ["alice"] }) });
+    it("delegates to toggleLikeAction", async () => {
+      mockedToggleLike.mockResolvedValueOnce({ ok: true, data: fakeComment({ likes: ["alice"] }) });
       const result = await commentsService.toggleLike("c1");
-      expect(mockedAxios.patch).toHaveBeenCalledWith("/api/comments/c1", { action: "like" });
+      expect(mockedToggleLike).toHaveBeenCalledWith("c1");
       expect(result.likes).toEqual(["alice"]);
     });
   });
 
   describe("report", () => {
-    it("PATCHes /api/comments/:id with action: report", async () => {
-      mockedAxios.patch.mockResolvedValueOnce({ data: fakeComment({ reports: ["bob"] }) });
+    it("delegates to reportCommentAction", async () => {
+      mockedReport.mockResolvedValueOnce({ ok: true, data: fakeComment({ reports: ["bob"] }) });
       const result = await commentsService.report("c1");
-      expect(mockedAxios.patch).toHaveBeenCalledWith("/api/comments/c1", { action: "report" });
+      expect(mockedReport).toHaveBeenCalledWith("c1");
       expect(result.reports).toEqual(["bob"]);
     });
   });
 
   describe("update", () => {
-    it("PATCHes /api/comments/:id with text and tags", async () => {
-      mockedAxios.patch.mockResolvedValueOnce({ data: fakeComment({ text: "edited" }) });
+    it("delegates to updateCommentAction with text and tags", async () => {
+      mockedUpdate.mockResolvedValueOnce({ ok: true, data: fakeComment({ text: "edited" }) });
       const result = await commentsService.update("c1", { text: "edited", tags: ["pessoal"] });
-      expect(mockedAxios.patch).toHaveBeenCalledWith("/api/comments/c1", {
+      expect(mockedUpdate).toHaveBeenCalledWith("c1", {
         text: "edited",
         tags: ["pessoal"],
       });
@@ -94,10 +116,10 @@ describe("commentsService", () => {
   });
 
   describe("delete", () => {
-    it("DELETEs /api/comments/:id", async () => {
-      mockedAxios.delete.mockResolvedValueOnce({ data: { success: true } });
+    it("delegates to deleteCommentAction", async () => {
+      mockedDelete.mockResolvedValueOnce({ ok: true, data: { deleted: true } });
       await commentsService.delete("c1");
-      expect(mockedAxios.delete).toHaveBeenCalledWith("/api/comments/c1");
+      expect(mockedDelete).toHaveBeenCalledWith("c1");
     });
   });
 

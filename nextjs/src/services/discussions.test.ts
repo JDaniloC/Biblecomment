@@ -11,7 +11,25 @@ vi.mock("axios", () => ({
   },
 }));
 
+vi.mock("@/app/actions/discussions", () => ({
+  createDiscussionAction: vi.fn(),
+  addAnswerAction: vi.fn(),
+  updateAnswerAction: vi.fn(),
+  deleteDiscussionAction: vi.fn(),
+}));
+
 const mockedAxios = vi.mocked(axios, true);
+import {
+  createDiscussionAction,
+  addAnswerAction,
+  updateAnswerAction,
+  deleteDiscussionAction,
+} from "@/app/actions/discussions";
+
+const mockedCreate = vi.mocked(createDiscussionAction);
+const mockedAddAnswer = vi.mocked(addAnswerAction);
+const mockedUpdateAnswer = vi.mocked(updateAnswerAction);
+const mockedDelete = vi.mocked(deleteDiscussionAction);
 
 const sampleDiscussion = {
   _id: "d1",
@@ -29,13 +47,13 @@ describe("discussionsService", () => {
     vi.clearAllMocks();
   });
 
-  it("createForBook POSTs to /api/discussion/:abbrev", async () => {
-    mockedAxios.post.mockResolvedValueOnce({ data: sampleDiscussion });
+  it("createForBook delegates to createDiscussionAction", async () => {
+    mockedCreate.mockResolvedValueOnce({ ok: true, data: sampleDiscussion });
     const result = await discussionsService.createForBook("gn", {
       verseReference: "Gn 1:1",
       question: "Why?",
     });
-    expect(mockedAxios.post).toHaveBeenCalledWith("/api/discussion/gn", {
+    expect(mockedCreate).toHaveBeenCalledWith("gn", {
       verseReference: "Gn 1:1",
       question: "Why?",
     });
@@ -60,31 +78,30 @@ describe("discussionsService", () => {
     expect(mockedAxios.get).toHaveBeenCalledWith("/api/discussion/gn/d1");
   });
 
-  it("addAnswer PATCHes /api/discussion/:abbrev/:id with the answer text", async () => {
-    mockedAxios.patch.mockResolvedValueOnce({
+  it("addAnswer delegates to addAnswerAction", async () => {
+    mockedAddAnswer.mockResolvedValueOnce({
+      ok: true,
       data: { ...sampleDiscussion, answers: [{ name: "bob", text: "ok" }] },
     });
     const result = await discussionsService.addAnswer("gn", "d1", "ok");
-    expect(mockedAxios.patch).toHaveBeenCalledWith("/api/discussion/gn/d1", { text: "ok" });
+    expect(mockedAddAnswer).toHaveBeenCalledWith("gn", "d1", "ok");
     expect(result.answers).toHaveLength(1);
   });
 
-  it("updateAnswer PATCHes /api/discussion/:abbrev/:id/answers/:answerId", async () => {
-    mockedAxios.patch.mockResolvedValueOnce({
+  it("updateAnswer delegates to updateAnswerAction", async () => {
+    mockedUpdateAnswer.mockResolvedValueOnce({
+      ok: true,
       data: { ...sampleDiscussion, answers: [{ _id: "a1", name: "bob", text: "edited" }] },
     });
     const result = await discussionsService.updateAnswer("gn", "d1", "a1", "edited");
-    expect(mockedAxios.patch).toHaveBeenCalledWith(
-      "/api/discussion/gn/d1/answers/a1",
-      { text: "edited" },
-    );
+    expect(mockedUpdateAnswer).toHaveBeenCalledWith("gn", "d1", "a1", "edited");
     expect(result.answers[0].text).toBe("edited");
   });
 
-  it("delete DELETEs /api/discussion/:abbrev/:id", async () => {
-    mockedAxios.delete.mockResolvedValueOnce({ data: { success: true } });
+  it("delete delegates to deleteDiscussionAction", async () => {
+    mockedDelete.mockResolvedValueOnce({ ok: true, data: { deleted: true } });
     await discussionsService.delete("gn", "d1");
-    expect(mockedAxios.delete).toHaveBeenCalledWith("/api/discussion/gn/d1");
+    expect(mockedDelete).toHaveBeenCalledWith("gn", "d1");
   });
 
   it("listAll GETs /api/discussions?pages=:n", async () => {

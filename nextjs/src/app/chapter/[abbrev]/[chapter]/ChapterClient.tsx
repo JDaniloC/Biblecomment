@@ -18,6 +18,8 @@ import {
   toggleLikeAction,
   reportCommentAction,
   deleteCommentAction,
+  createCommentAction,
+  updateCommentAction,
 } from "@/app/actions/comments";
 
 interface SessionUser {
@@ -170,25 +172,27 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
       const verseId = isTitleMode
         ? `${book.abbrev}/${chapter}`
         : `${book.abbrev}/${chapter}/${selectedVerse?.verseNumber ?? 1}`;
-      const res = await axios.post<CommentData>(`/api/comments/verse/${verseId}`, {
+      const result = await createCommentAction(verseId, {
         onTitle: isTitleMode,
         text: composeText,
         tags: tagList,
       });
+      if (!result.ok) {
+        handleNotification("error", result.error || "Erro ao publicar.");
+        return;
+      }
+      const created = result.data as unknown as CommentData;
       handleNotification("success", "Comentário publicado!");
       if (isTitleMode) {
-        setTitleComments((prev) => [res.data, ...prev]);
+        setTitleComments((prev) => [created, ...prev]);
         setTitleCount((n) => n + 1);
       } else {
-        setComments((prev) => [res.data, ...prev]);
+        setComments((prev) => [created, ...prev]);
         if (selectedVerse?._id) {
           setCountMap((prev) => ({ ...prev, [selectedVerse._id!]: (prev[selectedVerse._id!] ?? 0) + 1 }));
         }
       }
       resetCompose();
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Erro ao publicar.";
-      handleNotification("error", msg);
     } finally {
       setComposeSubmitting(false);
     }
@@ -246,15 +250,16 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
       return;
     }
     const tagList = Object.entries(editTags).filter(([, v]) => v).map(([k]) => k);
-    try {
-      const res = await axios.patch<CommentData>(`/api/comments/${editingComment._id}`, { text: editText, tags: tagList });
-      setComments((prev) => prev.map((c) => c._id === editingComment._id ? res.data : c));
-      setTitleComments((prev) => prev.map((c) => c._id === editingComment._id ? res.data : c));
-      handleNotification("success", "Comentário editado!");
-      setEditingComment(null);
-    } catch {
+    const result = await updateCommentAction(editingComment._id, { text: editText, tags: tagList });
+    if (!result.ok) {
       handleNotification("error", "Erro ao editar.");
+      return;
     }
+    const updated = result.data as unknown as CommentData;
+    setComments((prev) => prev.map((c) => c._id === editingComment._id ? updated : c));
+    setTitleComments((prev) => prev.map((c) => c._id === editingComment._id ? updated : c));
+    handleNotification("success", "Comentário editado!");
+    setEditingComment(null);
   }, [editingComment, editText, editTags, handleNotification]);
 
   const handleDiscussion = useCallback((id: string, text: string, reference: string) => {
