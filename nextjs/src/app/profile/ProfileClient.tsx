@@ -93,7 +93,7 @@ function SearchBar({
           alignItems: "center",
           paddingLeft: 36,
           paddingRight: 12,
-          overflow: "hidden",
+          overflow: "hidden"
         }}
       >
         <input
@@ -107,8 +107,7 @@ function SearchBar({
             color: "#1e293b",
             background: "transparent",
             border: "none",
-            outline: "none",
-            fontFamily: "Inter, sans-serif",
+            outline: "none"
           }}
         />
         {value && (
@@ -159,35 +158,35 @@ function ProfileCommentCard({
         borderBottom: "0.667px solid #e2e8f0",
         borderRadius: "0 10px 10px 0",
         boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.05)",
-        padding: "14px 18px 14px",
+        padding: "14px 18px 14px"
       }}
     >
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <span style={{ display: "inline-flex", alignItems: "center", background: type.bg, borderRadius: 10, padding: "2px 8px", height: 20.5, flexShrink: 0 }}>
-          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 11, color: type.color, lineHeight: "16.5px", whiteSpace: "nowrap" }}>
+          <span style={{ fontWeight: 600, fontSize: 11, color: type.color, lineHeight: "16.5px", whiteSpace: "nowrap" }}>
             {type.label}
           </span>
         </span>
         {comment.bookReference && (
           <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.06)", borderRadius: 4, padding: "1px 7px", height: 20, flexShrink: 0 }}>
-            <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontWeight: 700, fontSize: 12, color: "#137ddb", lineHeight: "18px", whiteSpace: "nowrap" }}>
+            <span style={{ fontWeight: 700, fontSize: 12, color: "#137ddb", lineHeight: "18px", whiteSpace: "nowrap" }}>
               {comment.bookReference}
             </span>
           </span>
         )}
-        <span style={{ marginLeft: "auto", fontFamily: "Inter, sans-serif", fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>
+        <span style={{ marginLeft: "auto", fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>
           {dateFormat(comment.createdAt)}
         </span>
         {(onEdit || onDelete) && (
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
             {onEdit && (
-              <button type="button" onClick={() => onEdit(comment)} style={{ fontSize: 11, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: 4, fontFamily: "Inter, sans-serif" }}>
+              <button type="button" onClick={() => onEdit(comment)} style={{ fontSize: 11, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: 4 }}>
                 Editar
               </button>
             )}
             {onDelete && (
-              <button type="button" onClick={() => onDelete(comment._id)} style={{ fontSize: 11, color: "#f87171", background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: 4, fontFamily: "Inter, sans-serif" }}>
+              <button type="button" onClick={() => onDelete(comment._id)} style={{ fontSize: 11, color: "#f87171", background: "none", border: "none", cursor: "pointer", padding: "2px 4px", borderRadius: 4 }}>
                 Excluir
               </button>
             )}
@@ -196,13 +195,13 @@ function ProfileCommentCard({
       </div>
 
       {/* Text */}
-      <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#374151", lineHeight: "22.75px", margin: "0 0 10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      <p style={{ fontSize: 13, color: "#374151", lineHeight: "22.75px", margin: "0 0 10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
         {comment.text}
       </p>
 
       {/* Context link */}
       {nav && (
-        <Link href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 11, color: "#137ddb", textDecoration: "none" }}>
+        <Link href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 11, color: "#137ddb", textDecoration: "none" }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
             <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
@@ -232,47 +231,47 @@ function FavoriteCard({ comment }: { comment: CommentData }) {
         borderBottom: "0.667px solid #e2e8f0",
         borderRadius: "0 10px 10px 0",
         boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.05)",
-        padding: "14px 18px 14px",
+        padding: "14px 18px 14px"
       }}
     >
       {/* Header — avatar + username + type badge + verse + date */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         {/* Author avatar */}
         <div style={{ width: 26, height: 26, borderRadius: 13, background: "rgba(19,125,219,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 10, color: "#137ddb", lineHeight: "15px" }}>
+          <span style={{ fontWeight: 700, fontSize: 10, color: "#137ddb", lineHeight: "15px" }}>
             {initials}
           </span>
         </div>
         {/* Username */}
-        <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 13, color: "#1e293b", whiteSpace: "nowrap", flexShrink: 0 }}>
+        <span style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", whiteSpace: "nowrap", flexShrink: 0 }}>
           {comment.username}
         </span>
         {/* Type badge */}
         <span style={{ display: "inline-flex", alignItems: "center", background: type.bg, borderRadius: 10, padding: "2px 8px", height: 20.5, flexShrink: 0 }}>
-          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 11, color: type.color, lineHeight: "16.5px", whiteSpace: "nowrap" }}>
+          <span style={{ fontWeight: 600, fontSize: 11, color: type.color, lineHeight: "16.5px", whiteSpace: "nowrap" }}>
             {type.label}
           </span>
         </span>
         {/* Verse */}
         {comment.bookReference && (
-          <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontWeight: 700, fontSize: 11, color: "#137ddb", whiteSpace: "nowrap", flexShrink: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 11, color: "#137ddb", whiteSpace: "nowrap", flexShrink: 0 }}>
             {comment.bookReference}
           </span>
         )}
         {/* Date */}
-        <span style={{ marginLeft: "auto", fontFamily: "Inter, sans-serif", fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>
+        <span style={{ marginLeft: "auto", fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>
           {dateFormat(comment.createdAt)}
         </span>
       </div>
 
       {/* Text */}
-      <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#374151", lineHeight: "22.75px", margin: "0 0 10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      <p style={{ fontSize: 13, color: "#374151", lineHeight: "22.75px", margin: "0 0 10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
         {comment.text}
       </p>
 
       {/* Context link */}
       {nav && (
-        <Link href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 11, color: "#137ddb", textDecoration: "none" }}>
+        <Link href={`/verses/${nav.abbrev}/${nav.chapter}#${nav.verse}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: 11, color: "#137ddb", textDecoration: "none" }}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
             <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
@@ -303,7 +302,7 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (v: 
         position: "relative",
         transition: "background 0.2s",
         padding: 0,
-        marginTop: 1,
+        marginTop: 1
       }}
     >
       <span
@@ -316,7 +315,7 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (v: 
           borderRadius: 7,
           background: "#fff",
           boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.2)",
-          transition: "left 0.2s",
+          transition: "left 0.2s"
         }}
       />
     </button>
@@ -328,10 +327,10 @@ function StatCard({ label, value, max, color }: { label: string; value: number; 
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "20px 24px", flex: 1, minWidth: 0 }}>
-      <div style={{ fontSize: 28, fontWeight: 800, color, fontFamily: "Inter, sans-serif", lineHeight: 1 }}>
+      <div style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>
         {value.toLocaleString("pt-BR")}
       </div>
-      <div style={{ fontSize: 12, color: "#94a3b8", fontFamily: "Inter, sans-serif", marginTop: 4, marginBottom: max > 0 ? 12 : 0 }}>
+      <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4, marginBottom: max > 0 ? 12 : 0 }}>
         {label}
         {max > 0 && <span style={{ color: "#cbd5e0" }}> de {max.toLocaleString("pt-BR")}</span>}
       </div>
@@ -521,7 +520,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
       <header style={{ position: "sticky", top: 0, zIndex: 20, background: "#fff", borderBottom: "0.667px solid #e2e8f0", height: 60, display: "flex", alignItems: "center", padding: "0 24px", gap: 12 }}>
         <Link
           href="/"
-          style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", borderRadius: 6, color: "#64748b", fontSize: 13, fontFamily: "Inter, sans-serif", fontWeight: 500, textDecoration: "none" }}
+          style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", borderRadius: 6, color: "#64748b", fontSize: 13, fontWeight: 500, textDecoration: "none" }}
           onMouseEnter={e => (e.currentTarget.style.background = "#f1f5f9")}
           onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
         >
@@ -531,9 +530,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
           Voltar à leitura
         </Link>
         <div style={{ width: 1, height: 18, background: "#e2e8f0", margin: "0 4px" }} />
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", fontFamily: "Inter, sans-serif" }}>BibleComment</span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: "#1e293b" }}>BibleComment</span>
         <div style={{ flex: 1 }} />
-        <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+        <button onClick={() => signOut({ callbackUrl: "/login" })} style={{ fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}>
           Sair
         </button>
       </header>
@@ -546,17 +545,17 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
           {/* User card */}
           <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "24px 20px 20px" }}>
             <div style={{ width: 68, height: 68, borderRadius: 34, background: "rgba(19,125,219,0.13)", border: "2.667px solid rgba(19,125,219,0.19)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
-              <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 800, fontSize: 22, color: "#137ddb", lineHeight: 1 }}>{initials}</span>
+              <span style={{ fontWeight: 800, fontSize: 22, color: "#137ddb", lineHeight: 1 }}>{initials}</span>
             </div>
-            <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 16, color: "#1e293b", lineHeight: "24px", marginBottom: 2 }}>{user.name}</div>
-            <div style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginBottom: 12 }}>@{user.username}</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: "#1e293b", lineHeight: "24px", marginBottom: 2 }}>{user.name}</div>
+            <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginBottom: 12 }}>@{user.username}</div>
             {profile?.belief && (
               <div style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.07)", borderRadius: 12, padding: "3px 9px", marginBottom: 8 }}>
-                <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 11, color: "#137ddb", lineHeight: "16.5px", whiteSpace: "nowrap" }}>{profile.belief}</span>
+                <span style={{ fontWeight: 600, fontSize: 11, color: "#137ddb", lineHeight: "16.5px", whiteSpace: "nowrap" }}>{profile.belief}</span>
               </div>
             )}
             {profile?.createdAt && (
-              <div style={{ fontFamily: "Inter, sans-serif", fontSize: 11, color: "#cbd5e0", lineHeight: "16.5px" }}>
+              <div style={{ fontSize: 11, color: "#cbd5e0", lineHeight: "16.5px" }}>
                 Membro desde {formatMemberSince(profile.createdAt)}
               </div>
             )}
@@ -576,7 +575,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                   onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? "rgba(19,125,219,0.06)" : "transparent"; }}
                 >
                   <span style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontWeight: active ? 600 : 400, fontSize: 13, lineHeight: "19.5px", whiteSpace: "nowrap" }}>{label}</span>
+                  <span style={{ fontWeight: active ? 600 : 400, fontSize: 13, lineHeight: "19.5px", whiteSpace: "nowrap" }}>{label}</span>
                 </button>
               );
             })}
@@ -590,10 +589,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
           {tab === "overview" && (
             <div>
               <div style={{ marginBottom: 24 }}>
-                <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 20, color: "#1e293b", margin: "0 0 4px" }}>
+                <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: "0 0 4px" }}>
                   Olá, {user.name.split(" ")[0]} 👋
                 </h2>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#94a3b8", margin: 0 }}>
+                <p style={{ fontSize: 13, color: "#94a3b8", margin: 0 }}>
                   Aqui está um resumo da sua atividade no BibleComment.
                 </p>
               </div>
@@ -609,10 +608,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               {comments.length > 0 && (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                    <h3 style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: "#94a3b8", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    <h3 style={{ fontWeight: 600, fontSize: 12, color: "#94a3b8", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       Comentários recentes
                     </h3>
-                    <button type="button" onClick={() => setTab("comments")} style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: "#137ddb", background: "none", border: "none", cursor: "pointer" }}>
+                    <button type="button" onClick={() => setTab("comments")} style={{ fontSize: 12, color: "#137ddb", background: "none", border: "none", cursor: "pointer" }}>
                       Ver todos
                     </button>
                   </div>
@@ -627,14 +626,14 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
           {/* COMMENTS */}
           {tab === "comments" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
+              <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
                 Meus Comentários
               </h2>
               <SearchBar value={commentSearch} onChange={setCommentSearch} placeholder="Buscar nos meus comentários…" />
               {loading && comments.length === 0 ? (
                 <Loading />
               ) : filteredComments.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "40px 0", fontFamily: "Inter, sans-serif", fontSize: 14 }}>
+                <div style={{ textAlign: "center", color: "#94a3b8", padding: "40px 0", fontSize: 14 }}>
                   {commentSearch ? `Nenhum resultado para "${commentSearch}".` : "Nenhum comentário ainda."}
                 </div>
               ) : (
@@ -650,7 +649,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
           {/* FAVORITES */}
           {tab === "favorites" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
+              <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
                 Favoritos
               </h2>
 
@@ -674,11 +673,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                         cursor: "pointer",
                         background: active ? "#137ddb" : "#f1f5f9",
                         color: active ? "#fff" : "#64748b",
-                        fontFamily: "Inter, sans-serif",
                         fontWeight: active ? 600 : 400,
                         fontSize: 12,
                         lineHeight: "18px",
-                        transition: "background 0.15s",
+                        transition: "background 0.15s"
                       }}
                     >
                       {f}
@@ -690,7 +688,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               {/* Autores Favoritos card */}
               {favoriteAuthors.length > 0 && (
                 <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "16px 20px 16px" }}>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 13, color: "#1e293b", marginBottom: 12 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", marginBottom: 12 }}>
                     Autores Favoritos
                   </div>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -707,17 +705,17 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                             border: "0.667px solid #e2e8f0",
                             borderRadius: 8,
                             padding: "6px 12px 6px 12px",
-                            height: 46.333,
+                            height: 46.333
                           }}
                         >
                           {/* Avatar */}
                           <div style={{ width: 28, height: 28, borderRadius: 14, background: "rgba(19,125,219,0.09)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 11, color: "#137ddb", lineHeight: "16.5px" }}>{ini}</span>
+                            <span style={{ fontWeight: 700, fontSize: 11, color: "#137ddb", lineHeight: "16.5px" }}>{ini}</span>
                           </div>
                           {/* Username + like count */}
                           <div style={{ display: "flex", flexDirection: "column" }}>
-                            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: "#1e293b", whiteSpace: "nowrap" }}>@{username}</span>
-                            <span style={{ fontFamily: "Inter, sans-serif", fontSize: 10, color: "#94a3b8" }}>{count} curtido{count !== 1 ? "s" : ""}</span>
+                            <span style={{ fontWeight: 600, fontSize: 12, color: "#1e293b", whiteSpace: "nowrap" }}>@{username}</span>
+                            <span style={{ fontSize: 10, color: "#94a3b8" }}>{count} curtido{count !== 1 ? "s" : ""}</span>
                           </div>
                         </div>
                       );
@@ -730,7 +728,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               {loading && favorites.length === 0 ? (
                 <Loading />
               ) : filteredFavorites.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "40px 0", fontFamily: "Inter, sans-serif", fontSize: 14 }}>
+                <div style={{ textAlign: "center", color: "#94a3b8", padding: "40px 0", fontSize: 14 }}>
                   {favSearch || favTypeFilter !== "Todos"
                     ? "Nenhum favorito encontrado com esses filtros."
                     : "Nenhum favorito ainda."}
@@ -747,17 +745,17 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
           {tab === "config" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               {/* Title */}
-              <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
+              <h2 style={{ fontWeight: 700, fontSize: 20, color: "#1e293b", margin: 0 }}>
                 Configurações &amp; Privacidade
               </h2>
 
               {/* ── Card 1: Informações da Conta ── */}
               <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "20px 24px 24px" }}>
-                <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 14, color: "#1e293b", marginBottom: 20 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", marginBottom: 20 }}>
                   Informações da Conta
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
-                  <label style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 13, color: "#1e293b" }}>
+                  <label style={{ fontWeight: 600, fontSize: 13, color: "#1e293b" }}>
                     Crença / Denominação
                   </label>
                   <select
@@ -770,11 +768,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                       borderRadius: 8,
                       padding: "0 12px",
                       fontSize: 13,
-                      fontFamily: "Inter, sans-serif",
                       outline: "none",
                       color: "#1e293b",
                       background: "#fff",
-                      cursor: "pointer",
+                      cursor: "pointer"
                     }}
                   >
                     {beliefs.map(b => <option key={b} value={b}>{b}</option>)}
@@ -790,10 +787,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                     border: "none",
                     borderRadius: 7,
                     fontSize: 13,
-                    fontFamily: "Inter, sans-serif",
                     fontWeight: 600,
                     cursor: "pointer",
-                    whiteSpace: "nowrap",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   Salvar alterações
@@ -802,7 +798,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
               {/* ── Card 2: Privacidade ── */}
               <div style={{ background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 12, padding: "20px 24px" }}>
-                <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 14, color: "#1e293b", marginBottom: 16 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", marginBottom: 16 }}>
                   Privacidade
                 </div>
 
@@ -810,10 +806,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 14, paddingBottom: 16 }}>
                   <PrivacyToggle checked={showReligion} onChange={setShowReligion} />
                   <div>
-                    <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 13, color: "#1e293b", lineHeight: "19.5px" }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", lineHeight: "19.5px" }}>
                       Mostrar minha religião no perfil público
                     </div>
-                    <div style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginTop: 2 }}>
                       Outros usuários poderão ver sua denominação na sua página de perfil.
                     </div>
                   </div>
@@ -826,10 +822,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
                   <PrivacyToggle checked={showHistory} onChange={setShowHistory} />
                   <div>
-                    <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 13, color: "#1e293b", lineHeight: "19.5px" }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", lineHeight: "19.5px" }}>
                       Permitir que outros vejam meu histórico de comentários
                     </div>
-                    <div style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: "18px", marginTop: 2 }}>
                       Se desativado, seus comentários ficam anônimos para outros leitores.
                     </div>
                   </div>
@@ -838,10 +834,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
               {/* ── Card 3: Zona de Perigo ── */}
               <div style={{ background: "#fff", border: "0.667px solid #fed7d7", borderRadius: 12, padding: "20px 24px 24px" }}>
-                <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 14, color: "#c53030", marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#c53030", marginBottom: 12 }}>
                   Zona de Perigo
                 </div>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#718096", lineHeight: "19.5px", margin: "0 0 20px" }}>
+                <p style={{ fontSize: 13, color: "#718096", lineHeight: "19.5px", margin: "0 0 20px" }}>
                   A exclusão da conta é permanente e irrecuperável.
                   {comments.length > 0 && ` Todos os seus ${comments.length} comentário${comments.length !== 1 ? "s" : ""} serão deletados.`}
                 </p>
@@ -855,10 +851,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                     border: "1.333px solid #e53e3e",
                     borderRadius: 7,
                     fontSize: 13,
-                    fontFamily: "Inter, sans-serif",
                     fontWeight: 600,
                     cursor: "pointer",
-                    whiteSpace: "nowrap",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   Excluir minha conta

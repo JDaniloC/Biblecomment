@@ -48,7 +48,7 @@ export default function SearchInput() {
           onChange={handleChange}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          style={{ flex: 1, fontSize: 12, color: "#1a1a1a", background: "transparent", border: "none", outline: "none", fontFamily: "Inter, sans-serif", width: 180 }}
+          style={{ flex: 1, fontSize: 12, color: "#1a1a1a", background: "transparent", border: "none", outline: "none", width: 180 }}
         />
         {query && (
           <button type="button" onClick={handleClear} style={{ display: "flex", alignItems: "center", color: "#94a3b8", cursor: "pointer", flexShrink: 0 }}>
@@ -62,7 +62,7 @@ export default function SearchInput() {
       {open && query.length >= 2 && (
         <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, width: 360, background: "#fff", border: "0.667px solid #e2e8f0", borderRadius: 10, boxShadow: "0px 12px 40px 0px rgba(0,0,0,0.14), 0px 2px 8px 0px rgba(0,0,0,0.06)", zIndex: 50, overflow: "hidden", maxHeight: 400, overflowY: "auto" }}>
           {!loading && !hasResults && (
-            <div style={{ padding: "20px 16px", textAlign: "center", color: "#94a3b8", fontSize: 12, fontFamily: "Inter, sans-serif" }}>
+            <div style={{ padding: "20px 16px", textAlign: "center", color: "#94a3b8", fontSize: 12 }}>
               Nenhum resultado encontrado
             </div>
           )}
@@ -71,7 +71,7 @@ export default function SearchInput() {
             <div style={{ paddingTop: 12, paddingBottom: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 5, paddingLeft: 14, paddingRight: 14, paddingBottom: 4 }}>
                 <span style={{ fontSize: 10 }}>📖</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "Inter, sans-serif" }}>Escrituras</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px" }}>Escrituras</span>
               </div>
               {results.verses.map((v) => (
                 <button
@@ -83,9 +83,9 @@ export default function SearchInput() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.07)", borderRadius: 4, padding: "1px 5px", height: 15, flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontWeight: 700, fontSize: 10, color: "#137ddb", lineHeight: "15px" }}>{v.reference}</span>
+                    <span style={{ fontWeight: 700, fontSize: 10, color: "#137ddb", lineHeight: "15px" }}>{v.reference}</span>
                   </span>
-                  <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontSize: 11, color: "#475569", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 11, color: "#475569", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
                     <HighlightText text={v.text} query={query} />
                   </span>
                 </button>
@@ -97,7 +97,7 @@ export default function SearchInput() {
             <div style={{ paddingTop: results.verses.length > 0 ? 6 : 12, paddingBottom: 6, borderTop: results.verses.length > 0 ? "1px solid #f1f5f9" : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 5, paddingLeft: 14, paddingRight: 14, paddingBottom: 4 }}>
                 <span style={{ fontSize: 10 }}>💬</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "Inter, sans-serif" }}>Comentários</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px" }}>Comentários</span>
               </div>
               {results.comments.map((c) => (
                 <button
@@ -110,9 +110,9 @@ export default function SearchInput() {
                 >
                   <UserAvatar username={c.username} size={18} />
                   <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.07)", borderRadius: 4, padding: "1px 5px", height: 15, flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontWeight: 700, fontSize: 10, color: "#137ddb", lineHeight: "15px" }}>{c.bookReference}</span>
+                    <span style={{ fontWeight: 700, fontSize: 10, color: "#137ddb", lineHeight: "15px" }}>{c.bookReference}</span>
                   </span>
-                  <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontSize: 11, color: "#475569", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 11, color: "#475569", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
                     <HighlightText text={c.text} query={query} />
                   </span>
                 </button>

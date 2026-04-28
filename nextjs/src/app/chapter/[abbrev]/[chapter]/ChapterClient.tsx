@@ -284,21 +284,21 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
         position: "sticky",
         top: 0,
         zIndex: 50,
-        flexShrink: 0,
+        flexShrink: 0
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
           <img src="/assets/logo.svg" alt="BibleComment" width={42} height={42} style={{ display: "block" }} />
           <div>
-            <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 15, color: "#1e293b", lineHeight: "22.5px", whiteSpace: "nowrap" }}>BibleComment</div>
-            <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 300, fontSize: 11, color: "#888", lineHeight: "16.5px", whiteSpace: "nowrap" }}>A Program for His Glory</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#1e293b", lineHeight: "22.5px", whiteSpace: "nowrap" }}>BibleComment</div>
+            <div style={{ fontWeight: 300, fontSize: 11, color: "#888", lineHeight: "16.5px", whiteSpace: "nowrap" }}>A Program for His Glory</div>
           </div>
         </div>
 
         {/* Nav links */}
         <nav style={{ display: "flex", gap: 20, flexShrink: 0 }}>
-          <Link href="/home" style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 14, color: "#1e293b", textDecoration: "none" }}>Livros</Link>
-          <Link href="/discussions" style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 14, color: "#1e293b", textDecoration: "none" }}>Discussões</Link>
+          <Link href="/home" style={{ fontWeight: 500, fontSize: 14, color: "#1e293b", textDecoration: "none" }}>Livros</Link>
+          <Link href="/discussions" style={{ fontWeight: 500, fontSize: 14, color: "#1e293b", textDecoration: "none" }}>Discussões</Link>
         </nav>
 
         {/* OmniSearch */}
@@ -320,10 +320,10 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: "pointer",
+              cursor: "pointer"
             }}
           >
-            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: "13px" }}>{initials}</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: "13px" }}>{initials}</span>
           </button>
 
           {showUserMenu && (
@@ -341,12 +341,12 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                 borderRadius: 10,
                 boxShadow: "0px 8px 30px 0px rgba(0,0,0,0.14), 0px 2px 8px 0px rgba(0,0,0,0.06)",
                 overflow: "hidden",
-                zIndex: 50,
+                zIndex: 50
               }}>
                 {/* Header */}
                 <div style={{ padding: "12px 16px 10px", borderBottom: "0.667px solid #f1f5f9" }}>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 14, color: "#1e293b", lineHeight: "21px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 12, color: "#94a3b8", lineHeight: "18px" }}>@{user.username}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", lineHeight: "21px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name}</div>
+                  <div style={{ fontWeight: 400, fontSize: 12, color: "#94a3b8", lineHeight: "18px" }}>@{user.username}</div>
                 </div>
                 {/* Items */}
                 {[
@@ -361,7 +361,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                     style={{ display: "flex", alignItems: "center", gap: 10, height: 35.5, padding: "0 0 0 16px", textDecoration: "none" }}
                   >
                     <span style={{ color: "#475569", display: "flex" }}>{icon}</span>
-                    <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>{label}</span>
+                    <span style={{ fontWeight: 500, fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>{label}</span>
                   </Link>
                 ))}
                 <div style={{ height: 1, background: "#f1f5f9", margin: "0" }} />
@@ -373,7 +373,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                   <span style={{ color: "#475569", display: "flex" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>
                   </span>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 13, color: "#475569" }}>Configurações</span>
+                  <span style={{ fontWeight: 500, fontSize: 13, color: "#475569" }}>Configurações</span>
                 </Link>
                 <Link
                   href="/api/auth/signout"
@@ -382,7 +382,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                   <span style={{ color: "#e53e3e", display: "flex" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                   </span>
-                  <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 13, color: "#e53e3e" }}>Sair</span>
+                  <span style={{ fontWeight: 500, fontSize: 13, color: "#e53e3e" }}>Sair</span>
                 </Link>
               </div>
             </>
@@ -435,7 +435,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                   background: "rgba(0,0,0,0.02)",
                   borderLeftWidth: "4px",
                   borderLeftStyle: "solid",
-                  borderLeftColor: isTitleMode ? "#137ddb" : "rgba(0,0,0,0)",
+                  borderLeftColor: isTitleMode ? "#137ddb" : "rgba(0,0,0,0)"
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -476,7 +476,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           borderLeftStyle: "solid",
                           borderLeftColor: isSelected ? "#137ddb" : "transparent",
                           padding: "8px 10px 8px 12px",
-                          background: isSelected ? "rgba(19,125,219,0.04)" : "transparent",
+                          background: isSelected ? "rgba(19,125,219,0.04)" : "transparent"
                         }}
                       >
                         <span
@@ -498,7 +498,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                             </svg>
-                            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 11, color: "#fff", lineHeight: "11px" }}>{count}</span>
+                            <span style={{ fontWeight: 700, fontSize: 11, color: "#fff", lineHeight: "11px" }}>{count}</span>
                           </span>
                         )}
                       </button>
@@ -534,7 +534,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                 <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">Comentários</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[13px] font-semibold text-slate-700">{sidebarTitle}</span>
-                  <span style={{ background: "rgba(19,125,219,0.09)", color: "#137ddb", fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif", borderRadius: 10, minWidth: 21, height: 18.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 7px" }}>
+                  <span style={{ background: "rgba(19,125,219,0.09)", color: "#137ddb", fontSize: 11, fontWeight: 600, borderRadius: 10, minWidth: 21, height: 18.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 7px" }}>
                     {activeComments.length}
                   </span>
                 </div>
@@ -553,10 +553,9 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                   background: "none",
                   color: "#137ddb",
                   fontSize: 12,
-                  fontFamily: "Inter, sans-serif",
                   fontWeight: 600,
                   cursor: "pointer",
-                  whiteSpace: "nowrap",
+                  whiteSpace: "nowrap"
                 }}
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -584,7 +583,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                     border: "0.667px solid #d1d9e8",
                     borderRadius: 10,
                     boxShadow: "0px 4px 20px 0px rgba(19,125,219,0.10)",
-                    overflow: "hidden",
+                    overflow: "hidden"
                   }}>
                     {/* Header bar: "Comentando em Ref [Alterar]" */}
                     <div style={{
@@ -594,19 +593,19 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                       alignItems: "center",
                       padding: "11px 16px 10px",
                       gap: 4,
-                      minHeight: 41.167,
+                      minHeight: 41.167
                     }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
-                      <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 12, color: "#64748b", marginLeft: 6 }}>Comentando em</span>
-                      <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 12, color: "#1e293b", marginLeft: 4 }}>{sidebarTitle}</span>
+                      <span style={{ fontWeight: 400, fontSize: 12, color: "#64748b", marginLeft: 6 }}>Comentando em</span>
+                      <span style={{ fontWeight: 700, fontSize: 12, color: "#1e293b", marginLeft: 4 }}>{sidebarTitle}</span>
                       {selectedVerse && !isTitleMode && (
                         <button
                           type="button"
                           onClick={() => openVersePanel(selectedVerse)}
-                          style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 11, color: "#0d9488", background: "none", border: "none", cursor: "pointer", marginLeft: 8, textDecoration: "underline" }}
+                          style={{ fontWeight: 500, fontSize: 11, color: "#0d9488", background: "none", border: "none", cursor: "pointer", marginLeft: 8, textDecoration: "underline" }}
                         >
                           Alterar
                         </button>
@@ -620,9 +619,9 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                         background: "#f8fafc",
                         borderLeft: "2.667px solid #cbd5e0",
                         borderRadius: "0 6px 6px 0",
-                        padding: "9px 12px",
+                        padding: "9px 12px"
                       }}>
-                        <p style={{ fontFamily: "Merriweather, serif", fontSize: 13, color: "#475569", lineHeight: "20px", margin: 0 }}>
+                        <p style={{ fontSize: 13, color: "#475569", lineHeight: "20px", margin: 0 }}>
                           {selectedVerse.verseNumber}. {selectedVerse.text}
                         </p>
                       </div>
@@ -648,11 +647,11 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                                 borderRadius: 7,
                                 border: `2px solid ${active ? meta.border : "#e2e8f0"}`,
                                 background: active ? meta.bg : "#fafafa",
-                                cursor: "pointer",
+                                cursor: "pointer"
                               }}
                             >
                               <span style={{ width: 8, height: 8, borderRadius: 4, background: meta.border, flexShrink: 0, display: "block" }} />
-                              <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 13, color: active ? meta.color : "#64748b" }}>{meta.label}</span>
+                              <span style={{ fontWeight: 400, fontSize: 13, color: active ? meta.color : "#64748b" }}>{meta.label}</span>
                             </button>
                           );
                         })}
@@ -684,12 +683,11 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                             border: "none",
                             outline: "none",
                             resize: "none",
-                            fontFamily: "Inter, sans-serif",
                             fontSize: 14,
                             color: "rgba(26,26,26,0.85)",
                             lineHeight: "25.2px",
                             background: "transparent",
-                            boxSizing: "border-box",
+                            boxSizing: "border-box"
                           }}
                         />
                         {/* Footer */}
@@ -697,7 +695,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           <button
                             type="button"
                             onClick={resetCompose}
-                            style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
+                            style={{ fontWeight: 500, fontSize: 13, color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
                           >
                             Cancelar
                           </button>
@@ -705,7 +703,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                             <div style={{ width: 32, height: 18, borderRadius: 9, background: "#cbd5e0", padding: 2, cursor: "pointer" }}>
                               <div style={{ width: 14, height: 14, borderRadius: 7, background: "#fff", boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.2)" }} />
                             </div>
-                            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 11, color: "#94a3b8" }}>Anônimo</span>
+                            <span style={{ fontWeight: 400, fontSize: 11, color: "#94a3b8" }}>Anônimo</span>
                           </div>
                           <button
                             type="submit"
@@ -719,17 +717,16 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                               cursor: composeText.length >= MIN_LEN ? "pointer" : "default",
                               background: composeText.length >= MIN_LEN && !composeSubmitting ? "#137ddb" : "#f1f5f9",
                               color: composeText.length >= MIN_LEN && !composeSubmitting ? "#fff" : "#a0aec0",
-                              fontFamily: "Inter, sans-serif",
                               fontWeight: 600,
                               fontSize: 13,
-                              whiteSpace: "nowrap",
+                              whiteSpace: "nowrap"
                             }}
                           >
                             {composeSubmitting ? "Publicando…" : "Publicar comentário"}
                           </button>
                         </div>
                         {composeText.length < MIN_LEN && composeText.length > 0 && (
-                          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 11, color: "#f59e0b", margin: "0 0 8px", textAlign: "right" }}>
+                          <p style={{ fontSize: 11, color: "#f59e0b", margin: "0 0 8px", textAlign: "right" }}>
                             Mínimo {MIN_LEN} caracteres ({composeText.length}/{MIN_LEN})
                           </p>
                         )}
@@ -813,7 +810,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           borderColor,
                           borderRadius: "0 8px 8px 0",
                           overflow: "hidden",
-                          boxShadow: "0px 1px 4px 0px rgba(0,0,0,0.06)",
+                          boxShadow: "0px 1px 4px 0px rgba(0,0,0,0.06)"
                         }}
                       >
                         {/* Header row: icon + type + username + date */}
@@ -825,23 +822,23 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           </svg>
                           {/* Type label */}
                           {meta && (
-                            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: meta.color, marginLeft: 8, whiteSpace: "nowrap" }}>
+                            <span style={{ fontWeight: 600, fontSize: 12, color: meta.color, marginLeft: 8, whiteSpace: "nowrap" }}>
                               {meta.label}
                             </span>
                           )}
                           {/* Username */}
-                          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 13, color: "#1e293b", marginLeft: "auto", whiteSpace: "nowrap" }}>
+                          <span style={{ fontWeight: 600, fontSize: 13, color: "#1e293b", marginLeft: "auto", whiteSpace: "nowrap" }}>
                             {comment.username}
                           </span>
                           {/* Date */}
-                          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 12, color: "#94a3b8", marginLeft: 12, whiteSpace: "nowrap" }}>
+                          <span style={{ fontWeight: 400, fontSize: 12, color: "#94a3b8", marginLeft: 12, whiteSpace: "nowrap" }}>
                             {dateFormat(comment.createdAt)}
                           </span>
                         </div>
 
                         {/* Paragraph */}
                         <div style={{ padding: "10px 18px 0" }}>
-                          <p style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 14, color: "#374151", lineHeight: "25.2px", margin: 0, whiteSpace: "pre-wrap" }}>
+                          <p style={{ fontWeight: 400, fontSize: 14, color: "#374151", lineHeight: "25.2px", margin: 0, whiteSpace: "pre-wrap" }}>
                             {comment.text}
                           </p>
                         </div>
@@ -852,7 +849,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           <button
                             type="button"
                             onClick={() => handleLike(comment._id)}
-                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 8px", height: 26, borderRadius: 5, border: "none", background: "none", cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap" }}
+                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 8px", height: 26, borderRadius: 5, border: "none", background: "none", cursor: "pointer", fontWeight: 500, fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap" }}
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -864,7 +861,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           <button
                             type="button"
                             onClick={() => handleDiscussion(comment._id, comment.text, `${comment.username} ${comment.bookReference}`)}
-                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 8px", height: 26, borderRadius: 5, border: "none", background: "none", cursor: "pointer", fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap", marginLeft: 2 }}
+                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 8px", height: 26, borderRadius: 5, border: "none", background: "none", cursor: "pointer", fontWeight: 500, fontSize: 12, color: "#94a3b8", whiteSpace: "nowrap", marginLeft: 2 }}
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="9 17 4 12 9 7" /><path d="M20 18v-2a4 4 0 0 0-4-4H4" />
@@ -876,7 +873,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
                           <div
                             style={{ marginLeft: "auto", background: "rgba(19,125,219,0.07)", borderRadius: 12, height: 22.5, display: "flex", alignItems: "center", padding: "0 10px", whiteSpace: "nowrap" }}
                           >
-                            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 11, color: "#137ddb" }}>
+                            <span style={{ fontWeight: 600, fontSize: 11, color: "#137ddb" }}>
                               {comment.likes.length > 0 ? `${comment.likes.length} Perspectiva${comment.likes.length !== 1 ? "s" : ""}` : "0 Perspectivas"}
                             </span>
                           </div>

@@ -16,6 +16,13 @@ const config: Config = {
           inspirado:  "#7c3aed",
         },
       },
+      fontFamily: {
+        // CSS variables come from next/font/google in app/layout.tsx.
+        // Falls back to system fonts if a variable isn't set.
+        sans:  ["var(--font-inter)",        "system-ui",  "sans-serif"],
+        serif: ["var(--font-merriweather)", "Georgia",     "serif"],
+        lora:  ["var(--font-lora)",         "Georgia",     "serif"],
+      },
     },
   },
   plugins: [],

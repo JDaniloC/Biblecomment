@@ -36,7 +36,7 @@ export default function OmniSearch() {
             borderRadius: 8,
             padding: "0 12px",
             height: 40,
-            boxShadow: "0px 4px 18px 0px rgba(19,125,219,0.15)",
+            boxShadow: "0px 4px 18px 0px rgba(19,125,219,0.15)"
           }}
         >
           {loading ? (
@@ -48,7 +48,7 @@ export default function OmniSearch() {
                 borderTopColor: "transparent",
                 borderRadius: "50%",
                 flexShrink: 0,
-                animation: "spin 0.7s linear infinite",
+                animation: "spin 0.7s linear infinite"
               }}
             />
           ) : (
@@ -70,8 +70,7 @@ export default function OmniSearch() {
               color: "#1a1a1a",
               background: "transparent",
               border: "none",
-              outline: "none",
-              fontFamily: "Inter, sans-serif",
+              outline: "none"
             }}
           />
           {query && (
@@ -102,11 +101,11 @@ export default function OmniSearch() {
             zIndex: 50,
             overflow: "hidden",
             maxHeight: 430,
-            overflowY: "auto",
+            overflowY: "auto"
           }}
         >
           {!loading && !hasResults && (
-            <div style={{ padding: "24px 16px", textAlign: "center", color: "#94a3b8", fontSize: 13, fontFamily: "Inter, sans-serif" }}>
+            <div style={{ padding: "24px 16px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
               Nenhum resultado para &ldquo;{query}&rdquo;
             </div>
           )}
@@ -115,7 +114,7 @@ export default function OmniSearch() {
             <div style={{ paddingTop: 14, paddingBottom: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 16, paddingRight: 16, paddingBottom: 6 }}>
                 <span style={{ fontSize: 11 }}>📖</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "Inter, sans-serif" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px" }}>
                   Escrituras
                 </span>
               </div>
@@ -129,9 +128,9 @@ export default function OmniSearch() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.07)", borderRadius: 4, padding: "1px 5px", height: 16, flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontWeight: 700, fontSize: 11, color: "#137ddb", lineHeight: "16.5px" }}>{verse.reference}</span>
+                    <span style={{ fontWeight: 700, fontSize: 11, color: "#137ddb", lineHeight: "16.5px" }}>{verse.reference}</span>
                   </span>
-                  <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontSize: 12, color: "#475569", lineHeight: "18px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 12, color: "#475569", lineHeight: "18px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
                     <HighlightText text={verse.text} query={query} />
                   </span>
                 </button>
@@ -143,7 +142,7 @@ export default function OmniSearch() {
             <div style={{ paddingTop: results.verses.length > 0 ? 8 : 14, paddingBottom: 8, borderTop: results.verses.length > 0 ? "1px solid #f1f5f9" : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 16, paddingRight: 16, paddingBottom: 6 }}>
                 <span style={{ fontSize: 11 }}>💬</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "Inter, sans-serif" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "1px" }}>
                   Comentários
                 </span>
               </div>
@@ -158,9 +157,9 @@ export default function OmniSearch() {
                 >
                   <UserAvatar username={comment.username} size={20} />
                   <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(19,125,219,0.07)", borderRadius: 4, padding: "1px 5px", height: 16, flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontWeight: 700, fontSize: 11, color: "#137ddb", lineHeight: "16.5px" }}>{comment.bookReference}</span>
+                    <span style={{ fontWeight: 700, fontSize: 11, color: "#137ddb", lineHeight: "16.5px" }}>{comment.bookReference}</span>
                   </span>
-                  <span style={{ fontFamily: "'Merriweather', Georgia, serif", fontSize: 12, color: "#475569", lineHeight: "18px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 12, color: "#475569", lineHeight: "18px", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
                     <HighlightText text={comment.text} query={query} />
                   </span>
                 </button>

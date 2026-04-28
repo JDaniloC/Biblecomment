@@ -18,7 +18,7 @@ export function HighlightText({ text, query }: HighlightTextProps) {
           color: "#137ddb",
           borderRadius: 2,
           paddingLeft: 1,
-          paddingRight: 1,
+          paddingRight: 1
         }}
       >
         {text.slice(idx, idx + query.length)}
@@ -55,8 +55,7 @@ export function UserAvatar({ username, size = 20 }: { username: string; size?: n
         color: "#fff",
         fontSize: Math.max(9, Math.round(size / 2)),
         fontWeight: 700,
-        flexShrink: 0,
-        fontFamily: "Inter, sans-serif",
+        flexShrink: 0
       }}
     >
       {initial}

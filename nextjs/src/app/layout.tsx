@@ -1,7 +1,24 @@
 import type { Metadata } from "next";
-import { Lora } from "next/font/google";
+import { Inter, Lora, Merriweather } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "./providers";
+
+// Inter: app default sans (was inlined in 50+ places as a fontFamily
+// string). Loaded once here and applied via the body className so
+// inline overrides become unnecessary.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+// Merriweather: serif used for verse quotes.
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-merriweather",
+  display: "swap",
+});
 
 const lora = Lora({
   subsets: ["latin"],
@@ -41,8 +58,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={lora.variable}>
-      <body>
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} ${merriweather.variable} ${lora.variable}`}
+    >
+      <body className="font-sans">
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
