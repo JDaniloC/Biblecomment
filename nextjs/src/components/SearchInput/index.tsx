@@ -19,28 +19,38 @@ export default function SearchInput() {
   } = useUnifiedSearch();
 
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg px-2.5 h-9 min-w-[220px] shadow-[0px_4px_18px_0px_rgba(19,125,219,0.12)]">
+    <div className="relative w-full max-w-[280px] sm:max-w-none">
+      <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg px-2.5 h-9 min-w-0 sm:min-w-[220px] shadow-[0px_4px_18px_0px_rgba(19,125,219,0.12)]">
         {loading ? (
           <div className="w-[13px] h-[13px] border-2 border-brand border-t-transparent rounded-full flex-shrink-0 animate-spin" />
         ) : (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0" aria-hidden="true">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
         )}
+        <label htmlFor="header-search" className="sr-only">
+          Buscar versículo ou comentário
+        </label>
         <input
+          id="header-search"
           ref={inputRef}
           type="text"
           value={query}
           placeholder="Buscar versículo ou comentário…"
+          aria-label="Buscar versículo ou comentário"
           onChange={handleChange}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          className="flex-1 w-[180px] text-xs text-[#1a1a1a] dark:text-slate-100 bg-transparent border-none outline-none"
+          className="flex-1 min-w-0 text-xs text-[#1a1a1a] dark:text-slate-100 bg-transparent border-none outline-none"
         />
         {query && (
-          <button type="button" onClick={handleClear} className="flex items-center text-slate-400 dark:text-slate-500 cursor-pointer flex-shrink-0">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <button
+            type="button"
+            onClick={handleClear}
+            aria-label="Limpar busca"
+            className="flex items-center text-slate-400 dark:text-slate-500 cursor-pointer flex-shrink-0"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
@@ -48,7 +58,7 @@ export default function SearchInput() {
       </div>
 
       {open && query.length >= 2 && (
-        <div className="absolute top-[calc(100%+4px)] left-0 w-[360px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-[0px_12px_40px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] z-50 overflow-hidden max-h-[400px] overflow-y-auto">
+        <div className="absolute top-[calc(100%+4px)] left-0 w-[min(360px,calc(100vw-2rem))] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-[0px_12px_40px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] z-50 overflow-hidden max-h-[400px] overflow-y-auto">
           {!loading && !hasResults && (
             <div className="px-4 py-5 text-center text-slate-400 dark:text-slate-500 text-xs">
               Nenhum resultado encontrado

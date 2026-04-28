@@ -199,7 +199,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
               <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-[15px]">{selectedBook.name}</h3>
               <span className="text-slate-400 dark:text-slate-500 text-sm">— Escolha o capítulo</span>
             </div>
-            <div className="grid grid-cols-8 gap-1.5">
+            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-1.5">
               {Array.from({ length: selectedBook.chapters }, (_, i) => i + 1).map((ch) => (
                 <button
                   key={ch}
@@ -241,14 +241,14 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
           <div className="px-5 py-5 flex flex-col gap-[20px] overflow-x-auto">
             <div className="flex flex-col gap-[14px]">
               <p className="text-[10px] font-bold text-[#cbd5e0] dark:text-slate-500 uppercase tracking-[1.2px]">Antigo Testamento</p>
-              <div className="flex gap-8 flex-wrap">
+              <div className="flex gap-4 md:gap-8 flex-wrap">
                 {AT_COLUMNS.map(renderColumn)}
               </div>
             </div>
 
             <div className="flex flex-col gap-[14px]">
               <p className="text-[10px] font-bold text-[#cbd5e0] dark:text-slate-500 uppercase tracking-[1.2px]">Novo Testamento</p>
-              <div className="flex gap-8 flex-wrap">
+              <div className="flex gap-4 md:gap-8 flex-wrap">
                 {NT_COLUMNS.map(renderColumn)}
               </div>
             </div>
