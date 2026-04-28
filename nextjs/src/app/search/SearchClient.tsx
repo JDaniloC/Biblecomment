@@ -73,7 +73,7 @@ export default function SearchClient({ user }: { user: SessionUser }) {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         <div className="relative mb-6">
           <Image
             src="/assets/search.svg"

@@ -141,7 +141,7 @@ export default async function RootPage() {
         </div>
       )}
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero */}
         <section className="bg-gradient-to-b from-white to-stone-50 dark:from-slate-900 dark:to-slate-950 pt-12 md:pt-16 pb-10 px-4">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-8">

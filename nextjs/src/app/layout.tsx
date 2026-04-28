@@ -64,6 +64,12 @@ export default function RootLayout({
       className={`${inter.variable} ${merriweather.variable} ${lora.variable}`}
     >
       <body className="font-sans">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200] focus:bg-white dark:focus:bg-slate-900 focus:text-brand focus:px-3 focus:py-2 focus:rounded focus:shadow-lg focus:outline-2 focus:outline-brand"
+        >
+          Pular para o conteúdo
+        </a>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

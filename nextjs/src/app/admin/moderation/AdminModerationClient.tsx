@@ -115,7 +115,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
         </button>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 pt-8 pb-16 flex flex-col gap-8">
+      <main id="main-content" className="max-w-4xl mx-auto px-6 pt-8 pb-16 flex flex-col gap-8">
         {/* Reports list */}
         <section>
           <div className="flex items-baseline justify-between mb-4">

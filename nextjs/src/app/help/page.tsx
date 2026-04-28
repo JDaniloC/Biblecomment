@@ -23,7 +23,7 @@ export default function HelpPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-10 space-y-12">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 py-10 space-y-12">
         <Introduction />
         <AboutComment />
         <AboutActions />

@@ -67,7 +67,7 @@ export default function BackupClient({ user }: { user: SessionUser }) {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-2">Exportar Dados</h2>

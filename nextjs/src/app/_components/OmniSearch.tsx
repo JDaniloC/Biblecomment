@@ -35,7 +35,11 @@ export default function OmniSearch() {
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
           )}
+          <label htmlFor="omni-search-input" className="sr-only">
+            Buscar versículos ou comentários
+          </label>
           <input
+            id="omni-search-input"
             ref={inputRef}
             type="text"
             value={query}
@@ -43,12 +47,14 @@ export default function OmniSearch() {
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             placeholder="Buscar versículos ou comentários…"
+            aria-label="Buscar versículos ou comentários"
             className="flex-1 text-[13px] text-[#1a1a1a] dark:text-slate-100 bg-transparent border-none outline-none"
           />
           {query && (
             <button
               type="button"
               onClick={handleClear}
+              aria-label="Limpar busca"
               className="flex items-center text-slate-400 dark:text-slate-500 cursor-pointer flex-shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

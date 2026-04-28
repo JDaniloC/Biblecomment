@@ -422,6 +422,7 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
       <div className="flex flex-1 relative min-h-0">
         <main
+          id="main-content"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
           className={`flex-1 overflow-y-auto transition-[padding] duration-200 ${showSidebar ? "md:pr-[420px]" : ""}`}

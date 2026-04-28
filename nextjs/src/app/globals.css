@@ -39,16 +39,13 @@ body {
 }
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 9999;
   padding: 0.75rem 1.25rem;
   border-radius: 0.5rem;
   color: #fff;
   font-size: 0.875rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   animation: slideIn 0.2s ease;
+  max-width: min(360px, calc(100vw - 3rem));
 }
 .toast-success { background: #16a34a; }
 .toast-error   { background: #dc2626; }

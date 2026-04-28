@@ -117,7 +117,11 @@ export default function NewCommentForm(props: Props) {
           </span>
         </div>
 
+        <label htmlFor="new-comment-text" className="sr-only">
+          Texto do comentário
+        </label>
         <textarea
+          id="new-comment-text"
           value={text}
           onChange={handleTextChange}
           placeholder="Descreva seu comentário"

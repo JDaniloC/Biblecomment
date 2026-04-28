@@ -680,7 +680,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
         </aside>
 
         {/* ── Main content ── */}
-        <main className="flex-1 min-w-0">
+        <main id="main-content" className="flex-1 min-w-0">
 
           {/* OVERVIEW */}
           {tab === "overview" && (

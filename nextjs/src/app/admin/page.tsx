@@ -19,7 +19,7 @@ export default async function AdminPage() {
           </Link>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 py-8 space-y-4">
         <p className="text-gray-600 text-sm">
           Bem-vindo, <strong>{user.name}</strong>.
         </p>

@@ -55,7 +55,7 @@ export default function UsersClient({ user }: { user: SessionUser }) {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         {loading && users.length === 0 ? (
           <Loading />
         ) : users.length === 0 ? (

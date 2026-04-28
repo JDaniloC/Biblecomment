@@ -56,7 +56,7 @@ export default function HomeClient({ books, user }: Props) {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <input
             type="text"

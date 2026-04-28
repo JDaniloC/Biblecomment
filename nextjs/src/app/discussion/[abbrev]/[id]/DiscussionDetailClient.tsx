@@ -135,7 +135,7 @@ export default function DiscussionDetailClient({
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-4 py-6">
+        <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-700 dark:text-slate-200">Discussões</h2>
             <button
@@ -231,7 +231,7 @@ export default function DiscussionDetailClient({
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
           <p className="text-xs text-gray-400 dark:text-slate-500 mb-1">{discussion.verseReference}</p>
           <blockquote className="italic text-gray-600 dark:text-slate-300 border-l-4 border-gray-200 dark:border-slate-700 pl-3 mb-3">

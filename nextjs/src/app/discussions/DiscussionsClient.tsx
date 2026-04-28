@@ -56,7 +56,7 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         {loading && discussions.length === 0 ? (
           <Loading />
         ) : discussions.length === 0 ? (

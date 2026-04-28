@@ -146,11 +146,15 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
   return (
     <div className="flex flex-col w-[min(900px,95vw)]">
       <div className="flex items-center gap-3 px-5 py-3">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0" aria-hidden="true">
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <form onSubmit={handleSearchSubmit} className="flex-1">
+          <label htmlFor="books-index-search" className="sr-only">
+            Buscar livro
+          </label>
           <input
+            id="books-index-search"
             ref={searchRef}
             type="text"
             value={query}
@@ -166,6 +170,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
               if (query) { setQuery(""); setSelectedBook(null); searchRef.current?.focus(); }
               else closeBookComponent?.();
             }}
+            aria-label={query ? "Limpar busca" : "Fechar"}
             className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition flex-shrink-0"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -184,6 +189,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
               <button
                 type="button"
                 onClick={() => setSelectedBook(null)}
+                aria-label="Voltar para lista de livros"
                 className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

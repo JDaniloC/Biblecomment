@@ -32,9 +32,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   return (
     <NotificationContext.Provider value={{ handleNotification }}>
       {children}
-      <div>
+      <div
+        role="region"
+        aria-label="Notificações"
+        aria-live="polite"
+        aria-atomic="false"
+        className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none"
+      >
         {toasts.map((toast) => (
-          <div key={toast.id} className={`toast toast-${toast.type}`}>
+          <div
+            key={toast.id}
+            role={toast.type === "error" ? "alert" : "status"}
+            className={`toast toast-${toast.type} pointer-events-auto`}
+          >
             {toast.message}
           </div>
         ))}
