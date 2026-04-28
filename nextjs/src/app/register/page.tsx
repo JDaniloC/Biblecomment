@@ -36,24 +36,24 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 px-4">
+      <main id="main-content" className="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-md w-full max-w-md border border-transparent dark:border-slate-800">
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-slate-100">
           Bible Comment
         </h1>
-        <h2 className="text-lg font-semibold mb-4 text-center text-gray-600">
+        <h2 className="text-lg font-semibold mb-4 text-center text-gray-600 dark:text-slate-300">
           Criar Conta
         </h2>
 
         {error && (
-          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm" role="alert">
+          <div className="bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 px-4 py-2 rounded mb-4 text-sm" role="alert">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="register-username" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="register-username" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
               Nome de usuário
             </label>
             <input
@@ -62,12 +62,12 @@ export default function RegisterPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <div>
-            <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
               Email
             </label>
             <input
@@ -76,12 +76,12 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           <div>
-            <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">
               Senha
             </label>
             <input
@@ -91,7 +91,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
@@ -102,15 +102,15 @@ export default function RegisterPage() {
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
               required
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
+              className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-brand focus:ring-brand"
             />
-            <label htmlFor="register-consent" className="text-sm text-gray-600 leading-snug">
+            <label htmlFor="register-consent" className="text-sm text-gray-600 dark:text-slate-300 leading-snug">
               Li e aceito a{" "}
-              <Link href="/privacy" className="text-blue-600 hover:underline" target="_blank">
+              <Link href="/privacy" className="text-blue-600 dark:text-brand hover:underline" target="_blank">
                 Política de Privacidade
               </Link>{" "}
               e os{" "}
-              <Link href="/terms" className="text-blue-600 hover:underline" target="_blank">
+              <Link href="/terms" className="text-blue-600 dark:text-brand hover:underline" target="_blank">
                 Termos de Uso
               </Link>
               .
@@ -126,13 +126,13 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-500">
+        <p className="mt-4 text-center text-sm text-gray-500 dark:text-slate-400">
           Já tem conta?{" "}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="text-blue-600 dark:text-brand hover:underline">
             Entrar
           </Link>
         </p>
-      </div>
+      </main>
     </div>
   );
 }

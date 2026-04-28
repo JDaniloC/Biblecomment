@@ -31,14 +31,14 @@ export default function Header({ onChangeChapter }: Props) {
 
   return (
     <>
-      <header className="bg-white shadow-sm sticky top-0 z-20">
+      <header className="bg-white dark:bg-slate-900 dark:border-b dark:border-slate-800 shadow-sm sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <Link href="/" className="flex items-center gap-2 shrink-0">
               <Image src="/assets/logo.svg" alt="Bible Comment" width={36} height={36} />
               <div className="hidden sm:block">
-                <h1 className="text-sm font-bold text-gray-800 leading-tight">Bible Comment</h1>
-                <sub className="text-xs text-gray-500">A Program for His Glory</sub>
+                <h1 className="text-sm font-bold text-gray-800 dark:text-slate-100 leading-tight">Bible Comment</h1>
+                <sub className="text-xs text-gray-500 dark:text-slate-400">A Program for His Glory</sub>
               </div>
             </Link>
             <SearchInput />
@@ -48,7 +48,7 @@ export default function Header({ onChangeChapter }: Props) {
               type="button"
               onClick={openBooks}
               aria-label="Abrir lista de livros"
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 px-2 py-1 rounded hover:bg-gray-100 transition"
+              className="flex items-center gap-1 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-brand px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition"
             >
               <span className="hidden sm:inline">Livros</span>
               <Image src="/assets/books.svg" alt="" aria-hidden="true" width={16} height={16} />
@@ -57,7 +57,7 @@ export default function Header({ onChangeChapter }: Props) {
               type="button"
               onClick={openLogin}
               aria-label="Abrir painel da conta"
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 px-2 py-1 rounded hover:bg-gray-100 transition"
+              className="flex items-center gap-1 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-brand px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition"
             >
               <span className="hidden sm:inline">Perfil</span>
               <Image src="/assets/person.svg" alt="" aria-hidden="true" width={16} height={16} />
@@ -65,7 +65,7 @@ export default function Header({ onChangeChapter }: Props) {
             <Link
               href="/help"
               title="Sobre o Bible Comment"
-              className="flex items-center justify-center w-7 h-7 rounded-full border border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition text-sm font-bold leading-none"
+              className="flex items-center justify-center w-7 h-7 rounded-full border border-gray-300 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 dark:hover:text-brand transition text-sm font-bold leading-none"
             >
               ?
             </Link>

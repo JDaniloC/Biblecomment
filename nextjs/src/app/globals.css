@@ -38,6 +38,16 @@ body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
+/* a11y: every focusable element must have a visible keyboard outline.
+   This is a backstop for components that haven't opted into
+   focus:ring-* utilities yet — Tailwind's default reset removes the UA
+   outline. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .toast {
   padding: 0.75rem 1.25rem;
   border-radius: 0.5rem;
