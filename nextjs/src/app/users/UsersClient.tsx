@@ -46,12 +46,12 @@ export default function UsersClient({ user }: { user: SessionUser }) {
   useEffect(() => { load(1); }, [load]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/home" className="text-blue-600 hover:text-blue-800 text-sm">← Livros</Link>
-          <h1 className="font-semibold text-gray-800">Usuários</h1>
-          <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">{user.name}</Link>
+          <Link href="/home" className="text-blue-600 dark:text-brand hover:text-blue-800 dark:hover:underline text-sm">← Livros</Link>
+          <h1 className="font-semibold text-gray-800 dark:text-slate-100">Usuários</h1>
+          <Link href="/profile" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">{user.name}</Link>
         </div>
       </header>
 
@@ -59,25 +59,25 @@ export default function UsersClient({ user }: { user: SessionUser }) {
         {loading && users.length === 0 ? (
           <Loading />
         ) : users.length === 0 ? (
-          <div className="text-center text-gray-400 py-10">Nenhum usuário encontrado.</div>
+          <div className="text-center text-gray-400 dark:text-slate-500 py-10">Nenhum usuário encontrado.</div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
+                <tr className="bg-gray-50 dark:bg-slate-800/50 text-left text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="px-4 py-3">Usuário</th>
                   <th className="px-4 py-3 hidden sm:table-cell">Crença</th>
                   <th className="px-4 py-3 hidden sm:table-cell">Estado</th>
                   <th className="px-4 py-3 text-right">Comentários</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
                 {users.map((u) => (
-                  <tr key={u._id} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-3 font-medium text-gray-800">{u.username}</td>
-                    <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{u.belief || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{u.stateName || "—"}</td>
-                    <td className="px-4 py-3 text-right text-gray-600">{u.total_comments}</td>
+                  <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition">
+                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-slate-100">{u.username}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-slate-400 hidden sm:table-cell">{u.belief || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-slate-400 hidden sm:table-cell">{u.stateName || "—"}</td>
+                    <td className="px-4 py-3 text-right text-gray-600 dark:text-slate-300">{u.total_comments}</td>
                   </tr>
                 ))}
               </tbody>
@@ -87,7 +87,7 @@ export default function UsersClient({ user }: { user: SessionUser }) {
               <div className="p-4 text-center">
                 <button
                   onClick={() => { const next = page + 1; setPage(next); load(next); }}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-blue-600 dark:text-brand hover:underline"
                 >
                   Carregar mais
                 </button>

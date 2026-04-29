@@ -64,12 +64,12 @@ export default function SearchClient({ user }: { user: SessionUser }) {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/home" className="text-blue-600 hover:text-blue-800 text-sm">← Livros</Link>
-          <h1 className="font-semibold text-gray-800">Buscar Comentários</h1>
-          <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">{user.name}</Link>
+          <Link href="/home" className="text-blue-600 dark:text-brand hover:text-blue-800 dark:hover:underline text-sm">← Livros</Link>
+          <h1 className="font-semibold text-gray-800 dark:text-slate-100">Buscar Comentários</h1>
+          <Link href="/profile" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">{user.name}</Link>
         </div>
       </header>
 
@@ -77,31 +77,37 @@ export default function SearchClient({ user }: { user: SessionUser }) {
         <div className="relative mb-6">
           <Image
             src="/assets/search.svg"
-            alt="Buscar"
+            alt=""
+            aria-hidden="true"
             width={20}
             height={20}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:opacity-70"
           />
+          <label htmlFor="search-input" className="sr-only">
+            Buscar comentário
+          </label>
           <input
+            id="search-input"
             type="text"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Buscar comentário..."
-            className="w-full border border-gray-300 rounded-lg pl-10 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg pl-10 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           {query && (
             <button
               type="button"
               onClick={() => { setQuery(""); setResults([]); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Limpar busca"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
             >
-              <Image src="/assets/x.svg" alt="Limpar" width={16} height={16} />
+              <Image src="/assets/x.svg" alt="" aria-hidden="true" width={16} height={16} />
             </button>
           )}
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-400 py-8">Buscando...</div>
+          <div className="text-center text-gray-400 dark:text-slate-500 py-8">Buscando...</div>
         ) : results.length > 0 ? (
           <ul className="space-y-3">
             {results.map((r) => (
@@ -109,19 +115,19 @@ export default function SearchClient({ user }: { user: SessionUser }) {
                 key={r.id}
                 role="button"
                 onClick={() => handleSelect(r)}
-                className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-blue-400 transition"
+                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4 cursor-pointer hover:border-blue-400 dark:hover:border-brand transition"
               >
-                <div className="text-xs text-blue-600 font-medium mb-1">{r.book_reference}</div>
-                <p className="text-sm text-gray-700">{r.text}</p>
-                <div className="text-xs text-gray-400 mt-1">por {r.username}</div>
+                <div className="text-xs text-blue-600 dark:text-brand font-medium mb-1">{r.book_reference}</div>
+                <p className="text-sm text-gray-700 dark:text-slate-200">{r.text}</p>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">por {r.username}</div>
               </li>
             ))}
           </ul>
         ) : query ? (
-          <div className="text-center text-gray-400 py-8">Nenhum resultado encontrado.</div>
+          <div className="text-center text-gray-400 dark:text-slate-500 py-8">Nenhum resultado encontrado.</div>
         ) : (
-          <div className="text-center text-gray-400 py-8">
-            <Image src="/assets/search.svg" alt="Buscar" width={48} height={48} className="mx-auto mb-3 opacity-30" />
+          <div className="text-center text-gray-400 dark:text-slate-500 py-8">
+            <Image src="/assets/search.svg" alt="" aria-hidden="true" width={48} height={48} className="mx-auto mb-3 opacity-30" />
             <p>Digite algo para buscar comentários</p>
           </div>
         )}

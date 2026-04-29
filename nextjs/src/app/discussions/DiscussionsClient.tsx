@@ -47,12 +47,12 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
   useEffect(() => { load(1); }, [load]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/home" className="text-blue-600 hover:text-blue-800 text-sm">← Livros</Link>
-          <h1 className="font-semibold text-gray-800">Discussões</h1>
-          <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">{user.name}</Link>
+          <Link href="/home" className="text-blue-600 dark:text-brand hover:text-blue-800 dark:hover:underline text-sm">← Livros</Link>
+          <h1 className="font-semibold text-gray-800 dark:text-slate-100">Discussões</h1>
+          <Link href="/profile" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">{user.name}</Link>
         </div>
       </header>
 
@@ -60,18 +60,18 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
         {loading && discussions.length === 0 ? (
           <Loading />
         ) : discussions.length === 0 ? (
-          <div className="text-center text-gray-400 py-10">Nenhuma discussão encontrada.</div>
+          <div className="text-center text-gray-400 dark:text-slate-500 py-10">Nenhuma discussão encontrada.</div>
         ) : (
           <div className="space-y-4">
             {discussions.map((d) => (
               <Link
                 key={d._id}
                 href={`/discussion/${d.bookAbbrev}/${d._id}`}
-                className="block bg-white border border-gray-200 rounded-xl p-4 hover:border-purple-400 transition"
+                className="block bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-purple-400 dark:hover:border-purple-600 transition"
               >
-                <div className="text-xs text-purple-600 font-medium mb-1">{d.verseReference}</div>
-                <p className="text-sm font-semibold text-gray-800 mb-2">{d.question}</p>
-                <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">{d.verseReference}</div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-slate-100 mb-2">{d.question}</p>
+                <div className="flex items-center justify-between text-xs text-gray-400 dark:text-slate-500">
                   <span>por {d.username}</span>
                   <span>{d.answersCount} resposta{d.answersCount !== 1 ? "s" : ""}</span>
                 </div>
@@ -81,7 +81,7 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
             {hasMore && !loading && (
               <button
                 onClick={() => { const next = page + 1; setPage(next); load(next); }}
-                className="w-full mt-2 text-sm text-purple-600 hover:underline py-2"
+                className="w-full mt-2 text-sm text-purple-600 dark:text-purple-400 hover:underline py-2"
               >
                 Carregar mais
               </button>
