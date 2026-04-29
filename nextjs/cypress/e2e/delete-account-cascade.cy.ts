@@ -111,7 +111,9 @@ describe("LGPD — delete account cascade", () => {
               body: { action: "report" },
             }).its("status").should("eq", 200);
 
-            // Sanity: pre-delete state has alice's footprint on bob's comment.
+            // Sanity: pre-delete state has alice's like on bob's comment.
+            // (Public chapter API strips reports[]; we'll verify the report
+            // cascade via the mod-only endpoint after the delete.)
             cy.request("GET", "/api/comments/chapter/gn/1/1").then((preRes) => {
               const all = [
                 ...(preRes.body.titleComments ?? []),
@@ -119,10 +121,22 @@ describe("LGPD — delete account cascade", () => {
               ];
               const bobPre = all.find((c: { _id: string }) => c._id === bobCommentId);
               expect(bobPre.likes, "alice should be in bob's likes pre-delete").to.include("alice");
-              expect(bobPre.reports, "alice should be in bob's reports pre-delete").to.include("alice");
             });
 
-            // Alice should also have at least one notification (bob answered her discussion).
+            // Pre-delete: mod sees bob's comment in the reports queue (alice reported it).
+            cy.clearCookies();
+            cy.loginAs(users.mod.email, users.mod.password);
+            cy.request("GET", "/api/moderation/reports?pages=1").then((modRes) => {
+              const reported = modRes.body.items as Array<{ _id: string; reports: string[] }>;
+              const target = reported.find((c) => c._id === bobCommentId);
+              expect(target, "bob's comment should be in the reports queue pre-delete").to.exist;
+              expect(target!.reports, "alice should be the reporter").to.include("alice");
+            });
+
+            cy.clearCookies();
+            cy.loginAs(users.alice.email, users.alice.password);
+
+            // Alice should have at least one notification (bob answered her discussion).
             cy.request("GET", "/api/notifications").then((notifRes) => {
               expect(notifRes.body.items.length, "alice has notifications pre-delete").to.be.greaterThan(0);
             });
@@ -159,7 +173,16 @@ describe("LGPD — delete account cascade", () => {
               expect(bobCmt, "bob's comment should still exist").to.exist;
               expect(bobCmt.username).to.eq("bob");
               expect(bobCmt.likes, "alice removed from bob's likes").to.not.include("alice");
-              expect(bobCmt.reports, "alice removed from bob's reports").to.not.include("alice");
+            });
+
+            // The mod-only reports queue confirms alice's report was pulled —
+            // bob's comment now has reports=[] and falls out of the queue.
+            cy.clearCookies();
+            cy.loginAs(users.mod.email, users.mod.password);
+            cy.request("GET", "/api/moderation/reports?pages=1").then((modRes) => {
+              const reported = modRes.body.items as Array<{ _id: string; reports: string[] }>;
+              const stillThere = reported.find((c) => c._id === bobCommentId);
+              expect(stillThere, "bob's comment should leave the reports queue post-delete").to.be.undefined;
             });
 
             // alice's discussion username is anonymized; bob's answer intact.
