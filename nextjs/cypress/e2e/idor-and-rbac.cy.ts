@@ -203,6 +203,7 @@ describe("Security regressions: IDOR & RBAC", () => {
           email: "first@cypress.test",
           username: "duplicate",
           password: "first-secret-12",
+          acceptedTerms: true,
         },
       }).then((res) => {
         expect(res.status).to.eq(201);
@@ -216,6 +217,7 @@ describe("Security regressions: IDOR & RBAC", () => {
           email: "second@cypress.test",
           username: "duplicate",
           password: "second-secret-12",
+          acceptedTerms: true,
         },
         failOnStatusCode: false,
       }).then((res) => {

@@ -22,6 +22,19 @@ const { spawn } = require("child_process");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { assertLocalMongoUri } = require("./safety");
+
+if (process.env.MONGODB_URI) {
+  try {
+    assertLocalMongoUri(process.env.MONGODB_URI, "dev-with-mongo pre-flight");
+  } catch (err) {
+    console.error(`[dev] aborting: ${err.message}`);
+    process.exit(1);
+  }
+  console.warn(
+    "[dev] note: MONGODB_URI was already set in env — that value will be overridden by the in-memory server.",
+  );
+}
 
 const FIXTURES = {
   users: [
@@ -86,6 +99,9 @@ async function main() {
     instance: { dbName: "biblecomment-dev" },
   });
   const uri = mongo.getUri();
+  // Sanity-check the in-memory URI is local. Defends against any future
+  // mongodb-memory-server change that might emit a non-localhost address.
+  assertLocalMongoUri(uri, "dev-with-mongo in-memory mongo");
   console.log(`[dev] mongo ready at ${uri}`);
 
   await seed(uri);

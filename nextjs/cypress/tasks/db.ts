@@ -9,23 +9,19 @@
 
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { assertLocalMongoUri } from "./safety";
 
 let connected = false;
 
 async function ensureConnected(): Promise<void> {
   if (connected) return;
   const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error("MONGODB_URI not set — refusing to connect to an unknown DB.");
-  }
-  if (uri.includes("/biblecomment?") || uri.endsWith("/biblecomment")) {
-    throw new Error(
-      "MONGODB_URI points at the production database name 'biblecomment'. " +
-        "Use a separate database (e.g. 'biblecomment-cypress') for tests.",
-    );
-  }
+  // Hard-stop if the URI isn't local. This guard is the last line of
+  // defense against cy.task("db:reset") wiping a production database
+  // when MONGODB_URI is inherited from .env or the shell.
+  assertLocalMongoUri(uri, "Cypress db.ts");
   mongoose.set("strictQuery", false);
-  await mongoose.connect(uri);
+  await mongoose.connect(uri!);
   connected = true;
 }
 

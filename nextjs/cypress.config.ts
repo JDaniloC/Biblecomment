@@ -1,5 +1,6 @@
 import { defineConfig } from "cypress";
 import { resetDatabase, seedDatabase, findUserByEmail } from "./cypress/tasks/db";
+import { assertLocalMongoUri } from "./cypress/tasks/safety";
 
 export default defineConfig({
   e2e: {
@@ -14,6 +15,11 @@ export default defineConfig({
     screenshotOnRunFailure: true,
     experimentalRunAllSpecs: true,
     setupNodeEvents(on) {
+      // Refuse to register DB-mutating tasks if Cypress was started with a
+      // non-local MONGODB_URI. This catches `cypress run` invoked directly
+      // (bypassing scripts/cy-test.js) when the shell has a prod URI set.
+      assertLocalMongoUri(process.env.MONGODB_URI, "cypress.config setupNodeEvents");
+
       on("task", {
         async "db:reset"() {
           await resetDatabase();

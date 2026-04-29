@@ -18,8 +18,26 @@
 const { MongoMemoryServer } = require("mongodb-memory-server");
 const { spawn } = require("child_process");
 const path = require("path");
+const { assertLocalMongoUri } = require("./safety");
 
 const MODE = process.argv[2] === "dev" ? "dev" : "ci";
+
+// Belt-and-suspenders: if MONGODB_URI is already set in the parent shell
+// (e.g. inherited from .env or an explicit export), refuse to start when
+// it points at a non-local host. The orchestrator does override it for
+// the spawned processes, but a misconfigured environment is loud enough
+// that we'd rather abort than proceed silently.
+if (process.env.MONGODB_URI) {
+  try {
+    assertLocalMongoUri(process.env.MONGODB_URI, "cy-test pre-flight");
+  } catch (err) {
+    console.error(`[cy-test] aborting: ${err.message}`);
+    process.exit(1);
+  }
+  console.warn(
+    "[cy-test] note: MONGODB_URI was already set in env — that value will be overridden by the in-memory server.",
+  );
+}
 
 // Use a port distinct from `npm run dev` (5000) so a developer can keep
 // their dev server running while Cypress executes against an isolated
@@ -33,6 +51,9 @@ async function main() {
     instance: { dbName: "biblecomment-cypress" },
   });
   const uri = mongo.getUri();
+  // Sanity: mongodb-memory-server always emits a 127.0.0.1 URI, but we
+  // re-check so any future change to that library can't bypass the guard.
+  assertLocalMongoUri(uri, "cy-test in-memory mongo");
   console.log(`[cy-test] mongo ready at ${uri}`);
 
   const env = {
