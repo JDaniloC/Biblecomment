@@ -148,28 +148,36 @@ export default function DiscussionDetailClient({
 
           {showForm && (
             <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4 mb-6 space-y-3">
+              <label htmlFor="new-disc-verseref" className="sr-only">Referência do versículo</label>
               <input
+                id="new-disc-verseref"
                 type="text"
                 placeholder="Referência do versículo (ex: Gn 1:1)"
                 value={newVerseRef}
                 onChange={(e) => setNewVerseRef(e.target.value)}
                 className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
               />
+              <label htmlFor="new-disc-versetext" className="sr-only">Texto do versículo</label>
               <input
+                id="new-disc-versetext"
                 type="text"
                 placeholder="Texto do versículo"
                 value={newVerseText}
                 onChange={(e) => setNewVerseText(e.target.value)}
                 className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
               />
+              <label htmlFor="new-disc-commenttext" className="sr-only">Texto do comentário relacionado (opcional)</label>
               <input
+                id="new-disc-commenttext"
                 type="text"
                 placeholder="Texto do comentário relacionado (opcional)"
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
                 className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
               />
+              <label htmlFor="new-disc-question" className="sr-only">Pergunta ou tema da discussão</label>
               <textarea
+                id="new-disc-question"
                 placeholder="Sua pergunta ou tema de discussão..."
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}

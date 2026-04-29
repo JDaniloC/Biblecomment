@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/Skeleton";
 
 export default function ChapterLoading() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-8 w-64 hidden md:block" />

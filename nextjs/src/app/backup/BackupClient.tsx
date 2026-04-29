@@ -56,22 +56,22 @@ export default function BackupClient({ user }: { user: SessionUser }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/home" className="text-blue-600 hover:text-blue-800 text-sm">← Livros</Link>
-          <h1 className="font-semibold text-gray-800">Backup</h1>
-          <button onClick={() => signOut({ callbackUrl: "/login" })} className="text-sm text-red-500 hover:text-red-700">
+          <Link href="/home" className="text-blue-600 dark:text-brand hover:text-blue-800 dark:hover:underline text-sm">← Livros</Link>
+          <h1 className="font-semibold text-gray-800 dark:text-slate-100">Backup</h1>
+          <button onClick={() => signOut({ callbackUrl: "/login" })} className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
             Sair
           </button>
         </div>
       </header>
 
       <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6 space-y-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Exportar Dados</h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-2">Exportar Dados</h2>
+            <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
               Exporte todos os dados do sistema (usuários, comentários, discussões, versículos) em formato JSON.
             </p>
             <button
@@ -83,27 +83,31 @@ export default function BackupClient({ user }: { user: SessionUser }) {
             </button>
           </div>
 
-          <hr className="border-gray-200" />
+          <hr className="border-gray-200 dark:border-slate-700" />
 
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Importar Dados</h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-2">Importar Dados</h2>
+            <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
               Importe um arquivo de backup JSON. <strong>Atenção:</strong> isso substituirá todos os dados atuais.
             </p>
+            <label htmlFor="backup-import-file" className="sr-only">
+              Selecionar arquivo de backup JSON
+            </label>
             <input
+              id="backup-import-file"
               ref={fileRef}
               type="file"
               accept=".json"
               onChange={handleImport}
               disabled={importing}
-              className="block text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-lg file:text-sm file:bg-white hover:file:bg-gray-50"
+              className="block text-sm text-gray-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 dark:file:border-slate-700 file:rounded-lg file:text-sm file:bg-white dark:file:bg-slate-800 hover:file:bg-gray-50 dark:hover:file:bg-slate-700 file:text-gray-700 dark:file:text-slate-200"
             />
-            {importing && <p className="text-sm text-blue-600 mt-2">Importando...</p>}
+            {importing && <p className="text-sm text-blue-600 dark:text-brand mt-2">Importando...</p>}
           </div>
         </div>
 
         {user.moderator && (
-          <div className="mt-4 text-xs text-gray-400 text-center">
+          <div className="mt-4 text-xs text-gray-400 dark:text-slate-500 text-center">
             Acesso de moderador: {user.email}
           </div>
         )}

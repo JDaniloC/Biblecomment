@@ -65,10 +65,10 @@ export default function UsersClient({ user }: { user: SessionUser }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-800/50 text-left text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                  <th className="px-4 py-3">Usuário</th>
-                  <th className="px-4 py-3 hidden sm:table-cell">Crença</th>
-                  <th className="px-4 py-3 hidden sm:table-cell">Estado</th>
-                  <th className="px-4 py-3 text-right">Comentários</th>
+                  <th scope="col" className="px-4 py-3">Usuário</th>
+                  <th scope="col" className="px-4 py-3 hidden sm:table-cell">Crença</th>
+                  <th scope="col" className="px-4 py-3 hidden sm:table-cell">Estado</th>
+                  <th scope="col" className="px-4 py-3 text-right">Comentários</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800">

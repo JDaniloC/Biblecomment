@@ -65,6 +65,7 @@ export default function Header({ onChangeChapter }: Props) {
             <Link
               href="/help"
               title="Sobre o Bible Comment"
+              aria-label="Sobre o Bible Comment e tutorial"
               className="flex items-center justify-center w-7 h-7 rounded-full border border-gray-300 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 dark:hover:text-brand transition text-sm font-bold leading-none"
             >
               ?
