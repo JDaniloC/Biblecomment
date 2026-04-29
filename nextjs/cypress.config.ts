@@ -3,7 +3,10 @@ import { resetDatabase, seedDatabase, findUserByEmail } from "./cypress/tasks/db
 
 export default defineConfig({
   e2e: {
-    baseUrl: "http://localhost:5000",
+    // CYPRESS_BASE_URL is set by scripts/cy-test.js so the server port
+    // (default 5050, override via CYPRESS_PORT) stays in sync with the
+    // baseUrl Cypress uses for cy.visit / cy.request.
+    baseUrl: process.env.CYPRESS_BASE_URL || "http://localhost:5050",
     specPattern: "cypress/e2e/**/*.cy.{ts,tsx}",
     supportFile: "cypress/support/e2e.ts",
     fixturesFolder: "cypress/fixtures",

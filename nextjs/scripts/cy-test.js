@@ -21,6 +21,12 @@ const path = require("path");
 
 const MODE = process.argv[2] === "dev" ? "dev" : "ci";
 
+// Use a port distinct from `npm run dev` (5000) so a developer can keep
+// their dev server running while Cypress executes against an isolated
+// build. Override with CYPRESS_PORT if needed.
+const PORT = parseInt(process.env.CYPRESS_PORT || "5050", 10);
+const BASE_URL = `http://localhost:${PORT}`;
+
 async function main() {
   console.log("[cy-test] starting in-memory Mongo...");
   const mongo = await MongoMemoryServer.create({
@@ -33,27 +39,35 @@ async function main() {
     ...process.env,
     MONGODB_URI: uri,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "cypress-test-secret-not-for-prod",
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:5000",
+    NEXTAUTH_URL: BASE_URL,
     // Auth.js v5 refuses requests to non-allowlisted hosts in production
     // mode (next start). localhost isn't auto-trusted — without this,
     // /api/auth/session throws UntrustedHost. Test-time only; real
     // deploys don't pass through this script.
     AUTH_TRUST_HOST: "true",
+    // Pass-through so Cypress' baseUrl can read it via env.
+    CYPRESS_BASE_URL: BASE_URL,
     NODE_ENV: MODE === "dev" ? "development" : "production",
   };
 
   const sst = require.resolve("start-server-and-test/src/bin/start.js");
-  const args =
+  // Invoke next directly with our chosen port instead of routing through
+  // `npm run dev` / `npm run start` (which hardcode 5000 for the human
+  // dev workflow). Using `npx next ...` keeps node-modules resolution
+  // identical to the project-installed binary.
+  const startCmd =
     MODE === "dev"
-      ? ["dev", "http://localhost:5000", "cy:open"]
-      : ["start", "http://localhost:5000", "cy:run"];
+      ? `npx next dev -p ${PORT}`
+      : `npx next start -p ${PORT}`;
+  const testCmd = MODE === "dev" ? "cy:open" : "cy:run";
+  const args = [startCmd, BASE_URL, testCmd];
 
   if (MODE === "ci") {
     console.log("[cy-test] running next build (one-time)...");
     await runOnce("npm", ["run", "build"], env);
   }
 
-  console.log(`[cy-test] launching start-server-and-test (${MODE})...`);
+  console.log(`[cy-test] launching start-server-and-test (${MODE}) on port ${PORT}...`);
   const child = spawn(process.execPath, [sst, ...args], {
     stdio: "inherit",
     env,
