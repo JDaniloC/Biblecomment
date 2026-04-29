@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useNotification } from "@/contexts/NotificationContext";
 import { commentsService } from "@/services/comments";
@@ -86,9 +86,12 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
   // Onboarding tour. Renders on first visit (any chapter) until the user
   // finishes or skips it. URL ?tour=1 forces a re-run regardless of the
   // localStorage flag — used by the "Refazer tutorial" button on /profile.
+  // useSearchParams (App Router hook) is the hydration-safe way to read
+  // the query string; reading window.location.search directly during
+  // render trips a SSR/CSR mismatch in production.
   const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME);
-  const forceTour = typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("tour") === "1";
+  const searchParams = useSearchParams();
+  const forceTour = searchParams?.get("tour") === "1";
   const showTutorial = forceTour || tutorial.isCompleted === false;
 
   const prevChapter = chapter > 1 ? chapter - 1 : null;
