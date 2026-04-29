@@ -15,6 +15,7 @@
     "cy:run": "cypress run",
     "cy:test": "node scripts/cy-test.js",
     "cy:test:dev": "node scripts/cy-test.js dev",
+    "a11y": "node scripts/lighthouse-a11y.js",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status",
@@ -51,6 +52,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@next/bundle-analyzer": "^16.2.4",
     "@testing-library/cypress": "^10.1.0",
     "@types/bcryptjs": "^2.4.6",

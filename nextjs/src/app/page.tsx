@@ -132,7 +132,7 @@ export default async function RootPage() {
               </Link>
               <Link
                 href="/register"
-                className="text-sm font-semibold bg-amber-600 text-white px-4 py-1.5 rounded-lg hover:bg-amber-700 transition"
+                className="text-sm font-semibold bg-amber-700 text-white px-4 py-1.5 rounded-lg hover:bg-amber-800 transition"
               >
                 Cadastrar-se
               </Link>
@@ -152,7 +152,7 @@ export default async function RootPage() {
               30.000+ versículos · Comentários · Reflexões
             </p>
             <p className="text-stone-500 dark:text-stone-400 text-sm md:text-base max-w-xl mx-auto pt-2">
-              Um espaço para o ensino e propagação do livro sagrado cristão através do
+              Um espaço para o ensino e propagação da Bíblia, a Palavra de Deus, através do
               compartilhamento de comentários e interpretações da comunidade.
             </p>
           </div>
@@ -165,7 +165,7 @@ export default async function RootPage() {
             <div className="max-w-3xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+                <span className="text-xs font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
                   Versículo do Dia
                 </span>
                 <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -216,7 +216,7 @@ export default async function RootPage() {
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              <span className="text-xs font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
                 Sobre o Projeto
               </span>
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -233,7 +233,7 @@ export default async function RootPage() {
                     href="https://reavivadosporsuapalavra.org/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brand hover:underline"
+                    className="text-blue-700 dark:text-brand underline"
                   >
                     Reavivados por Sua Palavra
                   </a>
@@ -264,7 +264,7 @@ export default async function RootPage() {
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              <span className="text-xs font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
                 Tipos de Comentário
               </span>
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -301,7 +301,7 @@ export default async function RootPage() {
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              <span className="text-xs font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
                 O Que Você Pode Fazer
               </span>
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -352,7 +352,7 @@ export default async function RootPage() {
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <Link
                   href="/register"
-                  className="flex-1 text-center bg-amber-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-amber-700 transition"
+                  className="flex-1 text-center bg-amber-700 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-amber-800 transition"
                 >
                   Criar conta gratuita
                 </Link>
@@ -372,7 +372,7 @@ export default async function RootPage() {
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              <span className="text-xs font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
                 Navegue pelos Livros
               </span>
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />

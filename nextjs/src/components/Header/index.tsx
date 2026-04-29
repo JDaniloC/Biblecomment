@@ -47,8 +47,8 @@ export default function Header({ onChangeChapter }: Props) {
             <button
               type="button"
               onClick={openBooks}
-              aria-label="Abrir lista de livros"
-              className="flex items-center gap-1 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-brand px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+              aria-label="Livros — abrir lista de livros"
+              className="flex items-center gap-1 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-brand px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition"
             >
               <span className="hidden sm:inline">Livros</span>
               <Image src="/assets/books.svg" alt="" aria-hidden="true" width={16} height={16} />
@@ -56,8 +56,8 @@ export default function Header({ onChangeChapter }: Props) {
             <button
               type="button"
               onClick={openLogin}
-              aria-label="Abrir painel da conta"
-              className="flex items-center gap-1 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-brand px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+              aria-label="Perfil — abrir painel da conta"
+              className="flex items-center gap-1 text-sm text-gray-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-brand px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition"
             >
               <span className="hidden sm:inline">Perfil</span>
               <Image src="/assets/person.svg" alt="" aria-hidden="true" width={16} height={16} />

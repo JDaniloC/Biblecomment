@@ -106,11 +106,11 @@ export default function RegisterPage() {
             />
             <label htmlFor="register-consent" className="text-sm text-gray-600 dark:text-slate-300 leading-snug">
               Li e aceito a{" "}
-              <Link href="/privacy" className="text-blue-600 dark:text-brand hover:underline" target="_blank">
+              <Link href="/privacy" className="text-blue-700 dark:text-brand underline" target="_blank">
                 Política de Privacidade
               </Link>{" "}
               e os{" "}
-              <Link href="/terms" className="text-blue-600 dark:text-brand hover:underline" target="_blank">
+              <Link href="/terms" className="text-blue-700 dark:text-brand underline" target="_blank">
                 Termos de Uso
               </Link>
               .
@@ -128,7 +128,7 @@ export default function RegisterPage() {
 
         <p className="mt-4 text-center text-sm text-gray-500 dark:text-slate-400">
           Já tem conta?{" "}
-          <Link href="/login" className="text-blue-600 dark:text-brand hover:underline">
+          <Link href="/login" className="text-blue-700 dark:text-brand underline">
             Entrar
           </Link>
         </p>

@@ -17,8 +17,8 @@ export default function TermsPage() {
         id="main-content"
         className="max-w-3xl mx-auto px-4 py-10 md:py-14"
       >
-        <p className="text-sm text-stone-400 dark:text-stone-500">
-          <Link href="/" className="hover:underline">← Início</Link>
+        <p className="text-sm text-stone-600 dark:text-stone-400">
+          <Link href="/" className="underline">← Início</Link>
         </p>
         <h1 className="font-lora text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100">
           Termos de Uso
@@ -91,7 +91,7 @@ export default function TermsPage() {
           Comentários podem ser denunciados por qualquer usuário. Moderadores
           podem remover conteúdos ou suspender contas que violem estes Termos.
           Decisões podem ser revistas por contato em{" "}
-          <a href={`mailto:${DPO_EMAIL}`} className="text-brand hover:underline">
+          <a href={`mailto:${DPO_EMAIL}`} className="text-blue-700 dark:text-brand underline">
             {DPO_EMAIL}
           </a>
           .
@@ -123,7 +123,7 @@ export default function TermsPage() {
         </h2>
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
           Seus dados pessoais são tratados conforme a{" "}
-          <Link href="/privacy" className="text-brand hover:underline">
+          <Link href="/privacy" className="text-blue-700 dark:text-brand underline">
             Política de Privacidade
           </Link>
           , parte integrante destes Termos.
@@ -134,7 +134,7 @@ export default function TermsPage() {
         </h2>
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
           Você pode excluir sua conta a qualquer momento, na aba{" "}
-          <Link href="/profile" className="text-brand hover:underline">Perfil</Link>.
+          <Link href="/profile" className="text-blue-700 dark:text-brand underline">Perfil</Link>.
           Os mantenedores podem encerrar contas que violem estes Termos,
           comunicando o motivo ao e-mail cadastrado quando possível.
         </p>
@@ -156,7 +156,7 @@ export default function TermsPage() {
           Estes Termos podem ser atualizados. Mudanças relevantes serão
           comunicadas na página inicial; o uso continuado após a comunicação
           implica aceitação. Contato:{" "}
-          <a href={`mailto:${DPO_EMAIL}`} className="text-brand hover:underline">
+          <a href={`mailto:${DPO_EMAIL}`} className="text-blue-700 dark:text-brand underline">
             {DPO_EMAIL}
           </a>
           .
