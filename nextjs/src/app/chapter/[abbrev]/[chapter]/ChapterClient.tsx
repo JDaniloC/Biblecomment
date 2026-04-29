@@ -13,6 +13,9 @@ import { CopyVerseButton } from "@/components/CopyVerseButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { FontSizeControl } from "@/components/FontSizeControl";
+import Tutorial from "@/components/Tutorial/Tutorial";
+import { useTutorial } from "@/lib/use-tutorial";
+import { CHAPTER_TUTORIAL, CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import { TAG_META, TAG_ORDER, getTagMeta } from "@/lib/tag-meta";
 import {
   toggleLikeAction,
@@ -79,6 +82,14 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Onboarding tour. Renders on first visit (any chapter) until the user
+  // finishes or skips it. URL ?tour=1 forces a re-run regardless of the
+  // localStorage flag — used by the "Refazer tutorial" button on /profile.
+  const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME);
+  const forceTour = typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("tour") === "1";
+  const showTutorial = forceTour || tutorial.isCompleted === false;
 
   const prevChapter = chapter > 1 ? chapter - 1 : null;
   const nextChapter = chapter < book.chapters ? chapter + 1 : null;
@@ -332,12 +343,12 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
 
         {/* Nav links */}
         <nav className="hidden md:flex gap-5 flex-shrink-0">
-          <Link href="/home" className="font-medium text-sm text-slate-800 dark:text-slate-100 no-underline">Livros</Link>
+          <Link href="/home" data-tour="livros-link" className="font-medium text-sm text-slate-800 dark:text-slate-100 no-underline">Livros</Link>
           <Link href="/discussions" className="font-medium text-sm text-slate-800 dark:text-slate-100 no-underline">Discussões</Link>
         </nav>
 
         {/* OmniSearch */}
-        <div className="flex-1 min-w-0">
+        <div data-tour="omnisearch" className="flex-1 min-w-0">
           <OmniSearch />
         </div>
 
@@ -346,10 +357,11 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
         <ThemeToggle />
 
         {/* UserDropdown */}
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0" data-tour="user-menu">
           <button
             type="button"
             onClick={() => setShowUserMenu((v) => !v)}
+            aria-label="Menu da conta"
             className="w-9 h-9 rounded-[18px] bg-brand border-2 border-brand flex items-center justify-center cursor-pointer"
           >
             <span className="font-bold text-[13px] text-white leading-[13px]">{initials}</span>
@@ -492,11 +504,11 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
               </div>
 
               <ul className="space-y-[2px]">
-                {verses.map((verse) => {
+                {verses.map((verse, idx) => {
                   const count = verse._id ? (countMap[verse._id] ?? 0) : 0;
                   const isSelected = selectedVerse?._id === verse._id && !isTitleMode;
                   return (
-                    <li key={verse._id} id={String(verse.verseNumber)} className="group relative">
+                    <li key={verse._id} id={String(verse.verseNumber)} data-tour={idx === 0 ? "verse-first" : undefined} className="group relative">
                       <button
                         type="button"
                         onClick={() => openVersePanel(verse)}
@@ -874,6 +886,21 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
           </aside>
         )}
       </div>
+
+      {showTutorial && (
+        <Tutorial
+          steps={CHAPTER_TUTORIAL}
+          onFinished={() => {
+            tutorial.markCompleted();
+            // Strip ?tour=1 so a refresh after dismiss doesn't reopen it.
+            if (forceTour && typeof window !== "undefined") {
+              const url = new URL(window.location.href);
+              url.searchParams.delete("tour");
+              window.history.replaceState(null, "", url.toString());
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

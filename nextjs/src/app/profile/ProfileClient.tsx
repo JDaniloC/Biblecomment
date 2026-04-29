@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { commentsService } from "@/services/comments";
@@ -12,6 +13,8 @@ import NewCommentForm from "@/components/NewCommentForm";
 import Loading from "@/components/Loading";
 import collectionsData from "@/data/collections.json";
 import { dateFormat } from "@/utils/iconFunction";
+import { useTutorial } from "@/lib/use-tutorial";
+import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 
 const { beliefs, states } = collectionsData as { beliefs: string[]; states: string[] };
 
@@ -389,6 +392,33 @@ function ChangePasswordCard() {
         {submitting ? "Atualizando…" : "Atualizar senha"}
       </button>
     </form>
+  );
+}
+
+/* ─────────────────── Tutorial reset (config tab) ─────────────────── */
+function TutorialResetCard() {
+  const router = useRouter();
+  const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME);
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
+      <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
+        Tutorial guiado
+      </div>
+      <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-4 mt-0">
+        Refaça o tour de boas-vindas para revisar como ler, comentar, abrir
+        discussões e gerenciar sua conta.
+      </p>
+      <button
+        type="button"
+        onClick={() => {
+          tutorial.reset();
+          router.push("/chapter/jo/3?tour=1");
+        }}
+        className="h-[35.5px] px-5 bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition"
+      >
+        Refazer tutorial
+      </button>
+    </div>
   );
 }
 
@@ -896,6 +926,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
               {/* ── Card: Trocar senha ── */}
               <ChangePasswordCard />
+
+              {/* ── Card: Tutorial guiado ── */}
+              <TutorialResetCard />
 
               {/* ── Card: Meus dados (LGPD Art. 18 - portabilidade) ── */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">

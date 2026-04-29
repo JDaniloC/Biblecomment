@@ -36,6 +36,7 @@
     "balloon-css": "^1.2.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.8.0",
+    "driver.js": "^1.4.0",
     "migrate-mongo": "^14.0.7",
     "mongoose": "^9.3.3",
     "next": "^14.2.35",
