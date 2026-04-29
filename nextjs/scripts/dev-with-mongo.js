@@ -110,12 +110,12 @@ async function main() {
     ...process.env,
     MONGODB_URI: uri,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "dev-mongo-secret-not-for-prod",
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:5000",
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
     AUTH_TRUST_HOST: "true",
     NODE_ENV: "development",
   };
 
-  console.log("[dev] launching next dev on :5000 — log in as alice@cypress.test / alice-secret-123\n");
+  console.log("[dev] launching next dev on :3000 — log in as alice@cypress.test / alice-secret-123\n");
 
   // Windows requires shell:true for .cmd shims like npm.cmd; harmless on
   // POSIX where /usr/bin/npm is a regular executable.

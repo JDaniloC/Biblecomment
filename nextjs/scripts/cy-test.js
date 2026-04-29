@@ -39,7 +39,7 @@ if (process.env.MONGODB_URI) {
   );
 }
 
-// Use a port distinct from `npm run dev` (5000) so a developer can keep
+// Use a port distinct from `npm run dev` (3000) so a developer can keep
 // their dev server running while Cypress executes against an isolated
 // build. Override with CYPRESS_PORT if needed.
 const PORT = parseInt(process.env.CYPRESS_PORT || "5050", 10);
@@ -73,7 +73,7 @@ async function main() {
 
   const sst = require.resolve("start-server-and-test/src/bin/start.js");
   // Invoke next directly with our chosen port instead of routing through
-  // `npm run dev` / `npm run start` (which hardcode 5000 for the human
+  // `npm run dev` / `npm run start` (which hardcode 3000 for the human
   // dev workflow). Using `npx next ...` keeps node-modules resolution
   // identical to the project-installed binary.
   const startCmd =

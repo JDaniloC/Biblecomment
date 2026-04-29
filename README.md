@@ -114,7 +114,7 @@ existing `catch` blocks that read `err.response?.status` keep working.
 cd nextjs
 cp .env.local.example .env.local     # set MONGODB_URI, NEXTAUTH_SECRET
 npm install
-npm run dev                          # http://localhost:5000 (with mongodb-memory-server)
+npm run dev                          # http://localhost:3000 (start a Mongo separately, or use `npm run dev:mongo` for an in-memory one)
 ```
 
 `npm run dev` orchestrates an in-memory Mongo instance and pipes its

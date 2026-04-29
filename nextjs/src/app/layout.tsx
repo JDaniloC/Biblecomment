@@ -27,7 +27,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:5000"),
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
   title: {
     default: "Bible Comment — Sua Biblioteca Bíblica",
     template: "%s | Bible Comment",

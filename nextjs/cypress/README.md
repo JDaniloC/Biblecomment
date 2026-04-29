@@ -10,20 +10,29 @@ You need a separate Mongo database for tests. **Never point Cypress at
 production Mongo** — the `db:reset` task wipes collections at the start
 of every spec.
 
-The DB task in `cypress/tasks/db.ts` refuses to connect if `MONGODB_URI`
-ends in `/biblecomment` (the prod database name).
+Hard guard (since 2026-04-29): every chokepoint that opens a Mongo
+connection from Cypress (`cypress/tasks/db.ts`,
+`cypress.config.ts:setupNodeEvents`, `scripts/cy-test.js`,
+`scripts/dev-with-mongo.js`) calls `assertLocalMongoUri()` and **refuses
+to connect to anything other than `127.0.0.1` / `localhost` / `::1` /
+`0.0.0.0`**. `mongodb+srv://` (Atlas) is rejected unconditionally. This
+is intentionally not env-overridable — see the comment at the top of
+`cypress/tasks/safety.ts` for the incident this defends against.
 
 ### Local
 
-Either run a local Mongo (`docker run -d -p 27017:27017 mongo:7`) and set:
+Run a local Mongo (`docker run -d -p 27017:27017 mongo:7`) and set:
 
 ```
 MONGODB_URI=mongodb://localhost:27017/biblecomment-cypress
 NEXTAUTH_SECRET=any-non-empty-string-for-tests
-NEXTAUTH_URL=http://localhost:5000
+NEXTAUTH_URL=http://localhost:5050
 ```
 
-…or point at a separate Atlas database (NOT the prod one).
+(Cypress runs on port 5050 by default; `npm run dev` uses 3000.)
+
+`npm run cy:test` is the recommended path — it spins up an in-memory
+Mongo and bypasses the local install entirely.
 
 ## Running
 

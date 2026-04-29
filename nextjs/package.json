@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev -p 5000",
+    "dev": "next dev -p 3000",
     "dev:mongo": "node scripts/dev-with-mongo.js",
     "build": "next build",
     "analyze": "cross-env ANALYZE=true next build",
-    "start": "next start -p 5000",
+    "start": "next start -p 3000",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
