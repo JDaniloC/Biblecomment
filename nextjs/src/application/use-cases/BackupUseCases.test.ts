@@ -33,6 +33,7 @@ function repoReturning(users: User[]): IUserRepository {
     create: async (u) => ({ _id: "new", ...u }),
     updatePassword: async () => {},
     update: async () => null,
+    markTutorialCompleted: async () => {},
     delete: async () => {},
   };
 }

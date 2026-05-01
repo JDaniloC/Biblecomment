@@ -9,12 +9,14 @@ declare module "next-auth" {
       name: string;
       username: string;
       moderator: boolean;
+      tutorialsCompleted: string[];
     };
   }
 
   interface User {
     username: string;
     moderator: boolean;
+    tutorialsCompleted: string[];
   }
 }
 
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
     id: string;
     username: string;
     moderator: boolean;
+    tutorialsCompleted: string[];
   }
 }

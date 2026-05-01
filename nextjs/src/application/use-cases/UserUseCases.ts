@@ -69,6 +69,15 @@ export class DeleteUserUseCase {
   }
 }
 
+export class MarkTutorialCompletedUseCase {
+  constructor(private readonly userRepo: IUserRepository) {}
+
+  async execute(email: string, name: string): Promise<void> {
+    if (!name || typeof name !== "string") throw new Error("Invalid tutorial name");
+    await this.userRepo.markTutorialCompleted(email, name);
+  }
+}
+
 export class SetModeratorUseCase {
   constructor(private readonly userRepo: IUserRepository) {}
 

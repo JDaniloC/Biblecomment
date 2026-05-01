@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import ChapterClient from "@/app/chapter/[abbrev]/[chapter]/ChapterClient";
+import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 
 type Params = { abbrev: string; number: string };
 
@@ -56,12 +57,16 @@ export default async function VersesPage({ params }: { params: Promise<Params> }
 
   if (!book) redirect("/home");
 
+  const tutorialAlreadyCompleted =
+    session.user.tutorialsCompleted?.includes(CHAPTER_TUTORIAL_NAME) ?? false;
+
   return (
     <ChapterClient
       book={book}
       verses={verses}
       chapter={chapterNum}
       user={session.user}
+      tutorialAlreadyCompleted={tutorialAlreadyCompleted}
     />
   );
 }

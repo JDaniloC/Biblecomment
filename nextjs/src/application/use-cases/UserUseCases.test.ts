@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
-import { SetModeratorUseCase, DeleteUserUseCase, ANONYMIZED_USERNAME } from "./UserUseCases";
+import {
+  SetModeratorUseCase,
+  DeleteUserUseCase,
+  MarkTutorialCompletedUseCase,
+  ANONYMIZED_USERNAME,
+} from "./UserUseCases";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
@@ -121,5 +126,37 @@ describe("DeleteUserUseCase", () => {
     expect(discussionRepo.anonymizeByUsername).toHaveBeenCalledWith("alice", ANONYMIZED_USERNAME);
     expect(notifRepo.deleteForUser).toHaveBeenCalledWith("alice");
     expect(del).toHaveBeenCalledWith("alice@example.com");
+  });
+});
+
+describe("MarkTutorialCompletedUseCase", () => {
+  it("delegates the email and tutorial name to the repo", async () => {
+    const markTutorialCompleted = vi.fn().mockResolvedValue(undefined);
+    const repo = { markTutorialCompleted } as unknown as IUserRepository;
+    const useCase = new MarkTutorialCompletedUseCase(repo);
+
+    await useCase.execute("alice@example.com", "chapter-v1");
+
+    expect(markTutorialCompleted).toHaveBeenCalledWith("alice@example.com", "chapter-v1");
+  });
+
+  it("is idempotent — repeated calls just delegate again (repo enforces $addToSet)", async () => {
+    const markTutorialCompleted = vi.fn().mockResolvedValue(undefined);
+    const repo = { markTutorialCompleted } as unknown as IUserRepository;
+    const useCase = new MarkTutorialCompletedUseCase(repo);
+
+    await useCase.execute("alice@example.com", "chapter-v1");
+    await useCase.execute("alice@example.com", "chapter-v1");
+
+    expect(markTutorialCompleted).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects empty/non-string tutorial names without touching the repo", async () => {
+    const markTutorialCompleted = vi.fn();
+    const repo = { markTutorialCompleted } as unknown as IUserRepository;
+    const useCase = new MarkTutorialCompletedUseCase(repo);
+
+    await expect(useCase.execute("alice@example.com", "")).rejects.toThrow("Invalid tutorial name");
+    expect(markTutorialCompleted).not.toHaveBeenCalled();
   });
 });

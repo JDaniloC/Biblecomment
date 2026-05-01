@@ -37,6 +37,13 @@ interface Props {
   verses: Verse[];
   chapter: number;
   user: SessionUser;
+  /**
+   * Has the user completed the chapter tutorial on any device? Sourced from
+   * the auth session (JWT, populated at login). Lets the tour skip itself
+   * for a fresh browser of an already-onboarded user without waiting on
+   * localStorage.
+   */
+  tutorialAlreadyCompleted: boolean;
 }
 
 const MIN_LEN = 200;
@@ -56,7 +63,7 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export default function ChapterClient({ book, verses, chapter, user }: Props) {
+export default function ChapterClient({ book, verses, chapter, user, tutorialAlreadyCompleted }: Props) {
   const router = useRouter();
   const { handleNotification } = useNotification();
 
@@ -89,7 +96,13 @@ export default function ChapterClient({ book, verses, chapter, user }: Props) {
   // useSearchParams (App Router hook) is the hydration-safe way to read
   // the query string; reading window.location.search directly during
   // render trips a SSR/CSR mismatch in production.
-  const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME);
+  // syncServer + initialFromServer give us cross-device behavior: the JWT
+  // carries `tutorialsCompleted`, so a fresh browser of an already-onboarded
+  // user skips the tour without waiting on localStorage.
+  const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME, {
+    syncServer: true,
+    initialFromServer: tutorialAlreadyCompleted,
+  });
   const searchParams = useSearchParams();
   const forceTour = searchParams?.get("tour") === "1";
   const showTutorial = forceTour || tutorial.isCompleted === false;

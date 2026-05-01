@@ -6,6 +6,7 @@ import {
   deleteSelfAction,
   changePasswordAction,
   setModeratorAction,
+  markTutorialCompletedAction,
 } from "@/app/actions/users";
 import { actionError } from "./_action-error";
 
@@ -89,6 +90,11 @@ export const usersService = {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     const result = await changePasswordAction(currentPassword, newPassword);
+    if (!result.ok) actionError(result.error);
+  },
+
+  async markTutorialCompleted(name: string): Promise<void> {
+    const result = await markTutorialCompletedAction(name);
     if (!result.ok) actionError(result.error);
   },
 };

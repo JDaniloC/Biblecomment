@@ -8,17 +8,19 @@ export interface IUserDocument extends Document {
   state?: string;
   belief?: string;
   moderator?: boolean;
+  tutorialsCompleted?: string[];
 }
 
 const UserSchema = new Schema<IUserDocument>(
   {
-    email:        { type: String, required: true, unique: true, lowercase: true, trim: true },
-    username:     { type: String, required: true, trim: true },
-    password:     { type: String, required: true },
-    passwordType: { type: String, enum: ["md5", "bcrypt"], default: "md5" },
-    state:        { type: String },
-    belief:       { type: String },
-    moderator:    { type: Boolean, default: false },
+    email:              { type: String, required: true, unique: true, lowercase: true, trim: true },
+    username:           { type: String, required: true, trim: true },
+    password:           { type: String, required: true },
+    passwordType:       { type: String, enum: ["md5", "bcrypt"], default: "md5" },
+    state:              { type: String },
+    belief:             { type: String },
+    moderator:          { type: Boolean, default: false },
+    tutorialsCompleted: { type: [String], default: [] },
   },
   { timestamps: true }
 );

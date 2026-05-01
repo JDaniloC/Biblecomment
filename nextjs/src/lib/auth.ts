@@ -52,6 +52,7 @@ export const authConfig: NextAuthConfig = {
           name: user.username,
           username: user.username,
           moderator: user.moderator ?? false,
+          tutorialsCompleted: user.tutorialsCompleted ?? [],
         };
       },
     }),
@@ -65,6 +66,8 @@ export const authConfig: NextAuthConfig = {
         token.name = user.name as string;
         token.username = (user as { username: string }).username;
         token.moderator = (user as { moderator: boolean }).moderator;
+        token.tutorialsCompleted =
+          (user as { tutorialsCompleted?: string[] }).tutorialsCompleted ?? [];
       }
       return token;
     },
@@ -75,6 +78,8 @@ export const authConfig: NextAuthConfig = {
         session.user.name = token.name as string;
         session.user.username = token.username as string;
         session.user.moderator = token.moderator as boolean;
+        session.user.tutorialsCompleted =
+          (token.tutorialsCompleted as string[] | undefined) ?? [];
       }
       return session;
     },

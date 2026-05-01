@@ -13,6 +13,7 @@ function toEntity(doc: IUserDocument): User {
     state: doc.state,
     belief: doc.belief,
     moderator: doc.moderator,
+    tutorialsCompleted: doc.tutorialsCompleted ?? [],
   };
 }
 
@@ -70,6 +71,14 @@ export class MongoUserRepository implements IUserRepository {
       { returnDocument: "after" }
     );
     return doc ? toEntity(doc) : null;
+  }
+
+  async markTutorialCompleted(email: string, name: string): Promise<void> {
+    await connectToDatabase();
+    await UserModel.updateOne(
+      { email: email.toLowerCase() },
+      { $addToSet: { tutorialsCompleted: name } },
+    );
   }
 
   async delete(email: string): Promise<void> {

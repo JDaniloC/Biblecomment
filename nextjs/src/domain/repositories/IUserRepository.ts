@@ -9,5 +9,10 @@ export interface IUserRepository {
   create(user: Omit<User, "_id">): Promise<User>;
   updatePassword(email: string, password: string, passwordType: "bcrypt"): Promise<void>;
   update(email: string, data: Partial<Omit<User, "_id" | "email">>): Promise<User | null>;
+  /**
+   * Idempotently mark a tutorial as completed for the user. Uses $addToSet
+   * under the hood so concurrent calls converge.
+   */
+  markTutorialCompleted(email: string, name: string): Promise<void>;
   delete(email: string): Promise<void>;
 }

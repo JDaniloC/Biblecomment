@@ -47,6 +47,7 @@ export interface SeedUser {
   moderator?: boolean;
   state?: string;
   belief?: string;
+  tutorialsCompleted?: string[];
 }
 
 export interface SeedBook {
@@ -77,6 +78,7 @@ export async function findUserByEmail(email: string): Promise<{
   passwordHashLength: number;
   passwordType: string | null;
   username: string | null;
+  tutorialsCompleted: string[];
 }> {
   await ensureConnected();
   const db = mongoose.connection.db;
@@ -85,13 +87,22 @@ export async function findUserByEmail(email: string): Promise<{
     .collection("users")
     .findOne({ email: email.toLowerCase().trim() });
   if (!doc) {
-    return { exists: false, passwordHashLength: 0, passwordType: null, username: null };
+    return {
+      exists: false,
+      passwordHashLength: 0,
+      passwordType: null,
+      username: null,
+      tutorialsCompleted: [],
+    };
   }
   return {
     exists: true,
     passwordHashLength: typeof doc.password === "string" ? doc.password.length : 0,
     passwordType: typeof doc.passwordType === "string" ? doc.passwordType : null,
     username: typeof doc.username === "string" ? doc.username : null,
+    tutorialsCompleted: Array.isArray(doc.tutorialsCompleted)
+      ? (doc.tutorialsCompleted as string[])
+      : [],
   };
 }
 
@@ -110,6 +121,7 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
         state: u.state ?? "",
         belief: u.belief ?? "",
         moderator: u.moderator ?? false,
+        tutorialsCompleted: u.tutorialsCompleted ?? [],
         createdAt: new Date(),
         updatedAt: new Date(),
       })),

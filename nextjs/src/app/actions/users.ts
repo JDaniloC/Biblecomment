@@ -10,6 +10,7 @@ import {
   UpdateUserProfileUseCase,
   DeleteUserUseCase,
   SetModeratorUseCase,
+  MarkTutorialCompletedUseCase,
 } from "@/application/use-cases/UserUseCases";
 import { ChangePasswordUseCase } from "@/application/use-cases/AuthUseCases";
 import { logger } from "@/lib/logger";
@@ -110,6 +111,31 @@ export async function changePasswordAction(
     }
     logger.error({ err, action: "changePasswordAction" }, "change password failed");
     return appError(err, "Erro ao atualizar senha.");
+  }
+}
+
+/**
+ * Mark an onboarding tutorial as completed for the current user. Idempotent
+ * via $addToSet at the repo layer. Server-side persistence is what makes
+ * the tour cross-device — the localStorage flag still drives "skip on this
+ * device" but the server flag is loaded into the JWT at next login.
+ */
+export async function markTutorialCompletedAction(
+  name: string,
+): Promise<ActionResult<{ marked: true }>> {
+  const session = await auth();
+  if (!session?.user) return authError();
+
+  try {
+    const useCase = new MarkTutorialCompletedUseCase(new MongoUserRepository());
+    await useCase.execute(session.user.email, name);
+    return { ok: true, data: { marked: true } };
+  } catch (err) {
+    if (err instanceof Error && err.message === "Invalid tutorial name") {
+      return { ok: false, error: "Invalid tutorial name" };
+    }
+    logger.error({ err, action: "markTutorialCompletedAction", name }, "mark tutorial failed");
+    return appError(err, "Erro ao marcar tutorial como concluído.");
   }
 }
 

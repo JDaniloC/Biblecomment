@@ -7,6 +7,12 @@ export interface User {
   state?: string;
   belief?: string;
   moderator?: boolean;
+  /**
+   * Onboarding tutorials the user has finished or skipped.
+   * Versioned identifiers (e.g. "chapter-v1") so a future tour bump
+   * can reuse the same field without re-prompting older completions.
+   */
+  tutorialsCompleted?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
