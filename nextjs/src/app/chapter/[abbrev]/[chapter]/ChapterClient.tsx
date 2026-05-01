@@ -36,12 +36,17 @@ interface Props {
   book: Book;
   verses: Verse[];
   chapter: number;
-  user: SessionUser;
+  /**
+   * The signed-in user, or null for an anonymous reader. Reading is
+   * always allowed; write actions (composing, liking, reporting, opening
+   * a discussion, deleting) bounce through /login when user is null.
+   */
+  user: SessionUser | null;
   /**
    * Has the user completed the chapter tutorial on any device? Sourced from
    * the auth session (JWT, populated at login). Lets the tour skip itself
    * for a fresh browser of an already-onboarded user without waiting on
-   * localStorage.
+   * localStorage. Always false for anonymous readers.
    */
   tutorialAlreadyCompleted: boolean;
 }
@@ -98,14 +103,16 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
   // render trips a SSR/CSR mismatch in production.
   // syncServer + initialFromServer give us cross-device behavior: the JWT
   // carries `tutorialsCompleted`, so a fresh browser of an already-onboarded
-  // user skips the tour without waiting on localStorage.
+  // user skips the tour without waiting on localStorage. The tour is
+  // skipped entirely for anonymous readers — the actions it teaches all
+  // require an account anyway.
   const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME, {
-    syncServer: true,
+    syncServer: !!user,
     initialFromServer: tutorialAlreadyCompleted,
   });
   const searchParams = useSearchParams();
   const forceTour = searchParams?.get("tour") === "1";
-  const showTutorial = forceTour || tutorial.isCompleted === false;
+  const showTutorial = !!user && (forceTour || tutorial.isCompleted === false);
 
   const prevChapter = chapter > 1 ? chapter - 1 : null;
   const nextChapter = chapter < book.chapters ? chapter + 1 : null;
@@ -180,8 +187,21 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
     setComposing(false);
   }, []);
 
+  // Push the visitor to /login with a callback that returns them right
+  // back to where they were trying to act. Called by every write handler
+  // when `user` is null.
+  const requireLogin = useCallback(() => {
+    if (typeof window === "undefined") {
+      router.push("/login");
+      return;
+    }
+    const cb = encodeURIComponent(window.location.pathname + window.location.search);
+    router.push(`/login?callbackUrl=${cb}`);
+  }, [router]);
+
   const handleCompose = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) { requireLogin(); return; }
     if (composeText.length < MIN_LEN || composeText.length > MAX_LEN) {
       handleNotification("info", `Comentário deve ter entre ${MIN_LEN} e ${MAX_LEN} caracteres.`);
       return;
@@ -216,9 +236,10 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
     } finally {
       setComposeSubmitting(false);
     }
-  }, [composeText, composeTags, isTitleMode, book.abbrev, chapter, selectedVerse, handleNotification, resetCompose]);
+  }, [user, requireLogin, composeText, composeTags, isTitleMode, book.abbrev, chapter, selectedVerse, handleNotification, resetCompose]);
 
   const handleLike = useCallback(async (id: string) => {
+    if (!user) { requireLogin(); return; }
     const result = await toggleLikeAction(id);
     if (!result.ok) {
       handleNotification("error", "Erro ao curtir.");
@@ -231,18 +252,20 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
       prev.map((c) => (c._id === id ? (result.data as unknown as CommentData) : c));
     setComments(updater);
     setTitleComments(updater);
-  }, [handleNotification]);
+  }, [user, requireLogin, handleNotification]);
 
   const handleReport = useCallback(async (id: string) => {
+    if (!user) { requireLogin(); return; }
     const result = await reportCommentAction(id);
     if (!result.ok) {
       handleNotification("error", "Erro ao reportar.");
       return;
     }
     handleNotification("info", "Comentário reportado.");
-  }, [handleNotification]);
+  }, [user, requireLogin, handleNotification]);
 
   const handleDelete = useCallback(async (id: string) => {
+    if (!user) { requireLogin(); return; }
     if (!confirm("Excluir este comentário?")) return;
     const result = await deleteCommentAction(id);
     if (!result.ok) {
@@ -252,7 +275,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
     setComments((prev) => prev.filter((c) => c._id !== id));
     setTitleComments((prev) => prev.filter((c) => c._id !== id));
     handleNotification("success", "Comentário excluído.");
-  }, [handleNotification]);
+  }, [user, requireLogin, handleNotification]);
 
   const startEdit = useCallback((comment: CommentData) => {
     setEditingComment(comment);
@@ -283,8 +306,9 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
   }, [editingComment, editText, editTags, handleNotification]);
 
   const handleDiscussion = useCallback((id: string, text: string, reference: string) => {
+    if (!user) { requireLogin(); return; }
     router.push(`/discussion/${book.abbrev}?commentId=${id}&ref=${encodeURIComponent(reference)}&text=${encodeURIComponent(text)}`);
-  }, [book.abbrev, router]);
+  }, [user, requireLogin, book.abbrev, router]);
 
   const showSidebar = selectedVerse !== null || isTitleMode;
 
@@ -341,7 +365,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
 
   const sidebarRef2 = sidebarRef;
 
-  const initials = getInitials(user.name || user.username || "U");
+  const initials = user ? getInitials(user.name || user.username || "U") : "";
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f7] dark:bg-slate-950">
@@ -369,11 +393,20 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
         </div>
 
         <div className="hidden md:inline-flex"><FontSizeControl /></div>
-        <NotificationsBell />
+        {user && <NotificationsBell />}
         <ThemeToggle />
 
+        {!user && (
+          <Link
+            href={`/login?callbackUrl=${encodeURIComponent(`/verses/${book.abbrev}/${chapter}`)}`}
+            className="flex-shrink-0 inline-flex items-center h-9 px-3 rounded-md bg-brand text-white text-sm font-semibold no-underline whitespace-nowrap hover:opacity-90 transition"
+          >
+            Entrar
+          </Link>
+        )}
+
         {/* UserDropdown */}
-        <div className="relative flex-shrink-0" data-tour="user-menu">
+        {user && <div className="relative flex-shrink-0" data-tour="user-menu">
           <button
             type="button"
             onClick={() => setShowUserMenu((v) => !v)}
@@ -445,7 +478,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
               </div>
             </>
           )}
-        </div>
+        </div>}
       </header>
 
       <div className="flex flex-1 relative min-h-0">
@@ -607,7 +640,11 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
               </div>
               <button
                 type="button"
-                onClick={() => { if (composing) resetCompose(); else setComposing(true); }}
+                onClick={() => {
+                  if (!user) { requireLogin(); return; }
+                  if (composing) resetCompose();
+                  else setComposing(true);
+                }}
                 className="flex items-center gap-[5px] h-[30.667px] px-[11px] border-[1.333px] border-brand rounded-md bg-transparent text-brand text-xs font-semibold cursor-pointer whitespace-nowrap"
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -759,7 +796,10 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                   <p className="text-slate-300 dark:text-slate-600 text-xs mt-1">Seja o primeiro a comentar!</p>
                   <button
                     type="button"
-                    onClick={() => setComposing(true)}
+                    onClick={() => {
+                      if (!user) { requireLogin(); return; }
+                      setComposing(true);
+                    }}
                     className="mt-4 text-[13px] text-[#137ddb] hover:underline"
                   >
                     Escrever comentário
@@ -769,7 +809,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                 <div className="px-6 py-6 space-y-[12px]">
                   {activeComments.map((comment) => {
                     const meta = getTagMeta(comment.tags);
-                    const isOwner = comment.username === user.username;
+                    const isOwner = !!user && comment.username === user.username;
 
                     if (editingComment?._id === comment._id) {
                       return (

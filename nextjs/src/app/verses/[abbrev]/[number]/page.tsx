@@ -41,8 +41,10 @@ export async function generateMetadata({
 }
 
 export default async function VersesPage({ params }: { params: Promise<Params> }) {
+  // Reading verses & comments is intentionally public — Bible Comment is
+  // an open platform. Auth gates write actions (composer, like, report,
+  // delete) inside ChapterClient instead.
   const session = await auth();
-  if (!session?.user) redirect("/login");
 
   const { abbrev, number } = await params;
   const chapterNum = parseInt(number, 10);
@@ -55,17 +57,17 @@ export default async function VersesPage({ params }: { params: Promise<Params> }
     verseRepo.findByAbbrevAndChapter(abbrev, chapterNum),
   ]);
 
-  if (!book) redirect("/home");
+  if (!book) redirect("/");
 
   const tutorialAlreadyCompleted =
-    session.user.tutorialsCompleted?.includes(CHAPTER_TUTORIAL_NAME) ?? false;
+    session?.user?.tutorialsCompleted?.includes(CHAPTER_TUTORIAL_NAME) ?? false;
 
   return (
     <ChapterClient
       book={book}
       verses={verses}
       chapter={chapterNum}
-      user={session.user}
+      user={session?.user ?? null}
       tutorialAlreadyCompleted={tutorialAlreadyCompleted}
     />
   );
