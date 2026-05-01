@@ -69,6 +69,10 @@ async function main() {
     // Pass-through so Cypress' baseUrl can read it via env.
     CYPRESS_BASE_URL: BASE_URL,
     NODE_ENV: MODE === "dev" ? "development" : "production",
+    // Capture password-reset emails in process memory; specs read them via
+    // GET /api/_test/last-email instead of going to Resend.
+    EMAIL_TRANSPORT: "memory",
+    APP_URL: BASE_URL,
   };
 
   const sst = require.resolve("start-server-and-test/src/bin/start.js");
@@ -80,7 +84,16 @@ async function main() {
     MODE === "dev"
       ? `npx next dev -p ${PORT}`
       : `npx next start -p ${PORT}`;
-  const testCmd = MODE === "dev" ? "cy:open" : "cy:run";
+  // CYPRESS_SPEC=cypress/e2e/foo.cy.ts narrows the run to one spec; the
+  // npm script `cy:run` covers the unfiltered case so CI doesn't need
+  // anything extra.
+  const specFilter = process.env.CYPRESS_SPEC;
+  const testCmd =
+    MODE === "dev"
+      ? "cy:open"
+      : specFilter
+        ? `npx cypress run --spec "${specFilter}"`
+        : "cy:run";
   const args = [startCmd, BASE_URL, testCmd];
 
   if (MODE === "ci") {

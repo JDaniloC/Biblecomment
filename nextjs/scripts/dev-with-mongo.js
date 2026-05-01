@@ -57,7 +57,15 @@ const FIXTURES = {
   ],
 };
 
-const COLLECTIONS = ["users", "books", "verses", "comments", "discussions", "notifications"];
+const COLLECTIONS = [
+  "users",
+  "books",
+  "verses",
+  "comments",
+  "discussions",
+  "notifications",
+  "passwordresettokens",
+];
 
 async function seed(uri) {
   mongoose.set("strictQuery", false);
@@ -113,6 +121,10 @@ async function main() {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
     AUTH_TRUST_HOST: "true",
     NODE_ENV: "development",
+    // Capture password-reset emails locally so /api/_test/last-email can
+    // hand back the link instead of relying on a real Resend account.
+    EMAIL_TRANSPORT: process.env.EMAIL_TRANSPORT ?? "memory",
+    APP_URL: process.env.APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000",
   };
 
   console.log("[dev] launching next dev on :3000 — log in as alice@cypress.test / alice-secret-123\n");

@@ -1,50 +1,53 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usersService } from "@/services/users";
 
-export default function RegisterPage() {
+export default function ResetPasswordPage() {
   return (
     <Suspense fallback={null}>
-      <RegisterContent />
+      <ResetPasswordContent />
     </Suspense>
   );
 }
 
-function RegisterContent() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl");
+  const token = searchParams?.get("token") ?? "";
 
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!token) router.replace("/forgot-password");
+  }, [token, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    if (!acceptedTerms) {
-      setError("É necessário aceitar os Termos de Uso e a Política de Privacidade.");
+    if (password.length < 6) {
+      setError("Senha inválida (mínimo 6 caracteres).");
+      return;
+    }
+    if (password !== confirm) {
+      setError("As senhas não coincidem.");
       return;
     }
 
     setLoading(true);
     try {
-      await usersService.register({ email, username, password, acceptedTerms: true });
-      const loginUrl = callbackUrl
-        ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
-        : "/login";
-      router.push(loginUrl);
+      await usersService.completePasswordReset(token, password);
+      router.push("/login?reset=1");
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } }; message?: string };
-      setError(e.response?.data?.error ?? e.message ?? "Erro ao cadastrar.");
+      const e = err as { message?: string };
+      setError(e.message ?? "Erro ao redefinir senha.");
     } finally {
       setLoading(false);
     }
@@ -52,8 +55,6 @@ function RegisterContent() {
 
   return (
     <div className="min-h-screen grid md:grid-cols-2 bg-stone-50 dark:bg-slate-950">
-      {/* Branded panel — desktop only. Mirrors /login so the cadastro flow
-          shares the same visual rest stop as sign-in. */}
       <aside
         aria-hidden="true"
         className="hidden md:flex flex-col justify-between bg-gradient-to-br from-amber-50 to-stone-100 dark:from-slate-900 dark:to-slate-950 p-12 border-r border-stone-200 dark:border-slate-800"
@@ -72,38 +73,26 @@ function RegisterContent() {
 
         <div className="space-y-6 max-w-sm">
           <h2 className="font-lora text-3xl lg:text-4xl font-bold text-stone-800 dark:text-stone-100 leading-tight">
-            Junte-se à comunidade de estudo bíblico.
+            Defina uma nova senha.
           </h2>
-          <ul className="space-y-3 text-stone-600 dark:text-stone-300">
-            <li className="flex items-start gap-3">
-              <span aria-hidden="true" className="mt-0.5 text-amber-700 dark:text-amber-300">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </span>
-              <span>Comente versículos com tags devocional, exegética, pessoal ou inspirada.</span>
+          <p className="text-stone-600 dark:text-stone-300 leading-relaxed">
+            Escolha uma senha forte com pelo menos 6 caracteres. Use uma
+            combinação que você não usa em outros sites.
+          </p>
+          <ul className="space-y-2 text-sm text-stone-600 dark:text-stone-300">
+            <li className="flex items-start gap-2">
+              <span aria-hidden="true" className="mt-0.5 text-amber-700 dark:text-amber-300">•</span>
+              Mínimo de 6 caracteres.
             </li>
-            <li className="flex items-start gap-3">
-              <span aria-hidden="true" className="mt-0.5 text-amber-700 dark:text-amber-300">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </span>
-              <span>Abra discussões e contribua com outras perspectivas.</span>
+            <li className="flex items-start gap-2">
+              <span aria-hidden="true" className="mt-0.5 text-amber-700 dark:text-amber-300">•</span>
+              Misture letras, números e símbolos.
             </li>
-            <li className="flex items-start gap-3">
-              <span aria-hidden="true" className="mt-0.5 text-amber-700 dark:text-amber-300">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </span>
-              <span>Sem spam, sem newsletters: o e-mail é apenas para login.</span>
+            <li className="flex items-start gap-2">
+              <span aria-hidden="true" className="mt-0.5 text-amber-700 dark:text-amber-300">•</span>
+              Não reaproveite senhas de outros serviços.
             </li>
           </ul>
-          <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-            Você pode exportar ou apagar todos os seus dados a qualquer momento — em
-            conformidade com a LGPD.
-          </p>
         </div>
 
         <p className="text-xs text-stone-500 dark:text-stone-400">
@@ -111,13 +100,11 @@ function RegisterContent() {
         </p>
       </aside>
 
-      {/* Form panel */}
       <main
         id="main-content"
         className="flex flex-col items-center justify-center px-4 py-10 md:py-16"
       >
         <div className="w-full max-w-sm">
-          {/* Mobile-only logo */}
           <Link
             href="/"
             className="md:hidden flex items-center justify-center gap-2 mb-8 no-underline"
@@ -130,10 +117,10 @@ function RegisterContent() {
 
           <header className="mb-8">
             <h1 className="font-lora text-3xl font-bold text-stone-800 dark:text-stone-100">
-              Criar conta
+              Redefinir senha
             </h1>
             <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
-              Cadastre-se gratuitamente para participar dos estudos.
+              Crie uma nova senha para acessar sua conta.
             </p>
           </header>
 
@@ -152,65 +139,10 @@ function RegisterContent() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
-                htmlFor="register-username"
+                htmlFor="reset-password"
                 className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1.5"
               >
-                Nome de usuário
-              </label>
-              <div className="relative">
-                <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                  </svg>
-                </span>
-                <input
-                  id="register-username"
-                  type="text"
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  placeholder="seu_nome"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
-                />
-              </div>
-              <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
-                Aparece publicamente nos seus comentários.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="register-email"
-                className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1.5"
-              >
-                Email
-              </label>
-              <div className="relative">
-                <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </span>
-                <input
-                  id="register-email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="voce@exemplo.com"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="register-password"
-                className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1.5"
-              >
-                Senha
+                Nova senha
               </label>
               <div className="relative">
                 <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500">
@@ -219,7 +151,7 @@ function RegisterContent() {
                   </svg>
                 </span>
                 <input
-                  id="register-password"
+                  id="reset-password"
                   type="password"
                   autoComplete="new-password"
                   value={password}
@@ -230,47 +162,38 @@ function RegisterContent() {
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
                 />
               </div>
-              <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
-                Mínimo 6 caracteres.
-              </p>
             </div>
 
-            <div className="flex items-start gap-2.5 pt-1">
-              <input
-                id="register-consent"
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                required
-                className="mt-1 h-4 w-4 rounded border-stone-300 dark:border-slate-600 text-brand focus:ring-brand"
-              />
+            <div>
               <label
-                htmlFor="register-consent"
-                className="text-sm text-stone-600 dark:text-stone-300 leading-snug"
+                htmlFor="reset-password-confirm"
+                className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1.5"
               >
-                Li e aceito a{" "}
-                <Link
-                  href="/privacy"
-                  className="font-medium text-blue-700 dark:text-brand underline"
-                  target="_blank"
-                >
-                  Política de Privacidade
-                </Link>{" "}
-                e os{" "}
-                <Link
-                  href="/terms"
-                  className="font-medium text-blue-700 dark:text-brand underline"
-                  target="_blank"
-                >
-                  Termos de Uso
-                </Link>
-                .
+                Confirmar nova senha
               </label>
+              <div className="relative">
+                <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input
+                  id="reset-password-confirm"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="••••••••"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
-              disabled={loading || !acceptedTerms}
+              disabled={loading || !token}
               className="w-full inline-flex items-center justify-center gap-2 bg-brand text-white py-2.5 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {loading && (
@@ -286,21 +209,17 @@ function RegisterContent() {
                   <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                 </svg>
               )}
-              {loading ? "Cadastrando..." : "Criar conta"}
+              {loading ? "Redefinindo..." : "Redefinir senha"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-stone-500 dark:text-stone-400">
-            Já tem conta?{" "}
+            Token expirado?{" "}
             <Link
-              href={
-                callbackUrl
-                  ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
-                  : "/login"
-              }
+              href="/forgot-password"
               className="font-medium text-blue-700 dark:text-brand underline"
             >
-              Entrar
+              Solicitar de novo
             </Link>
           </p>
 

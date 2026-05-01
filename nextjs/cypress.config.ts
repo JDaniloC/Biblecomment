@@ -1,5 +1,12 @@
 import { defineConfig } from "cypress";
-import { resetDatabase, seedDatabase, findUserByEmail } from "./cypress/tasks/db";
+import {
+  resetDatabase,
+  seedDatabase,
+  findUserByEmail,
+  insertResetToken,
+  countResetTokensForEmail,
+  type InsertResetTokenInput,
+} from "./cypress/tasks/db";
 import { assertLocalMongoUri } from "./cypress/tasks/safety";
 
 export default defineConfig({
@@ -31,6 +38,13 @@ export default defineConfig({
         },
         async "db:findUser"(email: string) {
           return await findUserByEmail(email);
+        },
+        async "db:insertResetToken"(input: InsertResetTokenInput) {
+          await insertResetToken(input);
+          return null;
+        },
+        async "db:countResetTokens"(email: string) {
+          return await countResetTokensForEmail(email);
         },
       });
     },

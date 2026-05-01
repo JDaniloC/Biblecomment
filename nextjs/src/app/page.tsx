@@ -239,7 +239,7 @@ export default async function RootPage() {
                   </a>
                   , incentivamos a leitura da bíblia <strong>um capítulo por dia</strong>.
                   Após a leitura, é comum perceber detalhes interessantes ou lições
-                  edificantes &mdash; é esse tipo de comentário que vale a pena compartilhar.
+                  edificantes - é esse tipo de comentário que vale a pena compartilhar.
                 </p>
                 <p className="text-stone-600 dark:text-stone-300 leading-relaxed">
                   A leitura deve ser feita na sua <strong>bíblia pessoal</strong>,

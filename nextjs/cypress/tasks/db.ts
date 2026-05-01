@@ -9,6 +9,7 @@
 
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { assertLocalMongoUri } from "./safety";
 
 let connected = false;
@@ -25,7 +26,15 @@ async function ensureConnected(): Promise<void> {
   connected = true;
 }
 
-const COLLECTIONS = ["users", "books", "verses", "comments", "discussions", "notifications"];
+const COLLECTIONS = [
+  "users",
+  "books",
+  "verses",
+  "comments",
+  "discussions",
+  "notifications",
+  "passwordresettokens",
+];
 
 export async function resetDatabase(): Promise<void> {
   await ensureConnected();
@@ -104,6 +113,45 @@ export async function findUserByEmail(email: string): Promise<{
       ? (doc.tutorialsCompleted as string[])
       : [],
   };
+}
+
+export interface InsertResetTokenInput {
+  email: string;
+  rawToken: string;
+  expiresAt: string; // ISO date
+}
+
+/** Inserts a password reset token tied to the user with `email`. */
+export async function insertResetToken(input: InsertResetTokenInput): Promise<void> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: input.email.toLowerCase().trim() });
+  if (!user) throw new Error(`insertResetToken: user ${input.email} not found`);
+
+  const tokenHash = crypto.createHash("sha256").update(input.rawToken).digest("hex");
+  await db.collection("passwordresettokens").insertOne({
+    userId: user._id.toString(),
+    tokenHash,
+    expiresAt: new Date(input.expiresAt),
+    createdAt: new Date(),
+  });
+}
+
+/** Counts password reset tokens for a given email (active + expired). */
+export async function countResetTokensForEmail(email: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: email.toLowerCase().trim() });
+  if (!user) return 0;
+  return db
+    .collection("passwordresettokens")
+    .countDocuments({ userId: user._id.toString() });
 }
 
 export async function seedDatabase(payload: SeedPayload): Promise<void> {

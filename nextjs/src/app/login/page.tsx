@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl") || "/home";
+  const justReset = searchParams?.get("reset") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -106,6 +115,16 @@ export default function LoginPage() {
             </p>
           </header>
 
+          {justReset && !error && (
+            <div
+              role="status"
+              data-testid="reset-success"
+              className="mb-4 rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200"
+            >
+              Senha redefinida com sucesso. Faça login com a nova senha.
+            </div>
+          )}
+
           {error && (
             <div
               role="alert"
@@ -192,6 +211,15 @@ export default function LoginPage() {
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
+
+          <p className="mt-4 text-center text-sm">
+            <Link
+              href="/forgot-password"
+              className="font-medium text-blue-700 dark:text-brand hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </p>
 
           <p className="mt-6 text-center text-sm text-stone-500 dark:text-stone-400">
             Não tem conta?{" "}
