@@ -48,7 +48,11 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
   }, [handleNotification, books.length]);
 
   useEffect(() => {
-    searchRef.current?.focus();
+    // preventScroll: BooksIndex is mounted both inside the books modal
+    // (where the modal sits in the viewport already) AND inline at the
+    // bottom of the home page. Without preventScroll, the home-page mount
+    // would jump the user past the hero on initial load.
+    searchRef.current?.focus({ preventScroll: true });
   }, []);
 
   const bookMap = useMemo(() => {
