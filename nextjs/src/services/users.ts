@@ -8,6 +8,10 @@ import {
   setModeratorAction,
   markTutorialCompletedAction,
 } from "@/app/actions/users";
+import {
+  requestPasswordResetAction,
+  completePasswordResetAction,
+} from "@/app/actions/password-recovery";
 import { actionError } from "./_action-error";
 
 export interface RegisterInput {
@@ -95,6 +99,16 @@ export const usersService = {
 
   async markTutorialCompleted(name: string): Promise<void> {
     const result = await markTutorialCompletedAction(name);
+    if (!result.ok) actionError(result.error);
+  },
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const result = await requestPasswordResetAction(email);
+    if (!result.ok) actionError(result.error);
+  },
+
+  async completePasswordReset(token: string, newPassword: string): Promise<void> {
+    const result = await completePasswordResetAction(token, newPassword);
     if (!result.ok) actionError(result.error);
   },
 };

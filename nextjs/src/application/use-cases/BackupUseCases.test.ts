@@ -32,6 +32,7 @@ function repoReturning(users: User[]): IUserRepository {
     findAllPaginated: async () => users,
     create: async (u) => ({ _id: "new", ...u }),
     updatePassword: async () => {},
+    updatePasswordById: async () => {},
     update: async () => null,
     markTutorialCompleted: async () => {},
     delete: async () => {},

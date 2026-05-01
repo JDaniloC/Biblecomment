@@ -13,7 +13,10 @@ function toEntity(doc: IUserDocument): User {
     state: doc.state,
     belief: doc.belief,
     moderator: doc.moderator,
-    tutorialsCompleted: doc.tutorialsCompleted ?? [],
+    // Copy MongooseArray → plain Array. Auth.js calls structuredClone on
+    // the user object during JWT encode and a MongooseArray (which carries
+    // hidden parent refs) blows up DataCloneError.
+    tutorialsCompleted: doc.tutorialsCompleted ? [...doc.tutorialsCompleted] : [],
   };
 }
 
@@ -61,6 +64,11 @@ export class MongoUserRepository implements IUserRepository {
   async updatePassword(email: string, password: string, passwordType: "bcrypt"): Promise<void> {
     await connectToDatabase();
     await UserModel.updateOne({ email: email.toLowerCase() }, { password, passwordType });
+  }
+
+  async updatePasswordById(userId: string, password: string, passwordType: "bcrypt"): Promise<void> {
+    await connectToDatabase();
+    await UserModel.updateOne({ _id: userId }, { password, passwordType });
   }
 
   async update(email: string, data: Partial<Omit<User, "_id" | "email">>): Promise<User | null> {
