@@ -8,6 +8,7 @@ const EMPTY: BadgeCounters = {
   chaptersReadByBook: {},
   commentsCount: 0,
   commentBooks: 0,
+  commentTagsUsed: new Set(),
   hasGivenLike: false,
   hasOpenedDiscussion: false,
   hasAnsweredDiscussion: false,
@@ -16,8 +17,8 @@ const EMPTY: BadgeCounters = {
 };
 
 describe("badge catalog", () => {
-  it("contains the expected v1 count of 22 badges", () => {
-    expect(BADGES).toHaveLength(22);
+  it("contains the expected v1 count of 26 badges", () => {
+    expect(BADGES).toHaveLength(26);
   });
 
   it("has unique ids across the whole catalog", () => {
@@ -30,7 +31,20 @@ describe("badge catalog", () => {
     expect(badgesByAxis("reader-section").length).toBe(BADGE_SECTIONS.length);
     expect(badgesByAxis("commenter-volume").length).toBeGreaterThan(0);
     expect(badgesByAxis("commenter-diversity").length).toBeGreaterThan(0);
+    expect(badgesByAxis("commenter-tags").length).toBe(4);
     expect(badgesByAxis("interaction").length).toBeGreaterThan(0);
+  });
+
+  it("has one first-comment badge per canonical tag (devocional/exegese/pessoal/inspirado)", () => {
+    for (const tag of ["devocional", "exegese", "pessoal", "inspirado"]) {
+      expect(getBadge(`first-comment-${tag}`)).toBeDefined();
+    }
+  });
+
+  it("first-comment-<tag> meets() reads from commentTagsUsed", () => {
+    const c: BadgeCounters = { ...EMPTY, commentTagsUsed: new Set(["devocional"]) };
+    expect(getBadge("first-comment-devocional")!.meets(c)).toBe(true);
+    expect(getBadge("first-comment-exegese")!.meets(c)).toBe(false);
   });
 
   it("reader-volume tier targets are strictly ascending", () => {

@@ -17,6 +17,9 @@ import type { Discussion } from "@/domain/entities/Discussion";
 import type { DiscussionDraft } from "@/services/discussions";
 import { logger } from "@/lib/logger";
 import type { ActionResult } from "./comments";
+import { evaluateBadges } from "./_badge-evaluator";
+
+const MENTION_REGEX = /@[A-Za-z0-9_]+/;
 
 function authError(): ActionResult<never> {
   return { ok: false, error: "Unauthorized" };
@@ -59,6 +62,13 @@ export async function createDiscussionAction(
       draft.question,
       draft.commentId,
     );
+
+    await evaluateBadges({
+      userId: session.user.id,
+      username: session.user.username,
+      axes: ["interaction"],
+      hints: { hasOpenedDiscussion: true },
+    });
 
     revalidateDiscussionPaths();
     return { ok: true, data: discussion };
@@ -115,6 +125,16 @@ export async function addAnswerAction(
       resourceType: "discussion",
       resourceId: discussionId,
       url,
+    });
+
+    await evaluateBadges({
+      userId: session.user.id,
+      username: session.user.username,
+      axes: ["interaction"],
+      hints: {
+        hasAnsweredDiscussion: true,
+        hasMentioned: MENTION_REGEX.test(text) || undefined,
+      },
     });
 
     revalidateDiscussionPaths();

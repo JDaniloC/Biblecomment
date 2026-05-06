@@ -16,6 +16,9 @@ import {
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import type { Comment } from "@/domain/entities/Comment";
 import { logger } from "@/lib/logger";
+import { evaluateBadges } from "./_badge-evaluator";
+
+const MENTION_REGEX = /@[A-Za-z0-9_]+/;
 
 /**
  * Discriminated-union return type lets callers pattern-match on `ok`
@@ -49,6 +52,19 @@ export async function toggleLikeAction(
     const repo = new MongoCommentRepository();
     const useCase = new ToggleLikeUseCase(repo);
     const updated = await useCase.execute(commentId, session.user.username);
+    // Only fire the badge evaluator when this toggle ADDED a like — toggling
+    // off doesn't progress the user toward `first-like`. (Once given, the user
+    // can never "ungive" their first-like badge anyway since hasGivenLike is
+    // computed against the historical likes set in DB at evaluator time.)
+    const justLiked = updated.likes.includes(session.user.username);
+    if (justLiked) {
+      await evaluateBadges({
+        userId: session.user.id,
+        username: session.user.username,
+        axes: ["interaction"],
+        hints: { hasGivenLike: true },
+      });
+    }
     // Chapter pages render the like count server-side; revalidate so the
     // server-rendered HTML reflects the new state on next navigation.
     revalidatePath("/verses/[abbrev]/[number]", "page");
@@ -155,6 +171,15 @@ export async function createCommentAction(
         url: `/verses/${verse.abbrev}/${verse.chapter}#${verse.verseNumber}`,
       });
     }
+
+    await evaluateBadges({
+      userId: session.user.id,
+      username: session.user.username,
+      axes: ["commenter-volume", "commenter-diversity", "commenter-tags", "interaction"],
+      hints: {
+        hasMentioned: MENTION_REGEX.test(draft.text) || undefined,
+      },
+    });
 
     revalidatePath("/verses/[abbrev]/[number]", "page");
     return { ok: true, data: comment };

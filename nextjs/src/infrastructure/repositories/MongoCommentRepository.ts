@@ -177,6 +177,12 @@ export class MongoCommentRepository implements ICommentRepository {
     );
   }
 
+  async userHasGivenLike(username: string): Promise<boolean> {
+    await connectToDatabase();
+    const doc = await CommentModel.findOne({ likes: username }, { _id: 1 });
+    return doc !== null;
+  }
+
   async findDailyFeatured(dayIndex: number): Promise<Comment | null> {
     await connectToDatabase();
     const filter = { onTitle: false, $expr: { $gte: [{ $strLenCP: "$text" }, 40] } };

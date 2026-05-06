@@ -11,6 +11,7 @@ export type BadgeAxis =
   | "reader-section"
   | "commenter-volume"
   | "commenter-diversity"
+  | "commenter-tags"
   | "interaction";
 
 export type BadgeTier = "bronze" | "silver" | "gold" | "platinum";
@@ -28,6 +29,12 @@ export interface BadgeCounters {
   commentsCount: number;
   /** Distinct book abbrevs in which the user has posted at least one comment. */
   commentBooks: number;
+  /**
+   * Set of canonical tag keys (lowercase, e.g. "devocional", "exegese",
+   * "pessoal", "inspirado") the user has applied to at least one comment.
+   * Drives the `first-comment-<tag>` badges.
+   */
+  commentTagsUsed: Set<string>;
   /** True if the user has given at least one like on any comment. */
   hasGivenLike: boolean;
   /** True if the user has opened at least one discussion. */

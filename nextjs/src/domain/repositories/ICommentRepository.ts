@@ -19,4 +19,6 @@ export interface ICommentRepository {
   searchByText(query: string): Promise<Comment[]>;
   anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
   removeUserReferences(username: string): Promise<void>;
+  /** Has the user given at least one like on any comment? Used by badge evaluator. */
+  userHasGivenLike(username: string): Promise<boolean>;
 }

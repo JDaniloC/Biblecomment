@@ -75,4 +75,13 @@ export class MongoNotificationRepository implements INotificationRepository {
     });
     return result.deletedCount ?? 0;
   }
+
+  async userHasMentioned(username: string): Promise<boolean> {
+    await connectToDatabase();
+    const doc = await NotificationModel.findOne(
+      { actor: username, type: { $in: ["comment_mention", "answer_mention"] } },
+      { _id: 1 },
+    );
+    return doc !== null;
+  }
 }

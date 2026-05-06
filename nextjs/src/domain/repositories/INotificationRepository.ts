@@ -8,4 +8,9 @@ export interface INotificationRepository {
   markAsRead(id: string, recipient: string): Promise<Notification | null>;
   markAllAsRead(recipient: string): Promise<number>;
   deleteForUser(username: string): Promise<number>;
+  /**
+   * True if the user has triggered at least one mention notification
+   * (i.e., they have @-mentioned someone in a comment or answer).
+   */
+  userHasMentioned(username: string): Promise<boolean>;
 }

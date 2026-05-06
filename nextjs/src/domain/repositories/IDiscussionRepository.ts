@@ -11,4 +11,8 @@ export interface IDiscussionRepository {
   delete(id: string): Promise<void>;
   findAll(): Promise<Discussion[]>;
   anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
+  /** Has the user opened (authored) at least one discussion? */
+  userHasOpenedDiscussion(username: string): Promise<boolean>;
+  /** Has the user answered at least one discussion (any author)? */
+  userHasAnsweredDiscussion(username: string): Promise<boolean>;
 }

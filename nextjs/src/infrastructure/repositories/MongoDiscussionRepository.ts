@@ -133,4 +133,16 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
     ]);
     return (topLevel.modifiedCount ?? 0) + (embedded.modifiedCount ?? 0);
   }
+
+  async userHasOpenedDiscussion(username: string): Promise<boolean> {
+    await connectToDatabase();
+    const doc = await DiscussionModel.findOne({ username }, { _id: 1 });
+    return doc !== null;
+  }
+
+  async userHasAnsweredDiscussion(username: string): Promise<boolean> {
+    await connectToDatabase();
+    const doc = await DiscussionModel.findOne({ "answers.name": username }, { _id: 1 });
+    return doc !== null;
+  }
 }

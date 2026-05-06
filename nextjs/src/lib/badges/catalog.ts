@@ -78,6 +78,23 @@ const DIVERSITY_BADGES: BadgeDefinition[] = DIVERSITY_TIERS.map((t) => ({
   progress: (c) => ({ current: Math.min(c.commentBooks, t.target), target: t.target }),
 }));
 
+const COMMENT_TAG_BADGES: BadgeDefinition[] = (
+  [
+    { tag: "devocional", name: "Primeiro comentário devocional", icon: "Sparkle" },
+    { tag: "exegese",    name: "Primeiro comentário de exegese", icon: "BookOpenCheck" },
+    { tag: "pessoal",    name: "Primeiro comentário pessoal",    icon: "Smile" },
+    { tag: "inspirado",  name: "Primeiro comentário inspirado",  icon: "Feather" },
+  ] as const
+).map((t) => ({
+  id: `first-comment-${t.tag}`,
+  axis: "commenter-tags",
+  name: t.name,
+  description: `Publique um comentário marcado como "${t.tag.charAt(0).toUpperCase() + t.tag.slice(1)}".`,
+  icon: t.icon,
+  meets: (c) => c.commentTagsUsed.has(t.tag),
+  progress: (c) => ({ current: c.commentTagsUsed.has(t.tag) ? 1 : 0, target: 1 }),
+}));
+
 const FIRST_TIME_BADGES: BadgeDefinition[] = [
   {
     id: "first-read",
@@ -131,6 +148,7 @@ export const BADGES: BadgeDefinition[] = [
   ...SECTION_BADGES,
   ...COMMENTER_BADGES,
   ...DIVERSITY_BADGES,
+  ...COMMENT_TAG_BADGES,
   ...FIRST_TIME_BADGES,
 ];
 
