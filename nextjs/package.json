@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@lhci/cli": "^0.15.1",
+    "@netlify/plugin-nextjs": "^5.15.10",
     "@next/bundle-analyzer": "^16.2.4",
     "@testing-library/cypress": "^10.1.0",
     "@types/bcryptjs": "^2.4.6",

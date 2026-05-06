@@ -1,0 +1,34 @@
+# Netlify deploy config for the BibleComment Next.js app.
+# The Next app lives in nextjs/ — `base` redirects all build/runtime work
+# into that subdirectory so Netlify treats nextjs/ as the project root.
+
+[build]
+  base    = "nextjs"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Pin Node to match CI (.github/workflows/ci.yml uses Node 22).
+  NODE_VERSION = "22"
+  # Skip the bundle analyzer plugin during prod builds.
+  ANALYZE      = "false"
+
+# Server-rendered Next.js (App Router, Server Actions, route handlers, ISR)
+# is handled by Netlify's official plugin — pinned in nextjs/package.json
+# so unattended Next major bumps don't silently break Server Actions.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Required env vars (set in Netlify dashboard, never committed):
+#   MONGODB_URI            — Atlas connection string
+#   NEXTAUTH_SECRET        — random 32-byte secret (openssl rand -base64 32)
+#   NEXTAUTH_URL           — final production URL (e.g. https://biblecomment.simpleread.foundation)
+#   APP_URL                — same value, used by password-reset link composer
+#   RESEND_API_KEY         — only set when you want emails to actually send
+#   EMAIL_FROM             — verified Resend sender (e.g. "Bible Comment <noreply@yourdomain>")
+#   SENTRY_DSN             — runtime DSN (Sentry → Settings → Client Keys)
+#   SENTRY_ORG             — slug of the Sentry org (build-time, source maps)
+#   SENTRY_PROJECT         — slug of the Sentry project (build-time, source maps)
+#   SENTRY_AUTH_TOKEN      — internal-integration token w/ `project:releases` scope (build-time only)
+#
+# Do NOT set EMAIL_TRANSPORT in production — it's a Cypress/dev-only switch.
