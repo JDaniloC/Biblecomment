@@ -8,11 +8,9 @@ import { commentsService } from "@/services/comments";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/lib/comment-data";
-import OmniSearch from "@/app/_components/OmniSearch";
 import { CopyVerseButton } from "@/components/CopyVerseButton";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { NotificationsBell } from "@/components/NotificationsBell";
 import { FontSizeControl } from "@/components/FontSizeControl";
+import { AppHeader } from "@/components/AppHeader";
 import Tutorial from "@/components/Tutorial/Tutorial";
 import { useTutorial } from "@/lib/use-tutorial";
 import { CHAPTER_TUTORIAL, CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
@@ -68,12 +66,6 @@ function dateFormat(str: string) {
   }
 }
 
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 export default function ChapterClient({ book, verses, chapter, user, tutorialAlreadyCompleted, alreadyRead }: Props) {
   const router = useRouter();
   const { handleNotification } = useNotification();
@@ -98,7 +90,6 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
     devocional: false, exegese: false, pessoal: false, inspirado: false,
   });
 
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Onboarding tour. Renders on first visit (any chapter) until the user
@@ -371,121 +362,15 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
 
   const sidebarRef2 = sidebarRef;
 
-  const initials = user ? getInitials(user.name || user.username || "U") : "";
-
   return (
     <div className="min-h-screen flex flex-col bg-[#f9f9f7] dark:bg-slate-950">
 
-      {/* ── Navbar ── */}
-      <header className="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center px-3 md:px-6 gap-3 md:gap-8 sticky top-0 z-50 flex-shrink-0">
-        {/* Logo */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <img src="/assets/logo.svg" alt="BibleComment" width={42} height={42} className="block w-9 h-9 md:w-[42px] md:h-[42px]" />
-          <div className="hidden sm:block">
-            <div className="font-bold text-[15px] text-slate-800 dark:text-slate-100 leading-[22.5px] whitespace-nowrap">BibleComment</div>
-            <div className="font-light text-[11px] text-[#888] dark:text-slate-400 leading-[16.5px] whitespace-nowrap">A Program for His Glory</div>
-          </div>
-        </div>
+      <AppHeader
+        user={user}
+        loginCallbackUrl={`/verses/${book.abbrev}/${chapter}`}
+        trailing={<div className="hidden md:inline-flex"><FontSizeControl /></div>}
+      />
 
-        {/* Nav links */}
-        <nav className="hidden md:flex gap-5 flex-shrink-0">
-          <Link href="/home" data-tour="livros-link" className="font-medium text-sm text-slate-800 dark:text-slate-100 no-underline">Livros</Link>
-          <Link href="/discussions" className="font-medium text-sm text-slate-800 dark:text-slate-100 no-underline">Discussões</Link>
-        </nav>
-
-        {/* OmniSearch */}
-        <div data-tour="omnisearch" className="flex-1 min-w-0">
-          <OmniSearch />
-        </div>
-
-        <div className="hidden md:inline-flex"><FontSizeControl /></div>
-        {user && <NotificationsBell />}
-        <ThemeToggle />
-
-        {!user && (
-          <Link
-            href={`/login?callbackUrl=${encodeURIComponent(`/verses/${book.abbrev}/${chapter}`)}`}
-            className="flex-shrink-0 inline-flex items-center h-9 px-3 rounded-md bg-brand text-white text-sm font-semibold no-underline whitespace-nowrap hover:opacity-90 transition"
-          >
-            Entrar
-          </Link>
-        )}
-
-        {/* UserDropdown */}
-        {user && <div className="relative flex-shrink-0" data-tour="user-menu">
-          <button
-            type="button"
-            onClick={() => setShowUserMenu((v) => !v)}
-            aria-label="Menu da conta"
-            className="w-9 h-9 rounded-[18px] bg-brand border-2 border-brand flex items-center justify-center cursor-pointer"
-          >
-            <span className="font-bold text-[13px] text-white leading-[13px]">{initials}</span>
-          </button>
-
-          {showUserMenu && (
-            <>
-              {/* Backdrop */}
-              <div className="fixed inset-0 z-[49]" onClick={() => setShowUserMenu(false)} />
-              {/* Dropdown */}
-              <div className="absolute right-0 top-11 w-[200px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-[0px_8px_30px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] overflow-hidden z-50">
-                {/* Header */}
-                <div className="px-4 pt-3 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-                  <div className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-[21px] whitespace-nowrap overflow-hidden text-ellipsis">{user.name}</div>
-                  <div className="font-normal text-xs text-slate-400 dark:text-slate-500 leading-[18px]">@{user.username}</div>
-                </div>
-                {/* Items */}
-                {[
-                  { label: "Meu Perfil",        href: "/profile",  icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
-                  { label: "Meus Comentários",   href: "/profile",  icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
-                  { label: "Favoritos",          href: "/profile",  icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> },
-                ].map(({ label, href, icon }) => (
-                  <Link
-                    key={label}
-                    href={href}
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
-                  >
-                    <span className="text-slate-600 dark:text-slate-300 flex">{icon}</span>
-                    <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">{label}</span>
-                  </Link>
-                ))}
-                <div className="h-px bg-slate-100 dark:bg-slate-800" />
-                <Link
-                  href="/profile?tab=config"
-                  onClick={() => setShowUserMenu(false)}
-                  className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
-                >
-                  <span className="text-slate-600 dark:text-slate-300 flex">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>
-                  </span>
-                  <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300">Configurações</span>
-                </Link>
-                {user.moderator && (
-                  <Link
-                    href="/admin/moderation"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
-                  >
-                    <span className="text-amber-600 dark:text-amber-400 flex">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </span>
-                    <span className="font-medium text-[13px] text-amber-700 dark:text-amber-300">Moderação</span>
-                  </Link>
-                )}
-                <Link
-                  href="/api/auth/signout"
-                  className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline"
-                >
-                  <span className="text-red-600 dark:text-red-400 flex">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                  </span>
-                  <span className="font-medium text-[13px] text-red-600 dark:text-red-400">Sair</span>
-                </Link>
-              </div>
-            </>
-          )}
-        </div>}
-      </header>
 
       <div className="flex flex-1 relative min-h-0">
         <main

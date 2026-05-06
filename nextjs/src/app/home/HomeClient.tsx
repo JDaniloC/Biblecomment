@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Book } from "@/domain/entities/Book";
+import { AppHeader } from "@/components/AppHeader";
 
 interface Props {
   books: Book[];
@@ -35,28 +35,9 @@ export default function HomeClient({ books, user }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Bible Comment</h1>
-          <div className="flex items-center gap-3">
-            <Link href="/search" className="text-sm text-blue-600 dark:text-brand hover:underline hidden sm:block">Buscar</Link>
-            <Link href="/discussions" className="text-sm text-purple-600 dark:text-purple-400 hover:underline hidden sm:block">Discussões</Link>
-            <Link href="/users" className="text-sm text-gray-500 dark:text-slate-400 hover:underline hidden sm:block">Usuários</Link>
-            <Link href="/profile" className="text-sm text-gray-600 dark:text-slate-300 hover:text-gray-800 dark:hover:text-slate-100 hidden sm:block">{user.name}</Link>
-            {user.moderator && (
-              <Link href="/backup" className="text-sm text-orange-600 dark:text-orange-400 hover:underline hidden sm:block">Backup</Link>
-            )}
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-            >
-              Sair
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppHeader user={user} />
 
-      <main id="main-content" className="max-w-5xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <label htmlFor="home-book-search" className="sr-only">
             Buscar livro

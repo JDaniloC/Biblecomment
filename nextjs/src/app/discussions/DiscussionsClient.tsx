@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useNotification } from "@/contexts/NotificationContext";
 import { discussionsService } from "@/services/discussions";
 import Loading from "@/components/Loading";
+import { AppHeader } from "@/components/AppHeader";
 
 interface SessionUser {
   name: string;
@@ -48,15 +49,10 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/home" className="text-blue-600 dark:text-brand hover:text-blue-800 dark:hover:underline text-sm">← Livros</Link>
-          <h1 className="font-semibold text-gray-800 dark:text-slate-100">Discussões</h1>
-          <Link href="/profile" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">{user.name}</Link>
-        </div>
-      </header>
+      <AppHeader user={user} />
 
       <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
+        <h1 className="font-semibold text-2xl text-gray-800 dark:text-slate-100 mb-6">Discussões</h1>
         {loading && discussions.length === 0 ? (
           <Loading />
         ) : discussions.length === 0 ? (

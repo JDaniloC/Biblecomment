@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import Image from "next/image";
-import Header from "@/components/Header";
+import { HomeHeader } from "@/components/HomeHeader";
 import BooksIndex from "@/components/BooksIndex/BooksIndex";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
@@ -113,30 +113,25 @@ export default async function RootPage() {
 
   const isLoggedIn = !!session?.user;
 
+  const sessionUser = session?.user
+    ? {
+        name: session.user.name,
+        username: session.user.username,
+        email: session.user.email,
+        moderator: session.user.moderator,
+      }
+    : null;
+
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-slate-950 flex flex-col">
-      <Header />
+      <HomeHeader user={sessionUser} />
 
       {!isLoggedIn && (
         <div className="bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-900/40">
-          <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4 flex-wrap">
-            <p className="text-sm text-amber-800 dark:text-amber-300">
+          <div className="max-w-6xl mx-auto px-4 py-2.5">
+            <p className="text-sm text-amber-800 dark:text-amber-300 text-center">
               Crie uma conta gratuita para comentar, favoritar versículos e participar dos debates.
             </p>
-            <div className="flex items-center gap-3 shrink-0">
-              <Link
-                href="/login"
-                className="text-sm font-medium text-amber-900 dark:text-amber-200 hover:underline"
-              >
-                Entrar
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm font-semibold bg-amber-700 text-white px-4 py-1.5 rounded-lg hover:bg-amber-800 transition"
-              >
-                Cadastrar-se
-              </Link>
-            </div>
           </div>
         </div>
       )}

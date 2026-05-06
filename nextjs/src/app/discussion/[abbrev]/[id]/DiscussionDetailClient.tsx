@@ -7,6 +7,7 @@ import { Book } from "@/domain/entities/Book";
 import { Discussion } from "@/domain/entities/Discussion";
 import { discussionsService } from "@/services/discussions";
 import { useNotification } from "@/contexts/NotificationContext";
+import { AppHeader } from "@/components/AppHeader";
 
 interface SessionUser {
   name: string;
@@ -123,19 +124,12 @@ export default function DiscussionDetailClient({
   if (mode === "list" || !discussion) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-        <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10">
-          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href="/home" className="text-blue-600 dark:text-brand hover:underline text-sm">
-              ← Livros
-            </Link>
-            <span className="text-gray-400 dark:text-slate-600">|</span>
-            <span className="font-semibold text-gray-800 dark:text-slate-100">
-              Discussões — {book.name}
-            </span>
-          </div>
-        </header>
+        <AppHeader user={user} />
 
         <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
+          <h1 className="font-semibold text-xl text-gray-800 dark:text-slate-100 mb-4">
+            Discussões — {book.name}
+          </h1>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-700 dark:text-slate-200">Discussões</h2>
             <button
@@ -224,20 +218,19 @@ export default function DiscussionDetailClient({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link
-            href={`/discussion/${book.abbrev}`}
-            className="text-blue-600 dark:text-brand hover:underline text-sm"
-          >
-            ← Discussões
-          </Link>
-          <span className="text-gray-400 dark:text-slate-600">|</span>
-          <span className="font-semibold text-gray-800 dark:text-slate-100 truncate">
-            {discussion.verseReference}
-          </span>
-        </div>
-      </header>
+      <AppHeader user={user} />
+      <div className="max-w-3xl mx-auto px-4 pt-4">
+        <Link
+          href={`/discussion/${book.abbrev}`}
+          className="text-blue-600 dark:text-brand hover:underline text-sm"
+        >
+          ← Discussões
+        </Link>
+        <span className="text-gray-400 dark:text-slate-600 mx-2">|</span>
+        <span className="text-sm text-gray-600 dark:text-slate-300">
+          {discussion.verseReference}
+        </span>
+      </div>
 
       <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">

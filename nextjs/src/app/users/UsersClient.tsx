@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useNotification } from "@/contexts/NotificationContext";
 import { usersService } from "@/services/users";
 import Loading from "@/components/Loading";
+import { AppHeader } from "@/components/AppHeader";
 
 interface SessionUser {
   name: string;
@@ -47,15 +48,10 @@ export default function UsersClient({ user }: { user: SessionUser }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 dark:border-b dark:border-slate-800">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/home" className="text-blue-600 dark:text-brand hover:text-blue-800 dark:hover:underline text-sm">← Livros</Link>
-          <h1 className="font-semibold text-gray-800 dark:text-slate-100">Usuários</h1>
-          <Link href="/profile" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">{user.name}</Link>
-        </div>
-      </header>
+      <AppHeader user={user} />
 
       <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
+        <h1 className="font-semibold text-2xl text-gray-800 dark:text-slate-100 mb-6">Usuários</h1>
         {loading && users.length === 0 ? (
           <Loading />
         ) : users.length === 0 ? (
