@@ -15,6 +15,7 @@ import collectionsData from "@/data/collections.json";
 import { dateFormat } from "@/utils/iconFunction";
 import { useTutorial } from "@/lib/use-tutorial";
 import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
+import { BadgesTab } from "./_components/BadgesTab";
 
 const { beliefs, states } = collectionsData as { beliefs: string[]; states: string[] };
 
@@ -40,7 +41,7 @@ import { getTagMetaOrNeutral } from "@/lib/tag-meta";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
 
-type Tab = "overview" | "comments" | "favorites" | "config";
+type Tab = "overview" | "comments" | "favorites" | "badges" | "config";
 type TypeFilter = "Todos" | "Exegese" | "Devocional" | "Pessoal" | "Inspirado";
 
 const TYPE_FILTERS: TypeFilter[] = ["Todos", "Exegese", "Devocional", "Pessoal", "Inspirado"];
@@ -480,6 +481,16 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: "badges",
+    label: "Conquistas",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="6" />
+        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+      </svg>
+    ),
+  },
+  {
     id: "config",
     label: "Configurações",
     icon: (
@@ -854,6 +865,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               )}
             </div>
           )}
+
+          {/* BADGES */}
+          {tab === "badges" && <BadgesTab />}
 
           {/* CONFIG */}
           {tab === "config" && (

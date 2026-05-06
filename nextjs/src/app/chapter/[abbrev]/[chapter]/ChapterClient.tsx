@@ -16,6 +16,7 @@ import { FontSizeControl } from "@/components/FontSizeControl";
 import Tutorial from "@/components/Tutorial/Tutorial";
 import { useTutorial } from "@/lib/use-tutorial";
 import { CHAPTER_TUTORIAL, CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
+import { MarkAsReadButton } from "@/components/MarkAsReadButton";
 import { TAG_META, TAG_ORDER, getTagMeta } from "@/lib/tag-meta";
 import {
   toggleLikeAction,
@@ -49,6 +50,11 @@ interface Props {
    * localStorage. Always false for anonymous readers.
    */
   tutorialAlreadyCompleted: boolean;
+  /**
+   * Whether the signed-in user has marked this chapter as read.
+   * Always false for anonymous readers (the button hides for them too).
+   */
+  alreadyRead: boolean;
 }
 
 const MIN_LEN = 200;
@@ -68,7 +74,7 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export default function ChapterClient({ book, verses, chapter, user, tutorialAlreadyCompleted }: Props) {
+export default function ChapterClient({ book, verses, chapter, user, tutorialAlreadyCompleted, alreadyRead }: Props) {
   const router = useRouter();
   const { handleNotification } = useNotification();
 
@@ -504,7 +510,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
               )}
             </div>
 
-            <div className="flex items-center justify-center gap-3 mt-6 mb-8">
+            <div className="flex items-center justify-center gap-3 mt-6 mb-3">
               <button
                 type="button"
                 onClick={openTitlePanel}
@@ -519,6 +525,15 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
+            </div>
+
+            <div className="flex items-center justify-center mb-6">
+              <MarkAsReadButton
+                abbrev={book.abbrev}
+                chapter={chapter}
+                initialRead={alreadyRead}
+                enabled={!!user}
+              />
             </div>
 
             {(titleCount > 0 || isTitleMode) && (

@@ -5,6 +5,9 @@ import {
   findUserByEmail,
   insertResetToken,
   countResetTokensForEmail,
+  seedChapterRead,
+  countChapterReads,
+  getUserBadges,
   type InsertResetTokenInput,
 } from "./cypress/tasks/db";
 import { assertLocalMongoUri } from "./cypress/tasks/safety";
@@ -45,6 +48,16 @@ export default defineConfig({
         },
         async "db:countResetTokens"(email: string) {
           return await countResetTokensForEmail(email);
+        },
+        async "db:seedChapterRead"(input: { email: string; abbrev: string; chapter: number }) {
+          await seedChapterRead(input);
+          return null;
+        },
+        async "db:countChapterReads"(email: string) {
+          return await countChapterReads(email);
+        },
+        async "db:getUserBadges"(email: string) {
+          return await getUserBadges(email);
         },
       });
     },

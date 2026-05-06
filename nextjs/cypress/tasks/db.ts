@@ -141,6 +141,49 @@ export async function insertResetToken(input: InsertResetTokenInput): Promise<vo
   });
 }
 
+export async function getUserBadges(email: string): Promise<string[]> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: email.toLowerCase().trim() });
+  if (!user) return [];
+  return Array.isArray(user.badges) ? (user.badges as string[]) : [];
+}
+
+export async function seedChapterRead(input: {
+  email: string;
+  abbrev: string;
+  chapter: number;
+}): Promise<void> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: input.email.toLowerCase().trim() });
+  if (!user) throw new Error(`seedChapterRead: user ${input.email} not found`);
+  await db.collection("userchapterreads").updateOne(
+    { userId: user._id.toString(), abbrev: input.abbrev.toLowerCase(), chapter: input.chapter },
+    { $setOnInsert: { readAt: new Date() } },
+    { upsert: true },
+  );
+}
+
+export async function countChapterReads(email: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: email.toLowerCase().trim() });
+  if (!user) return 0;
+  return db
+    .collection("userchapterreads")
+    .countDocuments({ userId: user._id.toString() });
+}
+
 /** Counts password reset tokens for a given email (active + expired). */
 export async function countResetTokensForEmail(email: string): Promise<number> {
   await ensureConnected();

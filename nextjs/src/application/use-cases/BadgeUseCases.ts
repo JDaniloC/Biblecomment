@@ -67,6 +67,18 @@ export class EvaluateBadgesUseCase {
     return newlyEarned;
   }
 
+  /**
+   * Compute counters for ALL axes — used by GetUserBadgesUseCase to render
+   * progress on every catalog entry without forcing the caller to think
+   * about which axis controls which badge.
+   */
+  async getCountersForAllAxes(userId: string, username: string): Promise<BadgeCounters> {
+    return this.computeCounters(
+      { userId, username, axes: ["reader-volume", "reader-section", "commenter-volume", "commenter-diversity", "commenter-tags", "interaction"] },
+      BADGES,
+    );
+  }
+
   private async computeCounters(
     input: EvaluateInput,
     candidates: BadgeDefinition[],
@@ -204,22 +216,46 @@ export class EvaluateBadgesUseCase {
   }
 }
 
+export interface BadgeProgressEntry {
+  id: string;
+  earned: boolean;
+  /** Current value toward the badge's target. 0 when meaningless. */
+  current: number;
+  /** Target value the badge needs. 1 for one-shot/binary badges. */
+  target: number;
+}
+
 export interface UserBadgesView {
+  /** All catalog badges, with the user's progress and earned flag. */
+  entries: BadgeProgressEntry[];
+  /** Just the unlocked IDs, for quick header copy ("4 of 26 unlocked"). */
   earned: string[];
-  /** Badge ids the user does not yet have, in catalog order. */
-  locked: string[];
 }
 
 export class GetUserBadgesUseCase {
-  constructor(private readonly userRepo: IUserRepository) {}
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly evaluator: EvaluateBadgesUseCase,
+  ) {}
 
-  async execute(email: string): Promise<UserBadgesView> {
+  async execute(email: string, username: string, userId: string): Promise<UserBadgesView> {
     const user = await this.userRepo.findByEmail(email);
-    if (!user) return { earned: [], locked: BADGES.map((b) => b.id) };
-    const earned = new Set(user.badges ?? []);
+    const earnedSet = new Set(user?.badges ?? []);
+    const counters = await this.evaluator.getCountersForAllAxes(userId, username);
+
+    const entries: BadgeProgressEntry[] = BADGES.map((b) => {
+      const prog = b.progress?.(counters) ?? null;
+      return {
+        id: b.id,
+        earned: earnedSet.has(b.id),
+        current: prog?.current ?? (b.meets(counters) ? 1 : 0),
+        target: prog?.target ?? 1,
+      };
+    });
+
     return {
-      earned: BADGES.filter((b) => earned.has(b.id)).map((b) => b.id),
-      locked: BADGES.filter((b) => !earned.has(b.id)).map((b) => b.id),
+      entries,
+      earned: BADGES.filter((b) => earnedSet.has(b.id)).map((b) => b.id),
     };
   }
 }

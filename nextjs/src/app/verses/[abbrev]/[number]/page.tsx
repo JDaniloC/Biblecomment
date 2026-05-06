@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
+import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/MongoUserChapterReadRepository";
 import ChapterClient from "@/app/chapter/[abbrev]/[chapter]/ChapterClient";
 import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 
@@ -62,6 +63,15 @@ export default async function VersesPage({ params }: { params: Promise<Params> }
   const tutorialAlreadyCompleted =
     session?.user?.tutorialsCompleted?.includes(CHAPTER_TUTORIAL_NAME) ?? false;
 
+  // Look up "is this chapter already marked as read?" only when signed in.
+  // Anonymous readers can't mark anything anyway — the button hides for them.
+  let alreadyRead = false;
+  if (session?.user?.id) {
+    const readRepo = new MongoUserChapterReadRepository();
+    const readChapters = await readRepo.findChaptersForBook(session.user.id, abbrev);
+    alreadyRead = readChapters.includes(chapterNum);
+  }
+
   return (
     <ChapterClient
       book={book}
@@ -69,6 +79,7 @@ export default async function VersesPage({ params }: { params: Promise<Params> }
       chapter={chapterNum}
       user={session?.user ?? null}
       tutorialAlreadyCompleted={tutorialAlreadyCompleted}
+      alreadyRead={alreadyRead}
     />
   );
 }
