@@ -91,6 +91,10 @@ describe("Badges", () => {
       cy.loginAs(users.alice.email, users.alice.password);
       cy.visit(`/verses/${bookGn.book.abbrev}/1`);
       cy.get('[data-testid="mark-as-read"]').click();
+      // Wait for the unlock toast — that's the post-action signal. The
+      // aria-pressed flip is optimistic and arrives before persistence;
+      // navigating on aria-pressed alone races the badge write.
+      cy.contains("Conquista desbloqueada").should("be.visible");
       cy.get('[data-testid="mark-as-read"]').should("have.attr", "aria-pressed", "true");
 
       cy.visit("/profile");

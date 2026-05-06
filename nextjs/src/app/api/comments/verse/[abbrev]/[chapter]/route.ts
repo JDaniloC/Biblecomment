@@ -36,7 +36,6 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
       text,
       tags,
       reports: [],
-      likes: [],
     });
 
     return NextResponse.json({
@@ -46,7 +45,8 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
       username: comment.username,
       bookReference: comment.bookReference,
       createdAt: comment.createdAt,
-      likes: comment.likes,
+      likeCount: 0,
+      likedByMe: false,
       onTitle: comment.onTitle,
     }, { status: 201 });
   } catch (err) {

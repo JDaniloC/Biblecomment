@@ -45,7 +45,6 @@ function fakeComment(overrides: Partial<Comment> = {}): Comment {
     text: "hello",
     tags: [],
     reports: [],
-    likes: [],
     ...overrides,
   };
 }
@@ -86,11 +85,14 @@ describe("commentsService", () => {
   });
 
   describe("toggleLike", () => {
-    it("delegates to toggleLikeAction", async () => {
-      mockedToggleLike.mockResolvedValueOnce({ ok: true, data: fakeComment({ likes: ["alice"] }) });
+    it("delegates to toggleLikeAction and returns ToggleLikeResult", async () => {
+      mockedToggleLike.mockResolvedValueOnce({
+        ok: true,
+        data: { commentId: "c1", likeCount: 1, likedByMe: true },
+      });
       const result = await commentsService.toggleLike("c1");
       expect(mockedToggleLike).toHaveBeenCalledWith("c1");
-      expect(result.likes).toEqual(["alice"]);
+      expect(result).toEqual({ commentId: "c1", likeCount: 1, likedByMe: true });
     });
   });
 

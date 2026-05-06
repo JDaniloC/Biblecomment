@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import type { Comment } from "@/domain/entities/Comment";
+import type { ToggleLikeResult } from "@/application/use-cases/CommentUseCases";
 import {
   toggleLikeAction,
   reportCommentAction,
@@ -53,7 +54,7 @@ export const commentsService = {
     return result.data;
   },
 
-  async toggleLike(id: string): Promise<Comment> {
+  async toggleLike(id: string): Promise<ToggleLikeResult> {
     const result = await toggleLikeAction(id);
     if (!result.ok) actionError(result.error);
     return result.data;

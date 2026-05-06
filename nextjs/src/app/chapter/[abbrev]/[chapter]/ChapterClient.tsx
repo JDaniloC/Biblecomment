@@ -242,11 +242,11 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
       handleNotification("error", "Erro ao curtir.");
       return;
     }
-    // The Server Action returns the domain Comment (Date typed as Date),
-    // but Next.js serializes Date → string at the boundary, matching
-    // CommentData. The double cast acknowledges that.
+    // The action returns { commentId, likeCount, likedByMe } — only those
+    // two fields change on the affected card.
+    const { likeCount, likedByMe } = result.data;
     const updater = (prev: CommentData[]) =>
-      prev.map((c) => (c._id === id ? (result.data as unknown as CommentData) : c));
+      prev.map((c) => (c._id === id ? { ...c, likeCount, likedByMe } : c));
     setComments(updater);
     setTitleComments(updater);
   }, [user, requireLogin, handleNotification]);
@@ -797,7 +797,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                             </svg>
-                            Útil · {comment.likes.length}
+                            Útil · {comment.likeCount}
                           </button>
 
                           {/* Contribuir button */}
@@ -815,7 +815,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                           {/* N Perspectiva badge */}
                           <div className="ml-auto bg-brand-tint rounded-[12px] h-[22.5px] flex items-center px-2.5 whitespace-nowrap">
                             <span className="font-semibold text-[11px] text-brand">
-                              {comment.likes.length > 0 ? `${comment.likes.length} Perspectiva${comment.likes.length !== 1 ? "s" : ""}` : "0 Perspectivas"}
+                              {comment.likeCount > 0 ? `${comment.likeCount} Perspectiva${comment.likeCount !== 1 ? "s" : ""}` : "0 Perspectivas"}
                             </span>
                           </div>
 

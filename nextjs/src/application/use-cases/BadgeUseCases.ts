@@ -1,10 +1,10 @@
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { IUserChapterReadRepository } from "@/domain/repositories/IUserChapterReadRepository";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import type { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { IBookRepository } from "@/domain/repositories/IBookRepository";
-import type { Book } from "@/domain/entities/Book";
 import { BADGES, getBadge } from "@/lib/badges/catalog";
 import { BADGE_SECTIONS } from "@/lib/badges/sections";
 import type { BadgeAxis, BadgeCounters, BadgeDefinition } from "@/lib/badges/types";
@@ -13,6 +13,7 @@ export interface BadgeRepos {
   user: IUserRepository;
   chapterRead: IUserChapterReadRepository;
   comment: ICommentRepository;
+  commentLike: ICommentLikeRepository;
   discussion: IDiscussionRepository;
   notification: INotificationRepository;
   book: IBookRepository;
@@ -137,7 +138,7 @@ export class EvaluateBadgesUseCase {
 
     if (needs("interaction")) {
       counters.hasGivenLike =
-        hints.hasGivenLike ?? (await this.repos.comment.userHasGivenLike(input.username));
+        hints.hasGivenLike ?? (await this.repos.commentLike.userHasGivenAnyLike(input.userId));
       counters.hasOpenedDiscussion =
         hints.hasOpenedDiscussion ??
         (await this.repos.discussion.userHasOpenedDiscussion(input.username));

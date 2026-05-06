@@ -92,9 +92,9 @@ describe("ImportCommentsUseCase", () => {
     const useCase = new ImportCommentsUseCase(repo);
 
     const items = [
-      { verseId: "v1", username: "a", onTitle: false, bookReference: "Gn 1", text: "x", tags: [], reports: [], likes: [] },
-      { verseId: "v2", username: "b", onTitle: false, bookReference: "Gn 2", text: "y", tags: [], reports: [], likes: [] },
-      { verseId: "v3", username: "c", onTitle: false, bookReference: "Gn 3", text: "z", tags: [], reports: [], likes: [] },
+      { verseId: "v1", username: "a", onTitle: false, bookReference: "Gn 1", text: "x", tags: [], reports: [] },
+      { verseId: "v2", username: "b", onTitle: false, bookReference: "Gn 2", text: "y", tags: [], reports: [] },
+      { verseId: "v3", username: "c", onTitle: false, bookReference: "Gn 3", text: "z", tags: [], reports: [] },
     ];
     const result = await useCase.execute(items);
 

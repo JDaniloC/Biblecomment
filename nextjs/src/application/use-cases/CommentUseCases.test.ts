@@ -17,7 +17,6 @@ function fakeComment(overrides: Partial<Comment> = {}): Comment {
     text: "comment",
     tags: [],
     reports: [],
-    likes: [],
     ...overrides,
   };
 }

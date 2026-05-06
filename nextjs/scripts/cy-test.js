@@ -39,6 +39,9 @@ if (process.env.MONGODB_URI) {
   );
 }
 
+// (Collection list lives in cypress/tasks/db.ts and scripts/dev-with-mongo.js
+// — the orchestrator itself never resets the DB, so it doesn't need its own.)
+
 // Use a port distinct from `npm run dev` (3000) so a developer can keep
 // their dev server running while Cypress executes against an isolated
 // build. Override with CYPRESS_PORT if needed.

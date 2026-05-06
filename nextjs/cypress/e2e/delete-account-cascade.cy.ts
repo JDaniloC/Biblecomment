@@ -19,7 +19,7 @@
  *   - alice's User document is gone (session lookups 401)
  *   - alice's comment text remains, username is "[usuário removido]"
  *   - alice's discussion username is anonymized; bob's answer untouched
- *   - bob's comment.likes and bob's comment.reports no longer contain "alice"
+ *   - bob's comment loses alice's like (commentlikes row gone) and her report
  *   - all notifications addressed to / from "alice" are removed
  */
 
@@ -120,8 +120,9 @@ describe("LGPD — delete account cascade", () => {
                 ...(preRes.body.verseComments ?? []),
               ];
               const bobPre = all.find((c: { _id: string }) => c._id === bobCommentId);
-              expect(bobPre.likes, "alice should be in bob's likes pre-delete").to.include("alice");
+              expect(bobPre.likeCount, "bob's comment shows 1 like pre-delete").to.eq(1);
             });
+            cy.task<number>("db:countLikesForComment", bobCommentId).should("eq", 1);
 
             // Pre-delete: mod sees bob's comment in the reports queue (alice reported it).
             cy.clearCookies();
@@ -172,8 +173,11 @@ describe("LGPD — delete account cascade", () => {
               const bobCmt = all.find((c: { _id: string }) => c._id === bobCommentId);
               expect(bobCmt, "bob's comment should still exist").to.exist;
               expect(bobCmt.username).to.eq("bob");
-              expect(bobCmt.likes, "alice removed from bob's likes").to.not.include("alice");
+              expect(bobCmt.likeCount, "alice's like cascaded out").to.eq(0);
             });
+            // Confirm at the storage layer too — no orphan commentlikes rows.
+            cy.task<number>("db:countLikesForComment", bobCommentId).should("eq", 0);
+            cy.task<number>("db:countCommentLikesByUser", users.alice.email).should("eq", 0);
 
             // The mod-only reports queue confirms alice's report was pulled —
             // bob's comment now has reports=[] and falls out of the queue.

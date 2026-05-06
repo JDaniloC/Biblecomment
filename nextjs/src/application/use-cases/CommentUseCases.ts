@@ -1,4 +1,5 @@
 import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import { Comment } from "@/domain/entities/Comment";
 
@@ -19,10 +20,34 @@ export class GetAllCommentsPaginatedUseCase {
 }
 
 export class GetUserFavoritesUseCase {
-  constructor(private readonly commentRepo: ICommentRepository) {}
+  constructor(
+    private readonly commentRepo: ICommentRepository,
+    private readonly likeRepo: ICommentLikeRepository,
+  ) {}
 
-  async execute(username: string, page: number, pageSize: number): Promise<Comment[]> {
-    return this.commentRepo.findFavoritesByUsername(username, page, pageSize);
+  /**
+   * Comments the user has liked, ordered by like createdAt desc.
+   * Each comment is enriched with `likeCount` and `likedByMe: true`.
+   */
+  async execute(userId: string, page: number, pageSize: number): Promise<Comment[]> {
+    const ids = await this.likeRepo.findCommentIdsLikedBy(userId, page, pageSize);
+    if (ids.length === 0) return [];
+    const [comments, counts] = await Promise.all([
+      this.commentRepo.findManyByIds(ids),
+      this.likeRepo.countByComment(ids),
+    ]);
+    const byId = new Map(comments.map((c) => [c._id ?? "", c]));
+    const ordered: Comment[] = [];
+    for (const id of ids) {
+      const c = byId.get(id);
+      if (!c) continue; // comment was hard-deleted but the like row hasn't been pruned yet
+      ordered.push({
+        ...c,
+        likeCount: counts.get(id) ?? 0,
+        likedByMe: true,
+      });
+    }
+    return ordered;
   }
 }
 
@@ -52,7 +77,6 @@ export class CreateCommentUseCase {
       text,
       tags,
       reports: [],
-      likes: [],
     });
   }
 }
@@ -72,29 +96,55 @@ export class UpdateCommentUseCase {
 }
 
 export class DeleteCommentUseCase {
-  constructor(private readonly commentRepo: ICommentRepository) {}
+  constructor(
+    private readonly commentRepo: ICommentRepository,
+    private readonly likeRepo?: ICommentLikeRepository,
+  ) {}
 
   async execute(id: string, username: string, isModerator: boolean = false): Promise<void> {
     const comment = await this.commentRepo.findById(id);
     if (!comment) throw new Error("Comment not found");
     if (!isModerator && comment.username !== username) throw new Error("Unauthorized");
     await this.commentRepo.delete(id);
+    // Cascade likes for the dead comment so the join collection doesn't grow
+    // orphaned rows. Best-effort — failure here doesn't undo the delete.
+    if (this.likeRepo) {
+      await this.likeRepo.deleteAllByComment(id).catch(() => undefined);
+    }
   }
 }
 
-export class ToggleLikeUseCase {
-  constructor(private readonly commentRepo: ICommentRepository) {}
+export interface ToggleLikeResult {
+  commentId: string;
+  likeCount: number;
+  likedByMe: boolean;
+}
 
-  async execute(id: string, username: string): Promise<Comment> {
-    const comment = await this.commentRepo.findById(id);
+export class ToggleLikeUseCase {
+  constructor(
+    private readonly commentRepo: ICommentRepository,
+    private readonly likeRepo: ICommentLikeRepository,
+  ) {}
+
+  async execute(commentId: string, userId: string): Promise<ToggleLikeResult> {
+    // Confirm the comment exists so callers get a clean 404 instead of
+    // silently flipping the join row for a non-existent target.
+    const comment = await this.commentRepo.findById(commentId);
     if (!comment) throw new Error("Comment not found");
 
-    const updated = comment.likes.includes(username)
-      ? await this.commentRepo.removeLike(id, username)
-      : await this.commentRepo.addLike(id, username);
+    const wasLiked = await this.likeRepo.hasLiked(userId, commentId);
+    if (wasLiked) {
+      await this.likeRepo.unlike(userId, commentId);
+    } else {
+      await this.likeRepo.like(userId, commentId);
+    }
 
-    if (!updated) throw new Error("Failed to toggle like");
-    return updated;
+    const counts = await this.likeRepo.countByComment([commentId]);
+    return {
+      commentId,
+      likeCount: counts.get(commentId) ?? 0,
+      likedByMe: !wasLiked,
+    };
   }
 }
 

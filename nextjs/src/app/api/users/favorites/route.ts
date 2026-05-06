@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { GetUserFavoritesUseCase } from "@/application/use-cases/CommentUseCases";
 import { getSessionUser, unauthorized, serverError } from "@/lib/get-session";
 
@@ -15,9 +16,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("pages") ?? "1", 10);
 
-    const repo = new MongoCommentRepository();
-    const useCase = new GetUserFavoritesUseCase(repo);
-    const favorites = await useCase.execute(user.username, page, PAGE_SIZE);
+    const useCase = new GetUserFavoritesUseCase(
+      new MongoCommentRepository(),
+      new MongoCommentLikeRepository(),
+    );
+    // Favorites are now keyed by userId in the CommentLike collection (see Phase 9.1).
+    // Comments come back with likeCount + likedByMe (always true here) populated.
+    const favorites = await useCase.execute(user.id, page, PAGE_SIZE);
     return NextResponse.json({ favorites });
   } catch (err) {
     return serverError(err);

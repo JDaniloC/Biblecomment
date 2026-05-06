@@ -1,5 +1,6 @@
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import { User } from "@/domain/entities/User";
@@ -45,6 +46,7 @@ export class DeleteUserUseCase {
   constructor(
     private readonly userRepo: IUserRepository,
     private readonly commentRepo: ICommentRepository,
+    private readonly commentLikeRepo: ICommentLikeRepository,
     private readonly discussionRepo: IDiscussionRepository,
     private readonly notificationRepo: INotificationRepository,
   ) {}
@@ -58,9 +60,14 @@ export class DeleteUserUseCase {
     // hard-deleting the User document. Discussion threads stay readable
     // under "[usuário removido]"; notifications referencing the user (as
     // recipient or actor) are removed since they no longer have meaning.
+    // Likes (CommentLike collection) are keyed by userId — deleteMany strips
+    // them cleanly without touching the parent comment.
     await Promise.all([
       this.commentRepo.anonymizeByUsername(user.username, ANONYMIZED_USERNAME),
       this.commentRepo.removeUserReferences(user.username),
+      user._id
+        ? this.commentLikeRepo.deleteAllByUser(user._id)
+        : Promise.resolve(0),
       this.discussionRepo.anonymizeByUsername(user.username, ANONYMIZED_USERNAME),
       this.notificationRepo.deleteForUser(user.username),
     ]);

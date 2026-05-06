@@ -14,7 +14,6 @@ function toEntity(doc: ICommentDocument): Comment {
     text: doc.text,
     tags: doc.tags,
     reports: doc.reports,
-    likes: doc.likes,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -50,12 +49,14 @@ export class MongoCommentRepository implements ICommentRepository {
     return docs.map(toEntity);
   }
 
-  async findFavoritesByUsername(username: string, page: number, pageSize: number): Promise<Comment[]> {
+  async findManyByIds(ids: string[]): Promise<Comment[]> {
+    if (ids.length === 0) return [];
     await connectToDatabase();
-    const docs = await CommentModel.find({ likes: username })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
+    const oids = ids
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (oids.length === 0) return [];
+    const docs = await CommentModel.find({ _id: { $in: oids } });
     return docs.map(toEntity);
   }
 
@@ -89,28 +90,6 @@ export class MongoCommentRepository implements ICommentRepository {
   async delete(id: string): Promise<void> {
     await connectToDatabase();
     await CommentModel.findByIdAndDelete(id);
-  }
-
-  async addLike(id: string, username: string): Promise<Comment | null> {
-    await connectToDatabase();
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const doc = await CommentModel.findByIdAndUpdate(
-      id,
-      { $addToSet: { likes: username } },
-      { returnDocument: "after" }
-    );
-    return doc ? toEntity(doc) : null;
-  }
-
-  async removeLike(id: string, username: string): Promise<Comment | null> {
-    await connectToDatabase();
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const doc = await CommentModel.findByIdAndUpdate(
-      id,
-      { $pull: { likes: username } },
-      { returnDocument: "after" }
-    );
-    return doc ? toEntity(doc) : null;
   }
 
   async addReport(id: string, username: string): Promise<Comment | null> {
@@ -171,16 +150,12 @@ export class MongoCommentRepository implements ICommentRepository {
 
   async removeUserReferences(username: string): Promise<void> {
     await connectToDatabase();
+    // Likes moved to a join collection (see MongoCommentLikeRepository.deleteAllByUser
+    // for the cascade). Reports stay embedded for now (Phase 9.2 will extract).
     await CommentModel.updateMany(
-      { $or: [{ likes: username }, { reports: username }] },
-      { $pull: { likes: username, reports: username } },
+      { reports: username },
+      { $pull: { reports: username } },
     );
-  }
-
-  async userHasGivenLike(username: string): Promise<boolean> {
-    await connectToDatabase();
-    const doc = await CommentModel.findOne({ likes: username }, { _id: 1 });
-    return doc !== null;
   }
 
   async findDailyFeatured(dayIndex: number): Promise<Comment | null> {

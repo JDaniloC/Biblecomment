@@ -9,11 +9,13 @@ export interface ICommentDocument extends Document {
   text: string;
   tags: string[];
   reports: string[];
-  likes: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Likes were extracted into a separate collection (see CommentLikeModel).
+// The schema deliberately omits the legacy `likes: [String]` field so old
+// docs upgrade lazily — Mongoose ignores unknown keys with strict (default).
 const CommentSchema = new Schema<ICommentDocument>(
   {
     sourceId:      { type: Number },
@@ -24,7 +26,6 @@ const CommentSchema = new Schema<ICommentDocument>(
     text:          { type: String, required: true },
     tags:          { type: [String], default: [] },
     reports:       { type: [String], default: [] },
-    likes:         { type: [String], default: [] },
   },
   { timestamps: true }
 );

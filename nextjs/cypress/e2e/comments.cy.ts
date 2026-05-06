@@ -136,7 +136,7 @@ describe("Comments — full lifecycle", () => {
   });
 
   describe("Like / Report (PATCH with action)", () => {
-    it("toggle like adds and removes the username in likes", () => {
+    it("toggle like flips the count + likedByMe via the CommentLike collection", () => {
       cy.loginAs(users.alice.email, users.alice.password);
       getVerseId("gn", 1, 1).then((verseId) => {
         cy.request({
@@ -154,8 +154,12 @@ describe("Comments — full lifecycle", () => {
             url: `/api/comments/${id}`,
             body: { action: "like" },
           }).then((res) => {
-            expect(res.body.likes).to.include("bob");
+            expect(res.body.commentId).to.eq(id);
+            expect(res.body.likeCount).to.eq(1);
+            expect(res.body.likedByMe).to.eq(true);
           });
+          cy.task<number>("db:countLikesForComment", id).should("eq", 1);
+          cy.task<number>("db:countCommentLikesByUser", users.bob.email).should("eq", 1);
 
           // Toggle off.
           cy.request({
@@ -163,8 +167,10 @@ describe("Comments — full lifecycle", () => {
             url: `/api/comments/${id}`,
             body: { action: "like" },
           }).then((res) => {
-            expect(res.body.likes).to.not.include("bob");
+            expect(res.body.likeCount).to.eq(0);
+            expect(res.body.likedByMe).to.eq(false);
           });
+          cy.task<number>("db:countLikesForComment", id).should("eq", 0);
         });
       });
     });

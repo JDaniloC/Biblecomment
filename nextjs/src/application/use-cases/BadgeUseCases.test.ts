@@ -3,6 +3,7 @@ import { EvaluateBadgesUseCase, type BadgeRepos } from "./BadgeUseCases";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { IUserChapterReadRepository } from "@/domain/repositories/IUserChapterReadRepository";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import type { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { IBookRepository } from "@/domain/repositories/IBookRepository";
@@ -61,8 +62,19 @@ function makeRepos(opts: {
 
   const comment = {
     findByUsername: async () => opts.comments ?? [],
-    userHasGivenLike: async () => opts.hasGivenLike ?? false,
   } as unknown as ICommentRepository;
+
+  const commentLike: ICommentLikeRepository = {
+    like: async () => true,
+    unlike: async () => {},
+    hasLiked: async () => false,
+    countByComment: async () => new Map(),
+    whichLiked: async () => new Set(),
+    findCommentIdsLikedBy: async () => [],
+    userHasGivenAnyLike: async () => opts.hasGivenLike ?? false,
+    deleteAllByUser: async () => 0,
+    deleteAllByComment: async () => 0,
+  };
 
   const discussion = {
     userHasOpenedDiscussion: async () => opts.hasOpenedDiscussion ?? false,
@@ -90,7 +102,7 @@ function makeRepos(opts: {
     create: async () => ({} as never),
   } as IBookRepository;
 
-  return { user, chapterRead, comment, discussion, notification, book };
+  return { user, chapterRead, comment, commentLike, discussion, notification, book };
 }
 
 function makeComment(bookRef: string, partial: Partial<Comment> = {}): Comment {
@@ -102,7 +114,6 @@ function makeComment(bookRef: string, partial: Partial<Comment> = {}): Comment {
     text: "x",
     tags: [],
     reports: [],
-    likes: [],
     ...partial,
   };
 }

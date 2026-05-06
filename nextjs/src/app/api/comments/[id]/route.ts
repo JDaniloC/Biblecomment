@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
@@ -74,8 +75,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     const repo = new MongoCommentRepository();
 
     if (action === "like") {
-      const useCase = new ToggleLikeUseCase(repo);
-      return NextResponse.json(await useCase.execute(id, user.username));
+      const useCase = new ToggleLikeUseCase(repo, new MongoCommentLikeRepository());
+      // Returns { commentId, likeCount, likedByMe } — the chapter listings use
+      // the same shape, so the client can update its local state without a refetch.
+      return NextResponse.json(await useCase.execute(id, user.id));
     }
 
     if (action === "report") {
@@ -101,8 +104,10 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     if (!user) return unauthorized();
 
     const { id } = await params;
-    const repo = new MongoCommentRepository();
-    const useCase = new DeleteCommentUseCase(repo);
+    const useCase = new DeleteCommentUseCase(
+      new MongoCommentRepository(),
+      new MongoCommentLikeRepository(),
+    );
     await useCase.execute(id, user.username, user.moderator);
     return NextResponse.json({ success: true });
   } catch (err) {

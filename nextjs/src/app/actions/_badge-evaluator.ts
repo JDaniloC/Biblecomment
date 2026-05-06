@@ -8,6 +8,7 @@
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/MongoUserChapterReadRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
@@ -20,6 +21,7 @@ export async function evaluateBadges(input: EvaluateInput): Promise<string[]> {
       user: new MongoUserRepository(),
       chapterRead: new MongoUserChapterReadRepository(),
       comment: new MongoCommentRepository(),
+      commentLike: new MongoCommentLikeRepository(),
       discussion: new MongoDiscussionRepository(),
       notification: new MongoNotificationRepository(),
       book: new MongoBookRepository(),

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
 export type SessionUser = {
+  id: string;
   name: string;
   email: string;
   username: string;

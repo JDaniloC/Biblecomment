@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
@@ -12,6 +13,7 @@ import {
   DeleteCommentUseCase,
   CreateCommentUseCase,
   UpdateCommentUseCase,
+  type ToggleLikeResult,
 } from "@/application/use-cases/CommentUseCases";
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import type { Comment } from "@/domain/entities/Comment";
@@ -39,25 +41,25 @@ function appError(err: unknown, fallback: string): ActionResult<never> {
 }
 
 /**
- * Toggle the current user in/out of the comment's `likes` array.
- * Server Action — replaces axios.patch(/api/comments/[id], { action: "like" }).
+ * Toggle the current user's like on a comment via the CommentLike collection.
+ * Returns the post-toggle stats — { likeCount, likedByMe } — so the caller
+ * can update the UI without a re-fetch.
  */
 export async function toggleLikeAction(
   commentId: string,
-): Promise<ActionResult<Comment>> {
+): Promise<ActionResult<ToggleLikeResult>> {
   const session = await auth();
   if (!session?.user) return authError();
 
   try {
-    const repo = new MongoCommentRepository();
-    const useCase = new ToggleLikeUseCase(repo);
-    const updated = await useCase.execute(commentId, session.user.username);
+    const useCase = new ToggleLikeUseCase(
+      new MongoCommentRepository(),
+      new MongoCommentLikeRepository(),
+    );
+    const result = await useCase.execute(commentId, session.user.id);
     // Only fire the badge evaluator when this toggle ADDED a like — toggling
-    // off doesn't progress the user toward `first-like`. (Once given, the user
-    // can never "ungive" their first-like badge anyway since hasGivenLike is
-    // computed against the historical likes set in DB at evaluator time.)
-    const justLiked = updated.likes.includes(session.user.username);
-    if (justLiked) {
+    // off doesn't progress the user toward `first-like`.
+    if (result.likedByMe) {
       await evaluateBadges({
         userId: session.user.id,
         username: session.user.username,
@@ -68,7 +70,7 @@ export async function toggleLikeAction(
     // Chapter pages render the like count server-side; revalidate so the
     // server-rendered HTML reflects the new state on next navigation.
     revalidatePath("/verses/[abbrev]/[number]", "page");
-    return { ok: true, data: updated };
+    return { ok: true, data: result };
   } catch (err) {
     logger.error({ err, action: "toggleLikeAction", commentId }, "toggle like failed");
     return appError(err, "Erro ao curtir.");
@@ -234,8 +236,10 @@ export async function deleteCommentAction(
   if (!session?.user) return authError();
 
   try {
-    const repo = new MongoCommentRepository();
-    const useCase = new DeleteCommentUseCase(repo);
+    const useCase = new DeleteCommentUseCase(
+      new MongoCommentRepository(),
+      new MongoCommentLikeRepository(),
+    );
     await useCase.execute(commentId, session.user.username, session.user.moderator);
     revalidatePath("/verses/[abbrev]/[number]", "page");
     return { ok: true, data: { deleted: true } };

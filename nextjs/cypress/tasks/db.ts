@@ -31,6 +31,7 @@ const COLLECTIONS = [
   "books",
   "verses",
   "comments",
+  "commentlikes",
   "discussions",
   "notifications",
   "passwordresettokens",
@@ -182,6 +183,29 @@ export async function countChapterReads(email: string): Promise<number> {
   return db
     .collection("userchapterreads")
     .countDocuments({ userId: user._id.toString() });
+}
+
+/** Total likes given by `email` across all comments. */
+export async function countCommentLikesByUser(email: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: email.toLowerCase().trim() });
+  if (!user) return 0;
+  return db.collection("commentlikes").countDocuments({ userId: user._id.toString() });
+}
+
+/** Total likes received by a single comment (rows in commentlikes for that id). */
+export async function countLikesForComment(commentId: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  if (!mongoose.Types.ObjectId.isValid(commentId)) return 0;
+  return db
+    .collection("commentlikes")
+    .countDocuments({ commentId: new mongoose.Types.ObjectId(commentId) });
 }
 
 /** Counts password reset tokens for a given email (active + expired). */

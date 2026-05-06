@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
@@ -63,6 +64,7 @@ export async function deleteSelfAction(
     const useCase = new DeleteUserUseCase(
       new MongoUserRepository(),
       new MongoCommentRepository(),
+      new MongoCommentLikeRepository(),
       new MongoDiscussionRepository(),
       new MongoNotificationRepository(),
     );

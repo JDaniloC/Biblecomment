@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
-import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { VerseModel } from "@/infrastructure/database/models/VerseModel";
-import mongoose from "mongoose";
+import { auth } from "@/lib/auth";
+import { buildLikeStats } from "@/lib/comment-enrich";
 import { badRequest, serverError } from "@/lib/get-session";
 
 type Params = { abbrev: string; chapter: string };
@@ -26,6 +25,12 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
       verseId: { $in: verseIds },
     }).sort({ createdAt: -1 }).lean();
 
+    const session = await auth();
+    const stats = await buildLikeStats(
+      comments.map((c) => c._id.toString()),
+      session?.user?.id,
+    );
+
     const titleComments = comments
       .filter((c) => c.onTitle)
       .map((c) => ({
@@ -35,7 +40,8 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
         username: c.username,
         bookReference: c.bookReference,
         createdAt: c.createdAt,
-        likes: c.likes,
+        likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
+        likedByMe: stats.likedByViewer.has(c._id.toString()),
         onTitle: c.onTitle,
       }));
 
@@ -48,7 +54,8 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
         username: c.username,
         bookReference: c.bookReference,
         createdAt: c.createdAt,
-        likes: c.likes,
+        likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
+        likedByMe: stats.likedByViewer.has(c._id.toString()),
         verseId: c.verseId.toString(),
         onTitle: c.onTitle,
       }));

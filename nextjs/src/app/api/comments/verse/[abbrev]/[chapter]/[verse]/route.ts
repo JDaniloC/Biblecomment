@@ -37,7 +37,6 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
       text,
       tags,
       reports: [],
-      likes: [],
     });
 
     return NextResponse.json({
@@ -47,7 +46,11 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
       username: comment.username,
       bookReference: comment.bookReference,
       createdAt: comment.createdAt,
-      likes: comment.likes,
+      // Fresh comment — no likes yet, and the author trivially hasn't liked
+      // their own (same shape as the GET listings so the client renders both
+      // through one branch).
+      likeCount: 0,
+      likedByMe: false,
       onTitle: comment.onTitle,
     }, { status: 201 });
   } catch (err) {
