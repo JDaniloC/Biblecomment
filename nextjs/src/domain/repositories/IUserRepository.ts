@@ -19,5 +19,10 @@ export interface IUserRepository {
    * under the hood so concurrent calls converge.
    */
   markTutorialCompleted(email: string, name: string): Promise<void>;
+  /**
+   * Append one or more badge IDs to the user, idempotently.
+   * Returns the IDs that were actually new (i.e., not previously present).
+   */
+  addBadges(userId: string, badgeIds: string[]): Promise<string[]>;
   delete(email: string): Promise<void>;
 }

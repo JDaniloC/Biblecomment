@@ -17,6 +17,7 @@ function toEntity(doc: IUserDocument): User {
     // the user object during JWT encode and a MongooseArray (which carries
     // hidden parent refs) blows up DataCloneError.
     tutorialsCompleted: doc.tutorialsCompleted ? [...doc.tutorialsCompleted] : [],
+    badges: doc.badges ? [...doc.badges] : [],
   };
 }
 
@@ -87,6 +88,21 @@ export class MongoUserRepository implements IUserRepository {
       { email: email.toLowerCase() },
       { $addToSet: { tutorialsCompleted: name } },
     );
+  }
+
+  async addBadges(userId: string, badgeIds: string[]): Promise<string[]> {
+    if (badgeIds.length === 0) return [];
+    await connectToDatabase();
+    const before = await UserModel.findOne({ _id: userId }, { badges: 1 });
+    if (!before) return [];
+    const existing = new Set(before.badges ?? []);
+    const fresh = badgeIds.filter((id) => !existing.has(id));
+    if (fresh.length === 0) return [];
+    await UserModel.updateOne(
+      { _id: userId },
+      { $addToSet: { badges: { $each: fresh } } },
+    );
+    return fresh;
   }
 
   async delete(email: string): Promise<void> {

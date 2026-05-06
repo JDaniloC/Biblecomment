@@ -13,6 +13,11 @@ export interface User {
    * can reuse the same field without re-prompting older completions.
    */
   tutorialsCompleted?: string[];
+  /**
+   * Badge IDs the user has unlocked (catalog ids from src/lib/badges/catalog.ts).
+   * Append-only via $addToSet — concurrent grants converge.
+   */
+  badges?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

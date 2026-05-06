@@ -35,6 +35,7 @@ function repoReturning(users: User[]): IUserRepository {
     updatePasswordById: async () => {},
     update: async () => null,
     markTutorialCompleted: async () => {},
+    addBadges: async () => [],
     delete: async () => {},
   };
 }

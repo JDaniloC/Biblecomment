@@ -9,6 +9,7 @@ export interface IUserDocument extends Document {
   belief?: string;
   moderator?: boolean;
   tutorialsCompleted?: string[];
+  badges?: string[];
 }
 
 const UserSchema = new Schema<IUserDocument>(
@@ -21,6 +22,7 @@ const UserSchema = new Schema<IUserDocument>(
     belief:             { type: String },
     moderator:          { type: Boolean, default: false },
     tutorialsCompleted: { type: [String], default: [] },
+    badges:             { type: [String], default: [] },
   },
   { timestamps: true }
 );

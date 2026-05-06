@@ -34,6 +34,7 @@ const COLLECTIONS = [
   "discussions",
   "notifications",
   "passwordresettokens",
+  "userchapterreads",
 ];
 
 export async function resetDatabase(): Promise<void> {

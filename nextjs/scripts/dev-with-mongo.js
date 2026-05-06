@@ -65,6 +65,7 @@ const COLLECTIONS = [
   "discussions",
   "notifications",
   "passwordresettokens",
+  "userchapterreads",
 ];
 
 async function seed(uri) {

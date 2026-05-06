@@ -1,9 +1,10 @@
 export type NotificationType =
   | "discussion_answer"
   | "comment_mention"
-  | "answer_mention";
+  | "answer_mention"
+  | "badge_unlocked";
 
-export type NotificationResourceType = "discussion" | "comment";
+export type NotificationResourceType = "discussion" | "comment" | "badge";
 
 export interface Notification {
   _id?: string;
