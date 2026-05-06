@@ -23,3 +23,14 @@ nextjs/.tmp-screenshots/
 nextjs/.lighthouseci/
 .claude/
 plan_*.md
+
+# Claude Code MCP server config — workspace-specific (Sentry MCP per developer).
+.mcp.json
+nextjs/.mcp.json
+
+# Project uses npm; yarn.lock would only show up if someone ran `yarn install`
+# by accident. Track only package-lock.json.
+yarn.lock
+
+# Backfill script for badges — kept locally, run on-demand against prod.
+nextjs/scripts/badges-backfill.js
