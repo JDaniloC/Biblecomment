@@ -63,6 +63,7 @@ const COLLECTIONS = [
   "verses",
   "comments",
   "commentlikes",
+  "commentreports",
   "discussions",
   "notifications",
   "passwordresettokens",

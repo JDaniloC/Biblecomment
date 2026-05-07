@@ -158,7 +158,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                       </span>
                     )}
                     <span className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
-                      {c.reports.length} report{c.reports.length !== 1 ? "s" : ""}
+                      {(c.reportCount ?? 0)} report{(c.reportCount ?? 0) !== 1 ? "s" : ""}
                     </span>
                     <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
                       {dateFormat(c.createdAt)}
@@ -169,7 +169,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                   </p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                      Reportado por: {c.reports.join(", ")}
+                      Reportado por: {(c.reporters ?? []).join(", ")}
                     </span>
                     <div className="ml-auto flex gap-2">
                       <button

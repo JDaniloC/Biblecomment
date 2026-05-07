@@ -11,15 +11,7 @@ export interface ICommentRepository {
   createMany(comments: Omit<Comment, "_id" | "createdAt" | "updatedAt">[]): Promise<number>;
   update(id: string, data: Partial<Comment>): Promise<Comment | null>;
   delete(id: string): Promise<void>;
-  addReport(id: string, username: string): Promise<Comment | null>;
-  findReported(page: number, pageSize: number): Promise<Comment[]>;
-  clearReports(id: string): Promise<Comment | null>;
   findAll(): Promise<Comment[]>;
   searchByText(query: string): Promise<Comment[]>;
   anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
-  /**
-   * Strip references to a deleted user from embedded arrays still held on
-   * Comment (currently just `reports`; likes were extracted in Phase 9.1).
-   */
-  removeUserReferences(username: string): Promise<void>;
 }

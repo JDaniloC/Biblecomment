@@ -44,7 +44,6 @@ function fakeComment(overrides: Partial<Comment> = {}): Comment {
     bookReference: "Gn 1:1",
     text: "hello",
     tags: [],
-    reports: [],
     ...overrides,
   };
 }
@@ -97,11 +96,14 @@ describe("commentsService", () => {
   });
 
   describe("report", () => {
-    it("delegates to reportCommentAction", async () => {
-      mockedReport.mockResolvedValueOnce({ ok: true, data: fakeComment({ reports: ["bob"] }) });
+    it("delegates to reportCommentAction and returns ReportCommentResult", async () => {
+      mockedReport.mockResolvedValueOnce({
+        ok: true,
+        data: { commentId: "c1", reportCount: 1, reportedByMe: true },
+      });
       const result = await commentsService.report("c1");
       expect(mockedReport).toHaveBeenCalledWith("c1");
-      expect(result.reports).toEqual(["bob"]);
+      expect(result).toEqual({ commentId: "c1", reportCount: 1, reportedByMe: true });
     });
   });
 

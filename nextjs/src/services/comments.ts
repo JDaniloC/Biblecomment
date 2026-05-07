@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import type { Comment } from "@/domain/entities/Comment";
-import type { ToggleLikeResult } from "@/application/use-cases/CommentUseCases";
+import type { ToggleLikeResult, ReportCommentResult } from "@/application/use-cases/CommentUseCases";
 import {
   toggleLikeAction,
   reportCommentAction,
@@ -60,7 +60,7 @@ export const commentsService = {
     return result.data;
   },
 
-  async report(id: string): Promise<Comment> {
+  async report(id: string): Promise<ReportCommentResult> {
     const result = await reportCommentAction(id);
     if (!result.ok) actionError(result.error);
     return result.data;

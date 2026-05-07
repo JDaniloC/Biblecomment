@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
 import { ClearReportsUseCase } from "@/application/use-cases/CommentUseCases";
-import { getSessionUser, forbidden, notFound, serverError } from "@/lib/get-session";
+import { getSessionUser, forbidden, serverError } from "@/lib/get-session";
 import { logger } from "@/lib/logger";
 
 type Params = { id: string };
@@ -14,20 +14,16 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     if (!user?.moderator) return forbidden();
 
     const { id } = await params;
-    const repo = new MongoCommentRepository();
-    const useCase = new ClearReportsUseCase(repo);
-    const updated = await useCase.execute(id);
+    const useCase = new ClearReportsUseCase(new MongoCommentReportRepository());
+    const result = await useCase.execute(id);
 
     logger.info(
-      { actor: user.email, commentId: id, action: "clear_reports" },
+      { actor: user.email, commentId: id, cleared: result.cleared, action: "clear_reports" },
       "comment reports cleared",
     );
 
-    return NextResponse.json({ _id: updated._id, reports: updated.reports });
+    return NextResponse.json({ _id: result.commentId, cleared: result.cleared });
   } catch (err) {
-    if (err instanceof Error && err.message === "Comment not found") {
-      return notFound("Comment not found");
-    }
     return serverError(err);
   }
 }

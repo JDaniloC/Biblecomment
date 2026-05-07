@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
-import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
 import { ClearReportsUseCase } from "@/application/use-cases/CommentUseCases";
 import { logger } from "@/lib/logger";
 import type { ActionResult } from "./comments";
@@ -19,33 +19,29 @@ function appError(err: unknown, fallback: string): ActionResult<never> {
 /**
  * Drop all reports on a flagged comment. Moderator-only.
  * Replaces axios.delete(/api/moderation/reports/:id).
+ *
+ * Reports live in the CommentReport collection (Phase 9.2) — clearing is
+ * a deleteMany on commentId, no parent doc mutation required.
  */
 export async function clearReportsAction(
   commentId: string,
-): Promise<ActionResult<{ _id: string; reports: string[] }>> {
+): Promise<ActionResult<{ _id: string; cleared: number }>> {
   const session = await auth();
   if (!session?.user) return authError();
   if (!session.user.moderator) return { ok: false, error: "Forbidden" };
 
   try {
-    const repo = new MongoCommentRepository();
-    const useCase = new ClearReportsUseCase(repo);
-    const updated = await useCase.execute(commentId);
+    const useCase = new ClearReportsUseCase(new MongoCommentReportRepository());
+    const result = await useCase.execute(commentId);
 
     logger.info(
-      { actor: session.user.email, commentId, action: "clear_reports" },
+      { actor: session.user.email, commentId, cleared: result.cleared, action: "clear_reports" },
       "comment reports cleared",
     );
 
     revalidatePath("/admin/moderation", "page");
-    return {
-      ok: true,
-      data: { _id: updated._id ?? commentId, reports: updated.reports },
-    };
+    return { ok: true, data: { _id: result.commentId, cleared: result.cleared } };
   } catch (err) {
-    if (err instanceof Error && err.message === "Comment not found") {
-      return { ok: false, error: "NotFound" };
-    }
     logger.error({ err, action: "clearReportsAction", commentId }, "clear reports failed");
     return appError(err, "Erro ao limpar relatórios.");
   }

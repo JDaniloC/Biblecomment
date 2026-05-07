@@ -8,14 +8,13 @@ export interface ICommentDocument extends Document {
   bookReference: string;
   text: string;
   tags: string[];
-  reports: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Likes were extracted into a separate collection (see CommentLikeModel).
-// The schema deliberately omits the legacy `likes: [String]` field so old
-// docs upgrade lazily — Mongoose ignores unknown keys with strict (default).
+// Likes (Phase 9.1) and reports (Phase 9.2) live in their own join
+// collections — see CommentLikeModel / CommentReportModel. The schema
+// deliberately omits the legacy fields so old docs upgrade lazily.
 const CommentSchema = new Schema<ICommentDocument>(
   {
     sourceId:      { type: Number },
@@ -25,7 +24,6 @@ const CommentSchema = new Schema<ICommentDocument>(
     bookReference: { type: String, required: true },
     text:          { type: String, required: true },
     tags:          { type: [String], default: [] },
-    reports:       { type: [String], default: [] },
   },
   { timestamps: true }
 );

@@ -32,6 +32,7 @@ const COLLECTIONS = [
   "verses",
   "comments",
   "commentlikes",
+  "commentreports",
   "discussions",
   "notifications",
   "passwordresettokens",
@@ -205,6 +206,29 @@ export async function countLikesForComment(commentId: string): Promise<number> {
   if (!mongoose.Types.ObjectId.isValid(commentId)) return 0;
   return db
     .collection("commentlikes")
+    .countDocuments({ commentId: new mongoose.Types.ObjectId(commentId) });
+}
+
+/** Total reports filed by a user across all comments. */
+export async function countCommentReportsByUser(email: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: email.toLowerCase().trim() });
+  if (!user) return 0;
+  return db.collection("commentreports").countDocuments({ userId: user._id.toString() });
+}
+
+/** Total reports filed against a single comment. */
+export async function countReportsForComment(commentId: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  if (!mongoose.Types.ObjectId.isValid(commentId)) return 0;
+  return db
+    .collection("commentreports")
     .countDocuments({ commentId: new mongoose.Types.ObjectId(commentId) });
 }
 

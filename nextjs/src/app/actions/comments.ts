@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
+import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
@@ -14,6 +15,7 @@ import {
   CreateCommentUseCase,
   UpdateCommentUseCase,
   type ToggleLikeResult,
+  type ReportCommentResult,
 } from "@/application/use-cases/CommentUseCases";
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import type { Comment } from "@/domain/entities/Comment";
@@ -78,21 +80,28 @@ export async function toggleLikeAction(
 }
 
 /**
- * Add the current user to the comment's `reports` array. Idempotent —
- * Mongo's $addToSet means reporting twice has no effect.
+ * Insert the current user's report on a comment. Idempotent — the
+ * CommentReport collection has a unique (userId, commentId) index, so
+ * reporting twice is a no-op.
  */
 export async function reportCommentAction(
   commentId: string,
-): Promise<ActionResult<Comment>> {
+): Promise<ActionResult<ReportCommentResult>> {
   const session = await auth();
   if (!session?.user) return authError();
 
   try {
-    const repo = new MongoCommentRepository();
-    const useCase = new ReportCommentUseCase(repo);
-    const updated = await useCase.execute(commentId, session.user.username);
+    const useCase = new ReportCommentUseCase(
+      new MongoCommentRepository(),
+      new MongoCommentReportRepository(),
+    );
+    const result = await useCase.execute(
+      commentId,
+      session.user.id,
+      session.user.username,
+    );
     revalidatePath("/verses/[abbrev]/[number]", "page");
-    return { ok: true, data: updated };
+    return { ok: true, data: result };
   } catch (err) {
     logger.error({ err, action: "reportCommentAction", commentId }, "report failed");
     return appError(err, "Erro ao reportar.");
@@ -255,6 +264,7 @@ export async function deleteCommentAction(
     const useCase = new DeleteCommentUseCase(
       new MongoCommentRepository(),
       new MongoCommentLikeRepository(),
+      new MongoCommentReportRepository(),
     );
     await useCase.execute(commentId, session.user.username, session.user.moderator);
     revalidatePath("/verses/[abbrev]/[number]", "page");

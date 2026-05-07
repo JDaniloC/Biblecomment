@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
+import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
@@ -65,6 +66,7 @@ export async function deleteSelfAction(
       new MongoUserRepository(),
       new MongoCommentRepository(),
       new MongoCommentLikeRepository(),
+      new MongoCommentReportRepository(),
       new MongoDiscussionRepository(),
       new MongoNotificationRepository(),
     );

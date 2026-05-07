@@ -1,9 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import {
-  ListReportedCommentsUseCase,
-  ClearReportsUseCase,
-  DeleteCommentUseCase,
-} from "./CommentUseCases";
+import { DeleteCommentUseCase } from "./CommentUseCases";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { Comment } from "@/domain/entities/Comment";
 
@@ -16,47 +12,9 @@ function fakeComment(overrides: Partial<Comment> = {}): Comment {
     bookReference: "Gn 1",
     text: "comment",
     tags: [],
-    reports: [],
     ...overrides,
   };
 }
-
-describe("ListReportedCommentsUseCase", () => {
-  it("delegates to findReported with page and pageSize", async () => {
-    const findReported = vi.fn().mockResolvedValue([
-      fakeComment({ _id: "c1", reports: ["bob"] }),
-      fakeComment({ _id: "c2", reports: ["bob", "carol"] }),
-    ]);
-    const repo = { findReported } as unknown as ICommentRepository;
-    const useCase = new ListReportedCommentsUseCase(repo);
-
-    const result = await useCase.execute(2, 10);
-
-    expect(findReported).toHaveBeenCalledWith(2, 10);
-    expect(result).toHaveLength(2);
-  });
-});
-
-describe("ClearReportsUseCase", () => {
-  it("returns the cleared comment on success", async () => {
-    const clearReports = vi.fn().mockResolvedValue(fakeComment({ reports: [] }));
-    const repo = { clearReports } as unknown as ICommentRepository;
-    const useCase = new ClearReportsUseCase(repo);
-
-    const result = await useCase.execute("c1");
-
-    expect(clearReports).toHaveBeenCalledWith("c1");
-    expect(result.reports).toEqual([]);
-  });
-
-  it("throws 'Comment not found' when repo returns null", async () => {
-    const clearReports = vi.fn().mockResolvedValue(null);
-    const repo = { clearReports } as unknown as ICommentRepository;
-    const useCase = new ClearReportsUseCase(repo);
-
-    await expect(useCase.execute("missing")).rejects.toThrow("Comment not found");
-  });
-});
 
 describe("DeleteCommentUseCase", () => {
   it("allows the owner to delete their own comment", async () => {
@@ -89,5 +47,24 @@ describe("DeleteCommentUseCase", () => {
 
     await expect(useCase.execute("c1", "attacker", false)).rejects.toThrow("Unauthorized");
     expect(del).not.toHaveBeenCalled();
+  });
+
+  it("cascades likes + reports cleanup when those repos are passed", async () => {
+    const findById = vi.fn().mockResolvedValue(fakeComment());
+    const del = vi.fn().mockResolvedValue(undefined);
+    const repo = { findById, delete: del } as unknown as ICommentRepository;
+    const likeCascade = vi.fn().mockResolvedValue(0);
+    const reportCascade = vi.fn().mockResolvedValue(0);
+    const useCase = new DeleteCommentUseCase(
+      repo,
+      { deleteAllByComment: likeCascade } as never,
+      { deleteAllByComment: reportCascade } as never,
+    );
+
+    await useCase.execute("c1", "alice", false);
+
+    expect(del).toHaveBeenCalledWith("c1");
+    expect(likeCascade).toHaveBeenCalledWith("c1");
+    expect(reportCascade).toHaveBeenCalledWith("c1");
   });
 });

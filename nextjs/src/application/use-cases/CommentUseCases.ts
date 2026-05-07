@@ -1,5 +1,6 @@
 import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
+import { ICommentReportRepository } from "@/domain/repositories/ICommentReportRepository";
 import { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import { Comment } from "@/domain/entities/Comment";
 
@@ -76,7 +77,6 @@ export class CreateCommentUseCase {
       bookReference: bookRef,
       text,
       tags,
-      reports: [],
     });
   }
 }
@@ -99,6 +99,7 @@ export class DeleteCommentUseCase {
   constructor(
     private readonly commentRepo: ICommentRepository,
     private readonly likeRepo?: ICommentLikeRepository,
+    private readonly reportRepo?: ICommentReportRepository,
   ) {}
 
   async execute(id: string, username: string, isModerator: boolean = false): Promise<void> {
@@ -106,10 +107,15 @@ export class DeleteCommentUseCase {
     if (!comment) throw new Error("Comment not found");
     if (!isModerator && comment.username !== username) throw new Error("Unauthorized");
     await this.commentRepo.delete(id);
-    // Cascade likes for the dead comment so the join collection doesn't grow
-    // orphaned rows. Best-effort — failure here doesn't undo the delete.
+    // Cascade likes + reports for the dead comment so the join collections
+    // don't grow orphaned rows. Best-effort — failure here doesn't undo
+    // the delete (the source of truth for "is this comment alive" is the
+    // CommentModel doc, which we just removed).
     if (this.likeRepo) {
       await this.likeRepo.deleteAllByComment(id).catch(() => undefined);
+    }
+    if (this.reportRepo) {
+      await this.reportRepo.deleteAllByComment(id).catch(() => undefined);
     }
   }
 }
@@ -148,34 +154,73 @@ export class ToggleLikeUseCase {
   }
 }
 
-export class ReportCommentUseCase {
-  constructor(private readonly commentRepo: ICommentRepository) {}
+export interface ReportCommentResult {
+  commentId: string;
+  reportCount: number;
+  reportedByMe: boolean;
+}
 
-  async execute(id: string, username: string): Promise<Comment> {
-    const comment = await this.commentRepo.findById(id);
+export class ReportCommentUseCase {
+  constructor(
+    private readonly commentRepo: ICommentRepository,
+    private readonly reportRepo: ICommentReportRepository,
+  ) {}
+
+  async execute(
+    commentId: string,
+    userId: string,
+    username: string,
+  ): Promise<ReportCommentResult> {
+    const comment = await this.commentRepo.findById(commentId);
     if (!comment) throw new Error("Comment not found");
 
-    const updated = await this.commentRepo.addReport(id, username);
-    if (!updated) throw new Error("Failed to report comment");
-    return updated;
+    await this.reportRepo.report(userId, username, commentId);
+    const counts = await this.reportRepo.countByComment([commentId]);
+    return {
+      commentId,
+      reportCount: counts.get(commentId) ?? 0,
+      reportedByMe: true,
+    };
   }
 }
 
 export class ListReportedCommentsUseCase {
-  constructor(private readonly commentRepo: ICommentRepository) {}
+  constructor(
+    private readonly commentRepo: ICommentRepository,
+    private readonly reportRepo: ICommentReportRepository,
+  ) {}
 
+  /**
+   * Reported comments paginated by report count desc. Each item is the
+   * Comment doc enriched with `reportCount` + `reporters` (snapshot
+   * usernames) so the moderation panel renders without an extra round-trip.
+   */
   async execute(page: number, pageSize: number): Promise<Comment[]> {
-    return this.commentRepo.findReported(page, pageSize);
+    const aggregates = await this.reportRepo.findReportedCommentIds(page, pageSize);
+    if (aggregates.length === 0) return [];
+    const ids = aggregates.map((a) => a.commentId);
+    const comments = await this.commentRepo.findManyByIds(ids);
+    const byId = new Map(comments.map((c) => [c._id ?? "", c]));
+    const ordered: Comment[] = [];
+    for (const a of aggregates) {
+      const c = byId.get(a.commentId);
+      if (!c) continue; // stale report rows for a hard-deleted comment
+      ordered.push({
+        ...c,
+        reportCount: a.reportCount,
+        reporters: a.reporters,
+      });
+    }
+    return ordered;
   }
 }
 
 export class ClearReportsUseCase {
-  constructor(private readonly commentRepo: ICommentRepository) {}
+  constructor(private readonly reportRepo: ICommentReportRepository) {}
 
-  async execute(id: string): Promise<Comment> {
-    const updated = await this.commentRepo.clearReports(id);
-    if (!updated) throw new Error("Comment not found");
-    return updated;
+  async execute(commentId: string): Promise<{ commentId: string; cleared: number }> {
+    const cleared = await this.reportRepo.clearReportsForComment(commentId);
+    return { commentId, cleared };
   }
 }
 

@@ -88,7 +88,6 @@ function makeComment(id: string, partial: Partial<Comment> = {}): Comment {
     bookReference: "Gn 1:1",
     text: "x",
     tags: [],
-    reports: [],
     ...partial,
   };
 }

@@ -36,7 +36,6 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
       bookReference: bookRef,
       text,
       tags,
-      reports: [],
     });
 
     return NextResponse.json({

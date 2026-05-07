@@ -106,7 +106,6 @@ const BackupCommentItemSchema = z.object({
   bookReference: z.string().min(1).max(200),
   text: z.string().min(1).max(5000),
   tags: z.array(z.string().max(50)).default([]),
-  reports: z.array(z.string().max(40)).default([]),
 });
 
 export const BackupCommentsSchema = z.object({

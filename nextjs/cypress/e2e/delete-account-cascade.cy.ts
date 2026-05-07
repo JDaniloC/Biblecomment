@@ -128,11 +128,17 @@ describe("LGPD — delete account cascade", () => {
             cy.clearCookies();
             cy.loginAs(users.mod.email, users.mod.password);
             cy.request("GET", "/api/moderation/reports?pages=1").then((modRes) => {
-              const reported = modRes.body.items as Array<{ _id: string; reports: string[] }>;
+              const reported = modRes.body.items as Array<{
+                _id: string;
+                reportCount: number;
+                reporters: string[];
+              }>;
               const target = reported.find((c) => c._id === bobCommentId);
               expect(target, "bob's comment should be in the reports queue pre-delete").to.exist;
-              expect(target!.reports, "alice should be the reporter").to.include("alice");
+              expect(target!.reportCount).to.eq(1);
+              expect(target!.reporters, "alice should be the reporter").to.include("alice");
             });
+            cy.task<number>("db:countReportsForComment", bobCommentId).should("eq", 1);
 
             cy.clearCookies();
             cy.loginAs(users.alice.email, users.alice.password);
@@ -180,14 +186,16 @@ describe("LGPD — delete account cascade", () => {
             cy.task<number>("db:countCommentLikesByUser", users.alice.email).should("eq", 0);
 
             // The mod-only reports queue confirms alice's report was pulled —
-            // bob's comment now has reports=[] and falls out of the queue.
+            // bob's comment loses its only report row and falls out of the queue.
             cy.clearCookies();
             cy.loginAs(users.mod.email, users.mod.password);
             cy.request("GET", "/api/moderation/reports?pages=1").then((modRes) => {
-              const reported = modRes.body.items as Array<{ _id: string; reports: string[] }>;
+              const reported = modRes.body.items as Array<{ _id: string }>;
               const stillThere = reported.find((c) => c._id === bobCommentId);
               expect(stillThere, "bob's comment should leave the reports queue post-delete").to.be.undefined;
             });
+            cy.task<number>("db:countReportsForComment", bobCommentId).should("eq", 0);
+            cy.task<number>("db:countCommentReportsByUser", users.alice.email).should("eq", 0);
 
             // alice's discussion username is anonymized; bob's answer intact.
             cy.request("GET", `/api/discussion/gn/${aliceDiscussionId}`).then((discRes) => {

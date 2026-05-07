@@ -85,11 +85,14 @@ describe("Moderation endpoints", () => {
             expect(res.status).to.eq(200);
             expect(res.body).to.have.property("page", 1);
             expect(res.body).to.have.property("pageSize", 20);
-            const found = (res.body.items as Array<{ _id: string; reports: string[] }>).find(
-              (c) => c._id === reportedId,
-            );
+            const found = (res.body.items as Array<{
+              _id: string;
+              reportCount: number;
+              reporters: string[];
+            }>).find((c) => c._id === reportedId);
             expect(found, "reported comment must appear in moderation list").to.exist;
-            expect(found!.reports).to.include("bob");
+            expect(found!.reportCount).to.eq(1);
+            expect(found!.reporters).to.include("bob");
           });
         });
       });
@@ -135,8 +138,9 @@ describe("Moderation endpoints", () => {
             url: `/api/moderation/reports/${reportedId}`,
           }).then((res) => {
             expect(res.status).to.eq(200);
-            expect(res.body.reports).to.deep.eq([]);
+            expect(res.body.cleared, "exactly bob's report row was wiped").to.eq(1);
           });
+          cy.task<number>("db:countReportsForComment", reportedId).should("eq", 0);
 
           // The comment itself is still there (only reports were cleared).
           cy.request("/api/comments/chapter/gn/1/1").then((listRes) => {
@@ -151,14 +155,16 @@ describe("Moderation endpoints", () => {
       });
     });
 
-    it("404 when comment doesn't exist", () => {
+    it("clearing on a missing target is a no-op (200, cleared: 0)", () => {
+      // Phase 9.2: clear is now a deleteMany on the CommentReport collection.
+      // It doesn't need the parent Comment to exist — idempotent semantics.
       cy.loginAs(users.mod.email, users.mod.password);
       cy.request({
         method: "DELETE",
         url: "/api/moderation/reports/507f1f77bcf86cd799439011",
-        failOnStatusCode: false,
       }).then((res) => {
-        expect(res.status).to.eq(404);
+        expect(res.status).to.eq(200);
+        expect(res.body.cleared).to.eq(0);
       });
     });
   });

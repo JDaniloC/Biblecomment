@@ -175,7 +175,7 @@ describe("Comments — full lifecycle", () => {
       });
     });
 
-    it("report adds the username to reports and is idempotent", () => {
+    it("report inserts a CommentReport row and is idempotent on the unique index", () => {
       cy.loginAs(users.alice.email, users.alice.password);
       getVerseId("gn", 1, 1).then((verseId) => {
         cy.request({
@@ -193,18 +193,21 @@ describe("Comments — full lifecycle", () => {
             url: `/api/comments/${id}`,
             body: { action: "report" },
           }).then((res) => {
-            expect(res.body.reports).to.include("bob");
+            expect(res.body.commentId).to.eq(id);
+            expect(res.body.reportCount).to.eq(1);
+            expect(res.body.reportedByMe).to.eq(true);
           });
+          cy.task<number>("db:countReportsForComment", id).should("eq", 1);
 
-          // Reporting again is a no-op (Mongoose $addToSet).
+          // Reporting again is a no-op (unique {userId, commentId} index).
           cy.request({
             method: "PATCH",
             url: `/api/comments/${id}`,
             body: { action: "report" },
           }).then((res) => {
-            const occurrences = (res.body.reports as string[]).filter((u) => u === "bob").length;
-            expect(occurrences, "report must be idempotent").to.eq(1);
+            expect(res.body.reportCount, "report must be idempotent").to.eq(1);
           });
+          cy.task<number>("db:countReportsForComment", id).should("eq", 1);
         });
       });
     });

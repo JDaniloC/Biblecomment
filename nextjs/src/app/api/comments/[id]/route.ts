@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
+import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
@@ -82,8 +83,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     }
 
     if (action === "report") {
-      const useCase = new ReportCommentUseCase(repo);
-      return NextResponse.json(await useCase.execute(id, user.username));
+      const useCase = new ReportCommentUseCase(repo, new MongoCommentReportRepository());
+      // Returns { commentId, reportCount, reportedByMe } — same shape family
+      // as toggleLike for consistency at the API boundary.
+      return NextResponse.json(await useCase.execute(id, user.id, user.username));
     }
 
     if (!text) return badRequest("text é obrigatório");
@@ -107,6 +110,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     const useCase = new DeleteCommentUseCase(
       new MongoCommentRepository(),
       new MongoCommentLikeRepository(),
+      new MongoCommentReportRepository(),
     );
     await useCase.execute(id, user.username, user.moderator);
     return NextResponse.json({ success: true });

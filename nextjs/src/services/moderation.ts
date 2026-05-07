@@ -18,7 +18,7 @@ export const moderationService = {
     return res.data;
   },
 
-  async clearReports(commentId: string): Promise<{ _id: string; reports: string[] }> {
+  async clearReports(commentId: string): Promise<{ _id: string; cleared: number }> {
     const result = await clearReportsAction(commentId);
     if (!result.ok) actionError(result.error);
     return result.data;

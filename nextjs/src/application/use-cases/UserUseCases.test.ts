@@ -8,6 +8,7 @@ import {
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
+import type { ICommentReportRepository } from "@/domain/repositories/ICommentReportRepository";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { User } from "@/domain/entities/User";
@@ -27,7 +28,6 @@ function fakeUser(overrides: Partial<User> = {}): User {
 function noopCommentRepo() {
   return {
     anonymizeByUsername: vi.fn().mockResolvedValue(0),
-    removeUserReferences: vi.fn().mockResolvedValue(undefined),
   } as unknown as ICommentRepository;
 }
 
@@ -35,6 +35,12 @@ function noopCommentLikeRepo() {
   return {
     deleteAllByUser: vi.fn().mockResolvedValue(0),
   } as unknown as ICommentLikeRepository;
+}
+
+function noopCommentReportRepo() {
+  return {
+    deleteAllByUser: vi.fn().mockResolvedValue(0),
+  } as unknown as ICommentReportRepository;
 }
 
 function noopDiscussionRepo() {
@@ -86,7 +92,7 @@ describe("DeleteUserUseCase", () => {
     const findByEmail = vi.fn().mockResolvedValue(fakeUser({ email: "victim@example.com", username: "victim" }));
     const del = vi.fn().mockResolvedValue(undefined);
     const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
-    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopCommentLikeRepo(), noopDiscussionRepo(), noopNotificationRepo());
+    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopCommentLikeRepo(), noopCommentReportRepo(), noopDiscussionRepo(), noopNotificationRepo());
 
     await useCase.execute("mod@example.com", "victim@example.com", true);
 
@@ -97,7 +103,7 @@ describe("DeleteUserUseCase", () => {
     const findByEmail = vi.fn().mockResolvedValue(fakeUser({ email: "alice@example.com" }));
     const del = vi.fn().mockResolvedValue(undefined);
     const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
-    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopCommentLikeRepo(), noopDiscussionRepo(), noopNotificationRepo());
+    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopCommentLikeRepo(), noopCommentReportRepo(), noopDiscussionRepo(), noopNotificationRepo());
 
     await useCase.execute("alice@example.com", "alice@example.com", false);
 
@@ -108,7 +114,7 @@ describe("DeleteUserUseCase", () => {
     const findByEmail = vi.fn().mockResolvedValue(fakeUser({ email: "victim@example.com" }));
     const del = vi.fn();
     const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
-    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopCommentLikeRepo(), noopDiscussionRepo(), noopNotificationRepo());
+    const useCase = new DeleteUserUseCase(userRepo, noopCommentRepo(), noopCommentLikeRepo(), noopCommentReportRepo(), noopDiscussionRepo(), noopNotificationRepo());
 
     await expect(
       useCase.execute("attacker@example.com", "victim@example.com", false),
@@ -123,15 +129,16 @@ describe("DeleteUserUseCase", () => {
 
     const commentRepo = noopCommentRepo();
     const commentLikeRepo = noopCommentLikeRepo();
+    const commentReportRepo = noopCommentReportRepo();
     const discussionRepo = noopDiscussionRepo();
     const notifRepo = noopNotificationRepo();
 
-    const useCase = new DeleteUserUseCase(userRepo, commentRepo, commentLikeRepo, discussionRepo, notifRepo);
+    const useCase = new DeleteUserUseCase(userRepo, commentRepo, commentLikeRepo, commentReportRepo, discussionRepo, notifRepo);
     await useCase.execute("alice@example.com", "alice@example.com", false);
 
     expect(commentRepo.anonymizeByUsername).toHaveBeenCalledWith("alice", ANONYMIZED_USERNAME);
-    expect(commentRepo.removeUserReferences).toHaveBeenCalledWith("alice");
     expect(commentLikeRepo.deleteAllByUser).toHaveBeenCalledWith("u1");
+    expect(commentReportRepo.deleteAllByUser).toHaveBeenCalledWith("u1");
     expect(discussionRepo.anonymizeByUsername).toHaveBeenCalledWith("alice", ANONYMIZED_USERNAME);
     expect(notifRepo.deleteForUser).toHaveBeenCalledWith("alice");
     expect(del).toHaveBeenCalledWith("alice@example.com");

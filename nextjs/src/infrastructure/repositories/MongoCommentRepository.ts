@@ -13,7 +13,6 @@ function toEntity(doc: ICommentDocument): Comment {
     bookReference: doc.bookReference,
     text: doc.text,
     tags: doc.tags,
-    reports: doc.reports,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -92,37 +91,6 @@ export class MongoCommentRepository implements ICommentRepository {
     await CommentModel.findByIdAndDelete(id);
   }
 
-  async addReport(id: string, username: string): Promise<Comment | null> {
-    await connectToDatabase();
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const doc = await CommentModel.findByIdAndUpdate(
-      id,
-      { $addToSet: { reports: username } },
-      { returnDocument: "after" }
-    );
-    return doc ? toEntity(doc) : null;
-  }
-
-  async findReported(page: number, pageSize: number): Promise<Comment[]> {
-    await connectToDatabase();
-    const docs = await CommentModel.find({ "reports.0": { $exists: true } })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize);
-    return docs.map(toEntity);
-  }
-
-  async clearReports(id: string): Promise<Comment | null> {
-    await connectToDatabase();
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const doc = await CommentModel.findByIdAndUpdate(
-      id,
-      { $set: { reports: [] } },
-      { returnDocument: "after" }
-    );
-    return doc ? toEntity(doc) : null;
-  }
-
   async findAll(): Promise<Comment[]> {
     await connectToDatabase();
     const docs = await CommentModel.find({});
@@ -146,16 +114,6 @@ export class MongoCommentRepository implements ICommentRepository {
       { $set: { username: replacement } },
     );
     return result.modifiedCount ?? 0;
-  }
-
-  async removeUserReferences(username: string): Promise<void> {
-    await connectToDatabase();
-    // Likes moved to a join collection (see MongoCommentLikeRepository.deleteAllByUser
-    // for the cascade). Reports stay embedded for now (Phase 9.2 will extract).
-    await CommentModel.updateMany(
-      { reports: username },
-      { $pull: { reports: username } },
-    );
   }
 
   async findDailyFeatured(dayIndex: number): Promise<Comment | null> {
