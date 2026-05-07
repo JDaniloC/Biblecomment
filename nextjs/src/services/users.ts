@@ -111,4 +111,12 @@ export const usersService = {
     const result = await completePasswordResetAction(token, newPassword);
     if (!result.ok) actionError(result.error);
   },
+
+  async importMyComments(payload: unknown): Promise<{ imported: number; skipped: number; failed: number }> {
+    const res = await axios.post<{ imported: number; skipped: number; failed: number }>(
+      "/api/users/me/import",
+      payload,
+    );
+    return res.data;
+  },
 };

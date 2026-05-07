@@ -2,21 +2,7 @@ import { NextResponse } from "next/server";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { serverError } from "@/lib/get-session";
-
-const SPECIAL: Record<string, string> = { jó: "job", jn: "jn" };
-
-function parseBookRef(bookRef: string): { abbrev: string; chapter: number; verse: number } | null {
-  const tokens = bookRef.trim().split(" ");
-  if (tokens.length < 2) return null;
-  const ref = tokens[tokens.length - 1];
-  const abbrevRaw = tokens.slice(0, -1).join("").toLowerCase();
-  const abbrev = SPECIAL[abbrevRaw] ?? abbrevRaw;
-  const [chStr, vStr] = ref.split(":");
-  const chapter = parseInt(chStr, 10);
-  const verse = parseInt(vStr, 10);
-  if (!abbrev || isNaN(chapter) || isNaN(verse)) return null;
-  return { abbrev, chapter, verse };
-}
+import { parseBookRef } from "@/lib/parse-book-ref";
 
 export const dynamic = "force-dynamic";
 

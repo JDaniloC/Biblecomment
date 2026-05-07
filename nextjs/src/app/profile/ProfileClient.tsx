@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -39,6 +39,7 @@ interface UserProfile {
 }
 
 import { getTagMetaOrNeutral } from "@/lib/tag-meta";
+import { parseBookRef } from "@/lib/parse-book-ref";
 import { TagIcon } from "@/components/TagIcon";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -46,8 +47,6 @@ type Tab = "overview" | "comments" | "favorites" | "badges" | "config";
 type TypeFilter = "Todos" | "Exegese" | "Devocional" | "Pessoal" | "Inspirado";
 
 const TYPE_FILTERS: TypeFilter[] = ["Todos", "Exegese", "Devocional", "Pessoal", "Inspirado"];
-
-const SPECIAL: Record<string, string> = { jó: "job" };
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -60,19 +59,6 @@ function formatMemberSince(dateStr?: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "";
   return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-}
-
-function parseBookRef(ref: string): { abbrev: string; chapter: number; verse: number } | null {
-  const tokens = ref.trim().split(" ");
-  if (tokens.length < 2) return null;
-  const chv = tokens[tokens.length - 1];
-  const abbrevRaw = tokens.slice(0, -1).join("").toLowerCase();
-  const abbrev = SPECIAL[abbrevRaw] ?? abbrevRaw;
-  const [chStr, vStr] = chv.split(":");
-  const chapter = parseInt(chStr, 10);
-  const verse = parseInt(vStr, 10);
-  if (!abbrev || isNaN(chapter) || isNaN(verse)) return null;
-  return { abbrev, chapter, verse };
 }
 
 function getCommentType(tags: string[]) {
@@ -398,6 +384,91 @@ function ChangePasswordCard() {
 }
 
 /* ─────────────────── Tutorial reset (config tab) ─────────────────── */
+function MyDataCard({ onCommentsImported }: { onCommentsImported: () => void }) {
+  const { handleNotification } = useNotification();
+  const confirm = useConfirm();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+
+  const onPick = () => fileRef.current?.click();
+
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = "";
+    if (!file) return;
+
+    const ok = await confirm({
+      title: "Importar comentários do backup?",
+      description:
+        "Comentários idênticos aos seus já existentes serão ignorados. " +
+        "Comentários cujo versículo não exista no banco atual serão pulados.",
+      confirmLabel: "Importar",
+    });
+    if (!ok) return;
+
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      const result = await usersService.importMyComments(payload);
+      onCommentsImported();
+      handleNotification(
+        "success",
+        `Importação concluída: ${result.imported} novos, ${result.skipped} já existiam, ${result.failed} ignorados.`,
+      );
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 400) {
+        handleNotification("error", "Arquivo inválido. Use um JSON exportado pelo próprio Bible Comment.");
+      } else {
+        handleNotification("error", "Não foi possível importar o arquivo.");
+      }
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
+      <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
+        Meus dados
+      </div>
+      <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-4 mt-0">
+        Baixe um arquivo JSON com tudo que armazenamos sobre você (perfil,
+        comentários, discussões, respostas e notificações). Você pode também
+        restaurar comentários a partir de um backup anterior.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <a
+          href="/api/users/me/export"
+          className="inline-block h-[35.5px] px-5 leading-[35.5px] bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition"
+        >
+          Exportar meus dados (JSON)
+        </a>
+        <button
+          type="button"
+          onClick={onPick}
+          disabled={importing}
+          className="h-[35.5px] px-5 bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition disabled:opacity-50"
+        >
+          {importing ? "Importando…" : "Importar comentários (JSON)"}
+        </button>
+        <label htmlFor="profile-import-file" className="sr-only">
+          Selecionar arquivo de backup JSON
+        </label>
+        <input
+          id="profile-import-file"
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={onFile}
+          className="hidden"
+        />
+      </div>
+    </div>
+  );
+}
+
 function TutorialResetCard() {
   const router = useRouter();
   const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME);
@@ -949,21 +1020,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               <TutorialResetCard />
 
               {/* ── Card: Meus dados (LGPD Art. 18 - portabilidade) ── */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
-                <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
-                  Meus dados
-                </div>
-                <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-4 mt-0">
-                  Baixe um arquivo JSON com tudo que armazenamos sobre você
-                  (perfil, comentários, discussões, respostas e notificações).
-                </p>
-                <a
-                  href="/api/users/me/export"
-                  className="inline-block h-[35.5px] px-5 leading-[35.5px] bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition"
-                >
-                  Exportar meus dados (JSON)
-                </a>
-              </div>
+              <MyDataCard onCommentsImported={loadComments} />
 
               {/* ── Card 3: Zona de Perigo ── */}
               <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/40 rounded-xl px-6 pt-5 pb-6">
