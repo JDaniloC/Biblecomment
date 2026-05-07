@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import { commentsService } from "@/services/comments";
 import { usersService } from "@/services/users";
 import type { CommentData } from "@/lib/comment-data";
@@ -504,6 +505,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 /* ──────────────────────── Main component ──────────────────────── */
 export default function ProfileClient({ user }: { user: SessionUser }) {
   const { handleNotification } = useNotification();
+  const confirm = useConfirm();
   const [tab, setTab]               = useState<Tab>("overview");
   const [profile, setProfile]       = useState<UserProfile | null>(null);
   const [comments, setComments]     = useState<CommentData[]>([]);
@@ -561,7 +563,13 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
   /* ── Handlers ── */
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("Excluir este comentário?")) return;
+    const ok = await confirm({
+      title: "Excluir este comentário?",
+      description: "Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await commentsService.delete(id);
       setComments(prev => prev.filter(c => c._id !== id));
@@ -569,7 +577,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
     } catch {
       handleNotification("error", "Erro ao excluir.");
     }
-  }, [handleNotification]);
+  }, [handleNotification, confirm]);
 
   const handleUpdateAccount = useCallback(async () => {
     try {
@@ -581,7 +589,13 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   }, [belief, stateName, handleNotification]);
 
   const handleDeleteAccount = useCallback(async () => {
-    if (!confirm("Tem certeza que quer excluir sua conta? Esta ação é irreversível.")) return;
+    const ok = await confirm({
+      title: "Excluir sua conta?",
+      description: "Esta ação é irreversível. Seus dados pessoais serão removidos e seus comentários ficarão anônimos.",
+      confirmLabel: "Excluir conta",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await usersService.deleteSelf(user.email);
       handleNotification("success", "Conta excluída.");
@@ -589,7 +603,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
     } catch {
       handleNotification("error", "Erro ao excluir conta.");
     }
-  }, [handleNotification, user.email]);
+  }, [handleNotification, user.email, confirm]);
 
   /* ── Derived data ── */
   const filteredComments = useMemo(() => {

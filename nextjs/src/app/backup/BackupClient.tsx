@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 
 interface SessionUser {
   name: string;
@@ -15,6 +16,7 @@ interface SessionUser {
 
 export default function BackupClient({ user }: { user: SessionUser }) {
   const { handleNotification } = useNotification();
+  const confirm = useConfirm();
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -40,7 +42,16 @@ export default function BackupClient({ user }: { user: SessionUser }) {
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!confirm("Importar o backup irá substituir os dados existentes. Continuar?")) return;
+    const ok = await confirm({
+      title: "Substituir os dados existentes?",
+      description: "Importar o backup irá sobrescrever todos os dados atuais. Esta ação não pode ser desfeita.",
+      confirmLabel: "Importar",
+      variant: "danger",
+    });
+    if (!ok) {
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
     setImporting(true);
     try {
       const text = await file.text();

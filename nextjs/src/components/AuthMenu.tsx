@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 
 interface SessionUser {
   name?: string | null;
@@ -103,10 +104,17 @@ export function AuthMenu({ user, loginCallbackUrl }: Props) {
                 <span className="font-medium text-[13px] text-amber-700 dark:text-amber-300">Moderação</span>
               </Link>
             )}
-            <Link href="/api/auth/signout" className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                signOut({ callbackUrl: "/" });
+              }}
+              className="w-full flex items-center gap-2.5 h-[35.5px] pl-4 bg-transparent border-none cursor-pointer text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
               <span className="text-red-600 dark:text-red-400 flex">{ICONS.signout}</span>
               <span className="font-medium text-[13px] text-red-600 dark:text-red-400">Sair</span>
-            </Link>
+            </button>
           </div>
         </>
       )}

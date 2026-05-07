@@ -5,6 +5,7 @@ import { ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material/st
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ConfirmProvider } from "@/contexts/ConfirmContext";
 
 const theme = createTheme({
   palette: {
@@ -21,7 +22,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         <MuiThemeProvider theme={theme}>
           <CssBaseline enableColorScheme />
           <NotificationProvider>
-            {children}
+            <ConfirmProvider>
+              {children}
+            </ConfirmProvider>
           </NotificationProvider>
         </MuiThemeProvider>
       </NextThemesProvider>

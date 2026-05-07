@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import { moderationService } from "@/services/moderation";
 import { commentsService } from "@/services/comments";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -26,6 +27,7 @@ function dateFormat(d?: Date | string) {
 
 export default function AdminModerationClient({ user }: { user: SessionUser }) {
   const { handleNotification } = useNotification();
+  const confirm = useConfirm();
   const [reports, setReports] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -51,7 +53,12 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
   }, [load]);
 
   async function handleClear(id: string) {
-    if (!confirm("Limpar reports deste comentário?")) return;
+    const ok = await confirm({
+      title: "Limpar reports deste comentário?",
+      description: "O comentário sairá da fila de moderação. Você poderá revisitá-lo se ele for reportado novamente.",
+      confirmLabel: "Limpar",
+    });
+    if (!ok) return;
     setBusyId(id);
     try {
       await moderationService.clearReports(id);
@@ -65,7 +72,13 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Deletar permanentemente este comentário? Esta ação não pode ser desfeita.")) return;
+    const ok = await confirm({
+      title: "Deletar este comentário?",
+      description: "A exclusão é permanente e não pode ser desfeita.",
+      confirmLabel: "Deletar",
+      variant: "danger",
+    });
+    if (!ok) return;
     setBusyId(id);
     try {
       await commentsService.delete(id);

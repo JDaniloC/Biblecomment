@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import { commentsService } from "@/services/comments";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
@@ -69,6 +70,7 @@ function dateFormat(str: string) {
 export default function ChapterClient({ book, verses, chapter, user, tutorialAlreadyCompleted, alreadyRead }: Props) {
   const router = useRouter();
   const { handleNotification } = useNotification();
+  const confirm = useConfirm();
 
   const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
   const [isTitleMode, setIsTitleMode] = useState(false);
@@ -253,17 +255,30 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
 
   const handleReport = useCallback(async (id: string) => {
     if (!user) { requireLogin(); return; }
+    const ok = await confirm({
+      title: "Reportar este comentário?",
+      description: "Use essa opção apenas para conteúdo abusivo, ofensivo ou fora do tema. A moderação será notificada.",
+      confirmLabel: "Reportar",
+      variant: "danger",
+    });
+    if (!ok) return;
     const result = await reportCommentAction(id);
     if (!result.ok) {
       handleNotification("error", "Erro ao reportar.");
       return;
     }
     handleNotification("info", "Comentário reportado.");
-  }, [user, requireLogin, handleNotification]);
+  }, [user, requireLogin, handleNotification, confirm]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!user) { requireLogin(); return; }
-    if (!confirm("Excluir este comentário?")) return;
+    const ok = await confirm({
+      title: "Excluir este comentário?",
+      description: "Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!ok) return;
     const result = await deleteCommentAction(id);
     if (!result.ok) {
       handleNotification("error", result.error === "Forbidden" ? "Sem permissão." : "Erro ao excluir.");
@@ -272,7 +287,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
     setComments((prev) => prev.filter((c) => c._id !== id));
     setTitleComments((prev) => prev.filter((c) => c._id !== id));
     handleNotification("success", "Comentário excluído.");
-  }, [user, requireLogin, handleNotification]);
+  }, [user, requireLogin, handleNotification, confirm]);
 
   const startEdit = useCallback((comment: CommentData) => {
     setEditingComment(comment);
@@ -832,18 +847,36 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                             </span>
                           </div>
 
-                          {/* ··· more options */}
+                          {/* Owner: edit pencil. Non-owner: report flag. */}
                           <div className="relative ml-1">
-                            <button
-                              type="button"
-                              className="flex items-center justify-center w-7 h-7 rounded-[5px] border-none bg-transparent cursor-pointer font-mono text-[15px] text-slate-400 dark:text-slate-500 tracking-[1.2px]"
-                              onClick={() => {
-                                if (isOwner) startEdit(comment);
-                                else handleReport(comment._id);
-                              }}
-                            >
-                              ···
-                            </button>
+                            {isOwner ? (
+                              <button
+                                type="button"
+                                aria-label="Editar comentário"
+                                title="Editar"
+                                className="flex items-center justify-center w-7 h-7 rounded-[5px] border-none bg-transparent cursor-pointer text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                onClick={() => startEdit(comment)}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label="Reportar comentário"
+                                title="Reportar"
+                                data-testid={`report-${comment._id}`}
+                                className="flex items-center justify-center w-7 h-7 rounded-[5px] border-none bg-transparent cursor-pointer text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                onClick={() => handleReport(comment._id)}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                                  <line x1="4" y1="22" x2="4" y2="15" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
