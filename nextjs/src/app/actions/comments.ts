@@ -184,7 +184,9 @@ export async function createCommentAction(
     });
 
     revalidatePath("/verses/[abbrev]/[number]", "page");
-    return { ok: true, data: comment };
+    // Fresh comments have no like rows — return well-formed stats so the
+    // client doesn't render `Útil · ` (undefined) on the optimistic insert.
+    return { ok: true, data: { ...comment, likeCount: 0, likedByMe: false } };
   } catch (err) {
     logger.error({ err, action: "createCommentAction", verseId }, "create comment failed");
     return appError(err, "Erro ao criar comentário.");
@@ -214,8 +216,22 @@ export async function updateCommentAction(
       draft.text,
       draft.tags ?? [],
     );
+    // Re-enrich so the client keeps a consistent { likeCount, likedByMe }
+    // contract across create / update / read paths.
+    const likeRepo = new MongoCommentLikeRepository();
+    const [counts, liked] = await Promise.all([
+      likeRepo.countByComment([commentId]),
+      likeRepo.whichLiked(session.user.id, [commentId]),
+    ]);
     revalidatePath("/verses/[abbrev]/[number]", "page");
-    return { ok: true, data: updated };
+    return {
+      ok: true,
+      data: {
+        ...updated,
+        likeCount: counts.get(commentId) ?? 0,
+        likedByMe: liked.has(commentId),
+      },
+    };
   } catch (err) {
     if (err instanceof Error) {
       if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
