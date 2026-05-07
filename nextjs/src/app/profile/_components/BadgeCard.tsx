@@ -1,6 +1,7 @@
 "use client";
 
 import type { BadgeDefinition, BadgeTier } from "@/lib/badges/types";
+import { BadgeIcon } from "@/components/BadgeIcon";
 
 interface Props {
   badge: BadgeDefinition;
@@ -9,6 +10,7 @@ interface Props {
   target: number;
 }
 
+/** Tier base colors — also used for the chip text on earned cards. */
 const TIER_COLORS: Record<BadgeTier, string> = {
   bronze:   "#b87333",
   silver:   "#94a3b8",
@@ -16,22 +18,45 @@ const TIER_COLORS: Record<BadgeTier, string> = {
   platinum: "#a78bfa",
 };
 
+/** Soft background tint used behind the icon for earned badges. */
+const TIER_TINTS: Record<BadgeTier, string> = {
+  bronze:   "#f5e6d3",
+  silver:   "#e2e8f0",
+  gold:     "#fbeec5",
+  platinum: "#ede9fe",
+};
+
+const TIER_LABELS: Record<BadgeTier, string> = {
+  bronze:   "Bronze",
+  silver:   "Prata",
+  gold:     "Ouro",
+  platinum: "Platina",
+};
+
 /**
  * One badge in the Conquistas grid.
  *
- * Earned: shows in tier colour with the tier label chip.
- * Locked: grayscale with progress bar (current/target). The progress numbers
- * are computed server-side by GetUserBadgesUseCase and passed in — keeps the
- * client free of repo dependencies.
+ * Locked: padlock icon over a muted slate background, full grayscale +
+ * opacity ramp so the row clearly reads as "not yet unlocked".
  *
- * The icon is rendered as a coloured circle with the first letter of the
- * lucide name. Real icons can be plugged in later without touching consumers.
+ * Earned: the catalog icon over a tier-tinted disc, in the tier color.
+ * Gold + platinum pick up a subtle outer glow so they stand out from
+ * bronze/silver. Tiered badges show a colored chip ("Bronze", "Ouro"…);
+ * one-shot badges drop the chip — the ✓ on the icon disc is enough.
+ *
+ * cypress contract preserved: `data-earned` and `data-testid` unchanged.
  */
 export function BadgeCard({ badge, earned, current, target }: Props) {
   const tierColor = badge.tier ? TIER_COLORS[badge.tier] : "var(--color-brand)";
-  const initial = (badge.icon[0] ?? "?").toUpperCase();
+  const tierTint = badge.tier
+    ? TIER_TINTS[badge.tier]
+    : "var(--color-brand-tint, #e0f2fe)";
   const showProgress = !earned && target > 1;
   const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+
+  // Gold/platinum get a soft glow so the page reads at a glance which
+  // achievements are the high-tier ones.
+  const premiumRing = earned && (badge.tier === "gold" || badge.tier === "platinum");
 
   return (
     <div
@@ -40,35 +65,67 @@ export function BadgeCard({ badge, earned, current, target }: Props) {
       className={[
         "relative flex gap-3 items-start p-3 rounded-lg border transition",
         earned
-          ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-          : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-70",
+          ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm"
+          : "bg-slate-50 dark:bg-slate-900/60 border-dashed border-slate-200 dark:border-slate-800",
       ].join(" ")}
+      style={
+        premiumRing
+          ? { boxShadow: `0 0 0 1px ${tierColor}55, 0 4px 14px -6px ${tierColor}88` }
+          : undefined
+      }
     >
+      {/* Icon disc */}
       <div
         aria-hidden="true"
-        className={[
-          "flex-none w-10 h-10 rounded-full flex items-center justify-center font-bold text-white",
-          earned ? "" : "grayscale",
-        ].join(" ")}
-        style={{ background: earned ? tierColor : "#94a3b8" }}
+        className="flex-none w-10 h-10 rounded-full flex items-center justify-center"
+        style={{
+          background: earned ? tierTint : undefined,
+          color: earned ? tierColor : "#94a3b8",
+        }}
       >
-        {initial}
+        {earned ? (
+          <BadgeIcon name={badge.icon} width={22} height={22} />
+        ) : (
+          // Locked badges replace the catalog icon with a padlock so the
+          // user knows the slot exists without spoiling the unlock art.
+          <BadgeIcon name="Lock" width={20} height={20} aria-label="Bloqueado" />
+        )}
       </div>
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h4 className="font-semibold text-[14px] text-slate-800 dark:text-slate-100 truncate">
+          <h4
+            className={[
+              "font-semibold text-[14px] truncate",
+              earned
+                ? "text-slate-800 dark:text-slate-100"
+                : "text-slate-500 dark:text-slate-400",
+            ].join(" ")}
+          >
             {badge.name}
           </h4>
-          {earned && (
+          {earned && badge.tier && (
             <span
               className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded"
               style={{ background: tierColor, color: "#fff" }}
             >
-              {badge.tier ?? "ok"}
+              {TIER_LABELS[badge.tier]}
+            </span>
+          )}
+          {!earned && (
+            <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+              Bloqueado
             </span>
           )}
         </div>
-        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+        <p
+          className={[
+            "text-[12px] mt-0.5 line-clamp-2",
+            earned
+              ? "text-slate-500 dark:text-slate-400"
+              : "text-slate-400 dark:text-slate-500",
+          ].join(" ")}
+        >
           {badge.description}
         </p>
         {showProgress && (
