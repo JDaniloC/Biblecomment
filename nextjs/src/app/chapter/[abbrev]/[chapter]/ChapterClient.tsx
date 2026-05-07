@@ -662,10 +662,28 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                             </div>
                             <span className="font-normal text-[11px] text-slate-400 dark:text-slate-500">Anônimo</span>
                           </div>
+                          {(() => {
+                            const len = composeText.length;
+                            const tooShort = len < MIN_LEN;
+                            const tooLong = len > MAX_LEN;
+                            const target = tooShort ? MIN_LEN : MAX_LEN;
+                            // Color encodes the state at a glance — amber while
+                            // the user can't yet publish, red when over the cap.
+                            const color = tooLong
+                              ? "text-red-500 dark:text-red-400"
+                              : tooShort
+                                ? "text-amber-500 dark:text-amber-400"
+                                : "text-slate-400 dark:text-slate-500";
+                            return (
+                              <span className={`ml-auto mr-3 text-[11px] font-medium ${color}`}>
+                                {len}/{target} caracteres
+                              </span>
+                            );
+                          })()}
                           <button
                             type="submit"
                             disabled={composeText.length < MIN_LEN || composeText.length > MAX_LEN || composeSubmitting}
-                            className="ml-auto h-9 px-4 rounded-[7px] border-none font-semibold text-[13px] whitespace-nowrap"
+                            className="h-9 px-4 rounded-[7px] border-none font-semibold text-[13px] whitespace-nowrap"
                             style={{
                               cursor: composeText.length >= MIN_LEN ? "pointer" : "default",
                               background: composeText.length >= MIN_LEN && !composeSubmitting ? "#137ddb" : "#f1f5f9",
@@ -675,11 +693,6 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                             {composeSubmitting ? "Publicando…" : "Publicar comentário"}
                           </button>
                         </div>
-                        {composeText.length < MIN_LEN && composeText.length > 0 && (
-                          <p className="text-[11px] text-amber-500 dark:text-amber-400 mt-0 mx-0 mb-2 text-right">
-                            Mínimo {MIN_LEN} caracteres ({composeText.length}/{MIN_LEN})
-                          </p>
-                        )}
                       </form>
                     </div>
                   </div>
