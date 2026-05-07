@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import {
+  GetDiscussionsUseCase,
+  GetDiscussionByIdUseCase,
+} from "@/application/use-cases/DiscussionUseCases";
+import { toDiscussionWire } from "@/lib/discussion-wire";
 import DiscussionDetailClient from "./DiscussionDetailClient";
 
 type Params = { abbrev: string; id: string };
@@ -16,9 +22,12 @@ export default async function DiscussionDetailPage({ params }: { params: Promise
   const book = await bookRepo.findByAbbrev(abbrev);
   if (!book) redirect("/home");
 
+  const discussionRepo = new MongoDiscussionRepository();
+  const answerRepo = new MongoDiscussionAnswerRepository();
+  const listUC = new GetDiscussionsUseCase(discussionRepo, answerRepo);
+
   if (id === "new") {
-    const repo = new MongoDiscussionRepository();
-    const discussions = await repo.findByBookAbbrev(abbrev);
+    const discussions = (await listUC.execute(abbrev)).map(toDiscussionWire);
     return (
       <DiscussionDetailClient
         discussion={null}
@@ -30,16 +39,16 @@ export default async function DiscussionDetailPage({ params }: { params: Promise
     );
   }
 
-  const repo = new MongoDiscussionRepository();
+  const detailUC = new GetDiscussionByIdUseCase(discussionRepo, answerRepo);
   const [discussion, discussions] = await Promise.all([
-    repo.findById(id),
-    repo.findByBookAbbrev(abbrev),
+    detailUC.execute(id),
+    listUC.execute(abbrev),
   ]);
 
   return (
     <DiscussionDetailClient
-      discussion={discussion}
-      discussions={discussions}
+      discussion={discussion ? toDiscussionWire(discussion) : null}
+      discussions={discussions.map(toDiscussionWire)}
       book={book}
       user={session.user}
       mode="detail"

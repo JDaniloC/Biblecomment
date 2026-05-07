@@ -5,6 +5,7 @@ import type { IUserChapterReadRepository } from "@/domain/repositories/IUserChap
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
+import type { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { IBookRepository } from "@/domain/repositories/IBookRepository";
 import type { Comment } from "@/domain/entities/Comment";
@@ -78,8 +79,19 @@ function makeRepos(opts: {
 
   const discussion = {
     userHasOpenedDiscussion: async () => opts.hasOpenedDiscussion ?? false,
-    userHasAnsweredDiscussion: async () => opts.hasAnsweredDiscussion ?? false,
   } as unknown as IDiscussionRepository;
+
+  const discussionAnswer: IDiscussionAnswerRepository = {
+    add: async () => ({} as never),
+    update: async () => null,
+    findById: async () => null,
+    findByDiscussion: async () => [],
+    countByDiscussion: async () => new Map(),
+    findByUser: async () => [],
+    userHasAnsweredAny: async () => opts.hasAnsweredDiscussion ?? false,
+    anonymizeByUser: async () => 0,
+    deleteByDiscussion: async () => 0,
+  };
 
   const notification = {
     create: async () => ({} as never),
@@ -102,7 +114,7 @@ function makeRepos(opts: {
     create: async () => ({} as never),
   } as IBookRepository;
 
-  return { user, chapterRead, comment, commentLike, discussion, notification, book };
+  return { user, chapterRead, comment, commentLike, discussion, discussionAnswer, notification, book };
 }
 
 function makeComment(bookRef: string, partial: Partial<Comment> = {}): Comment {

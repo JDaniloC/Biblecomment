@@ -122,8 +122,8 @@ describe("ImportDiscussionsUseCase", () => {
     const useCase = new ImportDiscussionsUseCase(repo);
 
     const items = [
-      { bookAbbrev: "gn", username: "a", verseReference: "Gn 1", verseText: "", commentText: "", question: "?", answers: [] },
-      { bookAbbrev: "ex", username: "b", verseReference: "Ex 1", verseText: "", commentText: "", question: "?", answers: [] },
+      { bookAbbrev: "gn", username: "a", verseReference: "Gn 1", verseText: "", commentText: "", question: "?" },
+      { bookAbbrev: "ex", username: "b", verseReference: "Ex 1", verseText: "", commentText: "", question: "?" },
     ];
     const result = await useCase.execute(items);
 

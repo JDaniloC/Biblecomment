@@ -11,6 +11,8 @@ import {
   countLikesForComment,
   countCommentReportsByUser,
   countReportsForComment,
+  countAnswersByUser,
+  countAnswersForDiscussion,
   getUserBadges,
   type InsertResetTokenInput,
 } from "./cypress/tasks/db";
@@ -71,6 +73,12 @@ export default defineConfig({
         },
         async "db:countReportsForComment"(commentId: string) {
           return await countReportsForComment(commentId);
+        },
+        async "db:countAnswersByUser"(email: string) {
+          return await countAnswersByUser(email);
+        },
+        async "db:countAnswersForDiscussion"(discussionId: string) {
+          return await countAnswersForDiscussion(discussionId);
         },
         async "db:getUserBadges"(email: string) {
           return await getUserBadges(email);

@@ -6,6 +6,7 @@ import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/Mo
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import {
@@ -31,6 +32,7 @@ export async function getMyBadgesAction(): Promise<ActionResult<UserBadgesView>>
       comment: new MongoCommentRepository(),
       commentLike: new MongoCommentLikeRepository(),
       discussion: new MongoDiscussionRepository(),
+      discussionAnswer: new MongoDiscussionAnswerRepository(),
       notification: new MongoNotificationRepository(),
       book: new MongoBookRepository(),
     });

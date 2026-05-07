@@ -1,18 +1,15 @@
-import { Discussion, DiscussionAnswer } from "../entities/Discussion";
+import { Discussion } from "../entities/Discussion";
 
 export interface IDiscussionRepository {
   findByBookAbbrev(bookAbbrev: string): Promise<Discussion[]>;
   findById(id: string): Promise<Discussion | null>;
   findAllPaginated(page: number, pageSize: number): Promise<Discussion[]>;
-  create(discussion: Omit<Discussion, "_id" | "createdAt" | "updatedAt">): Promise<Discussion>;
-  createMany(discussions: Omit<Discussion, "_id" | "createdAt" | "updatedAt">[]): Promise<number>;
-  addAnswer(id: string, answer: DiscussionAnswer): Promise<Discussion | null>;
-  updateAnswer(discussionId: string, answerId: string, text: string): Promise<Discussion | null>;
+  create(discussion: Omit<Discussion, "_id" | "createdAt" | "updatedAt" | "answers" | "answersCount">): Promise<Discussion>;
+  createMany(discussions: Omit<Discussion, "_id" | "createdAt" | "updatedAt" | "answers" | "answersCount">[]): Promise<number>;
   delete(id: string): Promise<void>;
   findAll(): Promise<Discussion[]>;
+  /** Anonymize the top-level discussion author. Answers cascade via DiscussionAnswerRepository. */
   anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
   /** Has the user opened (authored) at least one discussion? */
   userHasOpenedDiscussion(username: string): Promise<boolean>;
-  /** Has the user answered at least one discussion (any author)? */
-  userHasAnsweredDiscussion(username: string): Promise<boolean>;
 }

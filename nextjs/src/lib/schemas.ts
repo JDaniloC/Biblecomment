@@ -113,11 +113,9 @@ export const BackupCommentsSchema = z.object({
 });
 export type BackupCommentItem = z.infer<typeof BackupCommentItemSchema>;
 
-const BackupDiscussionAnswerSchema = z.object({
-  name: z.string().min(1).max(40),
-  text: z.string().min(1).max(5000),
-});
-
+// Answers were extracted into a separate collection (Phase 9.3). The
+// import path no longer accepts inline answers — restoring those is a
+// follow-up if backups ever ship.
 const BackupDiscussionItemSchema = z.object({
   bookAbbrev: z.string().min(1).max(20),
   commentId: z.string().optional(),
@@ -126,7 +124,6 @@ const BackupDiscussionItemSchema = z.object({
   verseText: z.string().max(5000).default(""),
   commentText: z.string().max(5000).default(""),
   question: z.string().min(1).max(2000),
-  answers: z.array(BackupDiscussionAnswerSchema).default([]),
 });
 
 export const BackupDiscussionsSchema = z.object({

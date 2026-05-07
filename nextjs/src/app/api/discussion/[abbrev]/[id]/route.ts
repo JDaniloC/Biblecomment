@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
@@ -11,6 +12,7 @@ import { CreateNotificationUseCase } from "@/application/use-cases/NotificationU
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import { getSessionUser, unauthorized, forbidden, notFound, serverError } from "@/lib/get-session";
 import { parseBody } from "@/lib/parse-body";
+import { toDiscussionWire } from "@/lib/discussion-wire";
 import { AddAnswerSchema } from "@/lib/schemas";
 
 type Params = { abbrev: string; id: string };
@@ -20,11 +22,15 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: Request, { params }: { params: Promise<Params> }) {
   try {
     const { id } = await params;
-    const repo = new MongoDiscussionRepository();
-    const useCase = new GetDiscussionByIdUseCase(repo);
+    // Hydrate answers from the new collection so the client gets the
+    // historical { _id, name, text } shape on `discussion.answers`.
+    const useCase = new GetDiscussionByIdUseCase(
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+    );
     const discussion = await useCase.execute(id);
     if (!discussion) return notFound("Discussão não encontrada");
-    return NextResponse.json(discussion);
+    return NextResponse.json(toDiscussionWire(discussion));
   } catch (err) {
     return serverError(err);
   }
@@ -39,9 +45,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     const parsed = await parseBody(req, AddAnswerSchema);
     if (!parsed.ok) return parsed.response;
 
-    const repo = new MongoDiscussionRepository();
-    const useCase = new AddAnswerUseCase(repo);
-    const discussion = await useCase.execute(id, { name: user.username, text: parsed.data.text });
+    const useCase = new AddAnswerUseCase(
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+    );
+    const discussion = await useCase.execute(id, user.id, user.username, parsed.data.text);
 
     const notifRepo = new MongoNotificationRepository();
     const userRepo = new MongoUserRepository();
@@ -68,7 +76,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
       url,
     });
 
-    return NextResponse.json(discussion);
+    return NextResponse.json(toDiscussionWire(discussion));
   } catch (err) {
     if (err instanceof Error && err.message === "Discussion not found") {
       return notFound("Discussão não encontrada");
@@ -83,8 +91,10 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     if (!user) return unauthorized();
 
     const { id } = await params;
-    const repo = new MongoDiscussionRepository();
-    const useCase = new DeleteDiscussionUseCase(repo);
+    const useCase = new DeleteDiscussionUseCase(
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+    );
     await useCase.execute(id, user.username, user.moderator);
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -95,3 +105,4 @@ export async function DELETE(_req: Request, { params }: { params: Promise<Params
     return serverError(err);
   }
 }
+

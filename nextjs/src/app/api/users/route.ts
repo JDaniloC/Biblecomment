@@ -4,6 +4,7 @@ import { MongoCommentRepository } from "@/infrastructure/repositories/MongoComme
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { RegisterUserUseCase } from "@/application/use-cases/AuthUseCases";
 import { UpdateUserProfileUseCase, DeleteUserUseCase } from "@/application/use-cases/UserUseCases";
@@ -115,6 +116,7 @@ export async function DELETE(req: Request) {
       new MongoCommentLikeRepository(),
       new MongoCommentReportRepository(),
       new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
       new MongoNotificationRepository(),
     );
     await useCase.execute(user.email, parsed.data.email, user.moderator);

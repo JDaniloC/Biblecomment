@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
@@ -14,6 +15,7 @@ import {
 import { CreateNotificationUseCase } from "@/application/use-cases/NotificationUseCases";
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import type { Discussion } from "@/domain/entities/Discussion";
+import { toDiscussionWire, type DiscussionWire } from "@/lib/discussion-wire";
 import type { DiscussionDraft } from "@/services/discussions";
 import { logger } from "@/lib/logger";
 import type { ActionResult } from "./comments";
@@ -42,7 +44,7 @@ function revalidateDiscussionPaths() {
 export async function createDiscussionAction(
   bookAbbrev: string,
   draft: DiscussionDraft,
-): Promise<ActionResult<Discussion>> {
+): Promise<ActionResult<DiscussionWire>> {
   const session = await auth();
   if (!session?.user) return authError();
 
@@ -71,7 +73,7 @@ export async function createDiscussionAction(
     });
 
     revalidateDiscussionPaths();
-    return { ok: true, data: discussion };
+    return { ok: true, data: toDiscussionWire(discussion) };
   } catch (err) {
     logger.error({ err, action: "createDiscussionAction", bookAbbrev }, "create discussion failed");
     return appError(err, "Erro ao criar discussão.");
@@ -86,7 +88,7 @@ export async function addAnswerAction(
   bookAbbrev: string,
   discussionId: string,
   text: string,
-): Promise<ActionResult<Discussion>> {
+): Promise<ActionResult<DiscussionWire>> {
   const session = await auth();
   if (!session?.user) return authError();
 
@@ -95,12 +97,16 @@ export async function addAnswerAction(
   }
 
   try {
-    const repo = new MongoDiscussionRepository();
-    const useCase = new AddAnswerUseCase(repo);
-    const discussion = await useCase.execute(discussionId, {
-      name: session.user.username,
+    const useCase = new AddAnswerUseCase(
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+    );
+    const discussion = await useCase.execute(
+      discussionId,
+      session.user.id,
+      session.user.username,
       text,
-    });
+    );
 
     const notifRepo = new MongoNotificationRepository();
     const userRepo = new MongoUserRepository();
@@ -138,7 +144,7 @@ export async function addAnswerAction(
     });
 
     revalidateDiscussionPaths();
-    return { ok: true, data: discussion };
+    return { ok: true, data: toDiscussionWire(discussion) };
   } catch (err) {
     if (err instanceof Error && err.message === "Discussion not found") {
       return { ok: false, error: "NotFound" };
@@ -159,7 +165,7 @@ export async function updateAnswerAction(
   discussionId: string,
   answerId: string,
   text: string,
-): Promise<ActionResult<Discussion>> {
+): Promise<ActionResult<DiscussionWire>> {
   const session = await auth();
   if (!session?.user) return authError();
 
@@ -168,18 +174,21 @@ export async function updateAnswerAction(
   }
 
   try {
-    const repo = new MongoDiscussionRepository();
-    const useCase = new UpdateAnswerUseCase(repo);
+    const useCase = new UpdateAnswerUseCase(
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+    );
     const discussion = await useCase.execute(
       discussionId,
       answerId,
+      session.user.id,
       session.user.username,
       session.user.moderator,
       text,
     );
 
     revalidateDiscussionPaths();
-    return { ok: true, data: discussion };
+    return { ok: true, data: toDiscussionWire(discussion) };
   } catch (err) {
     if (err instanceof Error) {
       if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
@@ -206,8 +215,10 @@ export async function deleteDiscussionAction(
   if (!session?.user) return authError();
 
   try {
-    const repo = new MongoDiscussionRepository();
-    const useCase = new DeleteDiscussionUseCase(repo);
+    const useCase = new DeleteDiscussionUseCase(
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+    );
     await useCase.execute(discussionId, session.user.username, session.user.moderator);
     revalidateDiscussionPaths();
     return { ok: true, data: { deleted: true } };

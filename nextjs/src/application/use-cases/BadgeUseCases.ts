@@ -3,6 +3,7 @@ import type { IUserChapterReadRepository } from "@/domain/repositories/IUserChap
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
+import type { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { IBookRepository } from "@/domain/repositories/IBookRepository";
 import { BADGES, getBadge } from "@/lib/badges/catalog";
@@ -15,6 +16,7 @@ export interface BadgeRepos {
   comment: ICommentRepository;
   commentLike: ICommentLikeRepository;
   discussion: IDiscussionRepository;
+  discussionAnswer: IDiscussionAnswerRepository;
   notification: INotificationRepository;
   book: IBookRepository;
 }
@@ -144,7 +146,7 @@ export class EvaluateBadgesUseCase {
         (await this.repos.discussion.userHasOpenedDiscussion(input.username));
       counters.hasAnsweredDiscussion =
         hints.hasAnsweredDiscussion ??
-        (await this.repos.discussion.userHasAnsweredDiscussion(input.username));
+        (await this.repos.discussionAnswer.userHasAnsweredAny(input.userId));
       counters.hasMentioned =
         hints.hasMentioned ??
         (await this.repos.notification.userHasMentioned(input.username));

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Book } from "@/domain/entities/Book";
-import { Discussion } from "@/domain/entities/Discussion";
 import { discussionsService } from "@/services/discussions";
+import type { DiscussionWire } from "@/lib/discussion-wire";
 import { useNotification } from "@/contexts/NotificationContext";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -17,8 +17,8 @@ interface SessionUser {
 }
 
 interface Props {
-  discussion: Discussion | null;
-  discussions: Discussion[];
+  discussion: DiscussionWire | null;
+  discussions: DiscussionWire[];
   book: Book;
   user: SessionUser;
   mode: "list" | "detail";
@@ -205,7 +205,7 @@ export default function DiscussionDetailClient({
                   <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-slate-500">
                     <span>{d.username}</span>
                     <span>·</span>
-                    <span>{d.answers.length} resposta(s)</span>
+                    <span>{d.answersCount} resposta(s)</span>
                   </div>
                 </Link>
               ))}
@@ -248,11 +248,11 @@ export default function DiscussionDetailClient({
         </div>
 
         <h2 className="text-md font-semibold text-gray-700 dark:text-slate-200 mb-3">
-          Respostas ({discussion.answers.length})
+          Respostas ({(discussion.answers ?? []).length})
         </h2>
 
         <div className="space-y-3 mb-6">
-          {discussion.answers.map((a, i) => {
+          {(discussion.answers ?? []).map((a, i) => {
             const canEdit = !!a._id && (user.moderator || a.name === user.name || a.name === user.username);
             const isEditing = editingAnswerId === a._id;
             return (

@@ -7,7 +7,11 @@ import { Discussion } from "@/domain/entities/Discussion";
 
 export type BackupUser = Omit<User, "password" | "passwordType">;
 export type ImportableComment = Omit<Comment, "_id" | "createdAt" | "updatedAt">;
-export type ImportableDiscussion = Omit<Discussion, "_id" | "createdAt" | "updatedAt">;
+// Answers (Phase 9.3) live in DiscussionAnswer collection — not imported through this path.
+export type ImportableDiscussion = Omit<
+  Discussion,
+  "_id" | "createdAt" | "updatedAt" | "answers" | "answersCount"
+>;
 
 export class BackupUsersUseCase {
   constructor(private readonly userRepo: IUserRepository) {}

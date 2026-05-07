@@ -3,6 +3,7 @@ import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import { ICommentReportRepository } from "@/domain/repositories/ICommentReportRepository";
 import { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
+import { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import { User } from "@/domain/entities/User";
 
@@ -50,6 +51,7 @@ export class DeleteUserUseCase {
     private readonly commentLikeRepo: ICommentLikeRepository,
     private readonly commentReportRepo: ICommentReportRepository,
     private readonly discussionRepo: IDiscussionRepository,
+    private readonly discussionAnswerRepo: IDiscussionAnswerRepository,
     private readonly notificationRepo: INotificationRepository,
   ) {}
 
@@ -60,11 +62,11 @@ export class DeleteUserUseCase {
 
     // LGPD Art. 18: anonymize the user's PII in dependent records before
     // hard-deleting the User document. Discussion threads stay readable
-    // under "[usuário removido]"; notifications referencing the user (as
-    // recipient or actor) are removed since they no longer have meaning.
-    // Likes and reports (CommentLike / CommentReport collections) are keyed
-    // by userId — deleteMany strips them cleanly without touching the
-    // parent comment.
+    // under "[usuário removido]" (top-level + per-answer snapshot);
+    // notifications referencing the user (as recipient or actor) are
+    // removed since they no longer have meaning.
+    // Likes and reports (CommentLike / CommentReport) are keyed by userId —
+    // deleteMany strips them cleanly without touching the parent comment.
     await Promise.all([
       this.commentRepo.anonymizeByUsername(user.username, ANONYMIZED_USERNAME),
       user._id
@@ -74,6 +76,9 @@ export class DeleteUserUseCase {
         ? this.commentReportRepo.deleteAllByUser(user._id)
         : Promise.resolve(0),
       this.discussionRepo.anonymizeByUsername(user.username, ANONYMIZED_USERNAME),
+      user._id
+        ? this.discussionAnswerRepo.anonymizeByUser(user._id, ANONYMIZED_USERNAME)
+        : Promise.resolve(0),
       this.notificationRepo.deleteForUser(user.username),
     ]);
 

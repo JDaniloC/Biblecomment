@@ -3,6 +3,7 @@ import { getSessionUser, unauthorized, serverError } from "@/lib/get-session";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import { NotificationModel } from "@/infrastructure/database/models/NotificationModel";
 
@@ -10,9 +11,7 @@ export const dynamic = "force-dynamic";
 
 // LGPD Art. 18(V): right to data portability. Returns a JSON dump of every
 // record tied to the authenticated user — profile, comments, discussions
-// they started, answers they wrote inside other discussions, and inbound
-// notifications. Discussions are queried via findAll so we can scoop up
-// embedded answers authored by the user even on threads they didn't open.
+// they started, answers they wrote (in any thread), and inbound notifications.
 export async function GET() {
   try {
     const sessionUser = await getSessionUser();
@@ -21,28 +20,29 @@ export async function GET() {
     const userRepo = new MongoUserRepository();
     const commentRepo = new MongoCommentRepository();
     const discussionRepo = new MongoDiscussionRepository();
+    const answerRepo = new MongoDiscussionAnswerRepository();
 
     const user = await userRepo.findByEmail(sessionUser.email);
     if (!user) return unauthorized();
 
     const username = user.username;
-    const [comments, allDiscussions] = await Promise.all([
+    const userId = user._id ?? "";
+
+    const [comments, allDiscussions, myAnswers] = await Promise.all([
       commentRepo.findByUsername(username),
       discussionRepo.findAll(),
+      answerRepo.findByUser(userId),
     ]);
 
     const ownedDiscussions = allDiscussions.filter((d) => d.username === username);
-    const answersAuthored = allDiscussions
-      .filter((d) => d.username !== username)
-      .flatMap((d) =>
-        d.answers
-          .filter((a) => a.name === username)
-          .map((a) => ({
-            discussionId: d._id,
-            verseReference: d.verseReference,
-            text: a.text,
-          })),
-      );
+    // Reattach verseReference to each answer for the dump's readability.
+    const discussionsById = new Map(allDiscussions.map((d) => [d._id ?? "", d]));
+    const answersAuthored = myAnswers.map((a) => ({
+      discussionId: a.discussionId,
+      verseReference: discussionsById.get(a.discussionId)?.verseReference ?? null,
+      text: a.text,
+      createdAt: a.createdAt,
+    }));
 
     await connectToDatabase();
     const notifications = await NotificationModel.find({ recipient: username })

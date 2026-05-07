@@ -1,0 +1,29 @@
+import type { Discussion } from "@/domain/entities/Discussion";
+
+/**
+ * Wire shape kept stable across the answers refactor (Phase 9.3): the
+ * client (DiscussionDetailClient) reads `a.name`, `a.text`, `a._id`.
+ * Internal entity carries `username` (snapshot) + `userId`; this mapper
+ * reduces it to the public surface so the UI doesn't need to know about
+ * the storage change.
+ *
+ * `answersCount` is always populated — list views ship just the count
+ * (no inline answers), detail views derive it from `answers.length`.
+ */
+export interface DiscussionWire extends Omit<Discussion, "answers"> {
+  answers: Array<{ _id?: string; name: string; text: string }>;
+  answersCount: number;
+}
+
+export function toDiscussionWire(discussion: Discussion): DiscussionWire {
+  const answers = (discussion.answers ?? []).map((a) => ({
+    _id: a._id,
+    name: a.username,
+    text: a.text,
+  }));
+  return {
+    ...discussion,
+    answers,
+    answersCount: discussion.answersCount ?? answers.length,
+  };
+}

@@ -9,23 +9,13 @@ export interface IDiscussionDocument extends Document {
   verseText: string;
   commentText: string;
   question: string;
-  answers: Array<{ _id?: mongoose.Types.ObjectId; name: string; text: string }>;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const AnswerSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    text: { type: String, required: true },
-  },
-  // _id default true: each answer gets an ObjectId so it can be edited
-  // or referenced individually. Pre-existing answers from the legacy
-  // SQLite migration lack _id and remain uneditable — acceptable
-  // limitation, surfaces as 404 if attempted.
-  { _id: true, timestamps: true },
-);
-
+// Answers were extracted into a separate collection (see DiscussionAnswerModel).
+// The schema deliberately omits the legacy `answers: [...]` field so old
+// docs upgrade lazily — Mongoose ignores unknown keys with strict (default).
 const DiscussionSchema = new Schema<IDiscussionDocument>(
   {
     sourceId:       { type: Number },
@@ -40,7 +30,6 @@ const DiscussionSchema = new Schema<IDiscussionDocument>(
     verseText:      { type: String, default: "" },
     commentText:    { type: String, default: "" },
     question:       { type: String, required: true },
-    answers:        { type: [AnswerSchema], default: [] },
   },
   { timestamps: true }
 );

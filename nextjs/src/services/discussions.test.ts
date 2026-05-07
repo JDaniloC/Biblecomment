@@ -39,7 +39,8 @@ const sampleDiscussion = {
   verseText: "",
   commentText: "",
   question: "Why?",
-  answers: [],
+  answers: [] as Array<{ _id?: string; name: string; text: string }>,
+  answersCount: 0,
 };
 
 describe("discussionsService", () => {
@@ -81,7 +82,7 @@ describe("discussionsService", () => {
   it("addAnswer delegates to addAnswerAction", async () => {
     mockedAddAnswer.mockResolvedValueOnce({
       ok: true,
-      data: { ...sampleDiscussion, answers: [{ name: "bob", text: "ok" }] },
+      data: { ...sampleDiscussion, answers: [{ name: "bob", text: "ok" }], answersCount: 1 },
     });
     const result = await discussionsService.addAnswer("gn", "d1", "ok");
     expect(mockedAddAnswer).toHaveBeenCalledWith("gn", "d1", "ok");
@@ -91,7 +92,7 @@ describe("discussionsService", () => {
   it("updateAnswer delegates to updateAnswerAction", async () => {
     mockedUpdateAnswer.mockResolvedValueOnce({
       ok: true,
-      data: { ...sampleDiscussion, answers: [{ _id: "a1", name: "bob", text: "edited" }] },
+      data: { ...sampleDiscussion, answers: [{ _id: "a1", name: "bob", text: "edited" }], answersCount: 1 },
     });
     const result = await discussionsService.updateAnswer("gn", "d1", "a1", "edited");
     expect(mockedUpdateAnswer).toHaveBeenCalledWith("gn", "d1", "a1", "edited");

@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { UpdateAnswerUseCase } from "./DiscussionUseCases";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
+import type { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import type { Discussion } from "@/domain/entities/Discussion";
+import type { DiscussionAnswer } from "@/domain/entities/DiscussionAnswer";
 
 function fakeDiscussion(overrides: Partial<Discussion> = {}): Discussion {
   return {
@@ -12,78 +14,125 @@ function fakeDiscussion(overrides: Partial<Discussion> = {}): Discussion {
     verseText: "",
     commentText: "",
     question: "Why?",
-    answers: [
-      { _id: "a1", name: "bob", text: "first take" },
-      { _id: "a2", name: "carol", text: "second take" },
-    ],
+    ...overrides,
+  };
+}
+
+function fakeAnswer(overrides: Partial<DiscussionAnswer> = {}): DiscussionAnswer {
+  return {
+    _id: "a1",
+    discussionId: "d1",
+    userId: "u-bob",
+    username: "bob",
+    text: "first take",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+function answerRepoStub(
+  overrides: Partial<IDiscussionAnswerRepository> = {},
+): IDiscussionAnswerRepository {
+  return {
+    add: async () => ({} as never),
+    update: async () => null,
+    findById: async () => null,
+    findByDiscussion: async () => [],
+    countByDiscussion: async () => new Map(),
+    findByUser: async () => [],
+    userHasAnsweredAny: async () => false,
+    anonymizeByUser: async () => 0,
+    deleteByDiscussion: async () => 0,
     ...overrides,
   };
 }
 
 describe("UpdateAnswerUseCase", () => {
-  it("lets the answer's owner edit their own text", async () => {
+  it("lets the answer's owner edit their own text (matched by userId)", async () => {
     const findById = vi.fn().mockResolvedValue(fakeDiscussion());
-    const updateAnswer = vi.fn().mockResolvedValue(
-      fakeDiscussion({
-        answers: [
-          { _id: "a1", name: "bob", text: "edited by bob" },
-          { _id: "a2", name: "carol", text: "second take" },
-        ],
-      }),
-    );
-    const repo = { findById, updateAnswer } as unknown as IDiscussionRepository;
-    const useCase = new UpdateAnswerUseCase(repo);
+    const repo = { findById } as unknown as IDiscussionRepository;
+    const update = vi.fn().mockResolvedValue(fakeAnswer({ text: "edited by bob" }));
+    const findAnswer = vi.fn().mockResolvedValue(fakeAnswer());
+    const findByDiscussion = vi
+      .fn()
+      .mockResolvedValue([fakeAnswer({ text: "edited by bob" })]);
+    const answerRepo = answerRepoStub({
+      findById: findAnswer,
+      update,
+      findByDiscussion,
+    });
 
-    const result = await useCase.execute("d1", "a1", "bob", false, "edited by bob");
+    const useCase = new UpdateAnswerUseCase(repo, answerRepo);
+    const result = await useCase.execute("d1", "a1", "u-bob", "bob", false, "edited by bob");
 
-    expect(updateAnswer).toHaveBeenCalledWith("d1", "a1", "edited by bob");
-    expect(result.answers[0].text).toBe("edited by bob");
+    expect(update).toHaveBeenCalledWith("a1", "edited by bob");
+    expect(result.answers?.[0].text).toBe("edited by bob");
   });
 
   it("lets a moderator edit any answer", async () => {
     const findById = vi.fn().mockResolvedValue(fakeDiscussion());
-    const updateAnswer = vi.fn().mockResolvedValue(fakeDiscussion());
-    const repo = { findById, updateAnswer } as unknown as IDiscussionRepository;
-    const useCase = new UpdateAnswerUseCase(repo);
+    const repo = { findById } as unknown as IDiscussionRepository;
+    const update = vi.fn().mockResolvedValue(fakeAnswer({ text: "mod override" }));
+    const answerRepo = answerRepoStub({
+      findById: async () => fakeAnswer(),
+      update,
+      findByDiscussion: async () => [fakeAnswer({ text: "mod override" })],
+    });
 
-    await useCase.execute("d1", "a1", "mod", true, "moderator override");
+    const useCase = new UpdateAnswerUseCase(repo, answerRepo);
+    await useCase.execute("d1", "a1", "u-mod", "mod", true, "mod override");
 
-    expect(updateAnswer).toHaveBeenCalledWith("d1", "a1", "moderator override");
+    expect(update).toHaveBeenCalledWith("a1", "mod override");
   });
 
   it("rejects edits from someone who isn't the owner or a moderator", async () => {
     const findById = vi.fn().mockResolvedValue(fakeDiscussion());
-    const updateAnswer = vi.fn();
-    const repo = { findById, updateAnswer } as unknown as IDiscussionRepository;
-    const useCase = new UpdateAnswerUseCase(repo);
+    const repo = { findById } as unknown as IDiscussionRepository;
+    const update = vi.fn();
+    const answerRepo = answerRepoStub({
+      findById: async () => fakeAnswer(),
+      update,
+    });
 
+    const useCase = new UpdateAnswerUseCase(repo, answerRepo);
     await expect(
-      useCase.execute("d1", "a1", "attacker", false, "hijack"),
+      useCase.execute("d1", "a1", "u-attacker", "attacker", false, "hijack"),
     ).rejects.toThrow("Unauthorized");
-    expect(updateAnswer).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("throws 'Discussion not found' when the discussion doesn't exist", async () => {
     const findById = vi.fn().mockResolvedValue(null);
-    const updateAnswer = vi.fn();
-    const repo = { findById, updateAnswer } as unknown as IDiscussionRepository;
-    const useCase = new UpdateAnswerUseCase(repo);
+    const repo = { findById } as unknown as IDiscussionRepository;
+    const useCase = new UpdateAnswerUseCase(repo, answerRepoStub());
 
     await expect(
-      useCase.execute("missing", "a1", "bob", false, "x"),
+      useCase.execute("missing", "a1", "u-bob", "bob", false, "x"),
     ).rejects.toThrow("Discussion not found");
   });
 
-  it("throws 'Answer not found' when the answer ID doesn't match (e.g. legacy answer with no _id)", async () => {
-    const findById = vi.fn().mockResolvedValue(
-      fakeDiscussion({ answers: [{ name: "bob", text: "legacy" }] }),
-    );
-    const updateAnswer = vi.fn();
-    const repo = { findById, updateAnswer } as unknown as IDiscussionRepository;
-    const useCase = new UpdateAnswerUseCase(repo);
+  it("throws 'Answer not found' when the answer ID doesn't match", async () => {
+    const findById = vi.fn().mockResolvedValue(fakeDiscussion());
+    const repo = { findById } as unknown as IDiscussionRepository;
+    const answerRepo = answerRepoStub({ findById: async () => null });
 
+    const useCase = new UpdateAnswerUseCase(repo, answerRepo);
     await expect(
-      useCase.execute("d1", "missing-id", "bob", false, "x"),
+      useCase.execute("d1", "missing-id", "u-bob", "bob", false, "x"),
+    ).rejects.toThrow("Answer not found");
+  });
+
+  it("rejects when the answer belongs to a sibling discussion", async () => {
+    const findById = vi.fn().mockResolvedValue(fakeDiscussion());
+    const repo = { findById } as unknown as IDiscussionRepository;
+    const answerRepo = answerRepoStub({
+      findById: async () => fakeAnswer({ discussionId: "other" }),
+    });
+
+    const useCase = new UpdateAnswerUseCase(repo, answerRepo);
+    await expect(
+      useCase.execute("d1", "a1", "u-bob", "bob", false, "x"),
     ).rejects.toThrow("Answer not found");
   });
 });

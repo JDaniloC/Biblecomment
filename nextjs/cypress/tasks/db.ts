@@ -34,6 +34,7 @@ const COLLECTIONS = [
   "commentlikes",
   "commentreports",
   "discussions",
+  "discussionanswers",
   "notifications",
   "passwordresettokens",
   "userchapterreads",
@@ -230,6 +231,29 @@ export async function countReportsForComment(commentId: string): Promise<number>
   return db
     .collection("commentreports")
     .countDocuments({ commentId: new mongoose.Types.ObjectId(commentId) });
+}
+
+/** Total answers a user has authored across all discussions. */
+export async function countAnswersByUser(email: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const user = await db
+    .collection("users")
+    .findOne({ email: email.toLowerCase().trim() });
+  if (!user) return 0;
+  return db.collection("discussionanswers").countDocuments({ userId: user._id.toString() });
+}
+
+/** Number of answers attached to a single discussion. */
+export async function countAnswersForDiscussion(discussionId: string): Promise<number> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  if (!mongoose.Types.ObjectId.isValid(discussionId)) return 0;
+  return db
+    .collection("discussionanswers")
+    .countDocuments({ discussionId: new mongoose.Types.ObjectId(discussionId) });
 }
 
 /** Counts password reset tokens for a given email (active + expired). */
