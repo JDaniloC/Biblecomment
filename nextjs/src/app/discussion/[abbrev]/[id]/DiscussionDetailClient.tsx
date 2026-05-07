@@ -16,6 +16,14 @@ interface SessionUser {
   moderator: boolean;
 }
 
+const COMMENT_EXCERPT_LIMIT = 280;
+
+function excerpt(text: string, limit = COMMENT_EXCERPT_LIMIT): string {
+  if (text.length <= limit) return text;
+  const slice = text.slice(0, limit).trimEnd();
+  return `${slice}…`;
+}
+
 interface Props {
   discussion: DiscussionWire | null;
   discussions: DiscussionWire[];
@@ -178,6 +186,31 @@ export default function DiscussionDetailClient({
                 rows={4}
                 className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm resize-none"
               />
+
+              {(newQuestion || newVerseRef || newVerseText || newCommentText) && (
+                <div className="border border-dashed border-gray-300 dark:border-slate-700 rounded-xl p-4 bg-gray-50 dark:bg-slate-950/40">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-2">
+                    Pré-visualização
+                  </p>
+                  {newVerseRef && (
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mb-1">{newVerseRef}</p>
+                  )}
+                  {newVerseText && (
+                    <blockquote className="italic text-gray-600 dark:text-slate-300 border-l-4 border-gray-200 dark:border-slate-700 pl-3 mb-3">
+                      {excerpt(newVerseText)}
+                    </blockquote>
+                  )}
+                  {newCommentText && (
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
+                      Comentário: <span className="italic">{excerpt(newCommentText)}</span>
+                    </p>
+                  )}
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100">
+                    {newQuestion || <span className="text-gray-400 dark:text-slate-500 font-normal italic">sua pergunta aparecerá aqui em destaque</span>}
+                  </h3>
+                </div>
+              )}
+
               <button
                 onClick={handleCreateDiscussion}
                 disabled={creating}
@@ -238,9 +271,11 @@ export default function DiscussionDetailClient({
           <blockquote className="italic text-gray-600 dark:text-slate-300 border-l-4 border-gray-200 dark:border-slate-700 pl-3 mb-3">
             {discussion.verseText}
           </blockquote>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
-            Comentário: <span className="italic">{discussion.commentText}</span>
-          </p>
+          {discussion.commentText && (
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
+              Comentário: <span className="italic">{excerpt(discussion.commentText)}</span>
+            </p>
+          )}
           <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">{discussion.question}</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
             por <strong>{discussion.username}</strong>

@@ -1,69 +1,8 @@
 # UX Review (humano)
 
-Checklist manual a ser executado antes de cada release pública. Lighthouse
-e os specs Cypress cobrem o que é mensurável; este documento cobre o que
-exige olho humano.
-
-Ambiente: `npm run dev:mongo` (orchestrator com Mongo em memória) ou
-`npm run dev` apontando para o Mongo local. Em qualquer caso, **nunca**
-contra Atlas/produção — `assertLocalMongoUri` deve bloquear antes de chegar
-nas tasks.
-
-## Dark mode visual
-
-- [ ] Toggle claro→escuro na home, percorrer Header → Modal de Livros
-- [ ] /chapter/gn/1: cabeçalho, lista de versículos, sidebar de comentários
-- [ ] /profile: todas as abas (overview, comentários, favoritos, configurações)
-- [ ] /discussion/gn (lista) + /discussion/gn/<id> (detalhe + form abrir)
-- [ ] /admin/moderation (entrar como `mod@cypress.test`)
-- [ ] /help: percorrer as 4 seções (Introduction, AboutComment, AboutActions, HelpAccount)
-- [ ] /backup, /admin: cards de ações em ambos os temas
-
-## Responsivo (DevTools 360 / 768 / 1280)
-
-- [ ] Home: hero centralizado, cards alinhados, sem overflow horizontal
-- [ ] Chapter: sidebar drawer aparece em mobile (swipe horizontal funciona)
-- [ ] Profile: tabs scrollam horizontalmente em mobile
-- [ ] Modal de Livros: grid de capítulos legível em 360px (`grid-cols-5` em mobile)
-- [ ] Header: botões "Livros"/"Perfil" ainda clicáveis sem rótulo (icon-only)
-- [ ] OmniSearch: dropdown não estoura viewport em 360px
-
-## Tutorial guiado
-
-- [ ] Cadastro novo → /chapter/jo/3 → tour abre automaticamente
-- [ ] `Esc` fecha; reload no mesmo browser não reabre
-- [ ] /profile → Configurações → "Refazer tutorial" → /chapter/jo/3?tour=1 → tour reabre
-- [ ] Step "primeiro versículo" highlighta o item correto
-- [ ] `prefers-reduced-motion: reduce`: tour anima sem scroll suave
-
-## LGPD flows
-
-- [ ] /register sem checkbox de consentimento → submit bloqueado + mensagem clara
-- [ ] /register com checkbox marcado → cadastra, redireciona /login
-- [ ] /profile → Configurações → "Exportar meus dados (JSON)" → arquivo baixa,
-      contém `comments`, `ownedDiscussions`, `answersAuthored` sem `password`
-- [ ] /profile → "Excluir conta" → confirma, conta apagada,
-      comentários permanecem como `[usuário removido]`
-- [ ] /privacy e /terms acessíveis sem login, com data de vigência atualizada
-- [ ] Footer da home: links Privacidade/Termos/Contato LGPD funcionando
-
-## Notificações & toasts
-
-- [ ] alice posta comentário com `@bob` → bob vê badge de notificação
-      em < 60s; clicar marca como lida
-- [ ] Toast aparece no canto inferior direito; `aria-live="polite"`
-      (validar com NVDA/VoiceOver se disponível)
-- [ ] Erros graves usam toast com `role="alert"` (não `status`)
-
-## Keyboard navigation
-
-- [ ] Tab da página inicial: skip-link → header → search → main → footer
-- [ ] Esc fecha modal e devolve foco ao botão que abriu
-- [ ] Tour: setas avançam, Esc fecha, Tab cicla dentro do popover
-- [ ] /chapter/[abbrev]/[chapter]: ←/→ navegam capítulos sem conflitar com tour
-
-## Pós-execução
-
-Marcar PRs/issues abertos para qualquer item desmarcado. Se nada
-desmarcado, registrar timestamp + versão da release no rodapé deste
-arquivo na próxima revisão.
+1. O identificador do usuário está muito permissivo, talvez o ponto é que o usuário deveria ter um nome de usuário para ser visível, e nós geramos um identificador único para o usuário a partir do seu nome, no qual ele pode modificar depois caso queira, conquanto que ainda seja um usuário único. O problema do identificador atual é que ele possui espaços e caracteres especiais, o que pode causar problemas de segurança. Por outro lado, eu quero permitir que o usuário entre com e-mail ou nome de usuário.
+4. A aba de pesquisa consegue procurar por comentários e texto dos versículos, porém o ideal é que pudesse também buscar por nome/abreviação dos capítulos e versículos como "Gn 1:1" ou "Gênesis 1:1", etc. Para não confundir as coisas, se ainda não houver, então poderia colocar badges ao lado dos achados dizendo se é um versículo ou comentário.
+5. Precisamos melhorar a página /home/ que hoje é apenas a busca de capítulos. O ideal é que fosse uma página de feed, mostrando os comentários mais recentes, ou mais curtidos, etc. Precisamos pensar em o que apresentar nessa página sem competir com outras páginas como a página inicial ou de perfil.
+7. Os meus comentários realizados na plataforma são muito valiosos para mim, então eu quero a todo custo salvar eles, de forma que antigamente eu commitava o banco de dados sqlite neste repositório, que não é uma boa prática. Eu não confio que o banco de dados mongodb vai ser tão confiável, então eu quero que os comentários sejam salvos em um arquivo de backup local, e no mínimo eu quero permitir que qualquer usuário possa exportar os seus comentários para um arquivo json, e também importar esse arquivo json caso queira restaurar os seus comentários.
+8. Eu gostaria que o admin pudesse averiguar todo comentário realizado na plataforma, para ser possível deletar caso fosse necessário, talvez até poderia dar um badge de verificado para os comentários que foram verificados por um admin, ou algo do tipo.
+9. A tela de perfil não está responsiva para mobile, o header também não. Precisa ver outras páginas para ver se estão ajustadas para o mobile, vi que até a busca dos livros na página inicial também não está. Isso é um requisito muito importante para a plataforma.

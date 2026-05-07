@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { useConfirm } from "@/contexts/ConfirmContext";
 
 interface SessionUser {
   name?: string | null;
@@ -42,6 +43,20 @@ const ICONS = {
  */
 export function AuthMenu({ user, loginCallbackUrl }: Props) {
   const [open, setOpen] = useState(false);
+  const confirm = useConfirm();
+
+  const handleSignOut = async () => {
+    setOpen(false);
+    const ok = await confirm({
+      title: "Sair da conta?",
+      description: "Você precisará entrar novamente para comentar e curtir.",
+      confirmLabel: "Sair",
+      cancelLabel: "Cancelar",
+      variant: "danger",
+    });
+    if (!ok) return;
+    signOut({ callbackUrl: "/" });
+  };
 
   if (!user) {
     const href = loginCallbackUrl
@@ -106,10 +121,7 @@ export function AuthMenu({ user, loginCallbackUrl }: Props) {
             )}
             <button
               type="button"
-              onClick={() => {
-                setOpen(false);
-                signOut({ callbackUrl: "/" });
-              }}
+              onClick={handleSignOut}
               className="w-full flex items-center gap-2.5 h-[35.5px] pl-4 bg-transparent border-none cursor-pointer text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
               <span className="text-red-600 dark:text-red-400 flex">{ICONS.signout}</span>

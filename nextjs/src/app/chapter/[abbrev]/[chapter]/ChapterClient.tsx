@@ -506,7 +506,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                           </span>
                         )}
                       </button>
-                      <div className="absolute right-1 top-1 opacity-60 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <div className={`absolute right-1 top-1 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity ${count > 0 ? "hidden md:block" : "opacity-60"}`}>
                         <CopyVerseButton
                           verse={{
                             abbrev: book.abbrev,
@@ -623,13 +623,19 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                               key={tag}
                               type="button"
                               onClick={() => setComposeTags((prev) => ({ ...prev, [tag]: !prev[tag] }))}
+                              aria-pressed={active}
                               className="flex items-center gap-2 h-[41.5px] px-[14px] rounded-[7px] border-2 border-solid cursor-pointer"
                               style={{
                                 borderColor: active ? meta.border : "#e2e8f0",
-                                background: active ? meta.bg : "#fafafa"
+                                background: active ? meta.bg : "transparent"
                               }}
                             >
-                              <span className="w-2 h-2 rounded-sm flex-shrink-0 block" style={{ background: meta.border }} />
+                              <span
+                                className="flex-shrink-0 inline-flex"
+                                style={{ color: meta.color }}
+                              >
+                                <TagIcon name={meta.icon} width={16} height={16} />
+                              </span>
                               <span className="font-normal text-[13px]" style={{ color: active ? meta.color : "#64748b" }}>{meta.label}</span>
                             </button>
                           );
@@ -802,8 +808,8 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                             onClick={() => handleLike(comment._id)}
                             className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill={comment.likedByMe ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                             </svg>
                             Útil · {comment.likeCount}
                           </button>
@@ -815,7 +821,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                             className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap ml-0.5"
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="9 17 4 12 9 7" /><path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                             </svg>
                             Contribuir
                           </button>

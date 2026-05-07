@@ -1,4 +1,4 @@
-export type TagIconName = "hand" | "book-open" | "user" | "pen" | "comment";
+export type TagIconName = "sunrise" | "book-open" | "user" | "pen" | "comment";
 
 export interface TagMeta {
   label: string;
@@ -10,7 +10,7 @@ export interface TagMeta {
 }
 
 export const TAG_META: Record<string, TagMeta> = {
-  devocional: { label: "Devocional", color: "#4f46e5", bg: "rgba(79,70,229,0.08)",  border: "#4f46e5", icon: "hand" },
+  devocional: { label: "Devocional", color: "#4f46e5", bg: "rgba(79,70,229,0.08)",  border: "#4f46e5", icon: "sunrise" },
   exegese:    { label: "Exegese",    color: "#0d9488", bg: "rgba(13,148,136,0.08)", border: "#0d9488", icon: "book-open" },
   exegetico:  { label: "Exegese",    color: "#0d9488", bg: "rgba(13,148,136,0.08)", border: "#0d9488", icon: "book-open" },
   pessoal:    { label: "Pessoal",    color: "#d97706", bg: "rgba(217,119,6,0.08)",  border: "#d97706", icon: "user" },

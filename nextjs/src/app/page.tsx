@@ -372,7 +372,7 @@ export default async function RootPage() {
               </span>
               <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
             </div>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 shadow-sm p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 shadow-sm p-2 sm:p-6">
               <BooksIndex initialBooks={books} />
             </div>
           </div>

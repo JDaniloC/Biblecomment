@@ -428,7 +428,7 @@ function TutorialResetCard() {
 function StatCard({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5 flex-1 min-w-0">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 sm:px-6 py-4 sm:py-5 flex-1 min-w-0">
       <div
         className="text-[28px] font-extrabold leading-none"
         style={{ color }}
@@ -649,10 +649,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
 
       {/* ── Body ── */}
-      <div className="max-w-[1100px] mx-auto pt-8 px-6 pb-16 flex gap-6 items-start">
+      <div className="max-w-[1100px] mx-auto pt-6 md:pt-8 px-4 md:px-6 pb-16 flex flex-col md:flex-row gap-4 md:gap-6 items-stretch md:items-start">
 
         {/* Sidebar */}
-        <aside className="w-60 flex-shrink-0 flex flex-col gap-2">
+        <aside className="w-full md:w-60 flex-shrink-0 flex flex-col gap-2">
           {/* User card */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pt-6 px-5 pb-5">
             <div className="w-[68px] h-[68px] rounded-[34px] bg-brand/15 border-[2.667px] border-[rgba(19,125,219,0.19)] flex items-center justify-center mb-[18px]">
@@ -672,8 +672,11 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
             )}
           </div>
 
-          {/* Navigation */}
-          <nav className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-[6.667px] px-[8.667px] flex flex-col gap-0.5">
+          {/* Navigation — icon-only tabs on mobile, full sidebar on md+ */}
+          <nav
+            aria-label="Seções do perfil"
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-[6.667px] px-[8.667px] flex flex-row md:flex-col gap-0.5 justify-around md:justify-start"
+          >
             {NAV_ITEMS.map(({ id, label, icon }) => {
               const active = tab === id;
               return (
@@ -681,7 +684,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                   key={id}
                   type="button"
                   onClick={() => setTab(id)}
-                  className={`flex items-center gap-2.5 h-[37.5px] pl-3 rounded-md border-none cursor-pointer w-full text-left transition-colors ${
+                  aria-label={label}
+                  title={label}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex items-center justify-center md:justify-start gap-0 md:gap-2.5 h-[37.5px] w-[37.5px] md:h-[37.5px] md:w-full md:pl-3 md:pr-3 rounded-md border-none cursor-pointer transition-colors ${
                     active
                       ? "bg-brand-wash text-brand"
                       : "bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -689,7 +695,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                 >
                   <span className="flex items-center shrink-0">{icon}</span>
                   <span
-                    className={`text-[13px] leading-[19.5px] whitespace-nowrap ${
+                    className={`hidden md:inline text-[13px] leading-[19.5px] whitespace-nowrap ${
                       active ? "font-semibold" : "font-normal"
                     }`}
                   >
@@ -701,14 +707,16 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
             {user.moderator && (
               <Link
                 href="/admin/moderation"
-                className="flex items-center gap-2.5 h-[37.5px] pl-3 rounded-md no-underline transition-colors text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                aria-label="Moderação"
+                title="Moderação"
+                className="flex items-center justify-center md:justify-start gap-0 md:gap-2.5 h-[37.5px] w-[37.5px] md:h-[37.5px] md:w-full md:pl-3 md:pr-3 rounded-md no-underline transition-colors text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
               >
                 <span className="flex items-center shrink-0">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   </svg>
                 </span>
-                <span className="text-[13px] leading-[19.5px] whitespace-nowrap font-semibold">
+                <span className="hidden md:inline text-[13px] leading-[19.5px] whitespace-nowrap font-semibold">
                   Moderação
                 </span>
               </Link>
@@ -731,7 +739,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                 </p>
               </div>
               {profile ? (
-                <div className="flex gap-3 mb-7">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7">
                   <StatCard label="Comentários" value={profile.commentsCount} max={0} color="#137ddb" />
                   <StatCard label="Livros comentados" value={profile.booksCount} max={66} color="#7c3aed" />
                   <StatCard label="Capítulos comentados" value={profile.chaptersCount} max={1189} color="#059669" />

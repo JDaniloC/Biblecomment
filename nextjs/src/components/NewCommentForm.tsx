@@ -4,14 +4,11 @@ import Image from "next/image";
 import { useState, useCallback } from "react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { commentsService } from "@/services/comments";
+import { TagIcon } from "@/components/TagIcon";
+import { TAG_META, TAG_ORDER } from "@/lib/tag-meta";
 import type { CommentData } from "@/lib/comment-data";
 
-const TAGS = [
-  { key: "devocional", icon: "/assets/hand.svg", label: "Devocional" },
-  { key: "exegese",    icon: "/assets/book.svg",   label: "Exegese" },
-  { key: "inspirado",  icon: "/assets/pen.svg",    label: "Inspirado" },
-  { key: "pessoal",    icon: "/assets/person.svg", label: "Pessoal" },
-];
+const TAGS = TAG_ORDER.map((key) => ({ key, meta: TAG_META[key] }));
 
 const MIN_LEN = 200;
 const MAX_LEN = 1000;
@@ -95,23 +92,26 @@ export default function NewCommentForm(props: Props) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex items-center gap-3">
-          {TAGS.map(({ key, icon, label }) => (
-            <label key={key} title={label} className="cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={tags[key]}
-                onChange={() => handleTagToggle(key)}
-              />
-              <Image
-                src={icon}
-                alt={label}
-                width={24}
-                height={24}
-                className={`transition ${tags[key] ? "opacity-100 scale-110" : "opacity-40"}`}
-              />
-            </label>
-          ))}
+          {TAGS.map(({ key, meta }) => {
+            const active = tags[key];
+            return (
+              <label
+                key={key}
+                title={meta.label}
+                aria-label={meta.label}
+                className={`cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-md transition ${active ? "scale-110" : "opacity-40"}`}
+                style={{ color: meta.color, background: active ? meta.bg : "transparent" }}
+              >
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={active}
+                  onChange={() => handleTagToggle(key)}
+                />
+                <TagIcon name={meta.icon} width={20} height={20} />
+              </label>
+            );
+          })}
           <span className="ml-auto text-xs text-gray-400">
             {text.length}/{text.length < MIN_LEN ? MIN_LEN : MAX_LEN}
           </span>
