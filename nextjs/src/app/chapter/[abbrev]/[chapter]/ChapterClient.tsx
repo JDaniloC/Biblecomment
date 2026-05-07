@@ -16,7 +16,8 @@ import Tutorial from "@/components/Tutorial/Tutorial";
 import { useTutorial } from "@/lib/use-tutorial";
 import { CHAPTER_TUTORIAL, CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import { MarkAsReadButton } from "@/components/MarkAsReadButton";
-import { TAG_META, TAG_ORDER, getTagMeta } from "@/lib/tag-meta";
+import { TAG_META, TAG_ORDER, getTagMetaOrNeutral } from "@/lib/tag-meta";
+import { TagIcon } from "@/components/TagIcon";
 import {
   toggleLikeAction,
   reportCommentAction,
@@ -636,20 +637,8 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                       </div>
                     </div>
 
-                    {/* Format toolbar + Textarea */}
+                    {/* Textarea */}
                     <div className="pt-3 px-4 overflow-hidden">
-                      {/* Toolbar */}
-                      <div className="flex gap-0.5 pb-2 border-b border-slate-100 mb-2">
-                        {["B", "I", "\u201C"].map((ch, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            className={`w-7 h-[26px] rounded border-none bg-transparent cursor-pointer text-slate-500 dark:text-slate-400 flex items-center justify-center ${i === 1 ? "font-serif italic" : "font-sans not-italic"} ${i === 0 ? "font-bold" : "font-medium"} ${i === 2 ? "text-[15px]" : "text-[13px]"}`}
-                          >
-                            {ch}
-                          </button>
-                        ))}
-                      </div>
                       <form onSubmit={handleCompose}>
                         <textarea
                           value={composeText}
@@ -671,12 +660,6 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                           >
                             Cancelar
                           </button>
-                          <div className="flex items-center gap-1.5 ml-2">
-                            <div className="w-8 h-[18px] rounded-[9px] bg-slate-300 dark:bg-slate-600 p-0.5 cursor-pointer">
-                              <div className="w-3.5 h-3.5 rounded-[7px] bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.2)]" />
-                            </div>
-                            <span className="font-normal text-[11px] text-slate-400 dark:text-slate-500">Anônimo</span>
-                          </div>
                           {(() => {
                             const len = composeText.length;
                             const tooShort = len < MIN_LEN;
@@ -736,7 +719,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
               ) : (
                 <div className="px-6 py-6 space-y-[12px]">
                   {activeComments.map((comment) => {
-                    const meta = getTagMeta(comment.tags);
+                    const meta = getTagMetaOrNeutral(comment.tags);
                     const isOwner = !!user && comment.username === user.username;
 
                     if (editingComment?._id === comment._id) {
@@ -777,26 +760,23 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                       );
                     }
 
-                    const borderColor = meta ? meta.border : "#e2e8f0";
+                    const borderColor = meta.border;
                     return (
                       <div
                         key={comment._id}
                         className="bg-white dark:bg-slate-900 border-l-4 border border-solid rounded-r-lg overflow-hidden shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)]"
                         style={{ borderColor }}
                       >
-                        {/* Header row: icon + type + username + date */}
+                        {/* Header row: type icon + label + username + date */}
                         <div className="flex items-center pt-4 px-[18px] h-9">
-                          {/* Book icon */}
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={borderColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                          </svg>
+                          {/* Type-specific icon — color matches the tag */}
+                          <span aria-hidden="true" className="flex-shrink-0" style={{ color: meta.color }}>
+                            <TagIcon name={meta.icon} width={18} height={18} />
+                          </span>
                           {/* Type label */}
-                          {meta && (
-                            <span className="font-semibold text-xs ml-2 whitespace-nowrap" style={{ color: meta.color }}>
-                              {meta.label}
-                            </span>
-                          )}
+                          <span className="font-semibold text-xs ml-2 whitespace-nowrap" style={{ color: meta.color }}>
+                            {meta.label}
+                          </span>
                           {/* Username */}
                           <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto whitespace-nowrap">
                             {comment.username}

@@ -39,6 +39,7 @@ interface UserProfile {
 }
 
 import { getTagMetaOrNeutral } from "@/lib/tag-meta";
+import { TagIcon } from "@/components/TagIcon";
 import { AppHeader } from "@/components/AppHeader";
 
 type Tab = "overview" | "comments" | "favorites" | "badges" | "config";
@@ -142,13 +143,13 @@ function ProfileCommentCard({
       {/* Header */}
       <div className="flex items-center gap-2 mb-2.5">
         <span
-          className="inline-flex items-center rounded-[10px] px-2 h-[20.5px] shrink-0"
-          style={{ background: type.bg }}
+          className="inline-flex items-center gap-1 rounded-[10px] pl-1.5 pr-2 h-[20.5px] shrink-0"
+          style={{ background: type.bg, color: type.color }}
         >
-          <span
-            className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap"
-            style={{ color: type.color }}
-          >
+          <span aria-hidden="true" className="flex">
+            <TagIcon name={type.icon} width={12} height={12} />
+          </span>
+          <span className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap">
             {type.label}
           </span>
         </span>
@@ -233,13 +234,13 @@ function FavoriteCard({ comment }: { comment: CommentData }) {
         </span>
         {/* Type badge */}
         <span
-          className="inline-flex items-center rounded-[10px] px-2 h-[20.5px] shrink-0"
-          style={{ background: type.bg }}
+          className="inline-flex items-center gap-1 rounded-[10px] pl-1.5 pr-2 h-[20.5px] shrink-0"
+          style={{ background: type.bg, color: type.color }}
         >
-          <span
-            className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap"
-            style={{ color: type.color }}
-          >
+          <span aria-hidden="true" className="flex">
+            <TagIcon name={type.icon} width={12} height={12} />
+          </span>
+          <span className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap">
             {type.label}
           </span>
         </span>
