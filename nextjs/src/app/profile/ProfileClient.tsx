@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { commentsService } from "@/services/comments";
@@ -395,6 +395,7 @@ function IdentityCard({
   onUpdated: (next: { displayName?: string; username?: string }) => void;
 }) {
   const { handleNotification } = useNotification();
+  const { update: updateSession } = useSession();
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [username, setUsername] = useState(initialUsername);
   const [savingName, setSavingName] = useState(false);
@@ -409,8 +410,12 @@ function IdentityCard({
     if (!nameChanged || !nameValid) return;
     setSavingName(true);
     try {
-      await usersService.updateProfile({ displayName: displayName.trim() });
-      onUpdated({ displayName: displayName.trim() });
+      const trimmed = displayName.trim();
+      await usersService.updateProfile({ displayName: trimmed });
+      // Refresh the JWT in place so AuthMenu/profile header pick up the
+      // new name without a re-login.
+      await updateSession({ displayName: trimmed, name: trimmed });
+      onUpdated({ displayName: trimmed });
       handleNotification("success", "Nome atualizado.");
     } catch {
       handleNotification("error", "Erro ao atualizar nome.");
@@ -424,6 +429,9 @@ function IdentityCard({
     setSavingSlug(true);
     try {
       const result = await usersService.updateUsername(username);
+      // Update the JWT so subsequent writes (createCommentAction, etc.)
+      // attribute records to the new slug instead of the now-defunct one.
+      await updateSession({ username: result.username });
       onUpdated({ username: result.username });
       handleNotification("success", "Identificador atualizado.");
     } catch (err) {
@@ -1084,16 +1092,6 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                   initialUsername={profile.username}
                   onUpdated={(next) => {
                     setProfile((p) => p ? { ...p, ...next } : p);
-                    if (next.username) {
-                      // Force a session refresh so future requests use the new slug.
-                      // signOut+signIn dance is heavy; instead instruct the user to
-                      // refresh — the cascade is server-side, the JWT will catch up
-                      // on next login.
-                      handleNotification(
-                        "info",
-                        "Recarregue a página ou entre novamente para atualizar a sessão.",
-                      );
-                    }
                   }}
                 />
               )}

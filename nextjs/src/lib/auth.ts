@@ -65,7 +65,7 @@ export const authConfig: NextAuthConfig = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id ?? "";
         token.email = (user.email ?? "") as string;
@@ -74,6 +74,17 @@ export const authConfig: NextAuthConfig = {
         token.moderator = (user as { moderator: boolean }).moderator;
         token.tutorialsCompleted =
           (user as { tutorialsCompleted?: string[] }).tutorialsCompleted ?? [];
+      }
+      // Client-triggered session refresh (useSession().update(...)) lands
+      // here with `trigger="update"` and `session` carrying the new fields.
+      // Without this, renaming the slug leaves the JWT stale and downstream
+      // writes (createCommentAction etc.) author records under the old
+      // username — orphaning them since the user table no longer has it.
+      if (trigger === "update" && session && typeof session === "object") {
+        const next = session as { username?: string; displayName?: string; name?: string };
+        if (typeof next.username === "string") token.username = next.username;
+        if (typeof next.displayName === "string") token.name = next.displayName;
+        else if (typeof next.name === "string") token.name = next.name;
       }
       return token;
     },
