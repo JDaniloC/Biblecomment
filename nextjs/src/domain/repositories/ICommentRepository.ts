@@ -15,15 +15,22 @@ export interface ICommentRepository {
   searchByText(query: string): Promise<Comment[]>;
   anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
   /**
-   * Paginated all-comments query for the moderation panel. Supports an
-   * optional case-insensitive substring filter against `text` and
-   * `username`. Returns a slice + total for pagination UI.
+   * Cursor-paginated all-comments query for the moderation panel. The
+   * cursor is `(createdAt, id)` of the last item returned by the previous
+   * page, so the next page filters with `createdAt < cursor.createdAt OR
+   * (createdAt = cursor.createdAt AND _id < cursor.id)` — deterministic
+   * tiebreak when timestamps collide.
+   *
+   * Search uses MongoDB full-text on `text` (Portuguese stemming) merged
+   * with case-insensitive regex against `username` and `bookReference`.
+   * Both sides are indexed; nothing scans the collection. There is no
+   * `total` — totals are O(N) and pointless for a feed.
    */
   findForModeration(opts: {
     q?: string;
-    page: number;
-    pageSize: number;
-  }): Promise<{ items: Comment[]; total: number }>;
+    cursor?: { createdAt: Date; id: string } | null;
+    limit: number;
+  }): Promise<{ items: Comment[]; nextCursor: { createdAt: Date; id: string } | null }>;
   /** Set the admin-verified state. `by` is the moderator's username (snapshot). */
   setVerified(id: string, verified: boolean, by: string | null): Promise<Comment | null>;
 }

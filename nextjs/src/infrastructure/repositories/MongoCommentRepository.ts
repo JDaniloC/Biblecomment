@@ -121,23 +121,83 @@ export class MongoCommentRepository implements ICommentRepository {
 
   async findForModeration(opts: {
     q?: string;
-    page: number;
-    pageSize: number;
-  }): Promise<{ items: Comment[]; total: number }> {
+    cursor?: { createdAt: Date; id: string } | null;
+    limit: number;
+  }): Promise<{ items: Comment[]; nextCursor: { createdAt: Date; id: string } | null }> {
     await connectToDatabase();
-    const filter: Record<string, unknown> = {};
+    const limit = Math.max(1, Math.min(opts.limit, 100));
     const q = opts.q?.trim();
-    if (q) {
+
+    // Cursor predicate: strict-less-than on (createdAt, _id) using the
+    // compound index { createdAt: -1, _id: -1 }. Splitting into the two
+    // OR branches keeps the query sargable.
+    const cursorPred = opts.cursor
+      ? {
+          $or: [
+            { createdAt: { $lt: opts.cursor.createdAt } },
+            mongoose.Types.ObjectId.isValid(opts.cursor.id)
+              ? {
+                  createdAt: opts.cursor.createdAt,
+                  _id: { $lt: new mongoose.Types.ObjectId(opts.cursor.id) },
+                }
+              : { _id: null },
+          ],
+        }
+      : null;
+
+    let docs: ICommentDocument[];
+    if (!q) {
+      const filter = cursorPred ?? {};
+      docs = await CommentModel.find(filter)
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(limit + 1);
+    } else {
+      // $text doesn't compose inside $or, so we issue both sides in
+      // parallel and merge in JS. Each side is bounded by `limit + 1`,
+      // so the merge buffer is at most 2*(limit+1) — tiny.
       const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const re = new RegExp(escaped, "i");
-      filter.$or = [{ text: re }, { username: re }, { bookReference: re }];
+
+      const textFilter: Record<string, unknown> = { $text: { $search: q } };
+      const metaFilter: Record<string, unknown> = {
+        $or: [{ username: re }, { bookReference: re }],
+      };
+      if (cursorPred) {
+        textFilter.$and = [cursorPred];
+        metaFilter.$and = [cursorPred];
+      }
+
+      const [byText, byMeta] = await Promise.all([
+        CommentModel.find(textFilter).sort({ createdAt: -1, _id: -1 }).limit(limit + 1),
+        CommentModel.find(metaFilter).sort({ createdAt: -1, _id: -1 }).limit(limit + 1),
+      ]);
+
+      const seen = new Set<string>();
+      docs = [...byText, ...byMeta]
+        .filter((d) => {
+          const id = d._id?.toString() ?? "";
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        })
+        .sort((a, b) => {
+          const ad = a.createdAt?.getTime() ?? 0;
+          const bd = b.createdAt?.getTime() ?? 0;
+          if (ad !== bd) return bd - ad;
+          return (b._id?.toString() ?? "").localeCompare(a._id?.toString() ?? "");
+        })
+        .slice(0, limit + 1);
     }
-    const skip = Math.max(0, (opts.page - 1) * opts.pageSize);
-    const [docs, total] = await Promise.all([
-      CommentModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(opts.pageSize),
-      CommentModel.countDocuments(filter),
-    ]);
-    return { items: docs.map(toEntity), total };
+
+    const hasMore = docs.length > limit;
+    const items = (hasMore ? docs.slice(0, limit) : docs).map(toEntity);
+    const last = items[items.length - 1];
+    const nextCursor =
+      hasMore && last?.createdAt && last._id
+        ? { createdAt: last.createdAt, id: last._id }
+        : null;
+
+    return { items, nextCursor };
   }
 
   async setVerified(id: string, verified: boolean, by: string | null): Promise<Comment | null> {

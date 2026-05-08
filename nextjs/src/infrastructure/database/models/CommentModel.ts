@@ -37,8 +37,16 @@ const CommentSchema = new Schema<ICommentDocument>(
 CommentSchema.index({ sourceId: 1 }, { unique: true, sparse: true });
 CommentSchema.index({ verseId: 1, onTitle: 1 });
 CommentSchema.index({ username: 1 });
+CommentSchema.index({ bookReference: 1 });
 CommentSchema.index({ verified: 1 });
-CommentSchema.index({ text: "text" });
+// Newest-first sort for the moderation panel and any feed view.
+// Compound on (createdAt, _id) so cursor pagination has a deterministic
+// tiebreaker when timestamps collide.
+CommentSchema.index({ createdAt: -1, _id: -1 });
+// Portuguese stemming for the moderation full-text search. Without a
+// language hint, MongoDB defaults to English — "verificação"/"versículo"
+// would never match a query for "verifica" / "versic".
+CommentSchema.index({ text: "text" }, { default_language: "portuguese" });
 
 export const CommentModel: Model<ICommentDocument> =
   mongoose.models.Comment || mongoose.model<ICommentDocument>("Comment", CommentSchema);

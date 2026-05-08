@@ -22,8 +22,14 @@ function makeComment(id: string, partial: Partial<Comment> = {}): Comment {
 }
 
 function inMemoryCommentRepo(comments: Comment[]): ICommentRepository {
-  // Keep state mutable — toggle tests rewrite verified in place.
-  const store = new Map(comments.map((c) => [c._id ?? "", { ...c }]));
+  // Keep state mutable — toggle tests rewrite verified in place. Stamp
+  // sequential createdAt so the cursor predicate is deterministic.
+  const store = new Map(
+    comments.map((c, i) => [
+      c._id ?? "",
+      { ...c, createdAt: c.createdAt ?? new Date(2026, 0, 1 + i) },
+    ]),
+  );
   return {
     findById: async (id: string) => {
       const c = store.get(id);
@@ -37,9 +43,17 @@ function inMemoryCommentRepo(comments: Comment[]): ICommentRepository {
       c.verifiedAt = verified ? new Date() : undefined;
       return { ...c };
     },
-    findForModeration: async ({ q, page, pageSize }: { q?: string; page: number; pageSize: number }) => {
+    findForModeration: async ({
+      q,
+      cursor,
+      limit,
+    }: {
+      q?: string;
+      cursor?: { createdAt: Date; id: string } | null;
+      limit: number;
+    }) => {
       const all = [...store.values()];
-      const filtered = q
+      let filtered = q
         ? all.filter((c) =>
             [c.text, c.username, c.bookReference]
               .join(" ")
@@ -47,10 +61,33 @@ function inMemoryCommentRepo(comments: Comment[]): ICommentRepository {
               .includes(q.toLowerCase()),
           )
         : all;
-      // newest first by id (stand-in for createdAt — fixtures don't set it)
-      filtered.sort((a, b) => (b._id ?? "").localeCompare(a._id ?? ""));
-      const start = (page - 1) * pageSize;
-      return { items: filtered.slice(start, start + pageSize), total: filtered.length };
+      // newest first by createdAt, _id desc as tiebreak
+      filtered = filtered.sort((a, b) => {
+        const ad = (a.createdAt as Date)?.getTime() ?? 0;
+        const bd = (b.createdAt as Date)?.getTime() ?? 0;
+        if (ad !== bd) return bd - ad;
+        return (b._id ?? "").localeCompare(a._id ?? "");
+      });
+      if (cursor) {
+        filtered = filtered.filter((c) => {
+          const cAt = (c.createdAt as Date).getTime();
+          const cuAt = cursor.createdAt.getTime();
+          if (cAt < cuAt) return true;
+          if (cAt > cuAt) return false;
+          return (c._id ?? "") < cursor.id;
+        });
+      }
+      const slice = filtered.slice(0, limit + 1);
+      const hasMore = slice.length > limit;
+      const items = (hasMore ? slice.slice(0, limit) : slice).map((c) => ({ ...c }));
+      const last = items[items.length - 1];
+      return {
+        items,
+        nextCursor:
+          hasMore && last?.createdAt && last._id
+            ? { createdAt: last.createdAt, id: last._id }
+            : null,
+      };
     },
   } as unknown as ICommentRepository;
 }
@@ -69,7 +106,7 @@ function reportRepoStub(byComment: Record<string, number> = {}): ICommentReportR
 }
 
 describe("ListAllCommentsForModerationUseCase", () => {
-  it("returns paginated items with total and enriches with reportCount", async () => {
+  it("returns first page with nextCursor when more remain, enriched with reportCount", async () => {
     const cRepo = inMemoryCommentRepo([
       makeComment("c1", { text: "alpha" }),
       makeComment("c2", { text: "beta" }),
@@ -78,16 +115,35 @@ describe("ListAllCommentsForModerationUseCase", () => {
     const rRepo = reportRepoStub({ c2: 5 });
     const uc = new ListAllCommentsForModerationUseCase(cRepo, rRepo);
 
-    const result = await uc.execute(1, 2);
+    const result = await uc.execute({ limit: 2 });
 
-    expect(result.total).toBe(3);
-    expect(result.page).toBe(1);
-    expect(result.pageSize).toBe(2);
     expect(result.items).toHaveLength(2);
+    expect(result.nextCursor).not.toBeNull();
     const reported = result.items.find((c) => c._id === "c2");
     expect(reported?.reportCount).toBe(5);
     const clean = result.items.find((c) => c._id !== "c2");
     expect(clean?.reportCount).toBe(0);
+  });
+
+  it("walks pages via cursor and returns null cursor on the last slice", async () => {
+    const cRepo = inMemoryCommentRepo([
+      makeComment("c1"),
+      makeComment("c2"),
+      makeComment("c3"),
+    ]);
+    const uc = new ListAllCommentsForModerationUseCase(cRepo, reportRepoStub());
+
+    const first = await uc.execute({ limit: 2 });
+    expect(first.items).toHaveLength(2);
+    expect(first.nextCursor).not.toBeNull();
+
+    const second = await uc.execute({ limit: 2, cursor: first.nextCursor });
+    expect(second.items).toHaveLength(1);
+    expect(second.nextCursor).toBeNull();
+
+    // Union covers all three with no duplicates.
+    const ids = [...first.items, ...second.items].map((c) => c._id);
+    expect(new Set(ids).size).toBe(3);
   });
 
   it("filters by query against text/username/bookReference", async () => {
@@ -98,20 +154,20 @@ describe("ListAllCommentsForModerationUseCase", () => {
     ]);
     const uc = new ListAllCommentsForModerationUseCase(cRepo, reportRepoStub());
 
-    const matches = await uc.execute(1, 50, "bob");
+    const matches = await uc.execute({ limit: 50, q: "bob" });
     expect(matches.items.map((c) => c._id)).toEqual(["c2"]);
-    expect(matches.total).toBe(1);
+    expect(matches.nextCursor).toBeNull();
   });
 
-  it("returns empty page without crashing on no results", async () => {
+  it("returns empty result without crashing on no rows", async () => {
     const cRepo = inMemoryCommentRepo([]);
     const result = await new ListAllCommentsForModerationUseCase(
       cRepo,
       reportRepoStub(),
-    ).execute(1, 20);
+    ).execute({ limit: 20 });
 
     expect(result.items).toEqual([]);
-    expect(result.total).toBe(0);
+    expect(result.nextCursor).toBeNull();
   });
 });
 

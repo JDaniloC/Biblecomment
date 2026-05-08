@@ -215,11 +215,14 @@ export class ListReportedCommentsUseCase {
   }
 }
 
+export interface ModerationCursor {
+  createdAt: Date;
+  id: string;
+}
+
 export interface ListAllCommentsResult {
   items: Comment[];
-  total: number;
-  page: number;
-  pageSize: number;
+  nextCursor: ModerationCursor | null;
 }
 
 export class ListAllCommentsForModerationUseCase {
@@ -229,17 +232,22 @@ export class ListAllCommentsForModerationUseCase {
   ) {}
 
   /**
-   * Paginated all-comments view for moderators. Each item is enriched with
-   * `reportCount` (best-effort batch lookup) so the panel can show "N reports"
-   * inline without a per-row round-trip.
+   * Cursor-paginated all-comments view for moderators. Each item is
+   * enriched with `reportCount` (best-effort batch lookup). `nextCursor`
+   * is null when there are no more results — UI hides the "Carregar mais"
+   * button on null.
    */
-  async execute(
-    page: number,
-    pageSize: number,
-    q?: string,
-  ): Promise<ListAllCommentsResult> {
-    const { items, total } = await this.commentRepo.findForModeration({ page, pageSize, q });
-    if (items.length === 0) return { items, total, page, pageSize };
+  async execute(opts: {
+    q?: string;
+    cursor?: ModerationCursor | null;
+    limit: number;
+  }): Promise<ListAllCommentsResult> {
+    const { items, nextCursor } = await this.commentRepo.findForModeration({
+      q: opts.q,
+      cursor: opts.cursor,
+      limit: opts.limit,
+    });
+    if (items.length === 0) return { items, nextCursor };
 
     const ids = items.map((c) => c._id ?? "").filter(Boolean);
     const counts = await this.reportRepo.countByComment(ids);
@@ -247,7 +255,7 @@ export class ListAllCommentsForModerationUseCase {
       ...c,
       reportCount: counts.get(c._id ?? "") ?? 0,
     }));
-    return { items: enriched, total, page, pageSize };
+    return { items: enriched, nextCursor };
   }
 }
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
-import { moderationService } from "@/services/moderation";
+import { moderationService, type ModerationCursor } from "@/services/moderation";
 import { commentsService } from "@/services/comments";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -32,12 +32,12 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // All-comments browser (ux-review #8)
+  // All-comments browser (ux-review #8). Cursor-paginated: no totals, no
+  // page numbers — clicking "Carregar mais" appends the next slice using
+  // the createdAt+id of the last visible row.
   const [allComments, setAllComments] = useState<Comment[]>([]);
   const [allLoading, setAllLoading] = useState(false);
-  const [allPage, setAllPage] = useState(1);
-  const [allTotal, setAllTotal] = useState(0);
-  const [allPageSize, setAllPageSize] = useState(20);
+  const [nextCursor, setNextCursor] = useState<ModerationCursor | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
@@ -57,15 +57,13 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     }
   }, [handleNotification]);
 
-  const loadAll = useCallback(
-    async (page: number, q: string) => {
+  const resetAll = useCallback(
+    async (q: string) => {
       setAllLoading(true);
       try {
-        const { items, total, pageSize } = await moderationService.listAllComments(page, q);
+        const { items, nextCursor: next } = await moderationService.listAllComments({ q });
         setAllComments(items);
-        setAllTotal(total);
-        setAllPageSize(pageSize);
-        setAllPage(page);
+        setNextCursor(next);
       } catch {
         handleNotification("error", "Erro ao carregar comentários.");
       } finally {
@@ -75,13 +73,30 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     [handleNotification],
   );
 
+  const loadMore = useCallback(async () => {
+    if (!nextCursor) return;
+    setAllLoading(true);
+    try {
+      const { items, nextCursor: next } = await moderationService.listAllComments({
+        q: searchQuery,
+        cursor: nextCursor,
+      });
+      setAllComments((prev) => [...prev, ...items]);
+      setNextCursor(next);
+    } catch {
+      handleNotification("error", "Erro ao carregar mais comentários.");
+    } finally {
+      setAllLoading(false);
+    }
+  }, [handleNotification, nextCursor, searchQuery]);
+
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    loadAll(1, searchQuery);
-  }, [loadAll, searchQuery]);
+    resetAll(searchQuery);
+  }, [resetAll, searchQuery]);
 
   async function handleClear(id: string) {
     const ok = await confirm({
@@ -161,7 +176,6 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     try {
       await commentsService.delete(id);
       setAllComments((prev) => prev.filter((c) => c._id !== id));
-      setAllTotal((t) => Math.max(0, t - 1));
       // Removing a comment also takes it out of the report queue if it was there.
       setReports((prev) => prev.filter((c) => c._id !== id));
       handleNotification("success", "Comentário deletado.");
@@ -300,19 +314,20 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
           <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
               Todos os comentários
-              {!allLoading && (
+              {!allLoading && allComments.length > 0 && (
                 <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500">
-                  ({allTotal})
+                  ({allComments.length}
+                  {nextCursor ? "+" : ""})
                 </span>
               )}
             </h2>
             <button
               type="button"
-              onClick={() => loadAll(allPage, searchQuery)}
+              onClick={() => resetAll(searchQuery)}
               className="text-xs text-brand hover:underline disabled:opacity-50"
               disabled={allLoading}
             >
-              {allLoading ? "Atualizando…" : "Atualizar"}
+              {allLoading && allComments.length === 0 ? "Atualizando…" : "Atualizar"}
             </button>
           </div>
 
@@ -347,7 +362,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
             )}
           </form>
 
-          {allLoading ? (
+          {allLoading && allComments.length === 0 ? (
             <div className="text-center text-slate-400 py-10">Carregando…</div>
           ) : allComments.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -419,27 +434,16 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                 </div>
               ))}
 
-              {/* Pagination */}
-              {allTotal > allPageSize && (
-                <div className="flex items-center justify-center gap-3 mt-2">
+              {/* Cursor-based "load more" — no totals, no page numbers. */}
+              {nextCursor && (
+                <div className="flex items-center justify-center mt-2">
                   <button
                     type="button"
-                    onClick={() => loadAll(allPage - 1, searchQuery)}
-                    disabled={allLoading || allPage <= 1}
-                    className="text-xs px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                    onClick={loadMore}
+                    disabled={allLoading}
+                    className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
                   >
-                    ← Anterior
-                  </button>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    Página {allPage} de {Math.max(1, Math.ceil(allTotal / allPageSize))}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => loadAll(allPage + 1, searchQuery)}
-                    disabled={allLoading || allPage * allPageSize >= allTotal}
-                    className="text-xs px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
-                  >
-                    Próxima →
+                    {allLoading ? "Carregando…" : "Carregar mais"}
                   </button>
                 </div>
               )}
