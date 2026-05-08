@@ -31,6 +31,13 @@ export interface ICommentLikeRepository {
   /** Has the user given any like? Used by the badge evaluator (first-like). */
   userHasGivenAnyLike(userId: string): Promise<boolean>;
 
+  /**
+   * Top-N comments by like count where the like itself was created on or
+   * after `since`. Returns `[{ commentId, likeCount }]` sorted desc.
+   * Used by the /home "Populares" feed.
+   */
+  topLikedSince(since: Date, limit: number): Promise<Array<{ commentId: string; likeCount: number }>>;
+
   /** Cascade on user deletion. */
   deleteAllByUser(userId: string): Promise<number>;
 

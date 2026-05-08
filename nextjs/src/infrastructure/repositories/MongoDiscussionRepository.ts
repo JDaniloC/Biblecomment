@@ -33,6 +33,17 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
     return doc ? toEntity(doc) : null;
   }
 
+  async findManyByIds(ids: string[]): Promise<Discussion[]> {
+    if (ids.length === 0) return [];
+    await connectToDatabase();
+    const oids = ids
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (oids.length === 0) return [];
+    const docs = await DiscussionModel.find({ _id: { $in: oids } });
+    return docs.map(toEntity);
+  }
+
   async findAllPaginated(page: number, pageSize: number): Promise<Discussion[]> {
     await connectToDatabase();
     const docs = await DiscussionModel.find({})

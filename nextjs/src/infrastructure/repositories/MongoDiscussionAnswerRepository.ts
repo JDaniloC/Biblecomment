@@ -105,6 +105,32 @@ export class MongoDiscussionAnswerRepository implements IDiscussionAnswerReposit
     return doc !== null;
   }
 
+  async latestPerDiscussion(
+    limit: number,
+  ): Promise<Array<{ discussionId: string; lastAnswerAt: Date; answerCount: number }>> {
+    await connectToDatabase();
+    const rows = await DiscussionAnswerModel.aggregate<{
+      _id: mongoose.Types.ObjectId;
+      lastAnswerAt: Date;
+      total: number;
+    }>([
+      {
+        $group: {
+          _id: "$discussionId",
+          lastAnswerAt: { $max: "$createdAt" },
+          total: { $sum: 1 },
+        },
+      },
+      { $sort: { lastAnswerAt: -1 } },
+      { $limit: Math.max(1, Math.min(limit, 100)) },
+    ]);
+    return rows.map((r) => ({
+      discussionId: r._id.toString(),
+      lastAnswerAt: r.lastAnswerAt,
+      answerCount: r.total,
+    }));
+  }
+
   async anonymizeByUser(userId: string, replacement: string): Promise<number> {
     await connectToDatabase();
     const result = await DiscussionAnswerModel.updateMany(

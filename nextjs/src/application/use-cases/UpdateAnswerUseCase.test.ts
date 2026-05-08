@@ -42,6 +42,7 @@ function answerRepoStub(
     countByDiscussion: async () => new Map(),
     findByUser: async () => [],
     userHasAnsweredAny: async () => false,
+    latestPerDiscussion: async () => [],
     anonymizeByUser: async () => 0,
     deleteByDiscussion: async () => 0,
     ...overrides,

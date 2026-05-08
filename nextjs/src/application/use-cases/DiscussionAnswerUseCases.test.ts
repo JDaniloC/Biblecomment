@@ -27,6 +27,7 @@ function discussionRepoStub(discussions: Discussion[]): IDiscussionRepository {
   const byId = new Map(discussions.map((d) => [d._id ?? "", d]));
   return {
     findById: async (id: string) => byId.get(id) ?? null,
+    findManyByIds: async (ids: string[]) => ids.map((i) => byId.get(i)).filter((d): d is Discussion => Boolean(d)),
     findAllPaginated: async () => discussions,
     findByBookAbbrev: async () => discussions,
     findAll: async () => discussions,
@@ -83,6 +84,9 @@ function inMemoryAnswerRepo(): IDiscussionAnswerRepository {
     },
     async userHasAnsweredAny(userId) {
       return rows.some((r) => r.userId === userId);
+    },
+    async latestPerDiscussion() {
+      return [];
     },
     async anonymizeByUser(userId, replacement) {
       let n = 0;

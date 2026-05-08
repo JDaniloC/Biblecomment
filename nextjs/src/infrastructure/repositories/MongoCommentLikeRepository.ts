@@ -87,6 +87,23 @@ export class MongoCommentLikeRepository implements ICommentLikeRepository {
     return doc !== null;
   }
 
+  async topLikedSince(
+    since: Date,
+    limit: number,
+  ): Promise<Array<{ commentId: string; likeCount: number }>> {
+    await connectToDatabase();
+    const rows = await CommentLikeModel.aggregate<{
+      _id: mongoose.Types.ObjectId;
+      total: number;
+    }>([
+      { $match: { createdAt: { $gte: since } } },
+      { $group: { _id: "$commentId", total: { $sum: 1 } } },
+      { $sort: { total: -1, _id: -1 } },
+      { $limit: Math.max(1, Math.min(limit, 100)) },
+    ]);
+    return rows.map((r) => ({ commentId: r._id.toString(), likeCount: r.total }));
+  }
+
   async deleteAllByUser(userId: string): Promise<number> {
     await connectToDatabase();
     const res = await CommentLikeModel.deleteMany({ userId });

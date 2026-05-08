@@ -64,6 +64,9 @@ function inMemoryLikeRepo(): ICommentLikeRepository {
     async userHasGivenAnyLike(userId) {
       return (data.get(userId)?.size ?? 0) > 0;
     },
+    async topLikedSince() {
+      return [];
+    },
     async deleteAllByUser(userId) {
       const n = data.get(userId)?.size ?? 0;
       data.delete(userId);

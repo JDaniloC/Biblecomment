@@ -73,6 +73,7 @@ function makeRepos(opts: {
     whichLiked: async () => new Set(),
     findCommentIdsLikedBy: async () => [],
     userHasGivenAnyLike: async () => opts.hasGivenLike ?? false,
+    topLikedSince: async () => [],
     deleteAllByUser: async () => 0,
     deleteAllByComment: async () => 0,
   };
@@ -89,6 +90,7 @@ function makeRepos(opts: {
     countByDiscussion: async () => new Map(),
     findByUser: async () => [],
     userHasAnsweredAny: async () => opts.hasAnsweredDiscussion ?? false,
+    latestPerDiscussion: async () => [],
     anonymizeByUser: async () => 0,
     deleteByDiscussion: async () => 0,
   };

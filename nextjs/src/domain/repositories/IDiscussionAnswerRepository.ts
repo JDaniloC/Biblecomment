@@ -25,6 +25,15 @@ export interface IDiscussionAnswerRepository {
   /** Has the user authored any answer? Used by the badge evaluator. */
   userHasAnsweredAny(userId: string): Promise<boolean>;
 
+  /**
+   * Top-N discussions by latest-answer timestamp. Returns
+   * `[{ discussionId, lastAnswerAt, answerCount }]` ordered desc by
+   * lastAnswerAt. Used by the /home "Discussões ativas" feed.
+   */
+  latestPerDiscussion(
+    limit: number,
+  ): Promise<Array<{ discussionId: string; lastAnswerAt: Date; answerCount: number }>>;
+
   /** LGPD cascade — rewrites username on every row authored by the user. */
   anonymizeByUser(userId: string, replacement: string): Promise<number>;
 

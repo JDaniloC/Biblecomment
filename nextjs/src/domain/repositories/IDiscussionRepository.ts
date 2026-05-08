@@ -3,6 +3,8 @@ import { Discussion } from "../entities/Discussion";
 export interface IDiscussionRepository {
   findByBookAbbrev(bookAbbrev: string): Promise<Discussion[]>;
   findById(id: string): Promise<Discussion | null>;
+  /** Hydrate discussion docs by id list. Order is not preserved — caller re-sorts. */
+  findManyByIds(ids: string[]): Promise<Discussion[]>;
   findAllPaginated(page: number, pageSize: number): Promise<Discussion[]>;
   create(discussion: Omit<Discussion, "_id" | "createdAt" | "updatedAt" | "answers" | "answersCount">): Promise<Discussion>;
   createMany(discussions: Omit<Discussion, "_id" | "createdAt" | "updatedAt" | "answers" | "answersCount">[]): Promise<number>;

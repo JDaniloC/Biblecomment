@@ -29,6 +29,17 @@ export class MongoVerseRepository implements IVerseRepository {
     return doc ? toEntity(doc) : null;
   }
 
+  async findManyByIds(ids: string[]): Promise<Verse[]> {
+    if (ids.length === 0) return [];
+    await connectToDatabase();
+    const oids = ids
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (oids.length === 0) return [];
+    const docs = await VerseModel.find({ _id: { $in: oids } });
+    return docs.map(toEntity);
+  }
+
   async findByAbbrevChapterVerse(
     abbrev: string,
     chapter: number,
