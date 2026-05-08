@@ -29,9 +29,9 @@ function comment(id: string, partial: Partial<Comment> = {}): Comment {
 
 function commentRepoStub(comments: Comment[]): ICommentRepository {
   return {
-    findManyByIds: async (ids) =>
+    findManyByIds: async (ids: string[]) =>
       ids.map((i) => comments.find((c) => c._id === i)).filter((c): c is Comment => Boolean(c)),
-    findForModeration: async ({ limit }) => {
+    findForModeration: async ({ limit }: { limit: number }) => {
       const sorted = [...comments].sort(
         (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
       );
@@ -55,7 +55,7 @@ function likeRepoStub(opts: {
   topSince?: Array<{ commentId: string; likeCount: number }>;
 } = {}): ICommentLikeRepository {
   return {
-    countByComment: async (ids) => {
+    countByComment: async (ids: string[]) => {
       const out = new Map<string, number>();
       for (const id of ids) {
         const n = opts.countMap?.[id] ?? 0;
@@ -69,7 +69,7 @@ function likeRepoStub(opts: {
 
 function verseRepoStub(verses: Verse[]): IVerseRepository {
   return {
-    findManyByIds: async (ids) =>
+    findManyByIds: async (ids: string[]) =>
       ids.map((i) => verses.find((v) => v._id === i)).filter((v): v is Verse => Boolean(v)),
   } as unknown as IVerseRepository;
 }

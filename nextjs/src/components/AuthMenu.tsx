@@ -32,6 +32,8 @@ const ICONS = {
   settings: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>,
   shield: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   signout: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  book: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  help: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
 };
 
 /**
@@ -95,6 +97,23 @@ export function AuthMenu({ user, loginCallbackUrl }: Props) {
                 {user.name ?? user.username}
               </div>
               <div className="font-normal text-xs text-slate-400 dark:text-slate-500 leading-[18px]">@{user.username}</div>
+            </div>
+            {/* Mobile-only nav: the AppHeader hides "Livros"/"Discussões"/"?" below md.
+                Surface them here so phone users can still navigate the site. */}
+            <div className="md:hidden">
+              <Link href="/home" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
+                <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.book}</span>
+                <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Livros</span>
+              </Link>
+              <Link href="/discussions" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
+                <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.message}</span>
+                <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Discussões</span>
+              </Link>
+              <Link href="/help" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
+                <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.help}</span>
+                <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Ajuda</span>
+              </Link>
+              <div className="h-px bg-slate-100 dark:bg-slate-800" />
             </div>
             <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
               <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.user}</span>

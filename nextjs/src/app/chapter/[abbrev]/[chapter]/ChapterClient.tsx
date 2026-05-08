@@ -477,7 +477,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                       <button
                         type="button"
                         onClick={() => openVersePanel(verse)}
-                        className="flex items-start gap-3 md:gap-3 gap-2 w-full text-left rounded-r-[4px] transition border-l-4 border-solid pt-3 pr-2.5 pb-3 pl-3 md:pt-2 md:pb-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 min-h-[44px]"
+                        className={`flex items-start gap-3 md:gap-3 gap-2 w-full text-left rounded-r-[4px] transition border-l-4 border-solid pt-3 pr-2.5 pl-3 md:pt-2 md:pb-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 min-h-[44px] ${count > 0 ? "pb-7 md:pb-2" : "pb-3"}`}
                         style={{
                           borderLeftColor: isSelected ? "#137ddb" : "transparent",
                           background: isSelected ? "rgba(19,125,219,0.04)" : undefined
@@ -495,10 +495,11 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                         >
                           {verse.text}
                         </span>
+                        {/* Desktop: count badge inline on the right; mobile gets the
+                            badge anchored to the bottom-right of the verse instead so it
+                            doesn't collide with the copy icon at top-right. */}
                         {count > 0 && (
-                          <span
-                            className="flex-shrink-0 flex items-center gap-1 h-[15px] px-2 rounded-[20px] bg-brand"
-                          >
+                          <span className="hidden md:flex flex-shrink-0 items-center gap-1 h-[15px] px-2 rounded-[20px] bg-brand">
                             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                             </svg>
@@ -506,7 +507,18 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                           </span>
                         )}
                       </button>
-                      <div className={`absolute right-1 top-1 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity ${count > 0 ? "hidden md:block" : "opacity-60"}`}>
+                      {count > 0 && (
+                        <span
+                          aria-hidden="true"
+                          className="md:hidden absolute right-2 bottom-1.5 flex items-center gap-1 h-[15px] px-2 rounded-[20px] bg-brand pointer-events-none"
+                        >
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                          </svg>
+                          <span className="font-bold text-[11px] text-white leading-[11px]">{count}</span>
+                        </span>
+                      )}
+                      <div className="absolute right-1 top-1 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity opacity-60">
                         <CopyVerseButton
                           verse={{
                             abbrev: book.abbrev,
