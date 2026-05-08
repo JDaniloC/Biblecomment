@@ -8,6 +8,7 @@ function toEntity(doc: IUserDocument): User {
     _id: doc._id?.toString(),
     email: doc.email,
     username: doc.username,
+    displayName: doc.displayName,
     password: doc.password,
     passwordType: doc.passwordType,
     state: doc.state,

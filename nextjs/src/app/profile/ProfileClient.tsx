@@ -30,6 +30,7 @@ interface SessionUser {
 interface UserProfile {
   email: string;
   username: string;
+  displayName?: string;
   belief?: string;
   stateName?: string;
   createdAt?: string;
@@ -384,6 +385,130 @@ function ChangePasswordCard() {
 }
 
 /* ─────────────────── Tutorial reset (config tab) ─────────────────── */
+function IdentityCard({
+  initialDisplayName,
+  initialUsername,
+  onUpdated,
+}: {
+  initialDisplayName: string;
+  initialUsername: string;
+  onUpdated: (next: { displayName?: string; username?: string }) => void;
+}) {
+  const { handleNotification } = useNotification();
+  const [displayName, setDisplayName] = useState(initialDisplayName);
+  const [username, setUsername] = useState(initialUsername);
+  const [savingName, setSavingName] = useState(false);
+  const [savingSlug, setSavingSlug] = useState(false);
+
+  const slugIsValid = /^[a-z0-9_-]{2,40}$/.test(username);
+  const slugChanged = username !== initialUsername;
+  const nameChanged = displayName.trim() !== initialDisplayName.trim();
+  const nameValid = displayName.trim().length >= 1 && displayName.trim().length <= 80;
+
+  async function saveName() {
+    if (!nameChanged || !nameValid) return;
+    setSavingName(true);
+    try {
+      await usersService.updateProfile({ displayName: displayName.trim() });
+      onUpdated({ displayName: displayName.trim() });
+      handleNotification("success", "Nome atualizado.");
+    } catch {
+      handleNotification("error", "Erro ao atualizar nome.");
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  async function saveSlug() {
+    if (!slugChanged || !slugIsValid) return;
+    setSavingSlug(true);
+    try {
+      const result = await usersService.updateUsername(username);
+      onUpdated({ username: result.username });
+      handleNotification("success", "Identificador atualizado.");
+    } catch (err) {
+      const msg = (err as Error)?.message ?? "Erro ao atualizar identificador.";
+      if (msg === "Username already taken") {
+        handleNotification("error", "Esse identificador já está em uso.");
+      } else if (msg === "Invalid username format") {
+        handleNotification("error", "Formato inválido.");
+      } else {
+        handleNotification("error", "Erro ao atualizar identificador.");
+      }
+    } finally {
+      setSavingSlug(false);
+    }
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
+      <div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
+        Identidade
+      </div>
+      <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-5 mt-0">
+        Seu nome aparece nos comentários. O identificador único é usado em URLs
+        e para login — só letras minúsculas, números, hífen ou sublinhado.
+      </p>
+
+      <div className="flex flex-col gap-1.5 mb-4">
+        <label htmlFor="profile-displayname" className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+          Nome
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="profile-displayname"
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            maxLength={80}
+            className="flex-1 h-[38.833px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 text-[13px] text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 outline-none"
+          />
+          <button
+            type="button"
+            onClick={saveName}
+            disabled={!nameChanged || !nameValid || savingName}
+            className="h-[38.833px] px-4 bg-brand text-white rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {savingName ? "…" : "Salvar"}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="profile-username" className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+          Identificador único (@)
+        </label>
+        <div className="flex gap-2">
+          <div className="flex-1 flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <span className="pl-3 pr-1 text-slate-400 dark:text-slate-500 text-[13px]">@</span>
+            <input
+              id="profile-username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              maxLength={40}
+              className="flex-1 h-[38.833px] pr-3 text-[13px] text-slate-800 dark:text-slate-100 bg-transparent outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={saveSlug}
+            disabled={!slugChanged || !slugIsValid || savingSlug}
+            className="h-[38.833px] px-4 bg-brand text-white rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {savingSlug ? "…" : "Salvar"}
+          </button>
+        </div>
+        {slugChanged && !slugIsValid && (
+          <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+            Use 2–40 caracteres: letras minúsculas, números, hífen ou sublinhado.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MyDataCard({ onCommentsImported }: { onCommentsImported: () => void }) {
   const { handleNotification } = useNotification();
   const confirm = useConfirm();
@@ -729,8 +854,8 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
             <div className="w-[68px] h-[68px] rounded-[34px] bg-brand/15 border-[2.667px] border-[rgba(19,125,219,0.19)] flex items-center justify-center mb-[18px]">
               <span className="font-extrabold text-[22px] text-brand leading-none">{initials}</span>
             </div>
-            <div className="font-bold text-base text-slate-800 dark:text-slate-100 leading-6 mb-0.5">{user.name}</div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mb-3">@{user.username}</div>
+            <div className="font-bold text-base text-slate-800 dark:text-slate-100 leading-6 mb-0.5">{profile?.displayName ?? user.name}</div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mb-3">@{profile?.username ?? user.username}</div>
             {profile?.belief && (
               <div className="inline-flex items-center bg-brand-tint rounded-xl px-2.5 py-0.5 mb-2">
                 <span className="font-semibold text-[11px] text-brand leading-[16.5px] whitespace-nowrap">{profile.belief}</span>
@@ -951,6 +1076,27 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
               <h2 className="font-bold text-xl text-slate-800 dark:text-slate-100 m-0">
                 Configurações &amp; Privacidade
               </h2>
+
+              {/* ── Card: Identidade (display name + slug) ── */}
+              {profile && (
+                <IdentityCard
+                  initialDisplayName={profile.displayName ?? user.name ?? user.username}
+                  initialUsername={profile.username}
+                  onUpdated={(next) => {
+                    setProfile((p) => p ? { ...p, ...next } : p);
+                    if (next.username) {
+                      // Force a session refresh so future requests use the new slug.
+                      // signOut+signIn dance is heavy; instead instruct the user to
+                      // refresh — the cascade is server-side, the JWT will catch up
+                      // on next login.
+                      handleNotification(
+                        "info",
+                        "Recarregue a página ou entre novamente para atualizar a sessão.",
+                      );
+                    }
+                  }}
+                />
+              )}
 
               {/* ── Card 1: Informações da Conta ── */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">

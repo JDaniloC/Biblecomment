@@ -3,6 +3,7 @@ import {
   SetModeratorUseCase,
   DeleteUserUseCase,
   MarkTutorialCompletedUseCase,
+  UpdateUsernameUseCase,
   ANONYMIZED_USERNAME,
 } from "./UserUseCases";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
@@ -59,6 +60,7 @@ function noopDiscussionAnswerRepo() {
 function noopNotificationRepo() {
   return {
     deleteForUser: vi.fn().mockResolvedValue(0),
+    renameUsername: vi.fn().mockResolvedValue(0),
   } as unknown as INotificationRepository;
 }
 
@@ -183,5 +185,85 @@ describe("MarkTutorialCompletedUseCase", () => {
 
     await expect(useCase.execute("alice@example.com", "")).rejects.toThrow("Invalid tutorial name");
     expect(markTutorialCompleted).not.toHaveBeenCalled();
+  });
+});
+
+describe("UpdateUsernameUseCase", () => {
+  function setup(opts: {
+    user?: User | null;
+    takenSlug?: string;
+  } = {}) {
+    const findByEmail = vi.fn().mockResolvedValue(opts.user === undefined ? fakeUser() : opts.user);
+    const findByUsername = vi.fn(async (slug: string) =>
+      opts.takenSlug === slug ? fakeUser({ username: slug, _id: "u-other" }) : null,
+    );
+    const update = vi.fn(async (_email: string, data: Partial<User>) =>
+      fakeUser({ username: data.username ?? "alice" }),
+    );
+    const userRepo = { findByEmail, findByUsername, update } as unknown as IUserRepository;
+
+    const commentRename = vi.fn().mockResolvedValue(2);
+    const discussionRename = vi.fn().mockResolvedValue(1);
+    const answerRename = vi.fn().mockResolvedValue(3);
+    const notifRename = vi.fn().mockResolvedValue(4);
+
+    const commentRepo = { anonymizeByUsername: commentRename } as unknown as ICommentRepository;
+    const discussionRepo = { anonymizeByUsername: discussionRename } as unknown as IDiscussionRepository;
+    const answerRepo = { anonymizeByUser: answerRename } as unknown as IDiscussionAnswerRepository;
+    const notifRepo = { renameUsername: notifRename } as unknown as INotificationRepository;
+
+    return {
+      useCase: new UpdateUsernameUseCase(userRepo, commentRepo, discussionRepo, answerRepo, notifRepo),
+      update, commentRename, discussionRename, answerRename, notifRename,
+    };
+  }
+
+  it("renames the user and cascades to comments/discussions/answers/notifications", async () => {
+    const { useCase, update, commentRename, discussionRename, answerRename, notifRename } = setup();
+
+    const result = await useCase.execute("alice@example.com", "alice-2");
+
+    expect(update).toHaveBeenCalledWith("alice@example.com", { username: "alice-2" });
+    expect(commentRename).toHaveBeenCalledWith("alice", "alice-2");
+    expect(discussionRename).toHaveBeenCalledWith("alice", "alice-2");
+    expect(answerRename).toHaveBeenCalledWith("u1", "alice-2");
+    expect(notifRename).toHaveBeenCalledWith("alice", "alice-2");
+    expect(result.username).toBe("alice-2");
+  });
+
+  it("rejects an invalid slug format", async () => {
+    const { useCase, update } = setup();
+
+    await expect(useCase.execute("alice@example.com", "Has Space")).rejects.toThrow(
+      "Invalid username format",
+    );
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("rejects when the new slug is already taken", async () => {
+    const { useCase, update } = setup({ takenSlug: "bob" });
+
+    await expect(useCase.execute("alice@example.com", "bob")).rejects.toThrow(
+      "Username already taken",
+    );
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("is a noop when the slug is unchanged", async () => {
+    const { useCase, update, commentRename } = setup();
+
+    const result = await useCase.execute("alice@example.com", "alice");
+
+    expect(update).not.toHaveBeenCalled();
+    expect(commentRename).not.toHaveBeenCalled();
+    expect(result.username).toBe("alice");
+  });
+
+  it("throws when the user doesn't exist", async () => {
+    const { useCase } = setup({ user: null });
+
+    await expect(useCase.execute("ghost@example.com", "valid")).rejects.toThrow(
+      "User not found",
+    );
   });
 });

@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { usersService } from "@/services/users";
+import { sanitizeUsername, MIN_USERNAME_LEN } from "@/lib/sanitize-username";
 
 export default function RegisterPage() {
   return (
@@ -20,11 +21,14 @@ function RegisterContent() {
   const callbackUrl = searchParams?.get("callbackUrl");
 
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const previewSlug = useMemo(() => sanitizeUsername(displayName), [displayName]);
+  const slugIsValid = previewSlug.length >= MIN_USERNAME_LEN;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,9 +39,14 @@ function RegisterContent() {
       return;
     }
 
+    if (!slugIsValid) {
+      setError("Esse nome não gera um identificador válido (mínimo 2 letras/números).");
+      return;
+    }
+
     setLoading(true);
     try {
-      await usersService.register({ email, username, password, acceptedTerms: true });
+      await usersService.register({ email, displayName, password, acceptedTerms: true });
       const loginUrl = callbackUrl
         ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
         : "/login";
@@ -152,10 +161,10 @@ function RegisterContent() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
-                htmlFor="register-username"
+                htmlFor="register-displayname"
                 className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1.5"
               >
-                Nome de usuário
+                Seu nome
               </label>
               <div className="relative">
                 <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500">
@@ -164,18 +173,20 @@ function RegisterContent() {
                   </svg>
                 </span>
                 <input
-                  id="register-username"
+                  id="register-displayname"
                   type="text"
-                  autoComplete="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                   required
-                  placeholder="seu_nome"
+                  placeholder="Felipe Silva"
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
                 />
               </div>
               <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
-                Aparece publicamente nos seus comentários.
+                {previewSlug
+                  ? <>Aparece nos comentários. Seu identificador único será <code className="font-mono text-stone-600 dark:text-stone-300">@{previewSlug}</code>.</>
+                  : "Aparece nos comentários. Geramos um identificador único a partir desse nome."}
               </p>
             </div>
 

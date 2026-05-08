@@ -39,7 +39,7 @@ function LoginContent() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Email ou senha inválidos.");
+      setError("Credenciais inválidas — verifique email/usuário e senha.");
     } else {
       router.push(callbackUrl);
     }
@@ -143,22 +143,22 @@ function LoginContent() {
                 htmlFor="login-email"
                 className="block text-sm font-medium text-stone-700 dark:text-stone-200 mb-1.5"
               >
-                Email
+                Email ou nome de usuário
               </label>
               <div className="relative">
                 <span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                   </svg>
                 </span>
                 <input
                   id="login-email"
-                  type="email"
-                  autoComplete="email"
+                  type="text"
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="voce@exemplo.com"
+                  placeholder="voce@exemplo.com ou seu_nome"
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
                 />
               </div>

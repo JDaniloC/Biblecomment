@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface IUserDocument extends Document {
   email: string;
   username: string;
+  displayName?: string;
   password: string;
   passwordType: "md5" | "bcrypt";
   state?: string;
@@ -16,6 +17,7 @@ const UserSchema = new Schema<IUserDocument>(
   {
     email:              { type: String, required: true, unique: true, lowercase: true, trim: true },
     username:           { type: String, required: true, trim: true },
+    displayName:        { type: String, trim: true },
     password:           { type: String, required: true },
     passwordType:       { type: String, enum: ["md5", "bcrypt"], default: "md5" },
     state:              { type: String },

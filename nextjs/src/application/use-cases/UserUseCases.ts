@@ -6,6 +6,7 @@ import { IDiscussionRepository } from "@/domain/repositories/IDiscussionReposito
 import { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import { User } from "@/domain/entities/User";
+import { isValidUsername } from "@/lib/sanitize-username";
 
 export const ANONYMIZED_USERNAME = "[usuário removido]";
 
@@ -37,9 +38,67 @@ export class GetUsersPaginatedUseCase {
 export class UpdateUserProfileUseCase {
   constructor(private readonly userRepo: IUserRepository) {}
 
-  async execute(email: string, data: { state?: string; belief?: string }): Promise<User> {
+  async execute(
+    email: string,
+    data: { state?: string; belief?: string; displayName?: string },
+  ): Promise<User> {
+    if (data.displayName !== undefined) {
+      const trimmed = data.displayName.trim();
+      if (trimmed.length < 1 || trimmed.length > 80) {
+        throw new Error("Invalid displayName length");
+      }
+      data = { ...data, displayName: trimmed };
+    }
     const updated = await this.userRepo.update(email, data);
     if (!updated) throw new Error("User not found");
+    return updated;
+  }
+}
+
+/**
+ * Rename a user's slug, cascading the snapshot field across every
+ * collection that stored it: comments, discussions, discussion answers,
+ * and notifications (recipient + actor).
+ *
+ * Validation order is deliberate: format → noop short-circuit → uniqueness
+ * → user fetch → write → cascade. The cascade is fire-and-forget after
+ * the user write commits, so a partial cascade leaves the user pointing
+ * at the new slug while old references slowly converge — re-running the
+ * use case with the same target is idempotent and finishes the work.
+ */
+export class UpdateUsernameUseCase {
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly commentRepo: ICommentRepository,
+    private readonly discussionRepo: IDiscussionRepository,
+    private readonly answerRepo: IDiscussionAnswerRepository,
+    private readonly notificationRepo: INotificationRepository,
+  ) {}
+
+  async execute(currentEmail: string, newUsername: string): Promise<User> {
+    if (!isValidUsername(newUsername)) {
+      throw new Error("Invalid username format");
+    }
+
+    const user = await this.userRepo.findByEmail(currentEmail);
+    if (!user) throw new Error("User not found");
+
+    if (user.username === newUsername) return user;
+
+    const taken = await this.userRepo.findByUsername(newUsername);
+    if (taken) throw new Error("Username already taken");
+
+    const oldUsername = user.username;
+    const updated = await this.userRepo.update(currentEmail, { username: newUsername });
+    if (!updated) throw new Error("Failed to rename");
+
+    await Promise.all([
+      this.commentRepo.anonymizeByUsername(oldUsername, newUsername),
+      this.discussionRepo.anonymizeByUsername(oldUsername, newUsername),
+      this.answerRepo.anonymizeByUser(updated._id ?? "", newUsername),
+      this.notificationRepo.renameUsername(oldUsername, newUsername),
+    ]);
+
     return updated;
   }
 }

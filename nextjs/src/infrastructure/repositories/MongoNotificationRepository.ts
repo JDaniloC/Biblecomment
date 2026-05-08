@@ -84,4 +84,22 @@ export class MongoNotificationRepository implements INotificationRepository {
     );
     return doc !== null;
   }
+
+  async renameUsername(oldUsername: string, newUsername: string): Promise<number> {
+    await connectToDatabase();
+    // Two updateMany — one per field — keeps each query selective on its
+    // own index. A combined $or with mixed $set would touch fields the
+    // user didn't actually change.
+    const [a, b] = await Promise.all([
+      NotificationModel.updateMany(
+        { recipient: oldUsername },
+        { $set: { recipient: newUsername } },
+      ),
+      NotificationModel.updateMany(
+        { actor: oldUsername },
+        { $set: { actor: newUsername } },
+      ),
+    ]);
+    return (a.modifiedCount ?? 0) + (b.modifiedCount ?? 0);
+  }
 }

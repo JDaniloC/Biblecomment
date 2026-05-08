@@ -13,4 +13,10 @@ export interface INotificationRepository {
    * (i.e., they have @-mentioned someone in a comment or answer).
    */
   userHasMentioned(username: string): Promise<boolean>;
+  /**
+   * Cascade rename when the user changes their slug — rewrites the
+   * `recipient` and `actor` fields on every notification matching the
+   * old username. Returns total rows touched.
+   */
+  renameUsername(oldUsername: string, newUsername: string): Promise<number>;
 }

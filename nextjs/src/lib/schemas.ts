@@ -2,7 +2,17 @@ import { z } from "zod";
 
 export const RegisterUserSchema = z.object({
   email: z.string().email(),
-  username: z.string().min(2).max(40),
+  /**
+   * Free-form display name (1-80 chars) — what shows on cards and profile.
+   * Allowed to contain spaces and accents. Backend derives a URL-safe slug
+   * from this when `username` is absent.
+   */
+  displayName: z.string().min(1).max(80),
+  /**
+   * Optional explicit slug. When provided, must already match the canonical
+   * `[a-z0-9_-]{2,40}` form — server does not silently rewrite caller input.
+   */
+  username: z.string().regex(/^[a-z0-9_-]{2,40}$/).optional(),
   password: z.string().min(6).max(200),
   // LGPD: explicit consent to Terms + Privacy Policy is mandatory at signup.
   // Validated at the API boundary; the value is not persisted (the act of
@@ -27,11 +37,20 @@ export const UpdateProfileSchema = z
   .object({
     state: z.string().max(100).optional(),
     belief: z.string().max(100).optional(),
+    /** Free-form name shown publicly. 1–80 chars, may include spaces/accents. */
+    displayName: z.string().min(1).max(80).optional(),
   })
-  .refine((v) => v.state !== undefined || v.belief !== undefined, {
-    message: "state ou belief é obrigatório",
-  });
+  .refine(
+    (v) => v.state !== undefined || v.belief !== undefined || v.displayName !== undefined,
+    { message: "state, belief ou displayName é obrigatório" },
+  );
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+
+export const UpdateUsernameSchema = z.object({
+  username: z.string().regex(/^[a-z0-9_-]{2,40}$/, {
+    message: "Use apenas letras minúsculas, números, hífen ou sublinhado (2-40).",
+  }),
+});
 
 export const DeleteUserSchema = z.object({
   email: z.string().email(),

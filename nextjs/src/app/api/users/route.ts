@@ -68,15 +68,23 @@ export async function POST(req: Request) {
   try {
     const parsed = await parseBody(req, RegisterUserSchema);
     if (!parsed.ok) return parsed.response;
-    const { email, username, password } = parsed.data;
+    const { email, displayName, username, password } = parsed.data;
 
     const repo = new MongoUserRepository();
     const useCase = new RegisterUserUseCase(repo);
-    const user = await useCase.execute(email, username, password);
-    return NextResponse.json({ email: user.email, username: user.username }, { status: 201 });
+    const user = await useCase.execute({ email, displayName, username, password });
+    return NextResponse.json(
+      { email: user.email, username: user.username, displayName: user.displayName },
+      { status: 201 },
+    );
   } catch (err) {
     if (err instanceof Error) {
-      if (err.message === "Email already registered" || err.message === "Username already taken") {
+      if (
+        err.message === "Email already registered" ||
+        err.message === "Username already taken" ||
+        err.message === "Invalid username format" ||
+        err.message === "Could not derive a username from the given name"
+      ) {
         return NextResponse.json({ error: err.message }, { status: 409 });
       }
     }

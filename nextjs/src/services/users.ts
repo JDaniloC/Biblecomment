@@ -3,6 +3,7 @@
 import axios from "axios";
 import {
   updateProfileAction,
+  updateUsernameAction,
   deleteSelfAction,
   changePasswordAction,
   setModeratorAction,
@@ -16,7 +17,10 @@ import { actionError } from "./_action-error";
 
 export interface RegisterInput {
   email: string;
-  username: string;
+  /** Free-form display name shown on cards. */
+  displayName: string;
+  /** Optional canonical slug. When omitted, server derives one from displayName. */
+  username?: string;
   password: string;
   acceptedTerms: true;
 }
@@ -24,6 +28,7 @@ export interface RegisterInput {
 export interface UserProfile {
   email: string;
   username: string;
+  displayName?: string;
   belief?: string;
   stateName?: string;
   createdAt?: string;
@@ -43,12 +48,16 @@ export interface UserListItem {
 export interface ProfileUpdateInput {
   belief?: string;
   state?: string;
+  displayName?: string;
 }
 
 export const usersService = {
   // Register stays on axios — anonymous flow, no session, never a Server Action target.
-  async register(input: RegisterInput): Promise<{ email: string; username: string }> {
-    const res = await axios.post<{ email: string; username: string }>("/api/users", input);
+  async register(input: RegisterInput): Promise<{ email: string; username: string; displayName?: string }> {
+    const res = await axios.post<{ email: string; username: string; displayName?: string }>(
+      "/api/users",
+      input,
+    );
     return res.data;
   },
 
@@ -79,6 +88,12 @@ export const usersService = {
   async updateProfile(updates: ProfileUpdateInput): Promise<void> {
     const result = await updateProfileAction(updates);
     if (!result.ok) actionError(result.error);
+  },
+
+  async updateUsername(newUsername: string): Promise<{ username: string }> {
+    const result = await updateUsernameAction(newUsername);
+    if (!result.ok) actionError(result.error);
+    return result.data;
   },
 
   async deleteSelf(email: string): Promise<void> {

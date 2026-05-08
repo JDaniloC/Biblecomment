@@ -32,6 +32,7 @@ export async function GET() {
     const safeUser = {
       email: userData.email,
       username: userData.username,
+      displayName: userData.displayName ?? userData.username,
       belief: userData.belief ?? "",
       stateName: userData.state ?? "",
       createdAt: (userData as { createdAt?: Date }).createdAt?.toISOString() ?? null,

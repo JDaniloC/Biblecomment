@@ -11,6 +11,7 @@ import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/M
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
   UpdateUserProfileUseCase,
+  UpdateUsernameUseCase,
   DeleteUserUseCase,
   SetModeratorUseCase,
   MarkTutorialCompletedUseCase,
@@ -32,7 +33,7 @@ function appError(err: unknown, fallback: string): ActionResult<never> {
  * Update the current user's profile. Replaces axios.patch(/api/users).
  */
 export async function updateProfileAction(
-  updates: { belief?: string; state?: string },
+  updates: { belief?: string; state?: string; displayName?: string },
 ): Promise<ActionResult<{ updated: true }>> {
   const session = await auth();
   if (!session?.user) return authError();
@@ -44,11 +45,46 @@ export async function updateProfileAction(
     revalidatePath("/profile", "page");
     return { ok: true, data: { updated: true } };
   } catch (err) {
-    if (err instanceof Error && err.message === "User not found") {
-      return { ok: false, error: "NotFound" };
+    if (err instanceof Error) {
+      if (err.message === "User not found") return { ok: false, error: "NotFound" };
+      if (err.message === "Invalid displayName length") return { ok: false, error: err.message };
     }
     logger.error({ err, action: "updateProfileAction" }, "update profile failed");
     return appError(err, "Erro ao atualizar perfil.");
+  }
+}
+
+/**
+ * Rename the current user's slug + cascade across content collections.
+ * Validation surface: format, uniqueness, "no-op when unchanged". The cascade
+ * runs after the user write commits — see UpdateUsernameUseCase for the
+ * idempotency contract.
+ */
+export async function updateUsernameAction(
+  newUsername: string,
+): Promise<ActionResult<{ username: string }>> {
+  const session = await auth();
+  if (!session?.user) return authError();
+
+  try {
+    const useCase = new UpdateUsernameUseCase(
+      new MongoUserRepository(),
+      new MongoCommentRepository(),
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+      new MongoNotificationRepository(),
+    );
+    const updated = await useCase.execute(session.user.email, newUsername);
+    revalidatePath("/profile", "page");
+    return { ok: true, data: { username: updated.username } };
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.message === "Invalid username format") return { ok: false, error: err.message };
+      if (err.message === "Username already taken") return { ok: false, error: err.message };
+      if (err.message === "User not found") return { ok: false, error: "NotFound" };
+    }
+    logger.error({ err, action: "updateUsernameAction" }, "rename failed");
+    return appError(err, "Erro ao atualizar nome de usuário.");
   }
 }
 

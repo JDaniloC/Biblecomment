@@ -14,17 +14,23 @@ export const authConfig: NextAuthConfig = {
   providers: [
     Credentials({
       name: "Credentials",
+      // The field is labeled "Identifier" because the user can supply
+      // either their email or their canonical username slug. Email is
+      // detected by the presence of "@"; anything else is treated as a
+      // username and looked up via findByUsername.
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email ou nome de usuário", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = (credentials.email as string).toLowerCase();
+        const identifier = (credentials.email as string).trim();
         const rawPassword = credentials.password as string;
 
-        const user = await userRepo.findByEmail(email);
+        const user = identifier.includes("@")
+          ? await userRepo.findByEmail(identifier.toLowerCase())
+          : await userRepo.findByUsername(identifier.toLowerCase());
         if (!user) return null;
 
         let valid = false;
@@ -33,7 +39,7 @@ export const authConfig: NextAuthConfig = {
           valid = user.password === md5(rawPassword);
           if (valid) {
             const hashed = await bcrypt.hash(rawPassword, 12);
-            await userRepo.updatePassword(email, hashed, "bcrypt");
+            await userRepo.updatePassword(user.email, hashed, "bcrypt");
           }
         } else {
           valid = await bcrypt.compare(rawPassword, user.password);
@@ -49,7 +55,7 @@ export const authConfig: NextAuthConfig = {
         return {
           id: user._id!,
           email: user.email,
-          name: user.username,
+          name: user.displayName ?? user.username,
           username: user.username,
           moderator: user.moderator ?? false,
           tutorialsCompleted: user.tutorialsCompleted ?? [],

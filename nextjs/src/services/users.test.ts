@@ -36,19 +36,19 @@ describe("usersService", () => {
     vi.clearAllMocks();
   });
 
-  it("register POSTs to /api/users with email/username/password/acceptedTerms", async () => {
+  it("register POSTs to /api/users with email/displayName/password/acceptedTerms", async () => {
     mockedAxios.post.mockResolvedValueOnce({
-      data: { email: "alice@example.com", username: "alice" },
+      data: { email: "alice@example.com", username: "alice", displayName: "Alice" },
     });
     const result = await usersService.register({
       email: "alice@example.com",
-      username: "alice",
+      displayName: "Alice",
       password: "secret-123",
       acceptedTerms: true,
     });
     expect(mockedAxios.post).toHaveBeenCalledWith("/api/users", {
       email: "alice@example.com",
-      username: "alice",
+      displayName: "Alice",
       password: "secret-123",
       acceptedTerms: true,
     });
