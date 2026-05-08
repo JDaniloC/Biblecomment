@@ -8,6 +8,9 @@ export interface ICommentDocument extends Document {
   bookReference: string;
   text: string;
   tags: string[];
+  verified?: boolean;
+  verifiedBy?: string;
+  verifiedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +27,9 @@ const CommentSchema = new Schema<ICommentDocument>(
     bookReference: { type: String, required: true },
     text:          { type: String, required: true },
     tags:          { type: [String], default: [] },
+    verified:      { type: Boolean, default: false },
+    verifiedBy:    { type: String },
+    verifiedAt:    { type: Date },
   },
   { timestamps: true }
 );
@@ -31,6 +37,7 @@ const CommentSchema = new Schema<ICommentDocument>(
 CommentSchema.index({ sourceId: 1 }, { unique: true, sparse: true });
 CommentSchema.index({ verseId: 1, onTitle: 1 });
 CommentSchema.index({ username: 1 });
+CommentSchema.index({ verified: 1 });
 CommentSchema.index({ text: "text" });
 
 export const CommentModel: Model<ICommentDocument> =

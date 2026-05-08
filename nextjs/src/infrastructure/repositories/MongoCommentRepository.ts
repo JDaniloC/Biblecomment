@@ -13,6 +13,9 @@ function toEntity(doc: ICommentDocument): Comment {
     bookReference: doc.bookReference,
     text: doc.text,
     tags: doc.tags,
+    verified: doc.verified ?? false,
+    verifiedBy: doc.verifiedBy,
+    verifiedAt: doc.verifiedAt,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -114,6 +117,37 @@ export class MongoCommentRepository implements ICommentRepository {
       { $set: { username: replacement } },
     );
     return result.modifiedCount ?? 0;
+  }
+
+  async findForModeration(opts: {
+    q?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: Comment[]; total: number }> {
+    await connectToDatabase();
+    const filter: Record<string, unknown> = {};
+    const q = opts.q?.trim();
+    if (q) {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(escaped, "i");
+      filter.$or = [{ text: re }, { username: re }, { bookReference: re }];
+    }
+    const skip = Math.max(0, (opts.page - 1) * opts.pageSize);
+    const [docs, total] = await Promise.all([
+      CommentModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(opts.pageSize),
+      CommentModel.countDocuments(filter),
+    ]);
+    return { items: docs.map(toEntity), total };
+  }
+
+  async setVerified(id: string, verified: boolean, by: string | null): Promise<Comment | null> {
+    await connectToDatabase();
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const update = verified
+      ? { $set: { verified: true, verifiedBy: by ?? "", verifiedAt: new Date() } }
+      : { $set: { verified: false }, $unset: { verifiedBy: "", verifiedAt: "" } };
+    const doc = await CommentModel.findByIdAndUpdate(id, update, { returnDocument: "after" });
+    return doc ? toEntity(doc) : null;
   }
 
   async findDailyFeatured(dayIndex: number): Promise<Comment | null> {

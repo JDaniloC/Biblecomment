@@ -14,4 +14,16 @@ export interface ICommentRepository {
   findAll(): Promise<Comment[]>;
   searchByText(query: string): Promise<Comment[]>;
   anonymizeByUsername(oldUsername: string, replacement: string): Promise<number>;
+  /**
+   * Paginated all-comments query for the moderation panel. Supports an
+   * optional case-insensitive substring filter against `text` and
+   * `username`. Returns a slice + total for pagination UI.
+   */
+  findForModeration(opts: {
+    q?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: Comment[]; total: number }>;
+  /** Set the admin-verified state. `by` is the moderator's username (snapshot). */
+  setVerified(id: string, verified: boolean, by: string | null): Promise<Comment | null>;
 }

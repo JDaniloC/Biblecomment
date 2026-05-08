@@ -32,6 +32,15 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // All-comments browser (ux-review #8)
+  const [allComments, setAllComments] = useState<Comment[]>([]);
+  const [allLoading, setAllLoading] = useState(false);
+  const [allPage, setAllPage] = useState(1);
+  const [allTotal, setAllTotal] = useState(0);
+  const [allPageSize, setAllPageSize] = useState(20);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+
   // Promote/demote form
   const [promoteEmail, setPromoteEmail] = useState("");
   const [promoteSubmitting, setPromoteSubmitting] = useState(false);
@@ -48,9 +57,31 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     }
   }, [handleNotification]);
 
+  const loadAll = useCallback(
+    async (page: number, q: string) => {
+      setAllLoading(true);
+      try {
+        const { items, total, pageSize } = await moderationService.listAllComments(page, q);
+        setAllComments(items);
+        setAllTotal(total);
+        setAllPageSize(pageSize);
+        setAllPage(page);
+      } catch {
+        handleNotification("error", "Erro ao carregar comentários.");
+      } finally {
+        setAllLoading(false);
+      }
+    },
+    [handleNotification],
+  );
+
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    loadAll(1, searchQuery);
+  }, [loadAll, searchQuery]);
 
   async function handleClear(id: string) {
     const ok = await confirm({
@@ -89,6 +120,61 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     } finally {
       setBusyId(null);
     }
+  }
+
+  async function handleToggleVerified(id: string) {
+    setBusyId(id);
+    try {
+      const updated = await moderationService.toggleVerified(id);
+      setAllComments((prev) =>
+        prev.map((c) =>
+          c._id === id
+            ? {
+                ...c,
+                verified: updated.verified,
+                verifiedBy: updated.verifiedBy,
+                verifiedAt: updated.verifiedAt,
+              }
+            : c,
+        ),
+      );
+      handleNotification(
+        "success",
+        updated.verified ? "Comentário verificado." : "Verificação removida.",
+      );
+    } catch {
+      handleNotification("error", "Erro ao atualizar verificação.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleDeleteFromAll(id: string) {
+    const ok = await confirm({
+      title: "Deletar este comentário?",
+      description: "A exclusão é permanente e não pode ser desfeita.",
+      confirmLabel: "Deletar",
+      variant: "danger",
+    });
+    if (!ok) return;
+    setBusyId(id);
+    try {
+      await commentsService.delete(id);
+      setAllComments((prev) => prev.filter((c) => c._id !== id));
+      setAllTotal((t) => Math.max(0, t - 1));
+      // Removing a comment also takes it out of the report queue if it was there.
+      setReports((prev) => prev.filter((c) => c._id !== id));
+      handleNotification("success", "Comentário deletado.");
+    } catch {
+      handleNotification("error", "Erro ao deletar comentário.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function submitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setSearchQuery(searchInput.trim());
   }
 
   async function handlePromote(makeMod: boolean) {
@@ -205,6 +291,158 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </section>
+
+        {/* All comments browser */}
+        <section>
+          <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              Todos os comentários
+              {!allLoading && (
+                <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500">
+                  ({allTotal})
+                </span>
+              )}
+            </h2>
+            <button
+              type="button"
+              onClick={() => loadAll(allPage, searchQuery)}
+              className="text-xs text-brand hover:underline disabled:opacity-50"
+              disabled={allLoading}
+            >
+              {allLoading ? "Atualizando…" : "Atualizar"}
+            </button>
+          </div>
+
+          <form onSubmit={submitSearch} className="mb-4 flex gap-2 flex-wrap">
+            <label htmlFor="mod-search" className="sr-only">Buscar comentários</label>
+            <input
+              id="mod-search"
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Buscar por texto, usuário ou referência…"
+              className="flex-1 min-w-[200px] border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+            <button
+              type="submit"
+              className="text-sm font-semibold px-4 py-2 rounded-md bg-brand text-white hover:opacity-90 transition disabled:opacity-50"
+              disabled={allLoading}
+            >
+              Buscar
+            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearchQuery("");
+                }}
+                className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              >
+                Limpar
+              </button>
+            )}
+          </form>
+
+          {allLoading ? (
+            <div className="text-center text-slate-400 py-10">Carregando…</div>
+          ) : allComments.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              {searchQuery ? "Nenhum comentário encontrado para essa busca." : "Nenhum comentário cadastrado."}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {allComments.map((c) => (
+                <div
+                  key={c._id}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-[18px]"
+                >
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+                      @{c.username}
+                    </span>
+                    {c.bookReference && (
+                      <span className="inline-flex items-center bg-brand-tint rounded px-[7px] h-5 shrink-0">
+                        <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
+                          {c.bookReference}
+                        </span>
+                      </span>
+                    )}
+                    {c.verified && (
+                      <span
+                        className="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full px-2.5 h-5 text-[11px] font-semibold"
+                        title={c.verifiedBy ? `Verificado por @${c.verifiedBy}` : "Verificado"}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Verificado
+                      </span>
+                    )}
+                    {(c.reportCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
+                        {c.reportCount} report{c.reportCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
+                      {dateFormat(c.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-[13px] text-gray-700 dark:text-slate-200 leading-[22.75px] m-0 mb-3 whitespace-pre-wrap">
+                    {c.text}
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleVerified(c._id!)}
+                      disabled={busyId === c._id}
+                      className={
+                        c.verified
+                          ? "text-[12px] px-3 py-1.5 rounded-md border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition disabled:opacity-50"
+                          : "text-[12px] px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-50"
+                      }
+                    >
+                      {c.verified ? "Desverificar" : "Verificar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFromAll(c._id!)}
+                      disabled={busyId === c._id}
+                      className="text-[12px] px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
+                    >
+                      Deletar
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Pagination */}
+              {allTotal > allPageSize && (
+                <div className="flex items-center justify-center gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => loadAll(allPage - 1, searchQuery)}
+                    disabled={allLoading || allPage <= 1}
+                    className="text-xs px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                  >
+                    ← Anterior
+                  </button>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Página {allPage} de {Math.max(1, Math.ceil(allTotal / allPageSize))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => loadAll(allPage + 1, searchQuery)}
+                    disabled={allLoading || allPage * allPageSize >= allTotal}
+                    className="text-xs px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                  >
+                    Próxima →
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </section>

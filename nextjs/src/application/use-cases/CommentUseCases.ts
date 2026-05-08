@@ -215,6 +215,59 @@ export class ListReportedCommentsUseCase {
   }
 }
 
+export interface ListAllCommentsResult {
+  items: Comment[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export class ListAllCommentsForModerationUseCase {
+  constructor(
+    private readonly commentRepo: ICommentRepository,
+    private readonly reportRepo: ICommentReportRepository,
+  ) {}
+
+  /**
+   * Paginated all-comments view for moderators. Each item is enriched with
+   * `reportCount` (best-effort batch lookup) so the panel can show "N reports"
+   * inline without a per-row round-trip.
+   */
+  async execute(
+    page: number,
+    pageSize: number,
+    q?: string,
+  ): Promise<ListAllCommentsResult> {
+    const { items, total } = await this.commentRepo.findForModeration({ page, pageSize, q });
+    if (items.length === 0) return { items, total, page, pageSize };
+
+    const ids = items.map((c) => c._id ?? "").filter(Boolean);
+    const counts = await this.reportRepo.countByComment(ids);
+    const enriched = items.map((c) => ({
+      ...c,
+      reportCount: counts.get(c._id ?? "") ?? 0,
+    }));
+    return { items: enriched, total, page, pageSize };
+  }
+}
+
+export class ToggleCommentVerifiedUseCase {
+  constructor(private readonly commentRepo: ICommentRepository) {}
+
+  async execute(commentId: string, moderatorUsername: string): Promise<Comment> {
+    const comment = await this.commentRepo.findById(commentId);
+    if (!comment) throw new Error("Comment not found");
+    const next = !comment.verified;
+    const updated = await this.commentRepo.setVerified(
+      commentId,
+      next,
+      next ? moderatorUsername : null,
+    );
+    if (!updated) throw new Error("Failed to toggle verified");
+    return updated;
+  }
+}
+
 export class ClearReportsUseCase {
   constructor(private readonly reportRepo: ICommentReportRepository) {}
 

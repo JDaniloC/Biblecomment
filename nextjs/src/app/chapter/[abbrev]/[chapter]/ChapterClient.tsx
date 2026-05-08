@@ -784,8 +784,19 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
                             {meta.label}
                           </span>
                           {/* Username */}
-                          <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto whitespace-nowrap">
+                          <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto whitespace-nowrap inline-flex items-center gap-1">
                             {comment.username}
+                            {comment.verified && (
+                              <span
+                                className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                                title={comment.verifiedBy ? `Verificado por @${comment.verifiedBy}` : "Verificado por moderador"}
+                                aria-label={comment.verifiedBy ? `Verificado por @${comment.verifiedBy}` : "Verificado por moderador"}
+                              >
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </span>
+                            )}
                           </span>
                           {/* Date */}
                           <span className="font-normal text-xs text-slate-400 dark:text-slate-500 ml-3 whitespace-nowrap">

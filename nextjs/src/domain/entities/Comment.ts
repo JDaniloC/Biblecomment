@@ -30,6 +30,15 @@ export interface Comment {
    * by ListReportedCommentsUseCase for the admin moderation queue.
    */
   reporters?: string[];
+  /**
+   * Admin-verified flag. When true, the chapter UI shows a small badge
+   * beside the username. Toggled by moderators in /admin/moderation.
+   */
+  verified?: boolean;
+  /** Username of the moderator who toggled `verified` last. */
+  verifiedBy?: string;
+  /** Timestamp of the last verified-state change. */
+  verifiedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }

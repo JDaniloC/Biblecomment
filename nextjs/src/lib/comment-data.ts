@@ -14,4 +14,8 @@ export interface CommentData {
   likedByMe: boolean;
   verseId?: string;
   onTitle?: boolean;
+  /** Admin-verified flag (Phase 8 / ux-review #8). Optional for back-compat with stale caches. */
+  verified?: boolean;
+  /** Snapshot username of the moderator who verified. */
+  verifiedBy?: string;
 }

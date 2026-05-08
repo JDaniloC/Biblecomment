@@ -40,6 +40,8 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
         createdAt: c.createdAt,
         likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
         likedByMe: stats.likedByViewer.has(c._id.toString()),
+        verified: c.verified ?? false,
+        verifiedBy: c.verifiedBy,
         onTitle: c.onTitle,
       }));
 
@@ -54,6 +56,8 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
         createdAt: c.createdAt,
         likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
         likedByMe: stats.likedByViewer.has(c._id.toString()),
+        verified: c.verified ?? false,
+        verifiedBy: c.verifiedBy,
         verseId: c.verseId.toString(),
         onTitle: c.onTitle,
       }));
