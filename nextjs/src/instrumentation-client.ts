@@ -27,3 +27,8 @@ if (dsn) {
     replaysOnErrorSampleRate: 0,
   });
 }
+
+// Required by Sentry App Router instrumentation to capture client-side
+// navigation transactions. Safe to export even when DSN is unset — Sentry
+// no-ops if init() didn't run.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

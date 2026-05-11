@@ -131,6 +131,7 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
       });
       setCountMap(map);
     } catch {
+      // Comment counts are non-critical UI metadata; failures shouldn't surface.
     }
   }, [book.abbrev, chapter]);
 

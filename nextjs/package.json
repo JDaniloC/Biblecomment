@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 3001",
     "dev:mongo": "node scripts/dev-with-mongo.js",
     "build": "next build",
     "analyze": "cross-env ANALYZE=true next build",
@@ -63,6 +63,8 @@
     "@types/react-dom": "^19.2.3",
     "cross-env": "^10.1.0",
     "cypress": "^15.14.1",
+    "eslint": "^10.3.0",
+    "eslint-config-next": "^16.2.6",
     "mongodb-memory-server": "^11.0.1",
     "start-server-and-test": "^3.0.2",
     "typescript": "^6.0.2",
