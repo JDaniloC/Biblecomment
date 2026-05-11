@@ -24,7 +24,6 @@ const TUTORIAL_NAME = "chapter-v1";
 interface FoundUser {
   exists: boolean;
   passwordHashLength: number;
-  passwordType: string | null;
   username: string | null;
   tutorialsCompleted: string[];
 }

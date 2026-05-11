@@ -86,7 +86,6 @@ async function seed(uri) {
       email: u.email.toLowerCase().trim(),
       username: u.username,
       password: await bcrypt.hash(u.password, 12),
-      passwordType: "bcrypt",
       state: "",
       belief: "",
       moderator: u.moderator,

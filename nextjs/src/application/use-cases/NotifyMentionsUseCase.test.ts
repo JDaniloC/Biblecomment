@@ -10,7 +10,6 @@ function fakeUser(username: string): User {
     email: `${username}@example.com`,
     username,
     password: "x",
-    passwordType: "bcrypt",
     moderator: false,
   };
 }

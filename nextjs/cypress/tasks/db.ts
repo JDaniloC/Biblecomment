@@ -89,7 +89,6 @@ export interface SeedPayload {
 export async function findUserByEmail(email: string): Promise<{
   exists: boolean;
   passwordHashLength: number;
-  passwordType: string | null;
   username: string | null;
   tutorialsCompleted: string[];
 }> {
@@ -103,7 +102,6 @@ export async function findUserByEmail(email: string): Promise<{
     return {
       exists: false,
       passwordHashLength: 0,
-      passwordType: null,
       username: null,
       tutorialsCompleted: [],
     };
@@ -111,7 +109,6 @@ export async function findUserByEmail(email: string): Promise<{
   return {
     exists: true,
     passwordHashLength: typeof doc.password === "string" ? doc.password.length : 0,
-    passwordType: typeof doc.passwordType === "string" ? doc.passwordType : null,
     username: typeof doc.username === "string" ? doc.username : null,
     tutorialsCompleted: Array.isArray(doc.tutorialsCompleted)
       ? (doc.tutorialsCompleted as string[])
@@ -281,7 +278,6 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
         email: u.email.toLowerCase().trim(),
         username: u.username,
         password: await bcrypt.hash(u.password, 12),
-        passwordType: "bcrypt",
         state: u.state ?? "",
         belief: u.belief ?? "",
         moderator: u.moderator ?? false,

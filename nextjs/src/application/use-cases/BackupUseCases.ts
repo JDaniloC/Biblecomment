@@ -5,7 +5,7 @@ import { User } from "@/domain/entities/User";
 import { Comment } from "@/domain/entities/Comment";
 import { Discussion } from "@/domain/entities/Discussion";
 
-export type BackupUser = Omit<User, "password" | "passwordType">;
+export type BackupUser = Omit<User, "password">;
 export type ImportableComment = Omit<Comment, "_id" | "createdAt" | "updatedAt">;
 // Answers (Phase 9.3) live in DiscussionAnswer collection — not imported through this path.
 export type ImportableDiscussion = Omit<
@@ -18,7 +18,7 @@ export class BackupUsersUseCase {
 
   async execute(): Promise<BackupUser[]> {
     const users = await this.userRepo.findAll();
-    return users.map(({ password: _p, passwordType: _t, ...rest }) => rest);
+    return users.map(({ password: _p, ...rest }) => rest);
   }
 }
 

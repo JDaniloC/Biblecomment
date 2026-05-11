@@ -2,14 +2,7 @@
  * Initial indexes migration.
  *
  * MongoDB stores documents in camelCase (JavaScript convention).
- * The SQLite→MongoDB migration script maps each snake_case column to camelCase:
- *   SQLite: verse_id   → MongoDB: verseId    (comments.verseId)
- *   SQLite: book_abbrev → MongoDB: bookAbbrev (discussions.bookAbbrev)
- *   SQLite: on_title   → MongoDB: onTitle    (comments.onTitle)
- *   SQLite: book_reference → MongoDB: bookReference (comments.bookReference)
- *   SQLite: verse_number → MongoDB: verseNumber (verses.verseNumber)
- *
- * Indexes target the actual stored field names (camelCase).
+ * Indexes target the stored field names.
  */
 module.exports = {
   async up(db) {
@@ -29,10 +22,10 @@ module.exports = {
       { unique: true, name: "verses_abbrev_chapter_verseNumber" }
     );
 
-    // comments — verseId is the migrated SQLite verse_id FK
+    // comments
     await db.collection("comments").createIndex(
       { verseId: 1 },
-      { name: "comments_verseId" }          // maps from SQLite: verse_id
+      { name: "comments_verseId" }
     );
     await db.collection("comments").createIndex(
       { username: 1 },
@@ -40,17 +33,17 @@ module.exports = {
     );
     await db.collection("comments").createIndex(
       { bookReference: 1 },
-      { name: "comments_bookReference" }    // maps from SQLite: book_reference
+      { name: "comments_bookReference" }
     );
 
-    // discussions — bookAbbrev is the migrated SQLite book_abbrev column
+    // discussions
     await db.collection("discussions").createIndex(
       { bookAbbrev: 1 },
-      { name: "discussions_bookAbbrev" }    // maps from SQLite: book_abbrev
+      { name: "discussions_bookAbbrev" }
     );
     await db.collection("discussions").createIndex(
       { commentId: 1 },
-      { name: "discussions_commentId" }     // maps from SQLite: comment_id FK
+      { name: "discussions_commentId" }
     );
 
     // users

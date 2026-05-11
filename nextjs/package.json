@@ -18,8 +18,7 @@
     "a11y": "node scripts/lighthouse-a11y.js",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
-    "migrate:status": "migrate-mongo status",
-    "migrate:data": "node scripts/migrate-sqlite-to-mongo.js"
+    "migrate:status": "migrate-mongo status"
   },
   "keywords": [],
   "author": "",
@@ -36,7 +35,6 @@
     "axios": "^1.13.6",
     "balloon-css": "^1.2.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.8.0",
     "driver.js": "^1.4.0",
     "migrate-mongo": "^14.0.7",
     "mongoose": "^9.3.3",

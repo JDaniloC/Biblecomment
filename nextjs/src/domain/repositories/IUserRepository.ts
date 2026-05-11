@@ -7,12 +7,12 @@ export interface IUserRepository {
   findAll(): Promise<User[]>;
   findAllPaginated(page: number, pageSize: number): Promise<User[]>;
   create(user: Omit<User, "_id">): Promise<User>;
-  updatePassword(email: string, password: string, passwordType: "bcrypt"): Promise<void>;
+  updatePassword(email: string, password: string): Promise<void>;
   /**
    * Update password by user id. Used by the password-recovery flow where
    * the lookup happens via reset-token (not email) so we already have the id.
    */
-  updatePasswordById(userId: string, password: string, passwordType: "bcrypt"): Promise<void>;
+  updatePasswordById(userId: string, password: string): Promise<void>;
   update(email: string, data: Partial<Omit<User, "_id" | "email">>): Promise<User | null>;
   /**
    * Idempotently mark a tutorial as completed for the user. Uses $addToSet

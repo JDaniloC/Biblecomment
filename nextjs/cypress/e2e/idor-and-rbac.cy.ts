@@ -6,15 +6,15 @@
  *     (data exposure / enumeration). It now requires a session, and only
  *     moderators see the email field.
  *
- *  2. GET /api/backup/users used to ship password and passwordType for
- *     every user (credential disclosure to anyone with a moderator session).
- *     It now strips both fields via BackupUsersUseCase.
+ *  2. GET /api/backup/users used to ship the password hash for every
+ *     user (credential disclosure to anyone with a moderator session).
+ *     It now strips the password via BackupUsersUseCase.
  *
  *  3. POST /api/backup/users used to forward arbitrary fields straight
- *     into UserModel.create — a moderator could plant a backdoor row with
- *     moderator: true and passwordType: "md5". It now whitelists fields
- *     via Zod, hardcodes moderator: false, and replaces the password
- *     with a placeholder bcrypt hash.
+ *     into UserModel.create — a moderator could plant a backdoor row
+ *     with moderator: true. It now whitelists fields via Zod, hardcodes
+ *     moderator: false, and replaces the password with a placeholder
+ *     bcrypt hash.
  *
  * Each `it` here pins one of those behaviors. If a future refactor
  * regresses any of them, this suite fails before the PR merges.
@@ -82,7 +82,7 @@ describe("Security regressions: IDOR & RBAC", () => {
       });
     });
 
-    it("strips password and passwordType from the moderator-visible payload", () => {
+    it("strips password from the moderator-visible payload", () => {
       cy.loginAs(users.mod.email, users.mod.password);
       cy.request("GET", "/api/backup/users").then((res) => {
         expect(res.status).to.eq(200);
@@ -90,14 +90,13 @@ describe("Security regressions: IDOR & RBAC", () => {
         expect(body.length).to.be.greaterThan(0);
         body.forEach((u) => {
           expect(u, "backup must never include password").to.not.have.property("password");
-          expect(u, "backup must never include passwordType").to.not.have.property("passwordType");
         });
       });
     });
   });
 
   describe("POST /api/backup/users — must reject mass-assignment", () => {
-    it("ignores moderator/password/passwordType fields in the request body", () => {
+    it("ignores moderator/password fields in the request body", () => {
       cy.loginAs(users.mod.email, users.mod.password);
       const malicious = {
         users: [
@@ -106,10 +105,8 @@ describe("Security regressions: IDOR & RBAC", () => {
             username: "backdoor",
             state: "X",
             belief: "Y",
-            // Attacker-controlled fields that the old code accepted:
+            // Attacker-controlled field that the old code accepted:
             moderator: true,
-            password: "5f4dcc3b5aa765d61d8327deb882cf99", // md5("password")
-            passwordType: "md5",
           },
         ],
       };
@@ -137,11 +134,11 @@ describe("Security regressions: IDOR & RBAC", () => {
         );
       });
 
-      // The acid test: try to log in with the planted MD5 password.
-      // Auth must reject it because the route replaced the hash with a
-      // random bcrypt placeholder. We can't use cy.loginAs here — its
-      // pre-flight asserts the user logs in successfully, which is the
-      // opposite of what we want.
+      // The acid test: try to log in with any guessed password. Auth must
+      // reject it because the route always replaces the hash with a random
+      // bcrypt placeholder. We can't use cy.loginAs here — its pre-flight
+      // asserts the user logs in successfully, which is the opposite of
+      // what we want.
       cy.clearCookies(); // drop the moderator session before the attempt
 
       cy.request("/api/auth/csrf").then((csrfRes) => {
@@ -172,7 +169,7 @@ describe("Security regressions: IDOR & RBAC", () => {
           ) {
             expect(
               loginRes.body.url,
-              "planted MD5 password must be rejected",
+              "guessed password against placeholder hash must be rejected",
             ).to.match(/\/api\/auth\/error/);
           }
         });

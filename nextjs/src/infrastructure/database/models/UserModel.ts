@@ -5,7 +5,6 @@ export interface IUserDocument extends Document {
   username: string;
   displayName?: string;
   password: string;
-  passwordType: "md5" | "bcrypt";
   state?: string;
   belief?: string;
   moderator?: boolean;
@@ -19,7 +18,6 @@ const UserSchema = new Schema<IUserDocument>(
     username:           { type: String, required: true, trim: true },
     displayName:        { type: String, trim: true },
     password:           { type: String, required: true },
-    passwordType:       { type: String, enum: ["md5", "bcrypt"], default: "md5" },
     state:              { type: String },
     belief:             { type: String },
     moderator:          { type: Boolean, default: false },

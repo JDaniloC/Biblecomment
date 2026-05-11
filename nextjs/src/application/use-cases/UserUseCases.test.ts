@@ -21,7 +21,6 @@ function fakeUser(overrides: Partial<User> = {}): User {
     email: "alice@example.com",
     username: "alice",
     password: "$2b$12$hash",
-    passwordType: "bcrypt",
     moderator: false,
     ...overrides,
   };

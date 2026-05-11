@@ -66,8 +66,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Senha</strong>, armazenada como <em>hash</em> bcrypt
-            (nunca em texto puro). Cadastros legados criados sob MD5 são
-            convertidos para bcrypt no primeiro login.
+            (nunca em texto puro).
           </li>
           <li>
             <strong>Crença e estado</strong> (opcionais), preenchidos no perfil.

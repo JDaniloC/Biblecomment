@@ -88,7 +88,7 @@ export class CompletePasswordResetUseCase {
     }
 
     const hashed = await bcrypt.hash(newPassword, 12);
-    await this.userRepo.updatePasswordById(tk.userId, hashed, "bcrypt");
+    await this.userRepo.updatePasswordById(tk.userId, hashed);
     await this.tokenRepo.deleteById(tk._id);
   }
 }

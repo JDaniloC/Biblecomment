@@ -2,8 +2,8 @@
  * POST /api/users/me/password — change/rotate password.
  *
  * Verifies the same matrix the unit tests cover (auth gate, current-password
- * verification for both bcrypt and MD5, validation, post-change login),
- * but end-to-end through HTTP + Mongo + NextAuth handshake.
+ * verification, validation, post-change login), but end-to-end through
+ * HTTP + Mongo + NextAuth handshake.
  */
 
 import users from "../fixtures/users.json";

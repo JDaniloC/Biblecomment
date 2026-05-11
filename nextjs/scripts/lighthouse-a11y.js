@@ -149,7 +149,6 @@ async function seedDatabase(uri) {
       email: SEED_USER.email.toLowerCase(),
       username: SEED_USER.username,
       password: passwordHash,
-      passwordType: "bcrypt",
       state: "",
       belief: "",
       moderator: false,

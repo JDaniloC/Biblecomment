@@ -5,7 +5,7 @@
 > A web site to read and share comments about Bible verses.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/-Next.js%2014-black?style=flat&logo=next.js"/>
+  <img src="https://img.shields.io/badge/-Next.js%2015-black?style=flat&logo=next.js"/>
   <img src="https://img.shields.io/badge/-MongoDB-black?style=flat&logo=mongodb"/>
   <img src="https://img.shields.io/badge/-NextAuth%20v5-black?style=flat&logo=auth0"/>
   <img src="https://img.shields.io/badge/-Tailwind%20v4-black?style=flat&logo=tailwindcss"/>
@@ -26,10 +26,9 @@ application under [`nextjs/`](./nextjs).
 
 ## Stack
 
-- **Next.js 14** — App Router, Server Components, Server Actions, Route Handlers
+- **Next.js 15** — App Router, Server Components, Server Actions, Route Handlers
 - **MongoDB** via Mongoose — persistence layer
-- **NextAuth.js v5** — credentials auth, MD5 → bcrypt upgrade on first
-  login from legacy data
+- **NextAuth.js v5** — credentials auth with bcrypt password hashing
 - **Tailwind v4** — `@theme` tokens in CSS, no `tailwind.config.ts` colors
 - **next-themes** — dark mode (`attribute="class"`, system-aware)
 - **pino** — structured server logs (`logger.error` wired into all `5xx` paths)
@@ -148,12 +147,8 @@ npm run analyze          # writes HTML report under .next/analyze/
 The original architecture (a Python web scraper, a CRA + Material UI
 React frontend in `frontend/`, an Express + SQLite backend in
 `backend/`) was migrated fully to Next.js + MongoDB. The legacy
-directories were removed once feature parity hit 100%. The SQLite
-snapshot used to seed the new database is preserved at
-[`nextjs/scripts/legacy-data/db.sqlite`](./nextjs/scripts/legacy-data)
-and the migration script lives at
-[`nextjs/scripts/migrate-sqlite-to-mongo.js`](./nextjs/scripts/migrate-sqlite-to-mongo.js).
-The Python scraper that originally populated the SQLite remains in
+directories were removed once feature parity hit 100%. The Python
+scraper that originally populated the verse corpus remains in
 [`scrapy/`](./scrapy).
 
 ---

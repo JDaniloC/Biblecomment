@@ -9,7 +9,6 @@ function fakeUser(overrides: Partial<User> = {}): User {
     email: "x@y.z",
     username: "user",
     password: "hashed",
-    passwordType: "bcrypt",
     ...overrides,
   };
 }

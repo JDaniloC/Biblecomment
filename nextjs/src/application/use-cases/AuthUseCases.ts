@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { User } from "@/domain/entities/User";
 import {
@@ -7,10 +6,6 @@ import {
   isValidUsername,
   MIN_USERNAME_LEN,
 } from "@/lib/sanitize-username";
-
-function md5(str: string): string {
-  return crypto.createHash("md5").update(str).digest("hex");
-}
 
 /**
  * Try `base`, `base-2`, `base-3`, ... up to 50 attempts. Realistically
@@ -92,7 +87,6 @@ export class RegisterUserUseCase {
       username: finalUsername,
       displayName: displayName.trim(),
       password: hashedPassword,
-      passwordType: "bcrypt",
       moderator: false,
     });
   }
@@ -130,19 +124,10 @@ export class ChangePasswordUseCase {
     const user = await this.userRepo.findByEmail(email);
     if (!user) throw new Error("User not found");
 
-    // Match the verification flow used by the NextAuth Credentials
-    // provider so legacy MD5 accounts can change their password without
-    // logging in twice.
-    let valid = false;
-    if (user.passwordType === "md5") {
-      valid = user.password === md5(currentPassword);
-    } else {
-      valid = await bcrypt.compare(currentPassword, user.password);
-    }
+    const valid = await bcrypt.compare(currentPassword, user.password);
     if (!valid) throw new Error("Invalid current password");
 
     const hashed = await bcrypt.hash(newPassword, 12);
-    // Always promotes legacy MD5 users to bcrypt at this point.
-    await this.userRepo.updatePassword(email, hashed, "bcrypt");
+    await this.userRepo.updatePassword(email, hashed);
   }
 }

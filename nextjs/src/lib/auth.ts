@@ -1,14 +1,9 @@
 import NextAuth, { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 
 const userRepo = new MongoUserRepository();
-
-function md5(str: string): string {
-  return crypto.createHash("md5").update(str).digest("hex");
-}
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -33,23 +28,7 @@ export const authConfig: NextAuthConfig = {
           : await userRepo.findByUsername(identifier.toLowerCase());
         if (!user) return null;
 
-        let valid = false;
-
-        if (user.passwordType === "md5") {
-          valid = user.password === md5(rawPassword);
-          if (valid) {
-            const hashed = await bcrypt.hash(rawPassword, 12);
-            await userRepo.updatePassword(user.email, hashed, "bcrypt");
-          }
-        } else {
-          valid = await bcrypt.compare(rawPassword, user.password);
-        }
-
-        // The JWT only carries id, email, username, moderator (see return below).
-        // It does not include passwordType / password, so the MD5 -> bcrypt upgrade
-        // above does not desynchronize the session. The next login (and all
-        // subsequent ones) will hit the bcrypt branch.
-
+        const valid = await bcrypt.compare(rawPassword, user.password);
         if (!valid) return null;
 
         return {

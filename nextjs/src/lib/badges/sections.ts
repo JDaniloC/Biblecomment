@@ -1,9 +1,7 @@
 /**
  * Literary-section mapping for `section-*` badges.
  *
- * Source: scripts/migrate-sqlite-to-mongo.js BOOK_META — the canonical mapping
- * from book abbrev → group used to seed the `Book.group` field. The badge
- * sections collapse Mongo `group` values into the 6 buckets we expose to users.
+ * Collapses Mongo `Book.group` values into the 6 buckets we expose to users.
  *
  * Apocalipse (ap, group="Apocalipse") is intentionally NOT part of any section
  * — it stays as a single-book island. Users still need it for `reader-platinum`

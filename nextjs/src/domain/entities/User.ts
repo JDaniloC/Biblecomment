@@ -15,7 +15,6 @@ export interface User {
    */
   displayName?: string;
   password: string;
-  passwordType: "md5" | "bcrypt";
   state?: string;
   belief?: string;
   moderator?: boolean;

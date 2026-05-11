@@ -10,7 +10,6 @@ function toEntity(doc: IUserDocument): User {
     username: doc.username,
     displayName: doc.displayName,
     password: doc.password,
-    passwordType: doc.passwordType,
     state: doc.state,
     belief: doc.belief,
     moderator: doc.moderator,
@@ -63,14 +62,14 @@ export class MongoUserRepository implements IUserRepository {
     return toEntity(doc);
   }
 
-  async updatePassword(email: string, password: string, passwordType: "bcrypt"): Promise<void> {
+  async updatePassword(email: string, password: string): Promise<void> {
     await connectToDatabase();
-    await UserModel.updateOne({ email: email.toLowerCase() }, { password, passwordType });
+    await UserModel.updateOne({ email: email.toLowerCase() }, { password });
   }
 
-  async updatePasswordById(userId: string, password: string, passwordType: "bcrypt"): Promise<void> {
+  async updatePasswordById(userId: string, password: string): Promise<void> {
     await connectToDatabase();
-    await UserModel.updateOne({ _id: userId }, { password, passwordType });
+    await UserModel.updateOne({ _id: userId }, { password });
   }
 
   async update(email: string, data: Partial<Omit<User, "_id" | "email">>): Promise<User | null> {

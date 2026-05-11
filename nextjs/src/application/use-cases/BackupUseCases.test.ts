@@ -15,7 +15,6 @@ function fakeUser(overrides: Partial<User> = {}): User {
     email: "alice@example.com",
     username: "alice",
     password: "$2b$12$abcdefghijklmnopqrstuv",
-    passwordType: "bcrypt",
     state: "SP",
     belief: "catholic",
     moderator: false,
@@ -41,10 +40,10 @@ function repoReturning(users: User[]): IUserRepository {
 }
 
 describe("BackupUsersUseCase", () => {
-  it("strips password and passwordType from every user", async () => {
+  it("strips password from every user", async () => {
     const users = [
-      fakeUser({ username: "alice", passwordType: "bcrypt" }),
-      fakeUser({ username: "bob", passwordType: "md5", password: "5f4dcc3b5aa765d61d8327deb882cf99" }),
+      fakeUser({ username: "alice" }),
+      fakeUser({ username: "bob", password: "$2b$12$zzzz" }),
     ];
     const useCase = new BackupUsersUseCase(repoReturning(users));
 
@@ -53,7 +52,6 @@ describe("BackupUsersUseCase", () => {
     expect(result).toHaveLength(2);
     for (const u of result) {
       expect(u).not.toHaveProperty("password");
-      expect(u).not.toHaveProperty("passwordType");
     }
     expect(result[0].username).toBe("alice");
     expect(result[1].username).toBe("bob");

@@ -47,7 +47,6 @@ export async function POST(req: Request) {
         state: raw.state,
         belief: raw.belief,
         password: placeholder,
-        passwordType: "bcrypt",
         moderator: false,
       });
       imported += 1;

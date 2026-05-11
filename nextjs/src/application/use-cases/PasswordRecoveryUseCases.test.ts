@@ -18,7 +18,6 @@ function fakeUser(overrides: Partial<User> = {}): User {
     email: "alice@example.com",
     username: "alice",
     password: "$2b$12$hash",
-    passwordType: "bcrypt",
     moderator: false,
     ...overrides,
   };
@@ -166,9 +165,8 @@ describe("CompletePasswordResetUseCase", () => {
 
     expect(tokenRepo.findActiveByHash).toHaveBeenCalledWith(sha256(raw));
     expect(userRepo.updatePasswordById).toHaveBeenCalledOnce();
-    const [userId, hash, type] = (userRepo.updatePasswordById as ReturnType<typeof vi.fn>).mock.calls[0];
+    const [userId, hash] = (userRepo.updatePasswordById as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(userId).toBe("u1");
-    expect(type).toBe("bcrypt");
     expect(await bcrypt.compare("new-secret-123", hash)).toBe(true);
     expect(tokenRepo.deleteById).toHaveBeenCalledWith("t1");
   });
