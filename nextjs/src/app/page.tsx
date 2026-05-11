@@ -157,7 +157,7 @@ export default async function RootPage() {
         {/* Versículo do Dia */}
         {verse && (
           <section className="px-4 pb-12">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
                 <span className="text-xs font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
@@ -320,45 +320,6 @@ export default async function RootPage() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Conta */}
-        <section id="conta" className="px-4 pb-12 md:pb-16 scroll-mt-16">
-          <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-6 md:p-8">
-            <h2 className="font-lora text-2xl md:text-3xl font-bold text-stone-800 dark:text-stone-100 mb-5">
-              Por que preciso me cadastrar?
-            </h2>
-            <div className="space-y-4 text-stone-600 dark:text-stone-300 leading-relaxed">
-              <p>
-                Para identificação na criação dos comentários e tópicos &mdash; mas
-                <strong> todo o conteúdo é visível</strong> mesmo sem conta. Você só
-                precisa se cadastrar para participar ativamente.
-              </p>
-              <p>
-                Você não receberá <strong>e-mails nem notificações externas</strong>:
-                o e-mail serve apenas como forma de identificação ao entrar na conta.
-                Você pode <strong>deletar sua conta</strong> a qualquer momento, assim
-                como pode deletar quaisquer comentários que tenha feito.
-              </p>
-            </div>
-
-            {!isLoggedIn && (
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/register"
-                  className="flex-1 text-center bg-amber-700 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-amber-800 transition"
-                >
-                  Criar conta gratuita
-                </Link>
-                <Link
-                  href="/login"
-                  className="flex-1 text-center bg-stone-100 dark:bg-slate-800 text-stone-800 dark:text-stone-100 px-5 py-2.5 rounded-lg font-medium hover:bg-stone-200 dark:hover:bg-slate-700 transition"
-                >
-                  Já tenho conta
-                </Link>
-              </div>
-            )}
           </div>
         </section>
 
