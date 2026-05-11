@@ -3,6 +3,12 @@ import { Comment } from "../entities/Comment";
 export interface ICommentRepository {
   findByVerseId(verseId: string): Promise<Comment[]>;
   findByUsername(username: string): Promise<Comment[]>;
+  /**
+   * DB-paginated variant of `findByUsername`. Used by the profile comments
+   * tab so we don't pull the user's entire history into memory just to slice.
+   * Page is 1-indexed; pageSize is clamped by the caller.
+   */
+  findByUsernamePaginated(username: string, page: number, pageSize: number): Promise<Comment[]>;
   findById(id: string): Promise<Comment | null>;
   findAllPaginated(page: number, pageSize: number): Promise<Comment[]>;
   /** Hydrate Comment docs by id. Order is not guaranteed — caller re-sorts. */
@@ -33,4 +39,10 @@ export interface ICommentRepository {
   }): Promise<{ items: Comment[]; nextCursor: { createdAt: Date; id: string } | null }>;
   /** Set the admin-verified state. `by` is the moderator's username (snapshot). */
   setVerified(id: string, verified: boolean, by: string | null): Promise<Comment | null>;
+  /**
+   * Aggregate counts for a chapter in a single round-trip. Used by the server
+   * component that renders ChapterClient so the verse-comment badges and
+   * title-comment counter paint on first byte instead of after a client fetch.
+   */
+  countsForChapter(verseIds: string[]): Promise<{ countMap: Record<string, number>; titleCount: number }>;
 }

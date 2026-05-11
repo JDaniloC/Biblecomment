@@ -1,16 +1,48 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
+import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { GetAllBooksUseCase } from "@/application/use-cases/BookUseCases";
+import { GetRecentFeedUseCase } from "@/application/use-cases/FeedUseCases";
 import HomeClient from "./HomeClient";
+
+const INITIAL_FEED_LIMIT = 10;
 
 export default async function HomePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const repo = new MongoBookRepository();
-  const useCase = new GetAllBooksUseCase(repo);
-  const books = await useCase.execute();
+  const booksUseCase = new GetAllBooksUseCase(new MongoBookRepository());
+  const recentUseCase = new GetRecentFeedUseCase(
+    new MongoCommentRepository(),
+    new MongoCommentLikeRepository(),
+    new MongoVerseRepository(),
+  );
 
-  return <HomeClient books={books} user={session.user} />;
+  // Books are cached via unstable_cache so the parallel fan-out is cheap on
+  // warm renders; the recent feed query is what we actually save a hop on by
+  // running it here instead of from a client-side useEffect after hydration.
+  const [books, recent] = await Promise.all([
+    booksUseCase.execute(),
+    recentUseCase.execute({ cursor: null, limit: INITIAL_FEED_LIMIT }),
+  ]);
+
+  // Use-case returns Date instances; the client component types cursors as
+  // ISO strings, so normalize here at the wire boundary.
+  const initialRecent = {
+    items: recent.items,
+    nextCursor: recent.nextCursor
+      ? { createdAt: recent.nextCursor.createdAt.toISOString(), id: recent.nextCursor.id }
+      : null,
+  };
+
+  return (
+    <HomeClient
+      books={books}
+      user={session.user}
+      initialRecent={initialRecent}
+    />
+  );
 }

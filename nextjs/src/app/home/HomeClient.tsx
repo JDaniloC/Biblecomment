@@ -14,6 +14,13 @@ import {
 interface Props {
   books: Book[];
   user: { name: string; email: string; username: string; moderator: boolean };
+  /**
+   * Server-rendered first page of the "recent" feed. When provided, the
+   * default tab paints with content on first byte and skips the mount-time
+   * axios fetch. Other tabs (popular, discussions) stay lazy because users
+   * typically don't visit them on every page load.
+   */
+  initialRecent?: { items: FeedComment[]; nextCursor: FeedCursor | null };
 }
 
 const testamentLabels: Record<string, string> = {
@@ -121,12 +128,16 @@ function DiscussionCard({ d }: { d: DiscussionFeedItem }) {
   );
 }
 
-function FeedSection() {
+function FeedSection({
+  initialRecent,
+}: {
+  initialRecent?: { items: FeedComment[]; nextCursor: FeedCursor | null };
+}) {
   const [tab, setTab] = useState<Tab>("recent");
 
-  const [recent, setRecent] = useState<FeedComment[]>([]);
-  const [recentCursor, setRecentCursor] = useState<FeedCursor | null>(null);
-  const [recentLoaded, setRecentLoaded] = useState(false);
+  const [recent, setRecent] = useState<FeedComment[]>(initialRecent?.items ?? []);
+  const [recentCursor, setRecentCursor] = useState<FeedCursor | null>(initialRecent?.nextCursor ?? null);
+  const [recentLoaded, setRecentLoaded] = useState(!!initialRecent);
 
   const [popular, setPopular] = useState<FeedComment[]>([]);
   const [popularLoaded, setPopularLoaded] = useState(false);
@@ -291,7 +302,7 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
-export default function HomeClient({ books, user }: Props) {
+export default function HomeClient({ books, user, initialRecent }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "VT" | "NT">("all");
 
@@ -314,7 +325,7 @@ export default function HomeClient({ books, user }: Props) {
       <AppHeader user={user} />
 
       <main id="main-content" className="max-w-6xl mx-auto px-4 py-6">
-        <FeedSection />
+        <FeedSection initialRecent={initialRecent} />
 
         <section>
           <div className="flex items-baseline gap-3 mb-4">

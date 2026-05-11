@@ -12,9 +12,18 @@ export class GetDiscussionsUseCase {
   /**
    * Discussions for a book, with `answersCount` populated when the answer
    * repo is wired. List views render the count without inline answers.
+   *
+   * Pass `{ page, pageSize }` to push pagination down to the DB; without it,
+   * every thread for the book is loaded (legacy behavior, kept for the
+   * admin/export paths that need the full set).
    */
-  async execute(bookAbbrev: string): Promise<Discussion[]> {
-    const discussions = await this.discussionRepo.findByBookAbbrev(bookAbbrev);
+  async execute(
+    bookAbbrev: string,
+    pagination?: { page: number; pageSize: number },
+  ): Promise<Discussion[]> {
+    const discussions = pagination
+      ? await this.discussionRepo.findByBookAbbrevPaginated(bookAbbrev, pagination.page, pagination.pageSize)
+      : await this.discussionRepo.findByBookAbbrev(bookAbbrev);
     if (!this.answerRepo || discussions.length === 0) return discussions;
     const ids = discussions.map((d) => d._id ?? "").filter(Boolean);
     const counts = await this.answerRepo.countByDiscussion(ids);

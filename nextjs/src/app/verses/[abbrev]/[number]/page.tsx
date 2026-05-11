@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/MongoUserChapterReadRepository";
 import ChapterClient from "@/app/chapter/[abbrev]/[chapter]/ChapterClient";
 import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
@@ -52,6 +53,7 @@ export default async function VersesPage({ params }: { params: Promise<Params> }
 
   const bookRepo = new MongoBookRepository();
   const verseRepo = new MongoVerseRepository();
+  const commentRepo = new MongoCommentRepository();
 
   const [book, verses] = await Promise.all([
     bookRepo.findByAbbrev(abbrev),
@@ -63,14 +65,19 @@ export default async function VersesPage({ params }: { params: Promise<Params> }
   const tutorialAlreadyCompleted =
     session?.user?.tutorialsCompleted?.includes(CHAPTER_TUTORIAL_NAME) ?? false;
 
-  // Look up "is this chapter already marked as read?" only when signed in.
-  // Anonymous readers can't mark anything anyway — the button hides for them.
-  let alreadyRead = false;
-  if (session?.user?.id) {
-    const readRepo = new MongoUserChapterReadRepository();
-    const readChapters = await readRepo.findChaptersForBook(session.user.id, abbrev);
-    alreadyRead = readChapters.includes(chapterNum);
-  }
+  // Pre-compute comment counts and the optional "already read" check in
+  // parallel. Counts are surfaced as initial props so ChapterClient renders
+  // verse badges + title-comments counter on first paint instead of after
+  // an axios round-trip from a mount-time useEffect.
+  const verseIds = verses.map((v) => v._id).filter((id): id is string => !!id);
+  const userId = session?.user?.id ?? null;
+  const [{ countMap, titleCount }, readChapters] = await Promise.all([
+    commentRepo.countsForChapter(verseIds),
+    userId
+      ? new MongoUserChapterReadRepository().findChaptersForBook(userId, abbrev)
+      : Promise.resolve<number[]>([]),
+  ]);
+  const alreadyRead = readChapters.includes(chapterNum);
 
   return (
     <ChapterClient
@@ -80,6 +87,8 @@ export default async function VersesPage({ params }: { params: Promise<Params> }
       user={session?.user ?? null}
       tutorialAlreadyCompleted={tutorialAlreadyCompleted}
       alreadyRead={alreadyRead}
+      initialCountMap={countMap}
+      initialTitleCount={titleCount}
     />
   );
 }

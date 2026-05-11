@@ -55,6 +55,13 @@ interface Props {
    * Always false for anonymous readers (the button hides for them too).
    */
   alreadyRead: boolean;
+  /**
+   * Per-verse comment counts (non-title) and total title-mode comment count,
+   * pre-computed server-side. When provided, ChapterClient paints badges on
+   * first render and skips the mount-time axios fetch.
+   */
+  initialCountMap?: Record<string, number>;
+  initialTitleCount?: number;
 }
 
 const MIN_LEN = 200;
@@ -68,7 +75,16 @@ function dateFormat(str: string) {
   }
 }
 
-export default function ChapterClient({ book, verses, chapter, user, tutorialAlreadyCompleted, alreadyRead }: Props) {
+export default function ChapterClient({
+  book,
+  verses,
+  chapter,
+  user,
+  tutorialAlreadyCompleted,
+  alreadyRead,
+  initialCountMap,
+  initialTitleCount,
+}: Props) {
   const router = useRouter();
   const { handleNotification } = useNotification();
   const confirm = useConfirm();
@@ -78,8 +94,12 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
   const [comments, setComments] = useState<CommentData[]>([]);
   const [titleComments, setTitleComments] = useState<CommentData[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [countMap, setCountMap] = useState<Record<string, number>>({});
-  const [titleCount, setTitleCount] = useState(0);
+  const [countMap, setCountMap] = useState<Record<string, number>>(initialCountMap ?? {});
+  const [titleCount, setTitleCount] = useState(initialTitleCount ?? 0);
+  // Counts are seeded from server props; only refetch client-side when the
+  // server didn't supply them (legacy callers / tests). Future writes update
+  // the maps directly via setCountMap / setTitleCount so no refresh is needed.
+  const hasInitialCounts = initialCountMap !== undefined && initialTitleCount !== undefined;
 
   const [composing, setComposing] = useState(false);
   const [composeText, setComposeText] = useState("");
@@ -136,8 +156,9 @@ export default function ChapterClient({ book, verses, chapter, user, tutorialAlr
   }, [book.abbrev, chapter]);
 
   useEffect(() => {
+    if (hasInitialCounts) return;
     loadCounts();
-  }, [loadCounts]);
+  }, [hasInitialCounts, loadCounts]);
 
   const openTitlePanel = useCallback(async () => {
     setIsTitleMode(true);

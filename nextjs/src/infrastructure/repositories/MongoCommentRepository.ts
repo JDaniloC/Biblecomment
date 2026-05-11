@@ -35,6 +35,17 @@ export class MongoCommentRepository implements ICommentRepository {
     return docs.map(toEntity);
   }
 
+  async findByUsernamePaginated(username: string, page: number, pageSize: number): Promise<Comment[]> {
+    await connectToDatabase();
+    const safePage = Math.max(1, page);
+    const safeSize = Math.max(1, Math.min(pageSize, 200));
+    const docs = await CommentModel.find({ username })
+      .sort({ createdAt: -1 })
+      .skip((safePage - 1) * safeSize)
+      .limit(safeSize);
+    return docs.map(toEntity);
+  }
+
   async findById(id: string): Promise<Comment | null> {
     await connectToDatabase();
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
@@ -208,6 +219,33 @@ export class MongoCommentRepository implements ICommentRepository {
       : { $set: { verified: false }, $unset: { verifiedBy: "", verifiedAt: "" } };
     const doc = await CommentModel.findByIdAndUpdate(id, update, { returnDocument: "after" });
     return doc ? toEntity(doc) : null;
+  }
+
+  async countsForChapter(verseIds: string[]): Promise<{ countMap: Record<string, number>; titleCount: number }> {
+    if (verseIds.length === 0) return { countMap: {}, titleCount: 0 };
+    await connectToDatabase();
+    const oids = verseIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (oids.length === 0) return { countMap: {}, titleCount: 0 };
+
+    const rows = await CommentModel.aggregate<{ _id: { verseId: mongoose.Types.ObjectId; onTitle: boolean }; count: number }>([
+      { $match: { verseId: { $in: oids } } },
+      {
+        $group: {
+          _id: { verseId: "$verseId", onTitle: { $ifNull: ["$onTitle", false] } },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    let titleCount = 0;
+    const countMap: Record<string, number> = {};
+    for (const row of rows) {
+      if (row._id.onTitle) titleCount += row.count;
+      else countMap[row._id.verseId.toString()] = (countMap[row._id.verseId.toString()] ?? 0) + row.count;
+    }
+    return { countMap, titleCount };
   }
 
   async findDailyFeatured(dayIndex: number): Promise<Comment | null> {

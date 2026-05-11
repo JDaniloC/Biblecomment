@@ -30,6 +30,7 @@ function discussionRepoStub(discussions: Discussion[]): IDiscussionRepository {
     findManyByIds: async (ids: string[]) => ids.map((i) => byId.get(i)).filter((d): d is Discussion => Boolean(d)),
     findAllPaginated: async () => discussions,
     findByBookAbbrev: async () => discussions,
+    findByBookAbbrevPaginated: async () => discussions,
     findAll: async () => discussions,
     create: async (d) => ({ _id: "new", ...d }) as Discussion,
     createMany: async () => discussions.length,

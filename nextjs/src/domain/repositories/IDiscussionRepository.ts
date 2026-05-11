@@ -2,6 +2,12 @@ import { Discussion } from "../entities/Discussion";
 
 export interface IDiscussionRepository {
   findByBookAbbrev(bookAbbrev: string): Promise<Discussion[]>;
+  /**
+   * DB-paginated variant of `findByBookAbbrev`. Used by the discussion list
+   * tab on the book page so we don't pull every thread into memory just to
+   * slice off the requested window.
+   */
+  findByBookAbbrevPaginated(bookAbbrev: string, page: number, pageSize: number): Promise<Discussion[]>;
   findById(id: string): Promise<Discussion | null>;
   /** Hydrate discussion docs by id list. Order is not preserved — caller re-sorts. */
   findManyByIds(ids: string[]): Promise<Discussion[]>;

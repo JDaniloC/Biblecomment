@@ -17,7 +17,8 @@ export async function GET(req: Request, { params }: { params: Promise<Params> })
   try {
     const { abbrev } = await params;
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("pages") ?? "1", 10);
+    const parsed = parseInt(searchParams.get("pages") ?? "1", 10);
+    const page = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
     const pageSize = 5;
 
     const bookRepo = new MongoBookRepository();
@@ -26,8 +27,8 @@ export async function GET(req: Request, { params }: { params: Promise<Params> })
 
     const repo = new MongoDiscussionRepository();
     const useCase = new GetDiscussionsUseCase(repo);
-    const all = await useCase.execute(abbrev.toLowerCase());
-    return NextResponse.json(all.slice((page - 1) * pageSize, page * pageSize));
+    const items = await useCase.execute(abbrev.toLowerCase(), { page, pageSize });
+    return NextResponse.json(items);
   } catch (err) {
     return serverError(err);
   }

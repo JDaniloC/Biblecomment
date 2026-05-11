@@ -14,10 +14,14 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const userData = await UserModel.findOne({ email: user.email }).lean();
+    // user.username is already in the JWT session, so we can fan out the
+    // user-doc lookup and the comments query in parallel instead of waiting
+    // for the first to resolve before issuing the second.
+    const [userData, userComments] = await Promise.all([
+      UserModel.findOne({ email: user.email }).lean(),
+      CommentModel.find({ username: user.username }).select("verseId").lean(),
+    ]);
     if (!userData) return unauthorized();
-
-    const userComments = await CommentModel.find({ username: userData.username }).select("verseId").lean();
 
     const verseIds = [...new Set(userComments.map((c) => c.verseId.toString()))];
     const verses = await VerseModel.find({ _id: { $in: verseIds } }).select("abbrev chapter").lean();

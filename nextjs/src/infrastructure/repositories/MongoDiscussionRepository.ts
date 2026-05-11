@@ -26,6 +26,17 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
     return docs.map(toEntity);
   }
 
+  async findByBookAbbrevPaginated(bookAbbrev: string, page: number, pageSize: number): Promise<Discussion[]> {
+    await connectToDatabase();
+    const safePage = Math.max(1, page);
+    const safeSize = Math.max(1, Math.min(pageSize, 100));
+    const docs = await DiscussionModel.find({ bookAbbrev })
+      .sort({ createdAt: -1 })
+      .skip((safePage - 1) * safeSize)
+      .limit(safeSize);
+    return docs.map(toEntity);
+  }
+
   async findById(id: string): Promise<Discussion | null> {
     await connectToDatabase();
     if (!mongoose.Types.ObjectId.isValid(id)) return null;

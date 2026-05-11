@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import { Verse } from "@/domain/entities/Verse";
 import { VerseModel, IVerseDocument } from "@/infrastructure/database/models/VerseModel";
@@ -15,18 +16,38 @@ function toEntity(doc: IVerseDocument): Verse {
   };
 }
 
-export class MongoVerseRepository implements IVerseRepository {
-  async findByAbbrevAndChapter(abbrev: string, chapter: number): Promise<Verse[]> {
+// Verses are immutable bible text seeded once. Memoize the two hot reads
+// behind Next's Data Cache; bust with `revalidateTag("verses")` from the
+// seeder when re-loading the corpus. Module-scope keeps the wrapped
+// function identity stable so subsequent calls hit the cache.
+const findByAbbrevAndChapterCached = unstable_cache(
+  async (abbrev: string, chapter: number): Promise<Verse[]> => {
     await connectToDatabase();
     const docs = await VerseModel.find({ abbrev, chapter }).sort({ verseNumber: 1 });
     return docs.map(toEntity);
+  },
+  ["verses-findByAbbrevAndChapter"],
+  { revalidate: 86400, tags: ["verses"] },
+);
+
+const findByIdCached = unstable_cache(
+  async (id: string): Promise<Verse | null> => {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    await connectToDatabase();
+    const doc = await VerseModel.findById(id);
+    return doc ? toEntity(doc) : null;
+  },
+  ["verses-findById"],
+  { revalidate: 86400, tags: ["verses"] },
+);
+
+export class MongoVerseRepository implements IVerseRepository {
+  async findByAbbrevAndChapter(abbrev: string, chapter: number): Promise<Verse[]> {
+    return findByAbbrevAndChapterCached(abbrev, chapter);
   }
 
   async findById(id: string): Promise<Verse | null> {
-    await connectToDatabase();
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const doc = await VerseModel.findById(id);
-    return doc ? toEntity(doc) : null;
+    return findByIdCached(id);
   }
 
   async findManyByIds(ids: string[]): Promise<Verse[]> {
