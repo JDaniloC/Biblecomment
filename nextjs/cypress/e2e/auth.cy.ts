@@ -19,13 +19,14 @@ describe("Authentication", () => {
     it("creates a new user and lets them log in immediately", () => {
       const email = `newuser-${Date.now()}@cypress.test`;
       const username = `newuser-${Date.now()}`;
+      const displayName = "New User";
       const password = "fresh-secret-123";
 
       // Register via API (UI tested separately if there's a register form spec).
       cy.request({
         method: "POST",
         url: "/api/users",
-        body: { email, username, password, acceptedTerms: true },
+        body: { email, username, displayName, password, acceptedTerms: true },
       }).then((res) => {
         expect(res.status).to.eq(201);
         expect(res.body).to.have.property("email", email);
@@ -50,6 +51,7 @@ describe("Authentication", () => {
         body: {
           email: users.alice.email,
           username: "alice-copy",
+          displayName: "Alice Copy",
           password: "another-pass-123",
           acceptedTerms: true,
         },
@@ -66,6 +68,7 @@ describe("Authentication", () => {
         body: {
           email: "not-an-email",
           username: "ghost",
+          displayName: "Ghost",
           password: "secret-123",
           acceptedTerms: true,
         },
@@ -83,6 +86,7 @@ describe("Authentication", () => {
         body: {
           email: "shortpw@cypress.test",
           username: "shortpw",
+          displayName: "Short Pw",
           password: "abc",
           acceptedTerms: true,
         },
@@ -99,6 +103,7 @@ describe("Authentication", () => {
         body: {
           email: "noconsent@cypress.test",
           username: "noconsent",
+          displayName: "No Consent",
           password: "secret-123",
         },
         failOnStatusCode: false,
@@ -114,6 +119,7 @@ describe("Authentication", () => {
         body: {
           email: "falseconsent@cypress.test",
           username: "falseconsent",
+          displayName: "False Consent",
           password: "secret-123",
           acceptedTerms: false,
         },
@@ -142,7 +148,7 @@ describe("Authentication", () => {
       cy.get("input#login-password").type("wrong-password-on-purpose");
       cy.get('button[type="submit"]').click();
 
-      cy.contains(/Email ou senha inválidos/i, { timeout: 5000 }).should("be.visible");
+      cy.contains(/Credenciais inválidas/i, { timeout: 5000 }).should("be.visible");
       cy.url().should("include", "/login");
     });
   });

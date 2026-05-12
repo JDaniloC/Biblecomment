@@ -199,6 +199,7 @@ describe("Security regressions: IDOR & RBAC", () => {
         body: {
           email: "first@cypress.test",
           username: "duplicate",
+          displayName: "First Dup",
           password: "first-secret-12",
           acceptedTerms: true,
         },
@@ -213,6 +214,7 @@ describe("Security regressions: IDOR & RBAC", () => {
         body: {
           email: "second@cypress.test",
           username: "duplicate",
+          displayName: "Second Dup",
           password: "second-secret-12",
           acceptedTerms: true,
         },
