@@ -41,8 +41,29 @@ export function BadgesTab() {
   }
   if (!view) {
     return (
-      <div className="text-slate-500 dark:text-slate-400 text-sm" data-testid="badges-loading">
-        Carregando conquistas…
+      <div data-testid="badges-loading" className="flex flex-col gap-6">
+        <div>
+          <div className="shimmer-skeleton h-6 w-32" />
+          <div className="shimmer-skeleton h-4 w-48 mt-2" />
+        </div>
+        <div>
+          <div className="shimmer-skeleton h-3 w-40 mb-3" />
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex gap-3 items-start p-3 rounded-lg border border-dashed border-amber-200/60 dark:border-slate-700 bg-white/40 dark:bg-slate-900/40"
+              >
+                <div className="shimmer-skeleton flex-none w-10 h-10 rounded-full" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="shimmer-skeleton h-4 w-2/3" />
+                  <div className="shimmer-skeleton h-3 w-full" />
+                  <div className="shimmer-skeleton h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
