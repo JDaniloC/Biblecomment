@@ -39,7 +39,11 @@ describe("Onboarding tutorial (chapter)", () => {
     cy.get(".driver-popover").should("not.exist");
 
     cy.visit("/chapter/gn/1?tour=1");
-    cy.get(".driver-popover.bc-tutorial", { timeout: 8000 }).should("be.visible");
+    // Gate on the redirect settling before polling for the popover so
+    // we don't burn the timeout on the in-flight navigation. Under
+    // full-suite load, hydration of useSearchParams can lag past 8s.
+    cy.location("pathname", { timeout: 10000 }).should("eq", "/verses/gn/1");
+    cy.get(".driver-popover.bc-tutorial", { timeout: 15000 }).should("be.visible");
   });
 
   it("Próximo advances through steps", () => {
