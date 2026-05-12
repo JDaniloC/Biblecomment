@@ -12,6 +12,11 @@
   NODE_VERSION = "22"
   # Skip the bundle analyzer plugin during prod builds.
   ANALYZE      = "false"
+  # Sentry DSNs are public by design (the browser SDK ships them to clients),
+  # so the same value lives in both SENTRY_DSN and NEXT_PUBLIC_SENTRY_DSN and
+  # legitimately appears in the client bundle / webpack cache. Exempt them
+  # from Netlify's secret scanner.
+  SECRETS_SCAN_OMIT_KEYS = "SENTRY_DSN,NEXT_PUBLIC_SENTRY_DSN"
 
 # Server-rendered Next.js (App Router, Server Actions, route handlers, ISR)
 # is handled by Netlify's official plugin — pinned in nextjs/package.json

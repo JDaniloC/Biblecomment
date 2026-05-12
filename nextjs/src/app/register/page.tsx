@@ -67,7 +67,10 @@ function RegisterContent() {
         aria-hidden="true"
         className="hidden md:flex flex-col justify-between bg-gradient-to-br from-amber-50 to-stone-100 dark:from-slate-900 dark:to-slate-950 p-12 border-r border-stone-200 dark:border-slate-800"
       >
-        <Link href="/" className="flex items-center gap-3 no-underline">
+        {/* tabIndex={-1}: keep the link clickable for mouse users but
+            out of the tab order so the aria-hidden aside has no focusable
+            descendants. Keyboard path home is the bottom "Voltar" link. */}
+        <Link href="/" tabIndex={-1} className="flex items-center gap-3 no-underline">
           <Image src="/assets/logo.svg" alt="" width={40} height={40} />
           <div>
             <div className="font-bold text-stone-800 dark:text-stone-100 leading-tight">
@@ -183,7 +186,7 @@ function RegisterContent() {
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
                 />
               </div>
-              <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
+              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                 {previewSlug
                   ? <>Aparece nos comentários. Seu identificador único será <code className="font-mono text-stone-600 dark:text-stone-300">@{previewSlug}</code>.</>
                   : "Aparece nos comentários. Geramos um identificador único a partir desse nome."}
@@ -241,7 +244,7 @@ function RegisterContent() {
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition"
                 />
               </div>
-              <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">
+              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                 Mínimo 6 caracteres.
               </p>
             </div>
@@ -262,7 +265,7 @@ function RegisterContent() {
                 Li e aceito a{" "}
                 <Link
                   href="/privacy"
-                  className="font-medium text-blue-700 dark:text-brand underline"
+                  className="font-medium text-blue-700 dark:text-blue-400 underline"
                   target="_blank"
                 >
                   Política de Privacidade
@@ -270,7 +273,7 @@ function RegisterContent() {
                 e os{" "}
                 <Link
                   href="/terms"
-                  className="font-medium text-blue-700 dark:text-brand underline"
+                  className="font-medium text-blue-700 dark:text-blue-400 underline"
                   target="_blank"
                 >
                   Termos de Uso
@@ -309,13 +312,13 @@ function RegisterContent() {
                   ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
                   : "/login"
               }
-              className="font-medium text-blue-700 dark:text-brand underline"
+              className="font-medium text-blue-700 dark:text-blue-400 underline"
             >
               Entrar
             </Link>
           </p>
 
-          <div className="mt-8 pt-6 border-t border-stone-200 dark:border-slate-800 text-center text-xs text-stone-400 dark:text-stone-500">
+          <div className="mt-8 pt-6 border-t border-stone-200 dark:border-slate-800 text-center text-xs text-stone-500 dark:text-stone-400">
             <Link href="/" className="hover:text-stone-600 dark:hover:text-stone-300 transition">
               ← Voltar à página inicial
             </Link>

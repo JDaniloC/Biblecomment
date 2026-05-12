@@ -3,12 +3,14 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-brand: #137ddb;
-  --color-brand-soft: rgba(19, 125, 219, 0.12);
-  --color-brand-light: rgba(19, 125, 219, 0.08);
-  --color-brand-tint: rgba(19, 125, 219, 0.07);
-  --color-brand-wash: rgba(19, 125, 219, 0.06);
-  --color-brand-hover: rgba(19, 125, 219, 0.04);
+  /* #1075d3 instead of #137ddb so white-on-brand passes WCAG AA (4.73:1
+     vs the previous 4.21:1). Visually near-identical; same hue, ~5% darker. */
+  --color-brand: #1075d3;
+  --color-brand-soft: rgba(16, 117, 211, 0.12);
+  --color-brand-light: rgba(16, 117, 211, 0.08);
+  --color-brand-tint: rgba(16, 117, 211, 0.07);
+  --color-brand-wash: rgba(16, 117, 211, 0.06);
+  --color-brand-hover: rgba(16, 117, 211, 0.04);
   --color-tag-devocional: #4f46e5;
   --color-tag-exegese: #0d9488;
   --color-tag-pessoal: #d97706;
