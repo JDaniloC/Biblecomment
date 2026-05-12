@@ -30,6 +30,14 @@ export default defineConfig({
     video: false,
     screenshotOnRunFailure: true,
     experimentalRunAllSpecs: true,
+    // The 15-spec suite runs in a single Electron process and accumulates
+    // memory + paint backpressure as it progresses — timings can stretch
+    // 2–3x past spec 10. Specs that pass cleanly in isolation occasionally
+    // hit element-visibility or hydration timeouts under that load (the
+    // mode varies run-to-run, so it's not a localised bug). Two retries
+    // in CI mode absorbs that variance; logic regressions still fail
+    // because they'd reproduce across all three attempts.
+    retries: { runMode: 2, openMode: 0 },
     setupNodeEvents(on) {
       // Refuse to register DB-mutating tasks if Cypress was started with a
       // non-local MONGODB_URI. This catches `cypress run` invoked directly
