@@ -77,14 +77,14 @@ describe("Badges", () => {
   });
 
   describe("Conquistas tab", () => {
-    it("renders all 26 catalog badges, with a summary count", () => {
+    it("renders all 30 catalog badges, with a summary count", () => {
       cy.loginAs(users.alice.email, users.alice.password);
       cy.visit("/profile");
       cy.contains("button", /conquistas/i).click();
 
       cy.get('[data-testid="badges-tab"]').should("be.visible");
-      cy.get('[data-testid="badges-summary"]').should("contain.text", "0 de 26");
-      cy.get('[data-testid^="badge-card-"]').should("have.length", 26);
+      cy.get('[data-testid="badges-summary"]').should("contain.text", "0 de 30");
+      cy.get('[data-testid^="badge-card-"]').should("have.length", 30);
     });
 
     it("flips a card to earned after the user marks a chapter", () => {
@@ -102,7 +102,7 @@ describe("Badges", () => {
 
       cy.get('[data-testid="badge-card-first-read"]')
         .should("have.attr", "data-earned", "true");
-      cy.get('[data-testid="badges-summary"]').should("contain.text", "1 de 26");
+      cy.get('[data-testid="badges-summary"]').should("contain.text", "1 de 30");
     });
   });
 });
