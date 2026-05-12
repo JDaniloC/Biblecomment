@@ -17,8 +17,35 @@ const EMPTY: BadgeCounters = {
 };
 
 describe("badge catalog", () => {
-  it("contains the expected v1 count of 26 badges", () => {
-    expect(BADGES).toHaveLength(26);
+  it("contains the expected count of 30 badges", () => {
+    expect(BADGES).toHaveLength(30);
+  });
+
+  it("commenter-volume axis exposes all 6 tiers with correct targets", () => {
+    expect(getBadge("commenter-bronze")?.progress?.(EMPTY)?.target).toBe(1);
+    expect(getBadge("commenter-silver")?.progress?.(EMPTY)?.target).toBe(10);
+    expect(getBadge("commenter-gold")?.progress?.(EMPTY)?.target).toBe(50);
+    expect(getBadge("commenter-platinum")?.progress?.(EMPTY)?.target).toBe(200);
+    expect(getBadge("commenter-diamond")?.progress?.(EMPTY)?.target).toBe(500);
+    expect(getBadge("commenter-mythic")?.progress?.(EMPTY)?.target).toBe(1000);
+  });
+
+  it("reader-volume axis exposes all 6 tiers with rebalanced targets", () => {
+    expect(getBadge("reader-bronze")?.progress?.(EMPTY)?.target).toBe(10);
+    expect(getBadge("reader-silver")?.progress?.(EMPTY)?.target).toBe(50);
+    expect(getBadge("reader-gold")?.progress?.(EMPTY)?.target).toBe(100);
+    expect(getBadge("reader-platinum")?.progress?.(EMPTY)?.target).toBe(250);
+    expect(getBadge("reader-diamond")?.progress?.(EMPTY)?.target).toBe(500);
+    expect(getBadge("reader-mythic")?.progress?.(EMPTY)?.target).toBe(1189);
+  });
+
+  it("new diamond/mythic tier IDs are present", () => {
+    for (const id of [
+      "commenter-diamond", "commenter-mythic",
+      "reader-diamond", "reader-mythic",
+    ]) {
+      expect(getBadge(id), `${id} should exist`).toBeDefined();
+    }
   });
 
   it("has unique ids across the whole catalog", () => {
@@ -63,10 +90,10 @@ describe("badge catalog", () => {
     }
   });
 
-  it("reader-platinum requires the full 1189 chapters of the Bible", () => {
+  it("reader-platinum requires 250 chapters (rebalanced)", () => {
     const platinum = getBadge("reader-platinum");
     expect(platinum).toBeDefined();
-    expect(platinum!.progress!(EMPTY)!.target).toBe(1189);
+    expect(platinum!.progress!(EMPTY)!.target).toBe(250);
   });
 
   it("nothing unlocks on an empty counters profile", () => {

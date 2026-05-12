@@ -14,7 +14,13 @@ export type BadgeAxis =
   | "commenter-tags"
   | "interaction";
 
-export type BadgeTier = "bronze" | "silver" | "gold" | "platinum";
+export type BadgeTier =
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "platinum"
+  | "diamond"
+  | "mythic";
 
 /**
  * Counters available to badge criteria. The evaluator computes these once per

@@ -1,35 +1,39 @@
 /**
- * Badge catalog (v1) — 22 entries across 5 axes.
+ * Badge catalog — 30 entries across 6 axes.
  *
  * To add a badge: append to BADGES with a unique `id` and a `meets()` predicate
  * over BadgeCounters. No migration needed; backfill script picks it up too.
  *
  * Tier thresholds were tuned for the BibleComment audience:
- * - Reader: Bronze 10 (a couple weeks of daily reading), Silver 50, Gold 250,
- *   Platinum 1189 (the whole Bible).
- * - Commenter volume: lower bar for Bronze (1) so first-comment also unlocks
- *   the tier badge alongside `first-mention` etc.
+ * - Reader: Bronze 10, Silver 50, Gold 100, Platinum 250, Diamond 500,
+ *   Mythic 1189 (the whole Bible).
+ * - Commenter volume: Bronze 1 (first comment), Silver 10, Gold 50,
+ *   Platinum 200, Diamond 500, Mythic 1000.
  * - Diversity: Bronze 3 books, Silver 15 (~half of NT), Gold 30 (~half Bible).
  */
 
-import type { BadgeDefinition } from "./types";
+import type { BadgeDefinition, BadgeTier } from "./types";
 import { BADGE_SECTIONS, SECTION_AXIS } from "./sections";
 
-const READER_TIERS: Array<{ id: string; tier: "bronze" | "silver" | "gold" | "platinum"; target: number; name: string }> = [
+const READER_TIERS: Array<{ id: string; tier: BadgeTier; target: number; name: string }> = [
   { id: "reader-bronze",   tier: "bronze",   target: 10,   name: "Leitor iniciante" },
   { id: "reader-silver",   tier: "silver",   target: 50,   name: "Leitor dedicado" },
-  { id: "reader-gold",     tier: "gold",     target: 250,  name: "Leitor experiente" },
-  { id: "reader-platinum", tier: "platinum", target: 1189, name: "Bíblia inteira lida" },
+  { id: "reader-gold",     tier: "gold",     target: 100,  name: "Leitor constante" },
+  { id: "reader-platinum", tier: "platinum", target: 250,  name: "Leitor experiente" },
+  { id: "reader-diamond",  tier: "diamond",  target: 500,  name: "Leitor incansável" },
+  { id: "reader-mythic",   tier: "mythic",   target: 1189, name: "Bíblia inteira lida" },
 ];
 
-const COMMENTER_TIERS: Array<{ id: string; tier: "bronze" | "silver" | "gold" | "platinum"; target: number; name: string }> = [
-  { id: "commenter-bronze",   tier: "bronze",   target: 1,   name: "Primeiro comentário" },
-  { id: "commenter-silver",   tier: "silver",   target: 10,  name: "Comentarista atuante" },
-  { id: "commenter-gold",     tier: "gold",     target: 50,  name: "Comentarista assíduo" },
-  { id: "commenter-platinum", tier: "platinum", target: 200, name: "Comentarista veterano" },
+const COMMENTER_TIERS: Array<{ id: string; tier: BadgeTier; target: number; name: string }> = [
+  { id: "commenter-bronze",   tier: "bronze",   target: 1,    name: "Primeiro comentário" },
+  { id: "commenter-silver",   tier: "silver",   target: 10,   name: "Comentarista atuante" },
+  { id: "commenter-gold",     tier: "gold",     target: 50,   name: "Comentarista assíduo" },
+  { id: "commenter-platinum", tier: "platinum", target: 200,  name: "Comentarista veterano" },
+  { id: "commenter-diamond",  tier: "diamond",  target: 500,  name: "Comentarista mestre" },
+  { id: "commenter-mythic",   tier: "mythic",   target: 1000, name: "Comentarista lendário" },
 ];
 
-const DIVERSITY_TIERS: Array<{ id: string; tier: "bronze" | "silver" | "gold"; target: number; name: string }> = [
+const DIVERSITY_TIERS: Array<{ id: string; tier: BadgeTier; target: number; name: string }> = [
   { id: "diverse-bronze", tier: "bronze", target: 3,  name: "Explorador (3 livros)" },
   { id: "diverse-silver", tier: "silver", target: 15, name: "Explorador (15 livros)" },
   { id: "diverse-gold",   tier: "gold",   target: 30, name: "Explorador (30 livros)" },
@@ -56,13 +60,22 @@ const SECTION_BADGES: BadgeDefinition[] = BADGE_SECTIONS.map((s) => ({
   progress: (c) => ({ current: c.completedSections.has(s.id) ? 1 : 0, target: 1 }),
 }));
 
+const COMMENTER_ICON: Record<BadgeTier, string> = {
+  bronze:   "MessageCircle",
+  silver:   "MessageCircle",
+  gold:     "MessageCircle",
+  platinum: "MessageCircle",
+  diamond:  "Gem",
+  mythic:   "Crown",
+};
+
 const COMMENTER_BADGES: BadgeDefinition[] = COMMENTER_TIERS.map((t) => ({
   id: t.id,
   axis: "commenter-volume",
   tier: t.tier,
   name: t.name,
   description: `Publique ${t.target} ${t.target === 1 ? "comentário" : "comentários"}.`,
-  icon: "MessageCircle",
+  icon: COMMENTER_ICON[t.tier],
   meets: (c) => c.commentsCount >= t.target,
   progress: (c) => ({ current: Math.min(c.commentsCount, t.target), target: t.target }),
 }));

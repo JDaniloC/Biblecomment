@@ -153,13 +153,13 @@ describe("EvaluateBadgesUseCase", () => {
       expect(out).toContain("reader-bronze");
     });
 
-    it("unlocks all four reader tiers at 1189", async () => {
+    it("unlocks all six reader tiers at 1189", async () => {
       const repos = makeRepos({ chaptersRead: 1189 });
       const out = await new EvaluateBadgesUseCase(repos).evaluate({
         ...ALICE,
         axes: ["reader-volume"],
       });
-      expect(out.sort()).toEqual(["reader-bronze", "reader-gold", "reader-platinum", "reader-silver"]);
+      expect(out.sort()).toEqual(["reader-bronze", "reader-diamond", "reader-gold", "reader-mythic", "reader-platinum", "reader-silver"]);
     });
 
     it("only awards what is new — already-owned tiers are skipped", async () => {
