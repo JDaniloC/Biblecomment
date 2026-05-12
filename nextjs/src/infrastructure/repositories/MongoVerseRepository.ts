@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { conditionalCache } from "@/lib/conditional-cache";
 import { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import { Verse } from "@/domain/entities/Verse";
 import { VerseModel, IVerseDocument } from "@/infrastructure/database/models/VerseModel";
@@ -20,7 +20,7 @@ function toEntity(doc: IVerseDocument): Verse {
 // behind Next's Data Cache; bust with `revalidateTag("verses")` from the
 // seeder when re-loading the corpus. Module-scope keeps the wrapped
 // function identity stable so subsequent calls hit the cache.
-const findByAbbrevAndChapterCached = unstable_cache(
+const findByAbbrevAndChapterCached = conditionalCache(
   async (abbrev: string, chapter: number): Promise<Verse[]> => {
     await connectToDatabase();
     const docs = await VerseModel.find({ abbrev, chapter }).sort({ verseNumber: 1 });
@@ -30,7 +30,7 @@ const findByAbbrevAndChapterCached = unstable_cache(
   { revalidate: 86400, tags: ["verses"] },
 );
 
-const findByIdCached = unstable_cache(
+const findByIdCached = conditionalCache(
   async (id: string): Promise<Verse | null> => {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
     await connectToDatabase();

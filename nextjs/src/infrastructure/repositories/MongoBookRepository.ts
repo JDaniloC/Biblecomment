@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { conditionalCache } from "@/lib/conditional-cache";
 import { IBookRepository } from "@/domain/repositories/IBookRepository";
 import { Book } from "@/domain/entities/Book";
 import { BookModel, IBookDocument } from "@/infrastructure/database/models/BookModel";
@@ -22,7 +22,7 @@ function toEntity(doc: IBookDocument): Book {
 // behind Next's Data Cache. `revalidateTag("books")` from a seed script is
 // enough to bust the cache when the corpus is reloaded. Module-scope keeps
 // the wrapped function identity stable so the cache actually hits.
-const findAllCached = unstable_cache(
+const findAllCached = conditionalCache(
   async (): Promise<Book[]> => {
     await connectToDatabase();
     const docs = await BookModel.find({});
@@ -32,7 +32,7 @@ const findAllCached = unstable_cache(
   { revalidate: 86400, tags: ["books"] },
 );
 
-const findByAbbrevCached = unstable_cache(
+const findByAbbrevCached = conditionalCache(
   async (abbrev: string): Promise<Book | null> => {
     await connectToDatabase();
     const doc = await BookModel.findOne({ abbrev });

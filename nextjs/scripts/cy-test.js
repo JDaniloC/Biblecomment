@@ -76,6 +76,11 @@ async function main() {
     // GET /api/_test/last-email instead of going to Resend.
     EMAIL_TRANSPORT: "memory",
     APP_URL: BASE_URL,
+    // Cypress's beforeEach hooks reset the DB between specs, but Next's
+    // unstable_cache (used for verses/books) lives in-process and would
+    // happily hand back the previous run's ObjectIds. Setting CYPRESS=1
+    // makes conditional-cache.ts skip the cache so reads always hit Mongo.
+    CYPRESS: "1",
   };
 
   const sst = require.resolve("start-server-and-test/src/bin/start.js");
