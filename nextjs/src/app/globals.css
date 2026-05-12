@@ -135,3 +135,38 @@ body {
   from { transform: translateY(10px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
+
+@keyframes shimmer-sweep {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.shimmer-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(254 243 199 / 0.5) 0%,
+    rgb(253 230 138 / 0.7) 50%,
+    rgb(254 243 199 / 0.5) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+  border-radius: 0.375rem;
+}
+
+.dark .shimmer-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(30 41 59 / 0.6) 0%,
+    rgb(51 65 85 / 0.8) 50%,
+    rgb(30 41 59 / 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-skeleton,
+  .dark .shimmer-skeleton {
+    animation: none;
+  }
+}
