@@ -16,8 +16,8 @@ const TIER_COLORS: Record<BadgeTier, string> = {
   silver:   "#94a3b8",
   gold:     "#d4a017",
   platinum: "#a78bfa",
-  diamond:  "#38bdf8",
-  mythic:   "#f59e0b",
+  diamond:  "#06b6d4",
+  mythic:   "#be185d",
 };
 
 /** Soft background tint used behind the icon for earned badges. */
@@ -26,8 +26,8 @@ const TIER_TINTS: Record<BadgeTier, string> = {
   silver:   "#e2e8f0",
   gold:     "#fbeec5",
   platinum: "#ede9fe",
-  diamond:  "#e0f2fe",
-  mythic:   "#fef3c7",
+  diamond:  "#cffafe",
+  mythic:   "#fce7f3",
 };
 
 const TIER_LABELS: Record<BadgeTier, string> = {
@@ -36,7 +36,7 @@ const TIER_LABELS: Record<BadgeTier, string> = {
   gold:     "Ouro",
   platinum: "Platina",
   diamond:  "Diamante",
-  mythic:   "Mítico",
+  mythic:   "Lendário",
 };
 
 /**
