@@ -60,9 +60,15 @@ export function BadgeCard({ badge, earned, current, target }: Props) {
   const showProgress = !earned && target > 1;
   const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
 
-  // Gold/platinum get a soft glow so the page reads at a glance which
-  // achievements are the high-tier ones.
-  const premiumRing = earned && (badge.tier === "gold" || badge.tier === "platinum");
+  // Gold/platinum/diamond/mythic get a soft glow so the page reads at a glance
+  // which achievements are the high-tier ones. Mythic uses a stronger double-shadow.
+  const premiumRing = earned && (
+    badge.tier === "gold" ||
+    badge.tier === "platinum" ||
+    badge.tier === "diamond" ||
+    badge.tier === "mythic"
+  );
+  const isMythic = earned && badge.tier === "mythic";
 
   return (
     <div
@@ -75,9 +81,16 @@ export function BadgeCard({ badge, earned, current, target }: Props) {
           : "bg-slate-50 dark:bg-slate-900/60 border-dashed border-slate-200 dark:border-slate-800",
       ].join(" ")}
       style={
-        premiumRing
-          ? { boxShadow: `0 0 0 1px ${tierColor}55, 0 4px 14px -6px ${tierColor}88` }
-          : undefined
+        isMythic
+          ? {
+              boxShadow:
+                `0 0 0 2px ${tierColor}66, ` +
+                `0 6px 20px -4px ${tierColor}aa, ` +
+                `0 0 24px -6px ${tierColor}88`,
+            }
+          : premiumRing
+            ? { boxShadow: `0 0 0 1px ${tierColor}55, 0 4px 14px -6px ${tierColor}88` }
+            : undefined
       }
     >
       {/* Icon disc */}
