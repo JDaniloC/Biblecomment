@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand: #137ddb;
+  --color-brand-soft: rgba(19, 125, 219, 0.12);
+  --color-brand-light: rgba(19, 125, 219, 0.08);
+  --color-brand-tint: rgba(19, 125, 219, 0.07);
+  --color-brand-wash: rgba(19, 125, 219, 0.06);
+  --color-brand-hover: rgba(19, 125, 219, 0.04);
+  --color-tag-devocional: #4f46e5;
+  --color-tag-exegese: #0d9488;
+  --color-tag-pessoal: #d97706;
+  --color-tag-inspirado: #7c3aed;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-merriweather), Georgia, serif;
+  --font-lora: var(--font-lora), Georgia, serif;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  color-scheme: light dark;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  /* Default sans is Inter (loaded by next/font in layout.tsx). The
+     font-sans Tailwind utility on <body> is the canonical wire-up; this
+     line is a fallback for cases where Tailwind isn't applied yet. */
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+/* a11y: every focusable element must have a visible keyboard outline.
+   This is a backstop for components that haven't opted into
+   focus:ring-* utilities yet — Tailwind's default reset removes the UA
+   outline. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Tutorial overlay (driver.js) — align colors with the brand palette
+   instead of the library's default purple. The .bc-tutorial class is
+   passed via popoverClass in Tutorial.tsx. */
+.driver-popover.bc-tutorial {
+  background: #ffffff;
+  color: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 18px 20px 16px;
+  max-width: 360px;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+.dark .driver-popover.bc-tutorial {
+  background: #0f172a;
+  color: #e2e8f0;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.bc-tutorial .driver-popover-title {
+  font-family: var(--font-lora), Georgia, serif;
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.bc-tutorial .driver-popover-description {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #475569;
+}
+.dark .bc-tutorial .driver-popover-description { color: #cbd5e1; }
+
+.bc-tutorial .driver-popover-footer { margin-top: 12px; }
+.bc-tutorial .driver-popover-progress-text {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.bc-tutorial .driver-popover-prev-btn,
+.bc-tutorial .driver-popover-next-btn {
+  background: var(--color-brand);
+  color: #fff;
+  border: none;
+  text-shadow: none;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.bc-tutorial .driver-popover-prev-btn {
+  background: transparent;
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand);
+}
+.bc-tutorial .driver-popover-prev-btn:hover {
+  background: var(--color-brand-tint);
+}
+.bc-tutorial .driver-popover-close-btn {
+  color: #94a3b8;
+}
+.dark .bc-tutorial .driver-popover-close-btn { color: #64748b; }
+/* Arrow color follows popover background. */
+.bc-tutorial .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #ffffff; }
+.bc-tutorial .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #ffffff; }
+.bc-tutorial .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #ffffff; }
+.bc-tutorial .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: #ffffff; }
+.dark .bc-tutorial .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #0f172a; }
+.dark .bc-tutorial .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #0f172a; }
+.dark .bc-tutorial .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #0f172a; }
+.dark .bc-tutorial .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: #0f172a; }
+
+.toast {
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: slideIn 0.2s ease;
+  max-width: min(360px, calc(100vw - 3rem));
+}
+.toast-success { background: #16a34a; }
+.toast-error   { background: #dc2626; }
+.toast-info    { background: #2563eb; }
+.toast-warning { background: #d97706; }
+
+@keyframes slideIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes shimmer-sweep {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.shimmer-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(254 243 199 / 0.5) 0%,
+    rgb(253 230 138 / 0.7) 50%,
+    rgb(254 243 199 / 0.5) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+  border-radius: 0.375rem;
+}
+
+.dark .shimmer-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(30 41 59 / 0.6) 0%,
+    rgb(51 65 85 / 0.8) 50%,
+    rgb(30 41 59 / 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-skeleton,
+  .dark .shimmer-skeleton {
+    animation: none;
+  }
+}

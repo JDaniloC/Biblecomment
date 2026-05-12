@@ -1,0 +1,33 @@
+{
+  "book": {
+    "abbrev": "gn",
+    "name": "Gênesis",
+    "chapters": 50,
+    "testament": "VT",
+    "group": "Pentateuco",
+    "author": "Moisés"
+  },
+  "verses": [
+    {
+      "abbrev": "gn",
+      "chapter": 1,
+      "verseNumber": 1,
+      "text": "No princípio, Deus criou os céus e a terra.",
+      "reference": "Gn 1:1"
+    },
+    {
+      "abbrev": "gn",
+      "chapter": 1,
+      "verseNumber": 2,
+      "text": "A terra era sem forma e vazia; havia trevas sobre a face do abismo.",
+      "reference": "Gn 1:2"
+    },
+    {
+      "abbrev": "gn",
+      "chapter": 1,
+      "verseNumber": 3,
+      "text": "Disse Deus: Haja luz; e houve luz.",
+      "reference": "Gn 1:3"
+    }
+  ]
+}

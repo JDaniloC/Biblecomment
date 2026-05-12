@@ -1,20 +1,8 @@
 {
-	"name": "bible-comment",
-	"version": "1.0.0",
-	"description": "A bible comment app",
-	"main": "index.js",
-	"author": "JDaniloC",
-	"license": "MIT",
-	"scripts": {
-		"start": "yarn --cwd backend start",
-		"heroku-postbuild": "npm install yarn && cd backend && yarn -i"
-	},
-	"engines": {
-		"node": "14.x"
-	},
-	"repository": "https://github.com/JDaniloC/Biblecomment.git",
-	"devDependencies": {
-		"eslint": "9.26.0",
-		"eslint-plugin-react": "^7.26.0"
-	}
+  "name": "biblecomment",
+  "version": "2.0.0",
+  "description": "Bible Comment — see nextjs/ for the current app.",
+  "private": true,
+  "license": "MIT",
+  "repository": "https://github.com/JDaniloC/Biblecomment.git"
 }
