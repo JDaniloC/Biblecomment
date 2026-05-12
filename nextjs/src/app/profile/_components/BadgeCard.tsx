@@ -46,8 +46,9 @@ const TIER_LABELS: Record<BadgeTier, string> = {
  * opacity ramp so the row clearly reads as "not yet unlocked".
  *
  * Earned: the catalog icon over a tier-tinted disc, in the tier color.
- * Gold + platinum pick up a subtle outer glow so they stand out from
- * bronze/silver. Tiered badges show a colored chip ("Bronze", "Ouro"…);
+ * Gold, platinum, and diamond pick up a subtle outer glow so they stand
+ * out from bronze/silver. Mythic earns a stronger triple-shadow halo as
+ * the top-rank tier. Tiered badges show a colored chip ("Bronze", "Ouro"…);
  * one-shot badges drop the chip — the ✓ on the icon disc is enough.
  *
  * cypress contract preserved: `data-earned` and `data-testid` unchanged.
