@@ -6,6 +6,7 @@ import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepo
 const userRepo = new MongoUserRepository();
 
 export const authConfig: NextAuthConfig = {
+  trustHost: true,
   providers: [
     Credentials({
       name: "Credentials",
