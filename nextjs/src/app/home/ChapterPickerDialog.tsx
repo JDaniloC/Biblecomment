@@ -18,12 +18,16 @@ export default function ChapterPickerDialog({ book, onClose }: Props) {
       size="lg"
     >
       {book && (
-        <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-8 gap-2">
+        <div
+          data-testid="chapter-picker-grid"
+          className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-8 gap-2"
+        >
           {Array.from({ length: book.chapters }, (_, i) => i + 1).map((n) => (
             <Link
               key={n}
               href={`/verses/${book.abbrev}/${n}`}
               onClick={onClose}
+              data-testid={`chapter-picker-chapter-${n}`}
               className="flex items-center justify-center h-10 rounded-md bg-gray-100 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 text-sm font-medium text-gray-700 dark:text-slate-200 transition"
             >
               {n}

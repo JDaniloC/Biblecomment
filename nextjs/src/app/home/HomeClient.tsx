@@ -374,6 +374,7 @@ export default function HomeClient({ books, user, initialRecent }: Props) {
                     key={book.abbrev}
                     type="button"
                     onClick={() => setPickerBook(book)}
+                    data-testid={`book-${book.abbrev}`}
                     className="text-left bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-3 hover:border-blue-400 dark:hover:border-brand hover:shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     <div className="text-xs text-gray-400 dark:text-slate-500 uppercase mb-1">
