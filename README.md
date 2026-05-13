@@ -144,12 +144,11 @@ npm run analyze          # writes HTML report under .next/analyze/
 
 ## History
 
-The original architecture (a Python web scraper, a CRA + Material UI
-React frontend in `frontend/`, an Express + SQLite backend in
-`backend/`) was migrated fully to Next.js + MongoDB. The legacy
-directories were removed once feature parity hit 100%. The Python
-scraper that originally populated the verse corpus remains in
-[`scrapy/`](./scrapy).
+The original architecture (a Python web scraper in `scrapy/`, a
+CRA + Material UI React frontend in `frontend/`, an Express +
+SQLite backend in `backend/`) was migrated fully to Next.js +
+MongoDB. The legacy directories were removed once feature parity
+hit 100%.
 
 ---
 
