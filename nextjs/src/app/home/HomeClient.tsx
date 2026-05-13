@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Book } from "@/domain/entities/Book";
 import { AppHeader } from "@/components/AppHeader";
+import ChapterPickerDialog from "./ChapterPickerDialog";
 import {
   feedService,
   type FeedComment,
@@ -305,6 +306,7 @@ function EmptyState({ text }: { text: string }) {
 export default function HomeClient({ books, user, initialRecent }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "VT" | "NT">("all");
+  const [pickerBook, setPickerBook] = useState<Book | null>(null);
 
   const filtered = books.filter((b) => {
     const matchesSearch =
@@ -368,10 +370,11 @@ export default function HomeClient({ books, user, initialRecent }: Props) {
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {grouped[group].map((book) => (
-                  <Link
+                  <button
                     key={book.abbrev}
-                    href={`/verses/${book.abbrev}/1`}
-                    className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-3 hover:border-blue-400 dark:hover:border-brand hover:shadow-sm transition"
+                    type="button"
+                    onClick={() => setPickerBook(book)}
+                    className="text-left bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-3 hover:border-blue-400 dark:hover:border-brand hover:shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     <div className="text-xs text-gray-400 dark:text-slate-500 uppercase mb-1">
                       {book.abbrev}
@@ -382,7 +385,7 @@ export default function HomeClient({ books, user, initialRecent }: Props) {
                     <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                       {book.chapters} cap.
                     </div>
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
@@ -395,6 +398,8 @@ export default function HomeClient({ books, user, initialRecent }: Props) {
           )}
         </section>
       </main>
+
+      <ChapterPickerDialog book={pickerBook} onClose={() => setPickerBook(null)} />
     </div>
   );
 }
