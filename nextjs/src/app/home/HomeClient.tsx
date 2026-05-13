@@ -22,7 +22,30 @@ interface Props {
    * typically don't visit them on every page load.
    */
   initialRecent?: { items: FeedComment[]; nextCursor: FeedCursor | null };
+  /**
+   * Map of book abbrev → number of chapters the current user has marked
+   * as read. Used to tint each book card (none / partial / complete).
+   * Books absent from the map are treated as 0.
+   */
+  readCountByBook?: Record<string, number>;
 }
+
+type ReadTier = "none" | "partial" | "complete";
+
+function readTier(read: number, total: number): ReadTier {
+  if (read <= 0) return "none";
+  if (read >= total) return "complete";
+  return "partial";
+}
+
+const BOOK_CARD_TIER_CLASS: Record<ReadTier, string> = {
+  none:
+    "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700",
+  partial:
+    "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50",
+  complete:
+    "bg-blue-100 dark:bg-blue-900/40 border-blue-400 dark:border-blue-700",
+};
 
 const testamentLabels: Record<string, string> = {
   VT: "Velho Testamento",
@@ -303,7 +326,7 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
-export default function HomeClient({ books, user, initialRecent }: Props) {
+export default function HomeClient({ books, user, initialRecent, readCountByBook }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "VT" | "NT">("all");
   const [pickerBook, setPickerBook] = useState<Book | null>(null);
@@ -369,25 +392,35 @@ export default function HomeClient({ books, user, initialRecent }: Props) {
                 {group}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {grouped[group].map((book) => (
-                  <button
-                    key={book.abbrev}
-                    type="button"
-                    onClick={() => setPickerBook(book)}
-                    data-testid={`book-${book.abbrev}`}
-                    className="text-left bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-3 hover:border-blue-400 dark:hover:border-brand hover:shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    <div className="text-xs text-gray-400 dark:text-slate-500 uppercase mb-1">
-                      {book.abbrev}
-                    </div>
-                    <div className="text-sm font-medium text-gray-800 dark:text-slate-100 leading-tight">
-                      {book.name}
-                    </div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-                      {book.chapters} cap.
-                    </div>
-                  </button>
-                ))}
+                {grouped[group].map((book) => {
+                  const readCount = readCountByBook?.[book.abbrev] ?? 0;
+                  const tier = readTier(readCount, book.chapters);
+                  return (
+                    <button
+                      key={book.abbrev}
+                      type="button"
+                      onClick={() => setPickerBook(book)}
+                      data-testid={`book-${book.abbrev}`}
+                      data-read-tier={tier}
+                      title={
+                        readCount > 0
+                          ? `${readCount}/${book.chapters} capítulos lidos`
+                          : undefined
+                      }
+                      className={`text-left border rounded-lg p-3 hover:border-blue-400 dark:hover:border-brand hover:shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-400 ${BOOK_CARD_TIER_CLASS[tier]}`}
+                    >
+                      <div className="text-xs text-gray-400 dark:text-slate-500 uppercase mb-1">
+                        {book.abbrev}
+                      </div>
+                      <div className="text-sm font-medium text-gray-800 dark:text-slate-100 leading-tight">
+                        {book.name}
+                      </div>
+                      <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+                        {readCount > 0 ? `${readCount}/${book.chapters} cap.` : `${book.chapters} cap.`}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}

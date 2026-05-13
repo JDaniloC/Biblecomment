@@ -4,6 +4,7 @@ import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepo
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
+import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/MongoUserChapterReadRepository";
 import { GetAllBooksUseCase } from "@/application/use-cases/BookUseCases";
 import { GetRecentFeedUseCase } from "@/application/use-cases/FeedUseCases";
 import HomeClient from "./HomeClient";
@@ -20,13 +21,15 @@ export default async function HomePage() {
     new MongoCommentLikeRepository(),
     new MongoVerseRepository(),
   );
+  const readRepo = new MongoUserChapterReadRepository();
 
   // Books are cached via unstable_cache so the parallel fan-out is cheap on
   // warm renders; the recent feed query is what we actually save a hop on by
   // running it here instead of from a client-side useEffect after hydration.
-  const [books, recent] = await Promise.all([
+  const [books, recent, readCountByBook] = await Promise.all([
     booksUseCase.execute(),
     recentUseCase.execute({ cursor: null, limit: INITIAL_FEED_LIMIT }),
+    readRepo.countByUserPerBook(session.user.id),
   ]);
 
   // Use-case returns Date instances; the client component types cursors as
@@ -43,6 +46,7 @@ export default async function HomePage() {
       books={books}
       user={session.user}
       initialRecent={initialRecent}
+      readCountByBook={readCountByBook}
     />
   );
 }
