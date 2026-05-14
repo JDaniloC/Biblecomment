@@ -69,3 +69,8 @@ export async function generateMetadata({ params }: PageProps) {
     description: `Perfil público de @${username} no Bible Comment.`,
   };
 }
+
+// auth() + Mongo lookups depend on per-request cookies and live data. Without
+// the explicit hint Next 15 + @netlify/plugin-nextjs has been seen to skip
+// the dynamic route during build, producing 404s in production.
+export const dynamic = "force-dynamic";

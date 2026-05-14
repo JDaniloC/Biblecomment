@@ -56,3 +56,5 @@ export async function generateMetadata({ params }: PageProps) {
     description: `Pessoas que @${username} segue.`,
   };
 }
+
+export const dynamic = "force-dynamic";
