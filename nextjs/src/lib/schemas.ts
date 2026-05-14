@@ -155,3 +155,12 @@ export const BackupDiscussionsSchema = z.object({
   discussions: z.array(BackupDiscussionItemSchema).default([]),
 });
 export type BackupDiscussionItem = z.infer<typeof BackupDiscussionItemSchema>;
+
+export const CreateCommunitySchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]{2,40}$/, {
+    message: "Use letras minúsculas, números ou hífen (2-40).",
+  }),
+  name: z.string().min(2).max(60),
+  description: z.string().max(500).optional().default(""),
+});
+export type CreateCommunityBody = z.infer<typeof CreateCommunitySchema>;
