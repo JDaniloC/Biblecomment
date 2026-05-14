@@ -36,6 +36,12 @@ export interface ICommentRepository {
     q?: string;
     cursor?: { createdAt: Date; id: string } | null;
     limit: number;
+    /**
+     * Optional author filter — when provided, the result is restricted to
+     * comments whose `username` is in the list. Used by the home "Seguindo"
+     * tab to filter the cursor stream to followed authors only.
+     */
+    usernamesIn?: string[];
   }): Promise<{ items: Comment[]; nextCursor: { createdAt: Date; id: string } | null }>;
   /** Set the admin-verified state. `by` is the moderator's username (snapshot). */
   setVerified(id: string, verified: boolean, by: string | null): Promise<Comment | null>;

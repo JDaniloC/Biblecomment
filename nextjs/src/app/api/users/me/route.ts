@@ -4,6 +4,7 @@ import { UserModel } from "@/infrastructure/database/models/UserModel";
 import { CommentModel } from "@/infrastructure/database/models/CommentModel";
 import { VerseModel } from "@/infrastructure/database/models/VerseModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
+import { MongoFollowRepository } from "@/infrastructure/repositories/MongoFollowRepository";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,13 @@ export async function GET() {
       chapterKeys.add(`${v.abbrev}:${v.chapter}`);
     }
 
+    const followRepo = new MongoFollowRepository();
+    const userId = userData._id.toString();
+    const [followersCount, followingCount] = await Promise.all([
+      followRepo.countFollowers(userId),
+      followRepo.countFollowing(userId),
+    ]);
+
     const safeUser = {
       email: userData.email,
       username: userData.username,
@@ -44,6 +52,8 @@ export async function GET() {
       booksCount: bookAbbrevs.size,
       chaptersCount: chapterKeys.size,
       commentsCount: userComments.length,
+      followersCount,
+      followingCount,
     };
 
     return NextResponse.json(safeUser);

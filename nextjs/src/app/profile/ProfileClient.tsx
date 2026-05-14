@@ -38,6 +38,8 @@ interface UserProfile {
   booksCount: number;
   chaptersCount: number;
   commentsCount: number;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 import { getTagMetaOrNeutral } from "@/lib/tag-meta";
@@ -951,11 +953,41 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                 </p>
               </div>
               {profile ? (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7">
-                  <StatCard label="Comentários" value={profile.commentsCount} max={0} color="#137ddb" />
-                  <StatCard label="Livros comentados" value={profile.booksCount} max={66} color="#7c3aed" />
-                  <StatCard label="Capítulos comentados" value={profile.chaptersCount} max={1189} color="#059669" />
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <StatCard label="Comentários" value={profile.commentsCount} max={0} color="#137ddb" />
+                    <StatCard label="Livros comentados" value={profile.booksCount} max={66} color="#7c3aed" />
+                    <StatCard label="Capítulos comentados" value={profile.chaptersCount} max={1189} color="#059669" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-7" data-testid="profile-social-stats">
+                    <Link
+                      href={`/u/${user.username}/followers`}
+                      data-testid="profile-followers-link"
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand transition no-underline"
+                    >
+                      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                        Seguidores
+                      </div>
+                      <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">
+                        {profile.followersCount ?? 0}
+                      </div>
+                      <div className="text-[11px] text-brand mt-1">Ver lista →</div>
+                    </Link>
+                    <Link
+                      href={`/u/${user.username}/following`}
+                      data-testid="profile-following-link"
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand transition no-underline"
+                    >
+                      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                        Seguindo
+                      </div>
+                      <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">
+                        {profile.followingCount ?? 0}
+                      </div>
+                      <div className="text-[11px] text-brand mt-1">Ver lista →</div>
+                    </Link>
+                  </div>
+                </>
               ) : (
                 <Loading />
               )}

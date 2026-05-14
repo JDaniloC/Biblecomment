@@ -40,6 +40,8 @@ export interface UserProfile {
   booksCount: number;
   chaptersCount: number;
   commentsCount: number;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 export interface UserListItem {

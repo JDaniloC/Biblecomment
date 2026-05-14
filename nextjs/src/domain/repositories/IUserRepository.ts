@@ -16,6 +16,8 @@ export interface IUserRepository {
    */
   searchByUsernamePrefix(prefix: string, limit: number): Promise<Array<{ username: string; displayName?: string }>>;
   findByUsernames(usernames: string[]): Promise<User[]>;
+  /** Bulk lookup by `_id`. Useful for resolving follow lists, likes, etc. */
+  findManyByIds(userIds: string[]): Promise<User[]>;
   findAll(): Promise<User[]>;
   findAllPaginated(page: number, pageSize: number): Promise<User[]>;
   create(user: Omit<User, "_id">): Promise<User>;

@@ -36,6 +36,17 @@ export const feedService = {
     return res.data;
   },
 
+  async following(opts: { cursor?: FeedCursor | null; limit?: number } = {}): Promise<RecentFeedPage> {
+    const params = new URLSearchParams();
+    if (opts.cursor) {
+      params.set("cursorAt", opts.cursor.createdAt);
+      params.set("cursorId", opts.cursor.id);
+    }
+    if (opts.limit) params.set("limit", String(opts.limit));
+    const res = await axios.get<RecentFeedPage>(`/api/feed/following?${params}`);
+    return res.data;
+  },
+
   async popular(opts: { windowDays?: number; limit?: number } = {}): Promise<{
     items: FeedComment[];
     windowDays: number;

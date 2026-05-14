@@ -17,8 +17,8 @@ const NotificationSchema = new Schema<INotificationDocument>(
   {
     recipient:    { type: String, required: true },
     actor:        { type: String, required: true },
-    type:         { type: String, enum: ["discussion_answer", "comment_mention", "answer_mention", "badge_unlocked"], required: true },
-    resourceType: { type: String, enum: ["discussion", "comment", "badge"], required: true },
+    type:         { type: String, enum: ["discussion_answer", "comment_mention", "answer_mention", "badge_unlocked", "new_follower"], required: true },
+    resourceType: { type: String, enum: ["discussion", "comment", "badge", "user"], required: true },
     resourceId:   { type: String, required: true },
     message:      { type: String, required: true },
     url:          { type: String, required: true },

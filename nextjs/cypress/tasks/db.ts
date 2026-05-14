@@ -156,6 +156,53 @@ export async function getUserBadges(email: string): Promise<string[]> {
   return Array.isArray(user.badges) ? (user.badges as string[]) : [];
 }
 
+export interface SeedCommentInput {
+  username: string;
+  /** Verse identifiers — needs a verse seeded via seedDb so we can resolve the id. */
+  abbrev: string;
+  chapter: number;
+  verseNumber: number;
+  bookReference?: string;
+  text: string;
+  tags?: string[];
+}
+
+/**
+ * Insert a comment row directly into Mongo, bypassing the API. Useful for
+ * tests that need pre-existing content (feed assertions, profile timeline)
+ * without driving through the UI/auth.
+ */
+export async function seedComment(input: SeedCommentInput): Promise<{ id: string }> {
+  await ensureConnected();
+  const db = mongoose.connection.db;
+  if (!db) throw new Error("Mongoose connection has no db handle.");
+  const verse = await db.collection("verses").findOne({
+    abbrev: input.abbrev,
+    chapter: input.chapter,
+    verseNumber: input.verseNumber,
+  });
+  if (!verse) {
+    throw new Error(
+      `seedComment: verse ${input.abbrev} ${input.chapter}:${input.verseNumber} not found — seed it via cy.seedDb first.`,
+    );
+  }
+  const now = new Date();
+  const doc = {
+    verseId: verse._id,
+    username: input.username,
+    onTitle: false,
+    bookReference:
+      input.bookReference ?? `${input.abbrev} ${input.chapter}:${input.verseNumber}`,
+    text: input.text,
+    tags: input.tags ?? ["devocional"],
+    verified: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const result = await db.collection("comments").insertOne(doc);
+  return { id: result.insertedId.toString() };
+}
+
 export async function seedChapterRead(input: {
   email: string;
   abbrev: string;

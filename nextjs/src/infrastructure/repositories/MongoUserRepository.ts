@@ -83,6 +83,13 @@ export class MongoUserRepository implements IUserRepository {
     return docs.map(toEntity);
   }
 
+  async findManyByIds(userIds: string[]): Promise<User[]> {
+    if (userIds.length === 0) return [];
+    await connectToDatabase();
+    const docs = await UserModel.find({ _id: { $in: userIds } });
+    return docs.map(toEntity);
+  }
+
   async findAll(): Promise<User[]> {
     await connectToDatabase();
     const docs = await UserModel.find({});

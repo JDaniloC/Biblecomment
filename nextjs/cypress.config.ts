@@ -6,6 +6,7 @@ import {
   insertResetToken,
   countResetTokensForEmail,
   seedChapterRead,
+  seedComment,
   countChapterReads,
   countCommentLikesByUser,
   countLikesForComment,
@@ -15,6 +16,7 @@ import {
   countAnswersForDiscussion,
   getUserBadges,
   type InsertResetTokenInput,
+  type SeedCommentInput,
 } from "./cypress/tasks/db";
 import { assertLocalMongoUri } from "./cypress/tasks/safety";
 
@@ -66,6 +68,9 @@ export default defineConfig({
         async "db:seedChapterRead"(input: { email: string; abbrev: string; chapter: number }) {
           await seedChapterRead(input);
           return null;
+        },
+        async "db:seedComment"(input: SeedCommentInput) {
+          return await seedComment(input);
         },
         async "db:countChapterReads"(email: string) {
           return await countChapterReads(email);

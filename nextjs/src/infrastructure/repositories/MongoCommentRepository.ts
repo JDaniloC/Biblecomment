@@ -134,10 +134,20 @@ export class MongoCommentRepository implements ICommentRepository {
     q?: string;
     cursor?: { createdAt: Date; id: string } | null;
     limit: number;
+    usernamesIn?: string[];
   }): Promise<{ items: Comment[]; nextCursor: { createdAt: Date; id: string } | null }> {
     await connectToDatabase();
     const limit = Math.max(1, Math.min(opts.limit, 100));
     const q = opts.q?.trim();
+    // Empty `usernamesIn` is explicit "nobody to show" — short-circuit so we
+    // don't issue a query with `{ username: { $in: [] } }` which always
+    // matches zero rows but still hits the DB.
+    if (opts.usernamesIn && opts.usernamesIn.length === 0) {
+      return { items: [], nextCursor: null };
+    }
+    const usernamesPred = opts.usernamesIn
+      ? { username: { $in: opts.usernamesIn } }
+      : null;
 
     // Cursor predicate: strict-less-than on (createdAt, _id) using the
     // compound index { createdAt: -1, _id: -1 }. Splitting into the two
@@ -158,7 +168,8 @@ export class MongoCommentRepository implements ICommentRepository {
 
     let docs: ICommentDocument[];
     if (!q) {
-      const filter = cursorPred ?? {};
+      const filter: Record<string, unknown> = { ...(cursorPred ?? {}) };
+      if (usernamesPred) Object.assign(filter, usernamesPred);
       docs = await CommentModel.find(filter)
         .sort({ createdAt: -1, _id: -1 })
         .limit(limit + 1);
@@ -176,6 +187,10 @@ export class MongoCommentRepository implements ICommentRepository {
       if (cursorPred) {
         textFilter.$and = [cursorPred];
         metaFilter.$and = [cursorPred];
+      }
+      if (usernamesPred) {
+        Object.assign(textFilter, usernamesPred);
+        Object.assign(metaFilter, usernamesPred);
       }
 
       const [byText, byMeta] = await Promise.all([

@@ -85,6 +85,16 @@ export class MongoNotificationRepository implements INotificationRepository {
     return doc !== null;
   }
 
+  async existsFor(
+    recipient: string,
+    actor: string,
+    type: Notification["type"],
+  ): Promise<boolean> {
+    await connectToDatabase();
+    const doc = await NotificationModel.exists({ recipient, actor, type });
+    return doc !== null;
+  }
+
   async renameUsername(oldUsername: string, newUsername: string): Promise<number> {
     await connectToDatabase();
     // Two updateMany — one per field — keeps each query selective on its

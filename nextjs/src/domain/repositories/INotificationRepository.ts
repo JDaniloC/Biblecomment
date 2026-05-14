@@ -14,6 +14,12 @@ export interface INotificationRepository {
    */
   userHasMentioned(username: string): Promise<boolean>;
   /**
+   * True iff a notification of the given (recipient, actor, type) already
+   * exists. Used to skip duplicate follow notifications when a user
+   * unfollows and re-follows.
+   */
+  existsFor(recipient: string, actor: string, type: import("../entities/Notification").NotificationType): Promise<boolean>;
+  /**
    * Cascade rename when the user changes their slug — rewrites the
    * `recipient` and `actor` fields on every notification matching the
    * old username. Returns total rows touched.

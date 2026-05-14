@@ -37,6 +37,7 @@ function makeRepos(opts: {
     findByUsernamePublic: async () => null,
     searchByUsernamePrefix: async () => [],
     findByUsernames: async () => [],
+    findManyByIds: async () => [],
     findAll: async () => [],
     findAllPaginated: async () => [],
     create: async () => ({} as never),
@@ -109,6 +110,7 @@ function makeRepos(opts: {
     markAllAsRead: async () => 0,
     deleteForUser: async () => 0,
     userHasMentioned: async () => opts.hasMentioned ?? false,
+    existsFor: async () => false,
     _created: notifs,
   } as unknown as INotificationRepository & { _created: unknown[] };
 

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { BadgeCard } from "@/app/profile/_components/BadgeCard";
 import { getBadge } from "@/lib/badges/catalog";
+import { followService } from "@/services/follow";
+import { useNotification } from "@/contexts/NotificationContext";
 
 interface ViewerSession {
   name: string;
@@ -30,12 +32,19 @@ export interface PublicProfileComment {
   createdAt: string | null;
 }
 
+export interface PublicProfileFollowState {
+  followers: number;
+  following: number;
+  isFollowing: boolean;
+}
+
 interface Props {
   user: PublicProfileUser;
   initialComments: PublicProfileComment[];
   initialHasMore: boolean;
   /** Logged-in viewer's session, or null for anonymous browsing. */
   viewer: ViewerSession | null;
+  initialFollowState: PublicProfileFollowState;
 }
 
 const PAGE_SIZE = 20;
@@ -61,14 +70,23 @@ function getInitials(name: string): string {
 
 type Tab = "badges" | "comments";
 
-export default function PublicProfileClient({ user, initialComments, initialHasMore, viewer }: Props) {
+export default function PublicProfileClient({
+  user,
+  initialComments,
+  initialHasMore,
+  viewer,
+  initialFollowState,
+}: Props) {
   const router = useRouter();
+  const { handleNotification } = useNotification();
   const [tab, setTab] = useState<Tab>("badges");
   const [comments, setComments] = useState<PublicProfileComment[]>(initialComments);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [followState, setFollowState] = useState<PublicProfileFollowState>(initialFollowState);
+  const [followBusy, setFollowBusy] = useState(false);
 
   // Deep-link friendly back behavior: prefer router.back() (so users return
   // to wherever they came from — chapter page, feed, etc.). When there is
@@ -83,6 +101,36 @@ export default function PublicProfileClient({ user, initialComments, initialHasM
 
   const display = user.displayName ?? user.username;
   const initials = getInitials(display);
+
+  const canFollow = !!viewer && viewer.username !== user.username;
+
+  async function handleToggleFollow() {
+    if (!canFollow || followBusy) return;
+    setFollowBusy(true);
+    const wasFollowing = followState.isFollowing;
+    // Optimistic update — UI snaps immediately. Rolls back on failure.
+    setFollowState((s) => ({
+      ...s,
+      isFollowing: !wasFollowing,
+      followers: s.followers + (wasFollowing ? -1 : 1),
+    }));
+    try {
+      if (wasFollowing) await followService.unfollow(user.username);
+      else await followService.follow(user.username);
+    } catch {
+      setFollowState((s) => ({
+        ...s,
+        isFollowing: wasFollowing,
+        followers: s.followers + (wasFollowing ? 1 : -1),
+      }));
+      handleNotification(
+        "error",
+        wasFollowing ? "Erro ao deixar de seguir." : "Erro ao seguir usuário.",
+      );
+    } finally {
+      setFollowBusy(false);
+    }
+  }
 
   const earnedBadges = user.badges
     .map((id) => getBadge(id))
@@ -182,18 +230,54 @@ export default function PublicProfileClient({ user, initialComments, initialHasM
                 {user.belief}
               </p>
             )}
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-              Membro desde {memberSince(user.createdAt)}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-500 dark:text-slate-400">
+              <Link
+                href={`/u/${user.username}/followers`}
+                data-testid="public-profile-followers"
+                className="hover:text-brand transition"
+              >
+                <strong className="text-slate-800 dark:text-slate-100">{followState.followers}</strong>{" "}
+                {followState.followers === 1 ? "seguidor" : "seguidores"}
+              </Link>
+              <Link
+                href={`/u/${user.username}/following`}
+                data-testid="public-profile-following"
+                className="hover:text-brand transition"
+              >
+                <strong className="text-slate-800 dark:text-slate-100">{followState.following}</strong>{" "}
+                seguindo
+              </Link>
+              <span className="text-slate-400 dark:text-slate-500">
+                Membro desde {memberSince(user.createdAt)}
+              </span>
+            </div>
           </div>
-          {isMe && (
-            <Link
-              href="/profile"
-              className="flex-none text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-            >
-              Editar perfil
-            </Link>
-          )}
+          <div className="flex-none flex flex-col gap-2 items-end">
+            {isMe && (
+              <Link
+                href="/profile"
+                className="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              >
+                Editar perfil
+              </Link>
+            )}
+            {canFollow && (
+              <button
+                type="button"
+                onClick={handleToggleFollow}
+                disabled={followBusy}
+                data-testid="public-profile-follow-button"
+                data-following={followState.isFollowing ? "true" : "false"}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-md transition disabled:opacity-60 ${
+                  followState.isFollowing
+                    ? "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-900/60"
+                    : "bg-brand text-white hover:bg-brand/90"
+                }`}
+              >
+                {followState.isFollowing ? "Seguindo" : "Seguir"}
+              </button>
+            )}
+          </div>
         </header>
 
         <nav

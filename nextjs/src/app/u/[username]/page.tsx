@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoFollowRepository } from "@/infrastructure/repositories/MongoFollowRepository";
+import { GetFollowStateUseCase } from "@/application/use-cases/FollowUseCases";
 import PublicProfileClient from "./PublicProfileClient";
 
 interface PageProps {
@@ -30,6 +32,11 @@ export default async function PublicProfilePage({ params }: PageProps) {
       }
     : null;
 
+  const followState = await new GetFollowStateUseCase(
+    new MongoFollowRepository(),
+    new MongoUserRepository(),
+  ).execute(slug, viewer?.email ?? null);
+
   // Mongoose docs carry Date instances; the client gets ISO strings over the
   // wire boundary so we normalize here rather than mixing types client-side.
   const serializableUser = {
@@ -50,6 +57,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
       initialComments={serializableComments}
       initialHasMore={comments.length === INITIAL_PAGE_SIZE}
       viewer={viewer}
+      initialFollowState={followState ?? { followers: 0, following: 0, isFollowing: false }}
     />
   );
 }

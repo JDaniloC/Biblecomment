@@ -52,10 +52,11 @@ const testamentLabels: Record<string, string> = {
   NT: "Novo Testamento",
 };
 
-type Tab = "recent" | "popular" | "discussions";
+type Tab = "recent" | "following" | "popular" | "discussions";
 
 const TAB_LABEL: Record<Tab, string> = {
   recent: "Recentes",
+  following: "Seguindo",
   popular: "Populares (7d)",
   discussions: "Discussões ativas",
 };
@@ -173,6 +174,10 @@ function FeedSection({
   const [recentCursor, setRecentCursor] = useState<FeedCursor | null>(initialRecent?.nextCursor ?? null);
   const [recentLoaded, setRecentLoaded] = useState(!!initialRecent);
 
+  const [following, setFollowing] = useState<FeedComment[]>([]);
+  const [followingCursor, setFollowingCursor] = useState<FeedCursor | null>(null);
+  const [followingLoaded, setFollowingLoaded] = useState(false);
+
   const [popular, setPopular] = useState<FeedComment[]>([]);
   const [popularLoaded, setPopularLoaded] = useState(false);
 
@@ -192,6 +197,21 @@ function FeedSection({
       setRecentLoaded(true);
     } catch {
       setError("Erro ao carregar o feed.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadFollowing = useCallback(async (cursor?: FeedCursor | null) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const page = await feedService.following({ cursor });
+      setFollowing((prev) => (cursor ? [...prev, ...page.items] : page.items));
+      setFollowingCursor(page.nextCursor);
+      setFollowingLoaded(true);
+    } catch {
+      setError("Erro ao carregar o feed de quem você segue.");
     } finally {
       setLoading(false);
     }
@@ -227,9 +247,10 @@ function FeedSection({
 
   useEffect(() => {
     if (tab === "recent" && !recentLoaded) loadRecent(null);
+    if (tab === "following" && !followingLoaded) loadFollowing(null);
     if (tab === "popular" && !popularLoaded) loadPopular();
     if (tab === "discussions" && !discussionsLoaded) loadDiscussions();
-  }, [tab, recentLoaded, popularLoaded, discussionsLoaded, loadRecent, loadPopular, loadDiscussions]);
+  }, [tab, recentLoaded, followingLoaded, popularLoaded, discussionsLoaded, loadRecent, loadFollowing, loadPopular, loadDiscussions]);
 
   return (
     <section className="mb-10">
@@ -240,7 +261,7 @@ function FeedSection({
       </div>
 
       <div role="tablist" aria-label="Filtros do feed" className="flex flex-wrap gap-2 mb-4">
-        {(["recent", "popular", "discussions"] as Tab[]).map((t) => (
+        {(["recent", "following", "popular", "discussions"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -286,6 +307,33 @@ function FeedSection({
                 </div>
               )}
               {!recentLoaded && loading && <Loading />}
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === "following" && (
+        <>
+          {following.length === 0 && followingLoaded && !loading ? (
+            <EmptyState text="Você ainda não segue ninguém — ou os usuários que você segue ainda não comentaram. Visite um perfil e clique em Seguir para começar." />
+          ) : (
+            <div className="flex flex-col gap-3" data-testid="feed-following">
+              {following.map((c) => (
+                <CommentCard key={c._id} c={c} />
+              ))}
+              {followingCursor && (
+                <div className="flex justify-center mt-2">
+                  <button
+                    type="button"
+                    onClick={() => loadFollowing(followingCursor)}
+                    disabled={loading}
+                    className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                  >
+                    {loading ? "Carregando…" : "Carregar mais"}
+                  </button>
+                </div>
+              )}
+              {!followingLoaded && loading && <Loading />}
             </div>
           )}
         </>
