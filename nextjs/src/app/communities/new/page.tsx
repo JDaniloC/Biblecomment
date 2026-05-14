@@ -21,3 +21,5 @@ export default async function NewCommunityPage() {
 export const metadata = {
   title: "Criar comunidade — Bible Comment",
 };
+
+export const dynamic = "force-dynamic";

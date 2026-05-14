@@ -14,12 +14,57 @@ interface ViewerSession {
   moderator?: boolean;
 }
 
+export interface CommunityCommentItem {
+  _id: string;
+  text: string;
+  username: string;
+  bookReference: string;
+  tags: string[];
+  createdAt: string | null;
+}
+
 interface Props {
   community: Community;
   isMember: boolean;
   isCreator: boolean;
   creatorUsername?: string;
   viewer: ViewerSession | null;
+  initialComments: CommunityCommentItem[];
+  initialCommentsTotal: number;
+  commentsPageSize: number;
+}
+
+/**
+ * Convert a `bookReference` ("GN 1:1" / "GN 1") into a verse permalink so
+ * each comment in the list can jump back to its source verse.
+ * Falls back to the community page when the parse fails.
+ */
+function refToHref(ref: string, fallback: string): string {
+  const parts = ref.trim().split(/\s+/);
+  if (parts.length < 2) return fallback;
+  const abbrev = parts[0].toLowerCase();
+  const tail = parts[1];
+  const colon = tail.indexOf(":");
+  const chapter = colon >= 0 ? tail.slice(0, colon) : tail;
+  const verse = colon >= 0 ? tail.slice(colon + 1) : null;
+  if (!/^\d+$/.test(chapter)) return fallback;
+  if (verse && /^\d+$/.test(verse)) {
+    return `/chapter/${abbrev}/${chapter}#verse-${verse}`;
+  }
+  return `/chapter/${abbrev}/${chapter}`;
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
 }
 
 export default function CommunityDetailClient({
@@ -28,11 +73,37 @@ export default function CommunityDetailClient({
   isCreator,
   creatorUsername,
   viewer,
+  initialComments,
+  initialCommentsTotal,
+  commentsPageSize,
 }: Props) {
   const { handleNotification } = useNotification();
   const [isMember, setIsMember] = useState(initialIsMember);
   const [memberCount, setMemberCount] = useState(community.memberCount);
   const [busy, setBusy] = useState(false);
+  const [comments, setComments] = useState(initialComments);
+  const [commentsTotal] = useState(initialCommentsTotal);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  async function loadMoreComments() {
+    if (loadingMore || comments.length >= commentsTotal) return;
+    setLoadingMore(true);
+    try {
+      const next = commentsPage + 1;
+      const res = await fetch(
+        `/api/communities/${community.slug}/comments?page=${next}`,
+      );
+      if (!res.ok) throw new Error("fetch failed");
+      const json = (await res.json()) as { items: CommunityCommentItem[] };
+      setComments((prev) => [...prev, ...json.items]);
+      setCommentsPage(next);
+    } catch {
+      handleNotification("error", "Erro ao carregar mais comentários.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   async function toggleMembership() {
     if (!viewer || busy) return;
@@ -129,11 +200,66 @@ export default function CommunityDetailClient({
           )}
         </header>
 
-        <section
-          data-testid="community-comments-placeholder"
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 text-sm text-slate-500 dark:text-slate-400"
-        >
-          Os comentários vinculados a esta comunidade aparecem aqui em breve.
+        <section data-testid="community-comments" className="mb-6">
+          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
+            Comentários ({commentsTotal})
+          </h2>
+
+          {comments.length === 0 ? (
+            <p
+              data-testid="community-comments-empty"
+              className="text-center text-sm text-slate-400 dark:text-slate-500 py-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl"
+            >
+              {isMember
+                ? "Seja o primeiro a comentar nessa comunidade — escolha-a no campo \"Postar em\" ao escrever um comentário."
+                : "Nenhum comentário ainda."}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {comments.map((c) => (
+                <li
+                  key={c._id}
+                  data-testid={`community-comment-${c._id}`}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <Link
+                      href={`/u/${c.username}`}
+                      className="text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-brand truncate"
+                    >
+                      @{c.username}
+                    </Link>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">
+                      {formatDate(c.createdAt)}
+                    </span>
+                  </div>
+                  <Link
+                    href={refToHref(c.bookReference, `/communities/${community.slug}`)}
+                    className="inline-block text-xs font-medium text-brand mb-2 hover:underline"
+                  >
+                    {c.bookReference}
+                  </Link>
+                  <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-6">
+                    {c.text}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {comments.length < commentsTotal && (
+            <div className="flex justify-center mt-4">
+              <button
+                type="button"
+                onClick={loadMoreComments}
+                disabled={loadingMore}
+                data-testid="community-comments-load-more"
+                className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+              >
+                {loadingMore ? "Carregando…" : "Carregar mais"}
+              </button>
+            </div>
+          )}
         </section>
       </main>
     </div>

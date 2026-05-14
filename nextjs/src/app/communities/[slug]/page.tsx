@@ -3,7 +3,11 @@ import { auth } from "@/lib/auth";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { ListCommunityCommentsUseCase } from "@/application/use-cases/CommentUseCases";
 import CommunityDetailClient from "./CommunityDetailClient";
+
+const INITIAL_COMMENTS = 20;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -39,6 +43,18 @@ export default async function CommunityDetailPage({ params }: PageProps) {
   const [creator] = await userRepo.findManyByIds([community.createdBy]);
   creatorUsername = creator?.username;
 
+  const commentsResult = await new ListCommunityCommentsUseCase(
+    new MongoCommentRepository(),
+  ).execute(lowSlug, 1, INITIAL_COMMENTS);
+  const initialComments = commentsResult.items.map((c) => ({
+    _id: c._id ?? "",
+    text: c.text,
+    username: c.username,
+    bookReference: c.bookReference,
+    tags: c.tags,
+    createdAt: c.createdAt?.toISOString() ?? null,
+  }));
+
   const viewer = session?.user
     ? {
         name: session.user.name ?? session.user.username,
@@ -55,6 +71,9 @@ export default async function CommunityDetailPage({ params }: PageProps) {
       isCreator={isCreator}
       creatorUsername={creatorUsername}
       viewer={viewer}
+      initialComments={initialComments}
+      initialCommentsTotal={commentsResult.total}
+      commentsPageSize={INITIAL_COMMENTS}
     />
   );
 }

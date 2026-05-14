@@ -18,4 +18,6 @@ export interface CommentData {
   verified?: boolean;
   /** Snapshot username of the moderator who verified. */
   verifiedBy?: string;
+  /** Slug of the community the comment was posted in. Absent for "general feed" comments. */
+  communitySlug?: string;
 }

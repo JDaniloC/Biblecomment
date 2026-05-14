@@ -8,6 +8,8 @@ import { MongoCommentReportRepository } from "@/infrastructure/repositories/Mong
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
+import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
+import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import {
   ToggleLikeUseCase,
   ReportCommentUseCase,
@@ -119,7 +121,7 @@ export async function reportCommentAction(
  */
 export async function createCommentAction(
   verseId: string,
-  draft: { text: string; tags?: string[]; onTitle?: boolean },
+  draft: { text: string; tags?: string[]; onTitle?: boolean; communitySlug?: string },
 ): Promise<ActionResult<Comment>> {
   const session = await auth();
   if (!session?.user) return authError();
@@ -159,14 +161,21 @@ export async function createCommentAction(
     const tags = draft.tags ?? [];
 
     const commentRepo = new MongoCommentRepository();
-    const useCase = new CreateCommentUseCase(commentRepo, verseRepo);
-    const comment = await useCase.execute(
-      verse._id,
-      session.user.username,
-      draft.text,
+    const useCase = new CreateCommentUseCase(
+      commentRepo,
+      verseRepo,
+      new MongoCommunityRepository(),
+      new MongoCommunityMembershipRepository(),
+      new MongoUserRepository(),
+    );
+    const comment = await useCase.execute({
+      verseId: verse._id,
+      username: session.user.username,
+      text: draft.text,
       tags,
       onTitle,
-    );
+      communitySlug: draft.communitySlug,
+    });
 
     if (comment._id) {
       const notifyMentions = new NotifyMentionsUseCase(

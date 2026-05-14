@@ -8,6 +8,7 @@ export interface ICommentDocument extends Document {
   bookReference: string;
   text: string;
   tags: string[];
+  communitySlug?: string;
   verified?: boolean;
   verifiedBy?: string;
   verifiedAt?: Date;
@@ -27,6 +28,7 @@ const CommentSchema = new Schema<ICommentDocument>(
     bookReference: { type: String, required: true },
     text:          { type: String, required: true },
     tags:          { type: [String], default: [] },
+    communitySlug: { type: String },
     verified:      { type: Boolean, default: false },
     verifiedBy:    { type: String },
     verifiedAt:    { type: Date },
@@ -38,6 +40,10 @@ CommentSchema.index({ sourceId: 1 }, { unique: true, sparse: true });
 CommentSchema.index({ verseId: 1, onTitle: 1 });
 CommentSchema.index({ username: 1 });
 CommentSchema.index({ bookReference: 1 });
+// Filter chapter reads by community without rebuilding the verseId index.
+// Sparse so the existing geral-only documents don't bloat the index.
+CommentSchema.index({ communitySlug: 1, createdAt: -1 }, { sparse: true });
+CommentSchema.index({ verseId: 1, communitySlug: 1 }, { sparse: true });
 CommentSchema.index({ verified: 1 });
 // Newest-first sort for the moderation panel and any feed view.
 // Compound on (createdAt, _id) so cursor pagination has a deterministic

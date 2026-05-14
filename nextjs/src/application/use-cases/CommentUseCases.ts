@@ -1,14 +1,28 @@
-import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import { ICommentRepository, CommunityFilter } from "@/domain/repositories/ICommentRepository";
 import { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import { ICommentReportRepository } from "@/domain/repositories/ICommentReportRepository";
+import { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
+import { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
+import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import { Comment } from "@/domain/entities/Comment";
 
 export class GetVerseCommentsUseCase {
   constructor(private readonly commentRepo: ICommentRepository) {}
 
-  async execute(verseId: string): Promise<Comment[]> {
-    return this.commentRepo.findByVerseId(verseId);
+  async execute(verseId: string, communities?: CommunityFilter): Promise<Comment[]> {
+    if (communities === undefined) {
+      return this.commentRepo.findByVerseId(verseId);
+    }
+    return this.commentRepo.findByVerseIdFiltered(verseId, communities);
+  }
+}
+
+export class ListCommunityCommentsUseCase {
+  constructor(private readonly commentRepo: ICommentRepository) {}
+
+  async execute(slug: string, page: number, pageSize: number) {
+    return this.commentRepo.findByCommunity(slug, page, pageSize);
   }
 }
 
@@ -52,31 +66,60 @@ export class GetUserFavoritesUseCase {
   }
 }
 
+export interface CreateCommentInput {
+  verseId: string;
+  username: string;
+  text: string;
+  tags: string[];
+  onTitle?: boolean;
+  /** Optional community to post into. Caller may omit for the general feed. */
+  communitySlug?: string;
+}
+
 export class CreateCommentUseCase {
   constructor(
     private readonly commentRepo: ICommentRepository,
-    private readonly verseRepo: IVerseRepository
+    private readonly verseRepo: IVerseRepository,
+    private readonly communityRepo?: ICommunityRepository,
+    private readonly membershipRepo?: ICommunityMembershipRepository,
+    private readonly userRepo?: IUserRepository,
   ) {}
 
-  async execute(
-    verseId: string,
-    username: string,
-    text: string,
-    tags: string[],
-    onTitle: boolean = false
-  ): Promise<Comment> {
-    const verse = await this.verseRepo.findById(verseId);
+  async execute(input: CreateCommentInput): Promise<Comment> {
+    const verse = await this.verseRepo.findById(input.verseId);
     if (!verse) throw new Error("Verse not found");
 
     const bookRef = verse.reference ?? `${verse.abbrev} ${verse.chapter}:${verse.verseNumber}`;
 
+    // Community gate: when the caller targets a community, we verify the
+    // community exists and the author belongs to it. Posting to /communities
+    // a user doesn't belong to should fail loudly rather than silently
+    // demoting the post to the general feed.
+    let communitySlug: string | undefined;
+    if (input.communitySlug) {
+      if (!this.communityRepo || !this.membershipRepo || !this.userRepo) {
+        throw new Error("Community posting not configured");
+      }
+      const community = await this.communityRepo.findBySlug(input.communitySlug);
+      if (!community || !community._id) throw new Error("Community not found");
+
+      const author = await this.userRepo.findByUsername(input.username);
+      if (!author || !author._id) throw new Error("Author not found");
+
+      const isMember = await this.membershipRepo.isMember(author._id, community._id);
+      if (!isMember) throw new Error("Not a community member");
+
+      communitySlug = community.slug;
+    }
+
     return this.commentRepo.create({
       verseId: verse._id ?? "",
-      username,
-      onTitle,
+      username: input.username,
+      onTitle: input.onTitle ?? false,
       bookReference: bookRef,
-      text,
-      tags,
+      text: input.text,
+      tags: input.tags,
+      communitySlug,
     });
   }
 }

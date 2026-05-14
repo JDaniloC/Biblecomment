@@ -44,6 +44,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
         likedByMe: stats.likedByViewer.has(c._id.toString()),
         verified: c.verified ?? false,
         verifiedBy: c.verifiedBy,
+        communitySlug: c.communitySlug,
         onTitle: c.onTitle,
       }));
 
@@ -60,6 +61,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
         likedByMe: stats.likedByViewer.has(c._id.toString()),
         verified: c.verified ?? false,
         verifiedBy: c.verifiedBy,
+        communitySlug: c.communitySlug,
         verseId: c.verseId.toString(),
         onTitle: c.onTitle,
       }));

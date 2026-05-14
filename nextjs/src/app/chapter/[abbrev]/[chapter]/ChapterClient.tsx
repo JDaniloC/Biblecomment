@@ -106,6 +106,8 @@ export default function ChapterClient({
   const [composeTags, setComposeTags] = useState<Record<string, boolean>>({
     devocional: false, exegese: false, pessoal: false, inspirado: false,
   });
+  const [composeCommunity, setComposeCommunity] = useState<string>("");
+  const [userCommunities, setUserCommunities] = useState<{ slug: string; name: string }[]>([]);
   const [composeSubmitting, setComposeSubmitting] = useState(false);
   const [editingComment, setEditingComment] = useState<CommentData | null>(null);
   const [editText, setEditText] = useState("");
@@ -160,6 +162,28 @@ export default function ChapterClient({
     loadCounts();
   }, [hasInitialCounts, loadCounts]);
 
+  // Fetch the user's communities once, on mount, so the "Postar em" select
+  // is already populated when the composer opens. Anonymous viewers skip the
+  // fetch entirely — the endpoint returns [] for them anyway, but cutting
+  // the request keeps the network panel clean.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/users/me/communities");
+        if (!res.ok) return;
+        const data = (await res.json()) as { items: { slug: string; name: string }[] };
+        if (!cancelled) setUserCommunities(data.items);
+      } catch {
+        // Non-critical metadata fetch — silently keep the select empty.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   const openTitlePanel = useCallback(async () => {
     setIsTitleMode(true);
     setSelectedVerse(null);
@@ -206,6 +230,7 @@ export default function ChapterClient({
   const resetCompose = useCallback(() => {
     setComposeText("");
     setComposeTags({ devocional: false, exegese: false, pessoal: false, inspirado: false });
+    setComposeCommunity("");
     setComposing(false);
   }, []);
 
@@ -238,6 +263,7 @@ export default function ChapterClient({
         onTitle: isTitleMode,
         text: composeText,
         tags: tagList,
+        communitySlug: composeCommunity || undefined,
       });
       if (!result.ok) {
         handleNotification("error", result.error || "Erro ao publicar.");
@@ -258,7 +284,7 @@ export default function ChapterClient({
     } finally {
       setComposeSubmitting(false);
     }
-  }, [user, requireLogin, composeText, composeTags, isTitleMode, book.abbrev, chapter, selectedVerse, handleNotification, resetCompose]);
+  }, [user, requireLogin, composeText, composeTags, composeCommunity, isTitleMode, book.abbrev, chapter, selectedVerse, handleNotification, resetCompose]);
 
   const handleLike = useCallback(async (id: string) => {
     if (!user) { requireLogin(); return; }
@@ -646,6 +672,28 @@ export default function ChapterClient({
                       </div>
                     )}
 
+                    {/* Postar em — comunidade do usuário ou geral */}
+                    {userCommunities.length > 0 && (
+                      <div className="pt-3 px-4">
+                        <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                          Postar em
+                        </label>
+                        <select
+                          value={composeCommunity}
+                          onChange={(e) => setComposeCommunity(e.target.value)}
+                          data-testid="compose-community-select"
+                          className="w-full h-9 px-3 rounded-[7px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] text-slate-700 dark:text-slate-200 cursor-pointer"
+                        >
+                          <option value="">Geral</option>
+                          {userCommunities.map((c) => (
+                            <option key={c.slug} value={c.slug}>
+                              /{c.slug} — {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     {/* Type CategoryCards */}
                     <div className="pt-3 px-4">
                       <div className="grid grid-cols-2 gap-1.5">
@@ -842,6 +890,23 @@ export default function ChapterClient({
                             {dateFormat(comment.createdAt)}
                           </span>
                         </div>
+
+                        {/* Community badge — only when the comment was posted into a community */}
+                        {comment.communitySlug && (
+                          <div className="pt-2 px-[18px]">
+                            <Link
+                              href={`/communities/${comment.communitySlug}`}
+                              data-testid={`comment-community-badge-${comment.communitySlug}`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-tint/30 dark:bg-brand-tint/20 text-brand text-[11px] font-semibold no-underline hover:bg-brand-tint/60 dark:hover:bg-brand-tint/40 transition"
+                            >
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                              </svg>
+                              /{comment.communitySlug}
+                            </Link>
+                          </div>
+                        )}
 
                         {/* Paragraph */}
                         <div className="pt-2.5 px-[18px]">

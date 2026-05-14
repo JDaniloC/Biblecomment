@@ -8,6 +8,8 @@ import {
   LeaveCommunityUseCase,
 } from "@/application/use-cases/CommunityUseCases";
 
+export const dynamic = "force-dynamic";
+
 /** POST = join (idempotent). DELETE = leave (idempotent). */
 export async function POST(
   _req: Request,

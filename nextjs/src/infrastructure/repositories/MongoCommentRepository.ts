@@ -1,4 +1,4 @@
-import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import { ICommentRepository, CommunityFilter } from "@/domain/repositories/ICommentRepository";
 import { Comment } from "@/domain/entities/Comment";
 import { CommentModel, ICommentDocument } from "@/infrastructure/database/models/CommentModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
@@ -13,6 +13,7 @@ function toEntity(doc: ICommentDocument): Comment {
     bookReference: doc.bookReference,
     text: doc.text,
     tags: doc.tags,
+    communitySlug: doc.communitySlug,
     verified: doc.verified ?? false,
     verifiedBy: doc.verifiedBy,
     verifiedAt: doc.verifiedAt,
@@ -27,6 +28,50 @@ export class MongoCommentRepository implements ICommentRepository {
     if (!mongoose.Types.ObjectId.isValid(verseId)) return [];
     const docs = await CommentModel.find({ verseId: new mongoose.Types.ObjectId(verseId) }).sort({ createdAt: -1 });
     return docs.map(toEntity);
+  }
+
+  async findByVerseIdFiltered(
+    verseId: string,
+    communities: CommunityFilter,
+  ): Promise<Comment[]> {
+    await connectToDatabase();
+    if (!mongoose.Types.ObjectId.isValid(verseId)) return [];
+    const filter: Record<string, unknown> = {
+      verseId: new mongoose.Types.ObjectId(verseId),
+    };
+    if (communities === null) {
+      // Strictly "general feed" — exclude any comment with a community tag.
+      filter.communitySlug = { $in: [null, undefined] };
+    } else if (Array.isArray(communities)) {
+      // Always include the general feed alongside the chosen communities so
+      // toggling "show community X" doesn't visually erase the unmarked posts.
+      filter.$or = [
+        { communitySlug: { $in: [null, undefined] } },
+        { communitySlug: { $in: communities } },
+      ];
+    }
+    // `undefined` falls through with no filter — equivalent to findByVerseId.
+    const docs = await CommentModel.find(filter).sort({ createdAt: -1 });
+    return docs.map(toEntity);
+  }
+
+  async findByCommunity(
+    slug: string,
+    page: number,
+    pageSize: number,
+  ): Promise<{ items: Comment[]; total: number }> {
+    await connectToDatabase();
+    const safePage = Math.max(1, page);
+    const safeSize = Math.max(1, Math.min(pageSize, 200));
+    const filter = { communitySlug: slug };
+    const [docs, total] = await Promise.all([
+      CommentModel.find(filter)
+        .sort({ createdAt: -1, _id: -1 })
+        .skip((safePage - 1) * safeSize)
+        .limit(safeSize),
+      CommentModel.countDocuments(filter),
+    ]);
+    return { items: docs.map(toEntity), total };
   }
 
   async findByUsername(username: string): Promise<Comment[]> {

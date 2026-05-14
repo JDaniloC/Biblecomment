@@ -1,7 +1,25 @@
 import { Comment } from "../entities/Comment";
 
+/**
+ * Filter expression for community-aware verse reads.
+ *
+ * `null` means "general feed only" (no communitySlug set). A list of slugs
+ * means "general feed + comments tagged with any of these slugs". `undefined`
+ * means "no filter — return everything", which preserves legacy behavior.
+ */
+export type CommunityFilter = null | string[] | undefined;
+
 export interface ICommentRepository {
   findByVerseId(verseId: string): Promise<Comment[]>;
+  /**
+   * Community-aware variant of findByVerseId. When `communities` is undefined
+   * the result is identical to findByVerseId. When it's `null` only comments
+   * without a communitySlug are returned; a non-empty array returns "general
+   * + those slugs". Always sorted newest-first like the base method.
+   */
+  findByVerseIdFiltered(verseId: string, communities: CommunityFilter): Promise<Comment[]>;
+  /** Paginated comments for a single community, newest-first. */
+  findByCommunity(slug: string, page: number, pageSize: number): Promise<{ items: Comment[]; total: number }>;
   findByUsername(username: string): Promise<Comment[]>;
   /**
    * DB-paginated variant of `findByUsername`. Used by the profile comments

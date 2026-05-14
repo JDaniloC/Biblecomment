@@ -89,6 +89,15 @@ export const CreateCommentSchema = z.object({
   tags: z.array(z.string().max(50)).max(20).default([]),
   on_title: z.boolean().optional(),
   onTitle: z.boolean().optional(),
+  /**
+   * Optional slug of the community the post is being made in. Reuses the
+   * community slug pattern. Server-side the CreateCommentUseCase verifies
+   * the author belongs to the community before persisting.
+   */
+  communitySlug: z
+    .string()
+    .regex(/^[a-z0-9-]{2,40}$/)
+    .optional(),
 });
 
 export const UpdateCommentSchema = z.object({

@@ -5,6 +5,8 @@ import { MongoCommentReportRepository } from "@/infrastructure/repositories/Mong
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
+import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
+import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import {
   CreateCommentUseCase,
   UpdateCommentUseCase,
@@ -29,14 +31,27 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     const { id: verseId } = await params;
     const parsed = await parseBody(req, CreateCommentSchema);
     if (!parsed.ok) return parsed.response;
-    const { text, tags, on_title, onTitle } = parsed.data;
+    const { text, tags, on_title, onTitle, communitySlug } = parsed.data;
     const titleFlag = onTitle ?? on_title ?? false;
 
     const commentRepo = new MongoCommentRepository();
     const verseRepo = new MongoVerseRepository();
-    const useCase = new CreateCommentUseCase(commentRepo, verseRepo);
+    const useCase = new CreateCommentUseCase(
+      commentRepo,
+      verseRepo,
+      new MongoCommunityRepository(),
+      new MongoCommunityMembershipRepository(),
+      new MongoUserRepository(),
+    );
 
-    const comment = await useCase.execute(verseId, user.username, text, tags, titleFlag);
+    const comment = await useCase.execute({
+      verseId,
+      username: user.username,
+      text,
+      tags,
+      onTitle: titleFlag,
+      communitySlug,
+    });
 
     const verse = await verseRepo.findById(verseId);
     if (verse && comment._id) {
@@ -56,8 +71,10 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
 
     return NextResponse.json(comment, { status: 201 });
   } catch (err) {
-    if (err instanceof Error && err.message === "Verse not found") {
-      return badRequest("Versículo não encontrado");
+    if (err instanceof Error) {
+      if (err.message === "Verse not found") return badRequest("Versículo não encontrado");
+      if (err.message === "Community not found") return badRequest("Comunidade não encontrada");
+      if (err.message === "Not a community member") return forbidden();
     }
     return serverError(err);
   }

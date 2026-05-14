@@ -7,6 +7,12 @@ export interface Comment {
   text: string;
   tags: string[];
   /**
+   * Optional community this comment belongs to. `undefined` = posted to the
+   * general feed. Stored as the community slug (not _id) so the chapter
+   * read-path can filter without an extra join.
+   */
+  communitySlug?: string;
+  /**
    * Aggregated like count from the CommentLike collection.
    * Populated at read time by enrichment helpers; absent on freshly-created
    * documents and on test fixtures that don't go through the read path.
