@@ -26,6 +26,8 @@ function repoReturning(users: User[]): IUserRepository {
   return {
     findByEmail: async () => null,
     findByUsername: async () => null,
+    findByUsernamePublic: async () => null,
+    searchByUsernamePrefix: async () => [],
     findByUsernames: async () => [],
     findAll: async () => users,
     findAllPaginated: async () => users,

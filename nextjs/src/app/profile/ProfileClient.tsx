@@ -32,6 +32,7 @@ interface UserProfile {
   username: string;
   displayName?: string;
   belief?: string;
+  showBelief?: boolean;
   stateName?: string;
   createdAt?: string;
   booksCount: number;
@@ -718,7 +719,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   const [loading, setLoading]       = useState(false);
   const [belief, setBelief]           = useState("");
   const [stateName, setStateName]     = useState("");
-  const [showReligion, setShowReligion]       = useState(true);
+  // showReligion drives the public profile's belief visibility — opt-in,
+  // default false. Loaded from /api/users/me and persisted on save below.
+  const [showReligion, setShowReligion]       = useState(false);
   const [showHistory, setShowHistory]         = useState(true);
   const [editingComment, setEditingComment] = useState<CommentData | null>(null);
   const [commentSearch, setCommentSearch]   = useState("");
@@ -734,6 +737,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
       setProfile(data);
       setBelief(data.belief ?? "");
       setStateName(data.stateName ?? "");
+      setShowReligion(data.showBelief ?? false);
     } catch {
       handleNotification("error", "Erro ao carregar perfil.");
     }
@@ -786,12 +790,16 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
   const handleUpdateAccount = useCallback(async () => {
     try {
-      await usersService.updateProfile({ belief, state: stateName });
+      await usersService.updateProfile({
+        belief,
+        state: stateName,
+        showBelief: showReligion,
+      });
       handleNotification("success", "Conta atualizada!");
     } catch {
       handleNotification("error", "Erro ao atualizar.");
     }
-  }, [belief, stateName, handleNotification]);
+  }, [belief, stateName, showReligion, handleNotification]);
 
   const handleDeleteAccount = useCallback(async () => {
     const ok = await confirm({
@@ -1047,7 +1055,12 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                           </div>
                           {/* Username + like count */}
                           <div className="flex flex-col">
-                            <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 whitespace-nowrap">@{username}</span>
+                            <Link
+                              href={`/u/${username}`}
+                              className="font-semibold text-xs text-slate-800 dark:text-slate-100 whitespace-nowrap hover:underline"
+                            >
+                              @{username}
+                            </Link>
                             <span className="text-[10px] text-slate-400 dark:text-slate-500">{count} curtido{count !== 1 ? "s" : ""}</span>
                           </div>
                         </div>
@@ -1128,7 +1141,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
                 </div>
 
                 {/* Toggle 1 */}
-                <div className="flex items-start gap-3.5 pb-4">
+                <div className="flex items-start gap-3.5 pb-4" data-testid="show-belief-toggle">
                   <PrivacyToggle checked={showReligion} onChange={setShowReligion} />
                   <div>
                     <div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-[19.5px]">

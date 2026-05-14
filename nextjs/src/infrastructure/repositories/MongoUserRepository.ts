@@ -1,5 +1,6 @@
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { User } from "@/domain/entities/User";
+import { PublicUserDTO } from "@/domain/dto/PublicUserDTO";
 import { UserModel, IUserDocument } from "@/infrastructure/database/models/UserModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 
@@ -12,6 +13,7 @@ function toEntity(doc: IUserDocument): User {
     password: doc.password,
     state: doc.state,
     belief: doc.belief,
+    showBelief: doc.showBelief ?? false,
     moderator: doc.moderator,
     // Copy MongooseArray → plain Array. Auth.js calls structuredClone on
     // the user object during JWT encode and a MongooseArray (which carries
@@ -32,6 +34,46 @@ export class MongoUserRepository implements IUserRepository {
     await connectToDatabase();
     const doc = await UserModel.findOne({ username });
     return doc ? toEntity(doc) : null;
+  }
+
+  async searchByUsernamePrefix(
+    prefix: string,
+    limit: number,
+  ): Promise<Array<{ username: string; displayName?: string }>> {
+    await connectToDatabase();
+    if (!prefix) return [];
+    // Anchor to the start of the string; escape regex metachars so a user's
+    // input like "a.b" doesn't blow up the query plan or skip the index.
+    const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const docs = await UserModel.find(
+      { username: { $regex: `^${escaped}`, $options: "i" } },
+      { username: 1, displayName: 1, _id: 0 },
+    )
+      .sort({ username: 1 })
+      .limit(Math.max(1, Math.min(limit, 50)))
+      .lean();
+    return docs.map((d) => ({
+      username: d.username,
+      displayName: d.displayName,
+    }));
+  }
+
+  async findByUsernamePublic(username: string): Promise<PublicUserDTO | null> {
+    await connectToDatabase();
+    // Project only the safe fields. We still need showBelief in the query so
+    // we can decide whether to surface belief, but it never leaves this method.
+    const doc = await UserModel.findOne(
+      { username },
+      { username: 1, displayName: 1, badges: 1, belief: 1, showBelief: 1, createdAt: 1 },
+    ).lean();
+    if (!doc) return null;
+    return {
+      username: doc.username,
+      displayName: doc.displayName,
+      badges: doc.badges ? [...doc.badges] : [],
+      belief: doc.showBelief ? doc.belief : undefined,
+      createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(0),
+    };
   }
 
   async findByUsernames(usernames: string[]): Promise<User[]> {

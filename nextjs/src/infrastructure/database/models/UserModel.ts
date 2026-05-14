@@ -7,6 +7,7 @@ export interface IUserDocument extends Document {
   password: string;
   state?: string;
   belief?: string;
+  showBelief?: boolean;
   moderator?: boolean;
   tutorialsCompleted?: string[];
   badges?: string[];
@@ -20,6 +21,7 @@ const UserSchema = new Schema<IUserDocument>(
     password:           { type: String, required: true },
     state:              { type: String },
     belief:             { type: String },
+    showBelief:         { type: Boolean, default: false },
     moderator:          { type: Boolean, default: false },
     tutorialsCompleted: { type: [String], default: [] },
     badges:             { type: [String], default: [] },

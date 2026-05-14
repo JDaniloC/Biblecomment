@@ -33,7 +33,7 @@ function appError(err: unknown, fallback: string): ActionResult<never> {
  * Update the current user's profile. Replaces axios.patch(/api/users).
  */
 export async function updateProfileAction(
-  updates: { belief?: string; state?: string; displayName?: string },
+  updates: { belief?: string; state?: string; displayName?: string; showBelief?: boolean },
 ): Promise<ActionResult<{ updated: true }>> {
   const session = await auth();
   if (!session?.user) return authError();

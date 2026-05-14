@@ -60,6 +60,10 @@ export interface SeedUser {
   moderator?: boolean;
   state?: string;
   belief?: string;
+  /** Opt-in flag: when true, the public /u/[username] page exposes `belief`. */
+  showBelief?: boolean;
+  /** Unlocked badge IDs (catalog ids from src/lib/badges/catalog.ts). */
+  badges?: string[];
   tutorialsCompleted?: string[];
 }
 
@@ -280,6 +284,8 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
         password: await bcrypt.hash(u.password, 12),
         state: u.state ?? "",
         belief: u.belief ?? "",
+        showBelief: u.showBelief ?? false,
+        badges: u.badges ?? [],
         moderator: u.moderator ?? false,
         tutorialsCompleted: u.tutorialsCompleted ?? [],
         createdAt: new Date(),

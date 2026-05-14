@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { serverError } from "@/lib/get-session";
 import { parseBookRef } from "@/lib/parse-book-ref";
 import { tryParseReference } from "@/lib/parse-reference";
@@ -11,12 +12,26 @@ export const dynamic = "force-dynamic";
 
 const VERSE_LIMIT = 6;
 const COMMENT_LIMIT = 6;
+const USER_LIMIT = 6;
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get("q") ?? searchParams.get("text") ?? "").trim();
-    if (!q || q.length < 2) return NextResponse.json({ verses: [], comments: [] });
+    if (!q || q.length < 2) {
+      return NextResponse.json({ verses: [], comments: [], users: [] });
+    }
+
+    // `@foo` switches the search into user-lookup mode: prefix match on
+    // username, no verse/comment search. Empty `@` alone (just the sigil)
+    // is treated as not-yet-typed.
+    if (q.startsWith("@")) {
+      const prefix = q.slice(1).toLowerCase();
+      if (!prefix) return NextResponse.json({ verses: [], comments: [], users: [] });
+      const userRepo = new MongoUserRepository();
+      const users = await userRepo.searchByUsernamePrefix(prefix, USER_LIMIT);
+      return NextResponse.json({ verses: [], comments: [], users });
+    }
 
     const verseRepo = new MongoVerseRepository();
     const commentRepo = new MongoCommentRepository();
@@ -58,6 +73,7 @@ export async function GET(req: Request) {
     ].slice(0, VERSE_LIMIT);
 
     return NextResponse.json({
+      users: [] as Array<{ username: string; displayName?: string }>,
       verses: mergedVerses.map((v) => ({
         _id: String(v._id),
         reference: v.reference ?? `${v.abbrev} ${v.chapter}:${v.verseNumber}`,

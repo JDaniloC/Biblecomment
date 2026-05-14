@@ -70,7 +70,15 @@ export default function UsersClient({ user }: { user: SessionUser }) {
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
                 {users.map((u) => (
                   <tr key={u._id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition">
-                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-slate-100">{u.username}</td>
+                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-slate-100">
+                      <Link
+                        href={`/u/${u.username}`}
+                        className="hover:underline text-blue-600 dark:text-brand"
+                        data-testid={`users-row-${u.username}`}
+                      >
+                        {u.username}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 hidden sm:table-cell">{u.belief || "—"}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 hidden sm:table-cell">{u.stateName || "—"}</td>
                     <td className="px-4 py-3 text-right text-gray-600 dark:text-slate-300">{u.total_comments}</td>

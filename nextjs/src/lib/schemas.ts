@@ -39,10 +39,16 @@ export const UpdateProfileSchema = z
     belief: z.string().max(100).optional(),
     /** Free-form name shown publicly. 1–80 chars, may include spaces/accents. */
     displayName: z.string().min(1).max(80).optional(),
+    /** Opt-in: expose `belief` on the public profile page. */
+    showBelief: z.boolean().optional(),
   })
   .refine(
-    (v) => v.state !== undefined || v.belief !== undefined || v.displayName !== undefined,
-    { message: "state, belief ou displayName é obrigatório" },
+    (v) =>
+      v.state !== undefined ||
+      v.belief !== undefined ||
+      v.displayName !== undefined ||
+      v.showBelief !== undefined,
+    { message: "state, belief, displayName ou showBelief é obrigatório" },
   );
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
 

@@ -1,8 +1,20 @@
 import { User } from "../entities/User";
+import { PublicUserDTO } from "../dto/PublicUserDTO";
 
 export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
+  /**
+   * Public-profile projection — only fields safe to expose anonymously. Belief
+   * is gated on the user's `showBelief` opt-in flag. Returns null for unknown users.
+   */
+  findByUsernamePublic(username: string): Promise<PublicUserDTO | null>;
+  /**
+   * Case-insensitive prefix match on `username`, sorted by username ascending.
+   * Used by the @-prefix search shortcut to jump to a user's public profile.
+   * Returns only the public-safe identity fields.
+   */
+  searchByUsernamePrefix(prefix: string, limit: number): Promise<Array<{ username: string; displayName?: string }>>;
   findByUsernames(usernames: string[]): Promise<User[]>;
   findAll(): Promise<User[]>;
   findAllPaginated(page: number, pageSize: number): Promise<User[]>;

@@ -5,10 +5,12 @@ const { withSentryConfig } = require("@sentry/nextjs");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["mongoose"],
-    instrumentationHook: true,
-  },
+  // Mongoose is loaded only on the server; opting it out of bundling keeps
+  // Webpack from pulling its native bson bindings into the edge runtime.
+  // (Next 15 moved this option out of `experimental`.)
+  serverExternalPackages: ["mongoose"],
+  // `experimental.instrumentationHook` was removed — instrumentation.ts is
+  // now picked up automatically by Next 15.
   images: {
     unoptimized: true,
   },

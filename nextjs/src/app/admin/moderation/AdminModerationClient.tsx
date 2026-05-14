@@ -260,9 +260,12 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                   className="bg-white dark:bg-slate-900 border-l-4 border-y border-r border-slate-200 dark:border-slate-700 border-l-red-400 rounded-r-[10px] py-3.5 px-[18px]"
                 >
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+                    <Link
+                      href={`/u/${c.username}`}
+                      className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 hover:underline"
+                    >
                       @{c.username}
-                    </span>
+                    </Link>
                     {c.bookReference && (
                       <span className="inline-flex items-center bg-brand-tint rounded px-[7px] h-5 shrink-0">
                         <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
@@ -376,9 +379,12 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-[18px]"
                 >
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+                    <Link
+                      href={`/u/${c.username}`}
+                      className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 hover:underline"
+                    >
                       @{c.username}
-                    </span>
+                    </Link>
                     {c.bookReference && (
                       <span className="inline-flex items-center bg-brand-tint rounded px-[7px] h-5 shrink-0">
                         <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">

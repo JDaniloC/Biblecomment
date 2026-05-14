@@ -34,6 +34,8 @@ function makeRepos(opts: {
   const user = {
     findByEmail: async () => null,
     findByUsername: async () => null,
+    findByUsernamePublic: async () => null,
+    searchByUsernamePrefix: async () => [],
     findByUsernames: async () => [],
     findAll: async () => [],
     findAllPaginated: async () => [],

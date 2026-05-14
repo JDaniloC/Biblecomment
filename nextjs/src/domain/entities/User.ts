@@ -17,6 +17,12 @@ export interface User {
   password: string;
   state?: string;
   belief?: string;
+  /**
+   * Opt-in flag controlling whether `belief` is surfaced on the public
+   * profile (`/u/[username]`). Default `false` — the field is private
+   * until the user explicitly toggles it on in /profile.
+   */
+  showBelief?: boolean;
   moderator?: boolean;
   /**
    * Onboarding tutorials the user has finished or skipped.

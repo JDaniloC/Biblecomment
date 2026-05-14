@@ -71,7 +71,12 @@ function CommentCard({ c }: { c: FeedComment }) {
   return (
     <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
-        <span className="font-semibold text-slate-800 dark:text-slate-100">@{c.username}</span>
+        <Link
+          href={`/u/${c.username}`}
+          className="font-semibold text-slate-800 dark:text-slate-100 hover:underline"
+        >
+          @{c.username}
+        </Link>
         {c.bookReference && (
           <span className="inline-flex items-center bg-brand-tint rounded px-2 h-5 font-bold text-brand whitespace-nowrap">
             {c.bookReference}
@@ -119,7 +124,12 @@ function DiscussionCard({ d }: { d: DiscussionFeedItem }) {
   return (
     <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
-        <span className="font-semibold text-slate-800 dark:text-slate-100">@{d.username}</span>
+        <Link
+          href={`/u/${d.username}`}
+          className="font-semibold text-slate-800 dark:text-slate-100 hover:underline"
+        >
+          @{d.username}
+        </Link>
         {d.verseReference && (
           <span className="inline-flex items-center bg-brand-tint rounded px-2 h-5 font-bold text-brand whitespace-nowrap">
             {d.verseReference}

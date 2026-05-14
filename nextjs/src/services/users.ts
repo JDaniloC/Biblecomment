@@ -30,6 +30,11 @@ export interface UserProfile {
   username: string;
   displayName?: string;
   belief?: string;
+  /**
+   * Opt-in flag — when true, `belief` is exposed on the public `/u/[username]` page.
+   * Always `false` for legacy users until they toggle it.
+   */
+  showBelief?: boolean;
   stateName?: string;
   createdAt?: string;
   booksCount: number;
@@ -49,6 +54,7 @@ export interface ProfileUpdateInput {
   belief?: string;
   state?: string;
   displayName?: string;
+  showBelief?: boolean;
 }
 
 export const usersService = {

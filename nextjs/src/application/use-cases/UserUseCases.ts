@@ -40,7 +40,7 @@ export class UpdateUserProfileUseCase {
 
   async execute(
     email: string,
-    data: { state?: string; belief?: string; displayName?: string },
+    data: { state?: string; belief?: string; displayName?: string; showBelief?: boolean },
   ): Promise<User> {
     if (data.displayName !== undefined) {
       const trimmed = data.displayName.trim();

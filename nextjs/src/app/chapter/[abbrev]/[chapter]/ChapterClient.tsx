@@ -817,9 +817,14 @@ export default function ChapterClient({
                           <span className="font-semibold text-xs ml-2 whitespace-nowrap" style={{ color: meta.color }}>
                             {meta.label}
                           </span>
-                          {/* Username */}
+                          {/* Username — linkar para o perfil público */}
                           <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto whitespace-nowrap inline-flex items-center gap-1">
-                            {comment.username}
+                            <Link
+                              href={`/u/${comment.username}`}
+                              className="hover:underline"
+                            >
+                              {comment.username}
+                            </Link>
                             {comment.verified && (
                               <span
                                 className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"

@@ -38,6 +38,7 @@ export async function GET() {
       username: userData.username,
       displayName: userData.displayName ?? userData.username,
       belief: userData.belief ?? "",
+      showBelief: userData.showBelief ?? false,
       stateName: userData.state ?? "",
       createdAt: (userData as { createdAt?: Date }).createdAt?.toISOString() ?? null,
       booksCount: bookAbbrevs.size,

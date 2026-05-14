@@ -16,6 +16,7 @@ export default function OmniSearch() {
     handleClear,
     handleSelectVerse,
     handleSelectComment,
+    handleSelectUser,
   } = useUnifiedSearch();
 
   return (
@@ -23,7 +24,8 @@ export default function OmniSearch() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (results.verses.length > 0) handleSelectVerse(results.verses[0]);
+          if (results.users.length > 0) handleSelectUser(results.users[0]);
+          else if (results.verses.length > 0) handleSelectVerse(results.verses[0]);
           else if (results.comments.length > 0) handleSelectComment(results.comments[0]);
         }}
       >
@@ -36,7 +38,7 @@ export default function OmniSearch() {
             </svg>
           )}
           <label htmlFor="omni-search-input" className="sr-only">
-            Buscar versículos ou comentários
+            Buscar versículos, comentários ou @usuário
           </label>
           <input
             id="omni-search-input"
@@ -46,8 +48,8 @@ export default function OmniSearch() {
             onChange={handleChange}
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
-            placeholder="Buscar versículos ou comentários…"
-            aria-label="Buscar versículos ou comentários"
+            placeholder="Buscar versículos, comentários ou @usuário…"
+            aria-label="Buscar versículos, comentários ou @usuário"
             className="flex-1 text-[13px] text-[#1a1a1a] dark:text-slate-100 bg-transparent border-none outline-none"
           />
           {query && (
@@ -73,8 +75,38 @@ export default function OmniSearch() {
             </div>
           )}
 
+          {results.users.length > 0 && (
+            <div className="pt-3.5 pb-2" data-testid="omni-search-users">
+              <div className="flex items-center gap-1.5 px-4 pb-1.5">
+                <span className="text-[11px]">@</span>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[1px]">
+                  Usuários
+                </span>
+              </div>
+              {results.users.map((user) => (
+                <button
+                  key={user.username}
+                  type="button"
+                  onMouseDown={() => handleSelectUser(user)}
+                  data-testid={`omni-search-user-${user.username}`}
+                  className="flex items-center gap-2.5 pl-[22px] pr-4 h-[38px] bg-transparent border-none cursor-pointer w-full text-left rounded-md transition-colors duration-100 hover:bg-brand-hover"
+                >
+                  <UserAvatar username={user.username} size={20} />
+                  <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                    @{user.username}
+                  </span>
+                  {user.displayName && user.displayName !== user.username && (
+                    <span className="text-xs text-slate-500 dark:text-slate-400 overflow-hidden whitespace-nowrap text-ellipsis flex-1 min-w-0">
+                      {user.displayName}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
           {results.verses.length > 0 && (
-            <div className="pt-3.5 pb-2">
+            <div className={`pb-2 ${results.users.length > 0 ? "pt-2 border-t border-slate-100 dark:border-slate-800" : "pt-3.5"}`}>
               <div className="flex items-center gap-1.5 px-4 pb-1.5">
                 <span className="text-[11px]">📖</span>
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[1px]">
