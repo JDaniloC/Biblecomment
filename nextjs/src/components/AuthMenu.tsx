@@ -98,23 +98,6 @@ export function AuthMenu({ user, loginCallbackUrl }: Props) {
               </div>
               <div className="font-normal text-xs text-slate-400 dark:text-slate-500 leading-[18px]">@{user.username}</div>
             </div>
-            {/* Mobile-only nav: the AppHeader hides "Livros"/"Discussões"/"?" below md.
-                Surface them here so phone users can still navigate the site. */}
-            <div className="md:hidden">
-              <Link href="/home" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
-                <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.book}</span>
-                <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Livros</span>
-              </Link>
-              <Link href="/discussions" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
-                <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.message}</span>
-                <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Discussões</span>
-              </Link>
-              <Link href="/help" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
-                <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.help}</span>
-                <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Ajuda</span>
-              </Link>
-              <div className="h-px bg-slate-100 dark:bg-slate-800" />
-            </div>
             <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
               <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.user}</span>
               <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Meu Perfil</span>
@@ -128,6 +111,10 @@ export function AuthMenu({ user, loginCallbackUrl }: Props) {
               <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Favoritos</span>
             </Link>
             <div className="h-px bg-slate-100 dark:bg-slate-800" />
+            <Link href="/help" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
+              <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.help}</span>
+              <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">Ajuda</span>
+            </Link>
             <Link href="/profile?tab=config" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
               <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.settings}</span>
               <span className="font-medium text-[13px] text-slate-600 dark:text-slate-300">Configurações</span>

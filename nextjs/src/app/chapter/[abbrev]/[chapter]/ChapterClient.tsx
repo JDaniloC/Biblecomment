@@ -481,6 +481,14 @@ export default function ChapterClient({
     return () => window.removeEventListener("keydown", onKey);
   }, [showSidebar, nextChapter, prevChapter, book.abbrev, router, handleClose]);
 
+  // The comment panel is a focused full-screen task on mobile — hide the
+  // global bottom tab bar while it is open (see globals.css .bc-hide-tabbar).
+  useEffect(() => {
+    if (!showSidebar) return;
+    document.body.classList.add("bc-hide-tabbar");
+    return () => document.body.classList.remove("bc-hide-tabbar");
+  }, [showSidebar]);
+
   // Swipe-to-navigate (touch only, mobile). Threshold ~60px horizontal,
   // ignored if vertical movement dominates (avoids hijacking scrolls)
   // or if the sidebar is open (would conflict with closing the drawer).
@@ -516,7 +524,7 @@ export default function ChapterClient({
       <AppHeader
         user={user}
         loginCallbackUrl={`/verses/${book.abbrev}/${chapter}`}
-        trailing={<div className="hidden md:inline-flex"><FontSizeControl /></div>}
+        trailing={<FontSizeControl />}
       />
 
 

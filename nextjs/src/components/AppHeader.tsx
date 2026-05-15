@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import OmniSearch from "@/app/_components/OmniSearch";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -114,8 +115,20 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
           <OmniSearch />
         </div>
 
-        {trailing}
-        {user && <NotificationsBell />}
+        {/* Desktop: trailing inline. Mobile: behind a "⋮" popover so
+            page tools (e.g. FontSizeControl/zoom) are reachable on phones. */}
+        {trailing && (
+          <>
+            <div className="hidden md:contents">{trailing}</div>
+            <MobileToolsMenu>{trailing}</MobileToolsMenu>
+          </>
+        )}
+        {/* Notifications: desktop bell only — phones get the tab-bar tab. */}
+        {user && (
+          <div className="hidden md:block">
+            <NotificationsBell />
+          </div>
+        )}
         <ThemeToggle />
         <AuthMenu user={user} loginCallbackUrl={loginCallbackUrl} />
 
@@ -128,5 +141,41 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
         </Link>
       </div>
     </header>
+  );
+}
+
+/**
+ * Mobile-only "⋮" overflow that surfaces the page's `trailing` controls
+ * (e.g. FontSizeControl/zoom) which are inline on desktop but had no home
+ * on phones. Mirrors the AuthMenu dropdown pattern (backdrop + popover).
+ */
+function MobileToolsMenu({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="md:hidden relative flex-shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Ferramentas da página"
+        aria-expanded={open}
+        data-testid="header-tools-menu"
+        className={NAV_LINK_CLASS}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[49]" onClick={() => setOpen(false)} />
+          <div
+            data-testid="header-tools-panel"
+            className="absolute right-0 top-11 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0px_8px_30px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] p-2"
+          >
+            {children}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

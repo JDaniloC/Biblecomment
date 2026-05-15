@@ -3,6 +3,7 @@ import { Inter, Lora, Merriweather } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "./providers";
 import PWARegister from "@/components/PWARegister";
+import { AppShellChrome } from "@/components/AppShellChrome";
 
 // Inter: app default sans (was inlined in 50+ places as a fontFamily
 // string). Loaded once here and applied via the body className so
@@ -99,7 +100,10 @@ export default function RootLayout({
         >
           Pular para o conteúdo
         </a>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          {children}
+          <AppShellChrome />
+        </SessionProvider>
         <PWARegister />
       </body>
     </html>

@@ -177,3 +177,14 @@ body {
     animation: none;
   }
 }
+
+/* Mobile bottom tab bar: hidden when a focused full-screen panel marks
+   the body. The 3.5rem (h-14) clearance keeps page content above the bar. */
+body.bc-hide-tabbar .bc-mobile-tabbar {
+  display: none;
+}
+@media (max-width: 767px) {
+  body:not(.bc-hide-tabbar) {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+}
