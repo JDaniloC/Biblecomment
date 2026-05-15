@@ -47,11 +47,37 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
   const [todayBookName, setTodayBookName] = useState<string | null>(null);
   const [todayCycleLabel, setTodayCycleLabel] = useState<string | null>(null);
   useEffect(() => {
-    const r = getReadingForDate(new Date());
-    setTodayAbbrev(r.abbrev);
-    setTodayChapter(r.chapter);
-    setTodayBookName(r.bookName);
-    setTodayCycleLabel(r.cycleLabel);
+    // Try the runtime override stored in AppConfig (a moderator can edit
+    // /api/config/reading-plan if RPSP slips). Fall back to the compiled
+    // default — getReadingForDate without an anchor uses DEFAULT_ANCHOR.
+    let cancelled = false;
+    const apply = (anchor?: { anchorDateUtc: number; anchorIndex: number }) => {
+      if (cancelled) return;
+      const r = anchor
+        ? getReadingForDate(new Date(), anchor)
+        : getReadingForDate(new Date());
+      setTodayAbbrev(r.abbrev);
+      setTodayChapter(r.chapter);
+      setTodayBookName(r.bookName);
+      setTodayCycleLabel(r.cycleLabel);
+    };
+    fetch("/api/config/reading-plan")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (
+          data &&
+          typeof data.anchorDateUtc === "number" &&
+          typeof data.anchorIndex === "number"
+        ) {
+          apply({ anchorDateUtc: data.anchorDateUtc, anchorIndex: data.anchorIndex });
+        } else {
+          apply();
+        }
+      })
+      .catch(() => apply());
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

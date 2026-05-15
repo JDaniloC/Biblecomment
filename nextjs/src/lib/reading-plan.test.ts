@@ -4,6 +4,7 @@ import {
   TOTAL_CHAPTERS,
   indexForDate,
   getReadingForDate,
+  bookChapterToIndex,
 } from "./reading-plan";
 
 describe("CANONICAL_BOOKS", () => {
@@ -72,6 +73,56 @@ describe("getReadingForDate (RPSP plan)", () => {
     const morning = getReadingForDate(new Date("2026-05-14T01:23:45Z"));
     const evening = getReadingForDate(new Date("2026-05-14T22:59:00Z"));
     expect(morning).toEqual(evening);
+  });
+});
+
+describe("bookChapterToIndex", () => {
+  it("maps Gn 1 → 1", () => {
+    expect(bookChapterToIndex("gn", 1)).toBe(1);
+  });
+
+  it("maps 2Cr 26 → 393", () => {
+    expect(bookChapterToIndex("2cr", 26)).toBe(393);
+  });
+
+  it("maps Ap 22 → 1189 (last chapter)", () => {
+    expect(bookChapterToIndex("ap", 22)).toBe(TOTAL_CHAPTERS);
+  });
+
+  it("is case-insensitive on abbrev", () => {
+    expect(bookChapterToIndex("GN", 1)).toBe(1);
+    expect(bookChapterToIndex("2Cr", 26)).toBe(393);
+  });
+
+  it("returns null for unknown abbrev or out-of-range chapter", () => {
+    expect(bookChapterToIndex("xx", 1)).toBeNull();
+    expect(bookChapterToIndex("gn", 0)).toBeNull();
+    expect(bookChapterToIndex("gn", 51)).toBeNull();
+  });
+});
+
+describe("anchor override (configurable from AppConfig)", () => {
+  it("uses the supplied anchor instead of the compiled default", () => {
+    // Pretend the moderator pushed "today should be Ap 22".
+    const today = new Date(Date.UTC(2026, 4, 14));
+    const override = {
+      anchorDateUtc: Date.UTC(2026, 4, 14),
+      anchorIndex: TOTAL_CHAPTERS, // Ap 22
+    };
+    const r = getReadingForDate(today, override);
+    expect(r.abbrev).toBe("ap");
+    expect(r.chapter).toBe(22);
+  });
+
+  it("walks forward from the override anchor the same way", () => {
+    // Anchor 2026-01-01 = Gn 1; one day later should be Gn 2.
+    const anchor = {
+      anchorDateUtc: Date.UTC(2026, 0, 1),
+      anchorIndex: 1,
+    };
+    const r = getReadingForDate(new Date(Date.UTC(2026, 0, 2)), anchor);
+    expect(r.abbrev).toBe("gn");
+    expect(r.chapter).toBe(2);
   });
 });
 

@@ -111,14 +111,45 @@ if (TOTAL_CHAPTERS !== 1189) {
 }
 
 /**
- * Anchor: 2025-04-17 (UTC) = Gênesis 1 in the current cycle. Pinned at
- * "Gn 1 day" rather than a mid-cycle reference so the constant is easy
- * to verify by reading.
+ * Default anchor: 2025-04-17 (UTC) = Gênesis 1 in the current cycle.
+ * Used as a fallback when the runtime override (stored in AppConfig) is
+ * absent or malformed. Updating this in code is a deploy; updating the
+ * AppConfig row is a hot edit a moderator can do via the API.
  */
-const ANCHOR_DATE_UTC = Date.UTC(2025, 3, 17); // months are 0-indexed
-const ANCHOR_INDEX = 1; // 1-based canonical index → Gênesis 1
+export const DEFAULT_ANCHOR_DATE_UTC = Date.UTC(2025, 3, 17);
+export const DEFAULT_ANCHOR_INDEX = 1;
+
+export interface ReadingPlanAnchor {
+  /** UTC midnight (milliseconds since epoch) for the anchor date. */
+  anchorDateUtc: number;
+  /** 1-based canonical chapter index that the anchor date lands on. */
+  anchorIndex: number;
+}
+
+const DEFAULT_ANCHOR: ReadingPlanAnchor = {
+  anchorDateUtc: DEFAULT_ANCHOR_DATE_UTC,
+  anchorIndex: DEFAULT_ANCHOR_INDEX,
+};
 
 const MS_PER_DAY = 86_400_000;
+
+/**
+ * Convert a (book abbrev, chapter) pair into its 1-based canonical index.
+ * Returns null when the abbrev is unknown or the chapter is out of range —
+ * callers should treat that as "config malformed, fall back to default".
+ */
+export function bookChapterToIndex(abbrev: string, chapter: number): number | null {
+  const normalized = abbrev.trim().toLowerCase();
+  let acc = 0;
+  for (const book of CANONICAL_BOOKS) {
+    if (book.abbrev === normalized) {
+      if (chapter < 1 || chapter > book.chapters) return null;
+      return acc + chapter;
+    }
+    acc += book.chapters;
+  }
+  return null;
+}
 
 /**
  * Floor a date to UTC midnight. Using UTC (not local) keeps the result
@@ -132,12 +163,14 @@ function toUtcMidnight(date: Date): number {
 /**
  * 1-based canonical index for the given date (1..1189). Wraps with modulo
  * so dates before the anchor and dates past one full cycle resolve too.
+ * Accepts an optional `anchor` override — useful when the configured
+ * anchor differs from the compiled default (RPSP schedule slip, etc.).
  */
-export function indexForDate(date: Date): number {
-  const days = Math.round((toUtcMidnight(date) - ANCHOR_DATE_UTC) / MS_PER_DAY);
+export function indexForDate(date: Date, anchor: ReadingPlanAnchor = DEFAULT_ANCHOR): number {
+  const days = Math.round((toUtcMidnight(date) - anchor.anchorDateUtc) / MS_PER_DAY);
   // JS `%` keeps the sign of the dividend; the double-modulo dance forces
   // a non-negative result so dates before the anchor still resolve.
-  return ((((ANCHOR_INDEX - 1 + days) % TOTAL_CHAPTERS) + TOTAL_CHAPTERS) % TOTAL_CHAPTERS) + 1;
+  return ((((anchor.anchorIndex - 1 + days) % TOTAL_CHAPTERS) + TOTAL_CHAPTERS) % TOTAL_CHAPTERS) + 1;
 }
 
 export interface DailyReading {
@@ -151,8 +184,11 @@ export interface DailyReading {
 }
 
 /** Resolve `indexForDate` back to a concrete book + chapter. */
-export function getReadingForDate(date: Date): DailyReading {
-  const idx = indexForDate(date);
+export function getReadingForDate(
+  date: Date,
+  anchor: ReadingPlanAnchor = DEFAULT_ANCHOR,
+): DailyReading {
+  const idx = indexForDate(date, anchor);
   let remaining = idx;
   for (const book of CANONICAL_BOOKS) {
     if (remaining <= book.chapters) {
