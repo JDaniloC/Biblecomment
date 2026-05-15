@@ -100,7 +100,7 @@ export function NotificationsBell({ className = "" }: { className?: string }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+6px)] w-[340px] max-h-[440px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-[0px_8px_30px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] z-50 flex flex-col overflow-hidden">
+        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-[360px] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+6px)] sm:translate-x-0 sm:translate-y-0 sm:w-[340px] sm:max-w-none max-h-[440px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-[0px_8px_30px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] z-50 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
             <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Notificações</span>
             {unread > 0 && (

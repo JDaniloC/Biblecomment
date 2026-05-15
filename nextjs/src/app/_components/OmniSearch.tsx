@@ -50,7 +50,7 @@ export default function OmniSearch() {
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             placeholder="Buscar versículos, comentários ou @usuário…"
             aria-label="Buscar versículos, comentários ou @usuário"
-            className="flex-1 text-[13px] text-[#1a1a1a] dark:text-slate-100 bg-transparent border-none outline-none"
+            className="flex-1 min-w-0 text-[13px] text-[#1a1a1a] dark:text-slate-100 bg-transparent border-none outline-none text-ellipsis"
           />
           {query && (
             <button

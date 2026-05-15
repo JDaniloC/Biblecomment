@@ -656,7 +656,7 @@ export default function ChapterClient({
 
             <div className="relative">
               <div
-                className="hidden md:block absolute left-[-40px] top-0 font-serif select-none pointer-events-none text-[80px] leading-[80px] font-black text-slate-800 dark:text-slate-100 opacity-80"
+                className="hidden md:block absolute right-full top-0 -mr-5 z-10 text-right font-serif select-none pointer-events-none text-[80px] leading-[80px] font-black text-slate-800 dark:text-slate-100 opacity-80"
               >
                 {chapter}
               </div>
@@ -670,21 +670,22 @@ export default function ChapterClient({
                       <button
                         type="button"
                         onClick={() => openVersePanel(verse)}
-                        className={`flex items-start gap-3 md:gap-3 gap-2 w-full text-left rounded-r-[4px] transition border-l-4 border-solid pt-3 pr-2.5 pl-3 md:pt-2 md:pb-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 min-h-[44px] ${count > 0 ? "pb-7 md:pb-2" : "pb-3"}`}
+                        className={`flex items-start gap-2 md:gap-3 w-full text-left rounded-r-[4px] transition border-l-4 border-solid pt-3 pr-2.5 pl-1.5 md:pl-3 md:pt-2 md:pb-2 hover:bg-[rgba(19,125,219,0.07)] dark:hover:bg-[rgba(19,125,219,0.16)] active:bg-[rgba(19,125,219,0.12)] dark:active:bg-[rgba(19,125,219,0.22)] min-h-[44px] ${count > 0 ? "pb-7 md:pb-2" : "pb-3"}`}
                         style={{
                           borderLeftColor: isSelected ? "#137ddb" : "transparent",
                           background: isSelected ? "rgba(19,125,219,0.04)" : undefined
                         }}
                       >
                         <span
-                          className="font-sans font-bold text-[14px] md:text-[13px] w-7 md:w-5 flex-shrink-0 text-right mt-[2px] transition"
+                          className="font-sans font-bold text-[14px] md:text-[13px] w-5 md:w-5 flex-shrink-0 text-right mt-[2px] transition"
                           style={{ color: isSelected ? "#137ddb" : "#94a3b8" }}
                         >
                           {verse.verseNumber}
                         </span>
                         <span
+                          data-testid="verse-text"
                           className="flex-1 font-serif leading-[1.85] transition text-[#1a1a1a] dark:text-slate-100"
-                          style={{ fontSize: "calc(17px * var(--bc-text-scale, 1))" }}
+                          style={{ fontSize: "17px" }}
                         >
                           {verse.text}
                         </span>
@@ -711,7 +712,7 @@ export default function ChapterClient({
                           <span className="font-bold text-[11px] text-white leading-[11px]">{count}</span>
                         </span>
                       )}
-                      <div className="absolute right-1 top-1 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity opacity-60">
+                      <div className="absolute right-[-10px] top-1 rounded-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity opacity-60">
                         <CopyVerseButton
                           verse={{
                             abbrev: book.abbrev,
@@ -747,13 +748,13 @@ export default function ChapterClient({
         {showSidebar && (
           <aside
             ref={sidebarRef2}
-            className="fixed inset-0 md:inset-auto md:right-0 bg-white dark:bg-slate-900 md:border-l border-slate-200 dark:border-slate-700 z-30 flex flex-col md:w-[420px] md:top-[68px] md:h-[calc(100vh-68px)]"
+            className="fixed top-[68px] left-0 right-0 bottom-0 md:inset-auto md:right-0 bg-white dark:bg-slate-900 md:border-l border-slate-200 dark:border-slate-700 z-30 flex flex-col md:w-[420px] md:top-[68px] md:h-[calc(100vh-68px)]"
           >
             <div className="border-b border-slate-200 dark:border-slate-700 px-5 py-3.5 flex items-center gap-3">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase">Comentários</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">{sidebarTitle}</span>
+                <div className="flex items-center gap-2 mt-0.5 min-w-0">
+                  <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 truncate">{sidebarTitle}</span>
                   <span className="bg-[rgba(19,125,219,0.09)] text-brand text-[11px] font-semibold rounded-[10px] min-w-[21px] h-[18.5px] inline-flex items-center justify-center px-[7px]">
                     {activeComments.length}
                   </span>
@@ -776,7 +777,8 @@ export default function ChapterClient({
               <button
                 type="button"
                 onClick={handleClose}
-                className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition ml-1"
+                aria-label="Fechar comentários"
+                className="flex-shrink-0 flex items-center justify-center w-9 h-9 -mr-1.5 rounded-md text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />

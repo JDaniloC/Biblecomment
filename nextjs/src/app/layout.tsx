@@ -85,6 +85,14 @@ export default function RootLayout({
       className={`${inter.variable} ${merriweather.variable} ${lora.variable}`}
     >
       <body className="font-sans">
+        {/* Anti-FOUC: apply the saved text scale before first paint so the
+            global `body { zoom: var(--bc-text-scale) }` is correct on load
+            instead of flashing at 100% until FontSizeControl hydrates. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var s=parseFloat(localStorage.getItem('bc-text-scale'));if(s>=0.85&&s<=1.4)document.documentElement.style.setProperty('--bc-text-scale',String(s));}catch(e){}`,
+          }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200] focus:bg-white dark:focus:bg-slate-900 focus:text-brand focus:px-3 focus:py-2 focus:rounded focus:shadow-lg focus:outline-2 focus:outline-brand"

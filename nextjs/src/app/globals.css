@@ -39,6 +39,11 @@ body {
      font-sans Tailwind utility on <body> is the canonical wire-up; this
      line is a fallback for cases where Tailwind isn't applied yet. */
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  /* Accessibility: FontSizeControl writes --bc-text-scale on <html>; this
+     zooms the whole interface (text + layout), not just the verse text.
+     `zoom` is used instead of transform so sticky/fixed and portals keep
+     working. Default 1 = no visual change anywhere. */
+  zoom: var(--bc-text-scale, 1);
 }
 
 /* a11y: every focusable element must have a visible keyboard outline.
