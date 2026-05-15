@@ -134,6 +134,16 @@ const DEFAULT_ANCHOR: ReadingPlanAnchor = {
 const MS_PER_DAY = 86_400_000;
 
 /**
+ * Reavivados Por Sua Palavra is a Brazilian program; readers expect the
+ * "today" boundary to roll at 00:00 BRT, not at UTC midnight. Without this
+ * shift, every Brazilian reader between 21:00 BRT and midnight saw
+ * tomorrow's chapter (confirmed against the live site on 2026-05-14: the
+ * UI showed "2Cr 27" instead of "2Cr 26"). Brazil dropped daylight savings
+ * in 2019, so UTC-3 is a stable constant.
+ */
+const BRAZIL_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/**
  * Convert a (book abbrev, chapter) pair into its 1-based canonical index.
  * Returns null when the abbrev is unknown or the chapter is out of range —
  * callers should treat that as "config malformed, fall back to default".
@@ -152,12 +162,15 @@ export function bookChapterToIndex(abbrev: string, chapter: number): number | nu
 }
 
 /**
- * Floor a date to UTC midnight. Using UTC (not local) keeps the result
- * stable across the user's timezone — every reader of the world sees the
- * same "today" for the plan, just like a physical wall calendar.
+ * Floor a date to "BRT calendar midnight, expressed in UTC ms" so every
+ * reader of the world sees the same Brazilian chapter on a given Brazilian
+ * date — just like a paper RPSP card printed in São Paulo. Anchors are
+ * stored as `Date.UTC(y, m, d)` already at "BRT-midnight semantics", so
+ * subtracting two such values gives the BRT day count.
  */
-function toUtcMidnight(date: Date): number {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+function toBrazilCalendarMidnightUtc(date: Date): number {
+  const shifted = new Date(date.getTime() - BRAZIL_OFFSET_MS);
+  return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
 }
 
 /**
@@ -167,7 +180,7 @@ function toUtcMidnight(date: Date): number {
  * anchor differs from the compiled default (RPSP schedule slip, etc.).
  */
 export function indexForDate(date: Date, anchor: ReadingPlanAnchor = DEFAULT_ANCHOR): number {
-  const days = Math.round((toUtcMidnight(date) - anchor.anchorDateUtc) / MS_PER_DAY);
+  const days = Math.round((toBrazilCalendarMidnightUtc(date) - anchor.anchorDateUtc) / MS_PER_DAY);
   // JS `%` keeps the sign of the dividend; the double-modulo dance forces
   // a non-negative result so dates before the anchor still resolve.
   return ((((anchor.anchorIndex - 1 + days) % TOTAL_CHAPTERS) + TOTAL_CHAPTERS) % TOTAL_CHAPTERS) + 1;
