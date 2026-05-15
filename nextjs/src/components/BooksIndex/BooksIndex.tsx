@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useNotification } from "@/contexts/NotificationContext";
 import { Book } from "@/domain/entities/Book";
+import { getReadingForDate } from "@/lib/reading-plan";
 import axios from "axios";
 
 interface Props {
@@ -29,8 +31,6 @@ const NT_COLUMNS: ColumnGroup[] = [
   { label: "Profecia",           groups: ["Apocalipse"] },
 ];
 
-const FEATURED = new Set(["gn", "sl", "pv", "jo", "mt", "ef", "ap"]);
-
 export default function BooksIndex({ initialBooks, onChangeChapter, closeBookComponent }: Props) {
   const router = useRouter();
   const { handleNotification } = useNotification();
@@ -38,6 +38,21 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
   const [query, setQuery] = useState("");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Today's chapter according to the Reavivados Por Sua Palavra plan. Set
+  // inside an effect (not at render time) so SSR and the first client paint
+  // agree; the badge is purely a client-side enhancement.
+  const [todayAbbrev, setTodayAbbrev] = useState<string | null>(null);
+  const [todayChapter, setTodayChapter] = useState<number | null>(null);
+  const [todayBookName, setTodayBookName] = useState<string | null>(null);
+  const [todayCycleLabel, setTodayCycleLabel] = useState<string | null>(null);
+  useEffect(() => {
+    const r = getReadingForDate(new Date());
+    setTodayAbbrev(r.abbrev);
+    setTodayChapter(r.chapter);
+    setTodayBookName(r.bookName);
+    setTodayCycleLabel(r.cycleLabel);
+  }, []);
 
   useEffect(() => {
     if (books.length === 0) {
@@ -101,31 +116,38 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
   }, [filteredBooks]);
 
   function renderBookItem(book: Book) {
-    const featured = FEATURED.has(book.abbrev);
+    const isToday = todayAbbrev === book.abbrev;
     const isSelected = selectedBook?.abbrev === book.abbrev;
     return (
       <button
         key={book.abbrev}
         type="button"
         onClick={() => handleBookClick(book)}
+        data-today={isToday ? "true" : undefined}
+        title={isToday ? `Leitura de hoje pelo Reavivados Por Sua Palavra: ${book.name} ${todayChapter}` : undefined}
         className="flex items-center gap-[5px] w-full rounded-[4px] min-h-[27.5px] transition-colors text-left px-1.5 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 group"
       >
         <span
           className={`w-[5px] h-[5px] rounded-[2.5px] flex-shrink-0 ${
             isSelected
               ? "bg-brand"
-              : featured
+              : isToday
                 ? "bg-orange-400"
                 : "bg-transparent border border-slate-200 dark:border-slate-700"
           }`}
         />
         <span
           className={`text-[13px] leading-[19.5px] truncate transition-colors ${
-            isSelected ? "text-brand font-semibold" : featured ? "text-[#333] dark:text-slate-100 font-semibold" : "text-[#333] dark:text-slate-100 font-normal"
+            isSelected ? "text-brand font-semibold" : isToday ? "text-orange-700 dark:text-orange-300 font-semibold" : "text-[#333] dark:text-slate-100 font-normal"
           }`}
         >
           {book.name}
         </span>
+        {isToday && todayChapter !== null && (
+          <span className="ml-auto flex-shrink-0 text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300">
+            cap {todayChapter}
+          </span>
+        )}
       </button>
     );
   }
@@ -186,6 +208,43 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
 
       <div className="h-px bg-[#e2e8f0] dark:bg-slate-700 mx-0" />
 
+      {/* Leitura do dia (RPSP) — banner clicável que destaca o livro/cap
+          do dia. Só aparece depois que o useEffect hidrata, evitando
+          mismatch entre SSR e CSR ao redor da virada do dia UTC. */}
+      {todayAbbrev && todayChapter && (
+        <Link
+          href={`/verses/${todayAbbrev}/${todayChapter}`}
+          onClick={() => closeBookComponent?.()}
+          data-testid="reading-plan-today"
+          className="flex items-center gap-3 px-5 py-3 mx-0 border-b border-[#e2e8f0] dark:border-slate-700 bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/40 transition no-underline"
+        >
+          <span
+            aria-hidden="true"
+            className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-400/15 dark:bg-orange-400/10 text-orange-600 dark:text-orange-300 flex items-center justify-center"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </span>
+          <span className="flex flex-col min-w-0 flex-1">
+            <span className="text-[11px] font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide">
+              Reavivados Por Sua Palavra
+            </span>
+            <span className="text-[14px] font-semibold text-slate-800 dark:text-slate-100 truncate">
+              Leitura de hoje: {todayBookName} {todayChapter}
+            </span>
+          </span>
+          {todayCycleLabel && (
+            <span className="hidden sm:block flex-shrink-0 text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+              {todayCycleLabel}
+            </span>
+          )}
+        </Link>
+      )}
+
       <div className="flex-1 overflow-y-auto">
         {selectedBook ? (
           <div className="p-5">
@@ -231,7 +290,7 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-sm flex-shrink-0 ${
-                        FEATURED.has(book.abbrev) ? "bg-orange-400" : "bg-slate-200 dark:bg-slate-700"
+                        todayAbbrev === book.abbrev ? "bg-orange-400" : "bg-slate-200 dark:bg-slate-700"
                       }`}
                     />
                     <span className="text-[14px] text-slate-700 dark:text-slate-200 font-medium">{book.name}</span>
