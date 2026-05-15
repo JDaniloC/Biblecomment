@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Lora, Merriweather } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "./providers";
+import PWARegister from "@/components/PWARegister";
 
 // Inter: app default sans (was inlined in 50+ places as a fontFamily
 // string). Loaded once here and applied via the body className so
@@ -50,6 +51,26 @@ export const metadata: Metadata = {
     description: "Sua biblioteca bíblica para estudo, comentário e discussão.",
   },
   robots: { index: true, follow: true },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Bible Comment",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 export default function RootLayout({
@@ -71,6 +92,7 @@ export default function RootLayout({
           Pular para o conteúdo
         </a>
         <SessionProvider>{children}</SessionProvider>
+        <PWARegister />
       </body>
     </html>
   );
