@@ -32,7 +32,13 @@ export class MongoUserRepository implements IUserRepository {
 
   async findByUsername(username: string): Promise<User | null> {
     await connectToDatabase();
-    const doc = await UserModel.findOne({ username });
+    // Username is stored case-preserved (legacy accounts use mixed case like
+    // "JDaniloC"). Look it up case-insensitively so /u/jdaniloc resolves to
+    // the historic "JDaniloC" account.
+    const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const doc = await UserModel.findOne({
+      username: { $regex: `^${escaped}$`, $options: "i" },
+    });
     return doc ? toEntity(doc) : null;
   }
 
@@ -62,8 +68,11 @@ export class MongoUserRepository implements IUserRepository {
     await connectToDatabase();
     // Project only the safe fields. We still need showBelief in the query so
     // we can decide whether to surface belief, but it never leaves this method.
+    // Case-insensitive match so historic mixed-case usernames resolve from a
+    // lower-case slug in the URL.
+    const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const doc = await UserModel.findOne(
-      { username },
+      { username: { $regex: `^${escaped}$`, $options: "i" } },
       { username: 1, displayName: 1, badges: 1, belief: 1, showBelief: 1, createdAt: 1 },
     ).lean();
     if (!doc) return null;

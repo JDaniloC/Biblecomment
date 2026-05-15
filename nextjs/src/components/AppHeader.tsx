@@ -21,8 +21,10 @@ interface Props {
   trailing?: React.ReactNode;
 }
 
+// Matches NotificationsBell and ThemeToggle so the header row reads as
+// one icon strip rather than two distinct toolbars.
 const NAV_LINK_CLASS =
-  "flex items-center justify-center w-9 h-9 rounded-md text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand transition no-underline";
+  "inline-flex items-center justify-center w-9 h-9 rounded-md text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors no-underline";
 
 /**
  * Canonical app-shell header used by every authenticated/dashboard-style
@@ -48,10 +50,13 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
 
         <nav className="hidden md:flex gap-1 flex-shrink-0" aria-label="Navegação principal">
           {user && (
+            // Home goes to /home (Livros), so the dedicated Livros icon
+            // would be a duplicate destination — keep only the home icon
+            // for signed-in users.
             <Link
               href="/home"
-              aria-label="Minha home"
-              title="Minha home"
+              aria-label="Início"
+              title="Início"
               data-testid="header-home-link"
               data-tour="livros-link"
               className={NAV_LINK_CLASS}
@@ -62,18 +67,22 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
               </svg>
             </Link>
           )}
-          <Link
-            href="/home"
-            aria-label="Livros"
-            title="Livros"
-            data-testid="header-books-link"
-            className={NAV_LINK_CLASS}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-          </Link>
+          {!user && (
+            // Anonymous viewers don't have a "minha home" — surface the
+            // books icon so the chapter index is still one click away.
+            <Link
+              href="/home"
+              aria-label="Livros"
+              title="Livros"
+              data-testid="header-books-link"
+              className={NAV_LINK_CLASS}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+            </Link>
+          )}
           <Link
             href="/discussions"
             aria-label="Discussões"

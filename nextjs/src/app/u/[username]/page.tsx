@@ -16,12 +16,18 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const { username } = await params;
   const slug = username.toLowerCase();
 
-  const [user, comments, session] = await Promise.all([
-    new MongoUserRepository().findByUsernamePublic(slug),
-    new MongoCommentRepository().findByUsernamePaginated(slug, 1, INITIAL_PAGE_SIZE),
-    auth(),
-  ]);
+  // Resolve user first so we know the canonical (case-preserved) username —
+  // comments and follow rows are keyed on that exact string, so a lookup by
+  // the URL slug (lower) would miss for legacy mixed-case accounts.
+  const session = await auth();
+  const user = await new MongoUserRepository().findByUsernamePublic(slug);
   if (!user) notFound();
+
+  const comments = await new MongoCommentRepository().findByUsernamePaginated(
+    user.username,
+    1,
+    INITIAL_PAGE_SIZE,
+  );
 
   const viewer = session?.user
     ? {
@@ -35,7 +41,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const followState = await new GetFollowStateUseCase(
     new MongoFollowRepository(),
     new MongoUserRepository(),
-  ).execute(slug, viewer?.email ?? null);
+  ).execute(user.username, viewer?.email ?? null);
 
   // Mongoose docs carry Date instances; the client gets ISO strings over the
   // wire boundary so we normalize here rather than mixing types client-side.
