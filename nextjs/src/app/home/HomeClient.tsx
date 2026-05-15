@@ -14,7 +14,8 @@ import {
 
 interface Props {
   books: Book[];
-  user: { name: string; email: string; username: string; moderator: boolean };
+  /** null = anonymous visitor: the book grid is public, the feed is gated. */
+  user: { name: string; email: string; username: string; moderator: boolean } | null;
   /**
    * Server-rendered first page of the "recent" feed. When provided, the
    * default tab paints with content on first byte and skips the mount-time
@@ -384,6 +385,41 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
+/**
+ * Shown to anonymous visitors in place of the social feed. The book grid
+ * below stays fully public; only the feed requires an account.
+ */
+function FeedAuthCta() {
+  return (
+    <div
+      data-testid="feed-auth-cta"
+      className="mb-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-6 text-center"
+    >
+      <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+        Crie sua conta para ver o feed da comunidade
+      </h2>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        Comente, acompanhe quem você segue e participe das discussões. Os livros
+        abaixo continuam livres para leitura.
+      </p>
+      <div className="mt-4 flex items-center justify-center gap-3">
+        <Link
+          href="/register"
+          className="inline-flex items-center h-9 px-4 rounded-md bg-brand text-white text-sm font-semibold no-underline hover:opacity-90 transition"
+        >
+          Criar conta
+        </Link>
+        <Link
+          href="/login"
+          className="text-sm font-medium text-brand hover:underline no-underline"
+        >
+          Entrar
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function HomeClient({ books, user, initialRecent, readCountByBook }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "VT" | "NT">("all");
@@ -408,7 +444,11 @@ export default function HomeClient({ books, user, initialRecent, readCountByBook
       <AppHeader user={user} />
 
       <main id="main-content" className="max-w-6xl mx-auto px-4 py-6">
-        <FeedSection initialRecent={initialRecent} />
+        {user ? (
+          <FeedSection initialRecent={initialRecent} />
+        ) : (
+          <FeedAuthCta />
+        )}
 
         <section>
           <div className="flex items-baseline gap-3 mb-4">

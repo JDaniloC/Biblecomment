@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
@@ -13,9 +12,16 @@ const INITIAL_FEED_LIMIT = 10;
 
 export default async function HomePage() {
   const session = await auth();
-  if (!session?.user) redirect("/login");
-
   const booksUseCase = new GetAllBooksUseCase(new MongoBookRepository());
+
+  // The book grid is public. Anonymous visitors get only the (cached) books
+  // — the social feed and per-user read tints require an account, so we
+  // skip those queries and let HomeClient render the create-account CTA.
+  if (!session?.user) {
+    const books = await booksUseCase.execute();
+    return <HomeClient books={books} user={null} />;
+  }
+
   const recentUseCase = new GetRecentFeedUseCase(
     new MongoCommentRepository(),
     new MongoCommentLikeRepository(),
