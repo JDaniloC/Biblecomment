@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { commentsService } from "@/services/comments";
+import { useCommunityFilter, GENERAL_BUCKET } from "@/lib/hooks/useCommunityFilter";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/lib/comment-data";
@@ -108,6 +109,7 @@ export default function ChapterClient({
   });
   const [composeCommunity, setComposeCommunity] = useState<string>("");
   const [userCommunities, setUserCommunities] = useState<{ slug: string; name: string }[]>([]);
+  const communityFilter = useCommunityFilter(user?.username);
   const [composeSubmitting, setComposeSubmitting] = useState(false);
   const [editingComment, setEditingComment] = useState<CommentData | null>(null);
   const [editText, setEditText] = useState("");
@@ -143,7 +145,11 @@ export default function ChapterClient({
 
   const loadCounts = useCallback(async () => {
     try {
-      const res = await commentsService.getForChapter(book.abbrev, chapter);
+      const res = await commentsService.getForChapter(
+        book.abbrev,
+        chapter,
+        communityFilter.selected,
+      );
       const tc = (res.titleComments ?? []) as unknown as CommentData[];
       const vc = (res.verseComments ?? []) as unknown as CommentData[];
       setTitleCount(tc.length);
@@ -155,12 +161,54 @@ export default function ChapterClient({
     } catch {
       // Comment counts are non-critical UI metadata; failures shouldn't surface.
     }
-  }, [book.abbrev, chapter]);
+  }, [book.abbrev, chapter, communityFilter.selected]);
 
   useEffect(() => {
-    if (hasInitialCounts) return;
+    // Skip the first paint when SSR already provided counts (no filter), but
+    // re-fetch on every filter change so the per-verse badges reflect the
+    // selected communities.
+    if (hasInitialCounts && communityFilter.selected === null) return;
     loadCounts();
-  }, [hasInitialCounts, loadCounts]);
+  }, [hasInitialCounts, loadCounts, communityFilter.selected]);
+
+  // Reload the open panel's comments whenever the filter changes — keeps
+  // the sidebar in sync with the chips without making the user close +
+  // reopen the verse panel. Inlined here (rather than calling openVersePanel)
+  // because the open* helpers double as toggles: invoking them on the
+  // already-selected verse closes the panel.
+  useEffect(() => {
+    let cancelled = false;
+    async function refresh() {
+      if (isTitleMode) {
+        try {
+          const res = await commentsService.getForChapter(
+            book.abbrev,
+            chapter,
+            communityFilter.selected,
+          );
+          if (!cancelled) setTitleComments((res.titleComments ?? []) as unknown as CommentData[]);
+        } catch {
+          // Filter change isn't a user action; suppress the toast — the
+          // existing comments stay rendered until the next interaction.
+        }
+      } else if (selectedVerse) {
+        try {
+          const res = await commentsService.getForVerse(
+            book.abbrev,
+            chapter,
+            selectedVerse.verseNumber,
+            communityFilter.selected,
+          );
+          if (!cancelled) setComments((res.verseComments ?? []) as unknown as CommentData[]);
+        } catch {}
+      }
+    }
+    refresh();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [communityFilter.selected]);
 
   // Fetch the user's communities once, on mount, so the "Postar em" select
   // is already populated when the composer opens. Anonymous viewers skip the
@@ -190,14 +238,18 @@ export default function ChapterClient({
     setComposing(false);
     setLoadingComments(true);
     try {
-      const res = await commentsService.getForChapter(book.abbrev, chapter);
+      const res = await commentsService.getForChapter(
+        book.abbrev,
+        chapter,
+        communityFilter.selected,
+      );
       setTitleComments((res.titleComments ?? []) as unknown as CommentData[]);
     } catch {
       handleNotification("error", "Erro ao carregar comentários do capítulo.");
     } finally {
       setLoadingComments(false);
     }
-  }, [book.abbrev, chapter, handleNotification]);
+  }, [book.abbrev, chapter, communityFilter.selected, handleNotification]);
 
   const openVersePanel = useCallback(async (verse: Verse) => {
     if (selectedVerse?._id === verse._id && !isTitleMode) {
@@ -210,14 +262,19 @@ export default function ChapterClient({
     setComposing(false);
     setLoadingComments(true);
     try {
-      const res = await commentsService.getForVerse(book.abbrev, chapter, verse.verseNumber);
+      const res = await commentsService.getForVerse(
+        book.abbrev,
+        chapter,
+        verse.verseNumber,
+        communityFilter.selected,
+      );
       setComments((res.verseComments ?? []) as unknown as CommentData[]);
     } catch {
       handleNotification("error", "Erro ao carregar comentários.");
     } finally {
       setLoadingComments(false);
     }
-  }, [book.abbrev, chapter, isTitleMode, selectedVerse, handleNotification]);
+  }, [book.abbrev, chapter, isTitleMode, selectedVerse, communityFilter.selected, handleNotification]);
 
   const handleClose = useCallback(() => {
     setSelectedVerse(null);
@@ -484,6 +541,67 @@ export default function ChapterClient({
                 enabled={!!user}
               />
             </div>
+
+            {/* Community filter chips — only renders for users in at least
+                one community. Geral is always available; clicking it toggles
+                showing the unmarked feed alongside the chosen communities. */}
+            {user && userCommunities.length > 0 && (() => {
+              const allChips = [GENERAL_BUCKET, ...userCommunities.map((c) => c.slug)];
+              // "null" means "all on" by default — first click switches to an
+              // explicit list (every chip minus the clicked one), so the
+              // visual stays consistent: tapping an active chip turns it off.
+              const handleChipClick = (slug: string) => {
+                if (communityFilter.selected === null) {
+                  communityFilter.setSelected(allChips.filter((s) => s !== slug));
+                } else {
+                  communityFilter.toggle(slug);
+                }
+              };
+              return (
+                <div
+                  data-testid="community-filter-row"
+                  className="flex flex-wrap items-center gap-2 mb-5 text-[12px]"
+                >
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">
+                    Mostrar:
+                  </span>
+                  {[{ slug: GENERAL_BUCKET, name: "Geral" }, ...userCommunities].map(
+                    (c) => {
+                      const isActive =
+                        communityFilter.selected === null
+                          ? true
+                          : communityFilter.selected.includes(c.slug);
+                      return (
+                        <button
+                          key={c.slug}
+                          type="button"
+                          onClick={() => handleChipClick(c.slug)}
+                          data-testid={`community-filter-chip-${c.slug}`}
+                          data-active={isActive ? "true" : "false"}
+                          className={`px-2.5 py-1 rounded-full border transition font-medium ${
+                            isActive
+                              ? "bg-brand text-white border-brand"
+                              : "bg-transparent text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand hover:text-brand"
+                          }`}
+                        >
+                          {c.slug === GENERAL_BUCKET ? "Geral" : `/${c.slug}`}
+                        </button>
+                      );
+                    },
+                  )}
+                  {communityFilter.selected !== null && (
+                    <button
+                      type="button"
+                      onClick={() => communityFilter.setSelected(null)}
+                      data-testid="community-filter-reset"
+                      className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 hover:text-brand underline"
+                    >
+                      limpar filtro
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
 
             {(titleCount > 0 || isTitleMode) && (
               <button

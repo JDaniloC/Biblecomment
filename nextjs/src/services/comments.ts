@@ -71,9 +71,14 @@ export const commentsService = {
     if (!result.ok) actionError(result.error);
   },
 
-  async getForChapter(abbrev: string, chapter: number): Promise<ChapterCommentsResponse> {
+  async getForChapter(
+    abbrev: string,
+    chapter: number,
+    communityFilter?: string[] | null,
+  ): Promise<ChapterCommentsResponse> {
+    const qs = buildCommunityQuery(communityFilter);
     const res = await axios.get<ChapterCommentsResponse>(
-      `/api/comments/chapter/${abbrev}/${chapter}`,
+      `/api/comments/chapter/${abbrev}/${chapter}${qs}`,
     );
     return res.data;
   },
@@ -82,10 +87,17 @@ export const commentsService = {
     abbrev: string,
     chapter: number,
     verse: number,
+    communityFilter?: string[] | null,
   ): Promise<ChapterCommentsResponse> {
+    const qs = buildCommunityQuery(communityFilter);
     const res = await axios.get<ChapterCommentsResponse>(
-      `/api/comments/chapter/${abbrev}/${chapter}/${verse}`,
+      `/api/comments/chapter/${abbrev}/${chapter}/${verse}${qs}`,
     );
     return res.data;
   },
 };
+
+function buildCommunityQuery(filter: string[] | null | undefined): string {
+  if (!filter) return "";
+  return `?communities=${encodeURIComponent(filter.join(","))}`;
+}
