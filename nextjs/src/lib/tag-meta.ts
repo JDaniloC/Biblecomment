@@ -9,8 +9,11 @@ export interface TagMeta {
   icon: TagIconName;
 }
 
+// Each tag needs to be visually distinct at a glance. Devocional moved from
+// indigo (#4f46e5) to rose (#e11d48) because it was reading as the same hue
+// as Inspirado's violet (#7c3aed) in the chapter sidebar.
 export const TAG_META: Record<string, TagMeta> = {
-  devocional: { label: "Devocional", color: "#4f46e5", bg: "rgba(79,70,229,0.08)",  border: "#4f46e5", icon: "sunrise" },
+  devocional: { label: "Devocional", color: "#e11d48", bg: "rgba(225,29,72,0.08)",  border: "#e11d48", icon: "sunrise" },
   exegese:    { label: "Exegese",    color: "#0d9488", bg: "rgba(13,148,136,0.08)", border: "#0d9488", icon: "book-open" },
   exegetico:  { label: "Exegese",    color: "#0d9488", bg: "rgba(13,148,136,0.08)", border: "#0d9488", icon: "book-open" },
   pessoal:    { label: "Pessoal",    color: "#d97706", bg: "rgba(217,119,6,0.08)",  border: "#d97706", icon: "user" },

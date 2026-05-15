@@ -26,6 +26,7 @@ import {
   createCommentAction,
   updateCommentAction,
 } from "@/app/actions/comments";
+import { toggleCommentVerifiedAction } from "@/app/actions/moderation";
 
 interface SessionUser {
   name: string;
@@ -375,6 +376,32 @@ export default function ChapterClient({
     }
     handleNotification("info", "Comentário reportado.");
   }, [user, requireLogin, handleNotification, confirm]);
+
+  // Moderator-only: flip the admin-verified badge on a comment without
+  // bouncing to /admin/moderation. Updates both lists optimistically so the
+  // checkmark next to the username refreshes immediately.
+  const handleToggleVerified = useCallback(async (id: string) => {
+    if (!user?.moderator) return;
+    const result = await toggleCommentVerifiedAction(id);
+    if (!result.ok) {
+      handleNotification(
+        "error",
+        result.error === "Forbidden" ? "Sem permissão." : "Erro ao alterar verificação.",
+      );
+      return;
+    }
+    const updated = result.data;
+    const patch = (c: CommentData): CommentData =>
+      c._id === id
+        ? { ...c, verified: updated.verified ?? false, verifiedBy: updated.verifiedBy }
+        : c;
+    setComments((prev) => prev.map(patch));
+    setTitleComments((prev) => prev.map(patch));
+    handleNotification(
+      "success",
+      updated.verified ? "Comentário verificado." : "Verificação removida.",
+    );
+  }, [user, handleNotification]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!user) { requireLogin(); return; }
@@ -1065,6 +1092,28 @@ export default function ChapterClient({
                               {comment.likeCount > 0 ? `${comment.likeCount} Perspectiva${comment.likeCount !== 1 ? "s" : ""}` : "0 Perspectivas"}
                             </span>
                           </div>
+
+                          {/* Moderator-only: toggle the admin-verified badge inline. */}
+                          {user?.moderator && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleVerified(comment._id)}
+                              data-testid={`mod-verify-${comment._id}`}
+                              data-verified={comment.verified ? "true" : "false"}
+                              aria-label={comment.verified ? "Remover verificação" : "Verificar comentário"}
+                              title={comment.verified ? "Remover verificação" : "Verificar comentário"}
+                              className={`flex items-center justify-center w-7 h-7 ml-1 rounded-[5px] border-none bg-transparent cursor-pointer transition-colors ${
+                                comment.verified
+                                  ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
+                                  : "text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400"
+                              }`}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                              </svg>
+                            </button>
+                          )}
 
                           {/* Owner: edit pencil. Non-owner: report flag. */}
                           <div className="relative ml-1">
