@@ -10,6 +10,31 @@
 
 import users from "../fixtures/users.json";
 
+/**
+ * Poll the public followers API until alice is persisted as bob's follower.
+ * `cy.request().should()` does not re-issue the request, so retry by
+ * recursion bounded at ~6s — long enough for the awaited server action +
+ * revalidate to land even under full-suite CI load, short enough to fail
+ * loudly if the write genuinely never happens.
+ */
+function waitForFollowPersisted(attempt = 0): void {
+  cy.request(`/api/users/${users.bob.username}/followers?page=1`).then(
+    (res) => {
+      const persisted = (res.body.items as Array<{ username: string }>).some(
+        (i) => i.username === users.alice.username,
+      );
+      if (persisted) return;
+      if (attempt >= 30) {
+        throw new Error(
+          "alice→bob follow never persisted (server write failed, not a race)",
+        );
+      }
+      cy.wait(200);
+      waitForFollowPersisted(attempt + 1);
+    },
+  );
+}
+
 describe("Follow lists + /profile counters", () => {
   beforeEach(() => {
     cy.resetDb();
@@ -19,11 +44,14 @@ describe("Follow lists + /profile counters", () => {
     // Set up the follow relation via the UI (drives prod code path).
     cy.visit(`/u/${users.bob.username}`);
     cy.get('[data-testid="public-profile-follow-button"]').click();
-    cy.get('[data-testid="public-profile-follow-button"]').should(
-      "have.attr",
-      "data-following",
-      "true",
-    );
+    // The button flips data-following="true" OPTIMISTICALLY (client state,
+    // before the awaited server action commits the Mongo write). Asserting
+    // that attribute races the write — under CI suite load the subsequent
+    // following-list / count reads beat the write and come back empty
+    // (deterministic on CI, green locally/in isolation where the write
+    // wins). Wait on server truth instead: poll the public followers API
+    // until the relation is actually persisted before any test reads it.
+    waitForFollowPersisted();
   });
 
   it("clicking the public-profile followers counter opens the followers list", () => {
