@@ -21,7 +21,7 @@ const SIZES = {
  * icon+label so secondary categories are no longer invisible.
  */
 export function TagBadges({ tags, size = "sm", className = "" }: Props) {
-  const s = SIZES[size];
+  const sz = SIZES[size];
   return (
     <span
       data-testid="tag-badges"
@@ -30,13 +30,13 @@ export function TagBadges({ tags, size = "sm", className = "" }: Props) {
       {getTagMetas(tags).map((meta) => (
         <span
           key={meta.label}
-          className={`inline-flex items-center gap-1 rounded-[10px] ${s.px} ${s.h} shrink-0`}
+          className={`inline-flex items-center gap-1 rounded-[10px] ${sz.px} ${sz.h} shrink-0`}
           style={{ background: meta.bg, color: meta.color }}
         >
           <span aria-hidden="true" className="flex">
-            <TagIcon name={meta.icon} width={s.icon} height={s.icon} />
+            <TagIcon name={meta.icon} width={sz.icon} height={sz.icon} />
           </span>
-          <span className={`font-semibold whitespace-nowrap ${s.text}`}>
+          <span className={`font-semibold whitespace-nowrap ${sz.text}`}>
             {meta.label}
           </span>
         </span>

@@ -45,7 +45,6 @@ interface UserProfile {
 import { getTagMetaOrNeutral, getTagMetas } from "@/lib/tag-meta";
 import { TagBadges } from "@/components/TagBadges";
 import { parseBookRef } from "@/lib/parse-book-ref";
-import { TagIcon } from "@/components/TagIcon";
 import { AppHeader } from "@/components/AppHeader";
 
 type Tab = "overview" | "comments" | "favorites" | "badges" | "config";

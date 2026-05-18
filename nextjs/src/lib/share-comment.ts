@@ -64,9 +64,9 @@ export function verseDeepLinkPath(verse: ShareVerseCoords): string {
  * text exactly at the boundary is returned untouched (no ellipsis).
  */
 export function clampForCard(text: string, max = 280): string {
-  const t = text.trim();
-  if (t.length <= max) return t;
-  return `${t.slice(0, max - 1).trimEnd()}…`;
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max - 1).trimEnd()}…`;
 }
 
 /** Formatted, copy-pasteable share text + link. */
@@ -89,7 +89,7 @@ export function commentToCardProps(
     username: comment.username,
     reference: formatCommentReference(comment, verse),
     tags: comment.tags ?? [],
-    verified: !!comment.verified,
+    verified: Boolean(comment.verified),
     communitySlug: comment.communitySlug,
     url: formatCommentShareUrl(comment._id ?? "", origin),
     verseHref: verseDeepLinkPath(verse),

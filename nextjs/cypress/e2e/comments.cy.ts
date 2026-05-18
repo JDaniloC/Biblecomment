@@ -16,10 +16,14 @@ function getVerseId(
 ): Cypress.Chainable<string> {
   return cy.request("GET", `/api/books/${abbrev}/verses/${chapter}`).then((res) => {
     const verse = (res.body as Array<{ _id: string; verseNumber: number }>).find(
-      (v) => v.verseNumber === verseNumber,
+      (item) => item.verseNumber === verseNumber,
     );
-    expect(verse, `verse ${abbrev} ${chapter}:${verseNumber} should be seeded`).to.exist;
-    return verse!._id;
+    if (!verse) {
+      throw new Error(
+        `verse ${abbrev} ${chapter}:${verseNumber} should be seeded`,
+      );
+    }
+    return verse._id;
   });
 }
 
@@ -27,7 +31,13 @@ describe("Comments — full lifecycle", () => {
   beforeEach(() => {
     cy.resetDb();
     cy.seedDb({
-      users: [users.alice, users.bob, users.mod],
+      // Seed the chapter tutorial as completed so its full-screen coach-mark
+      // overlay (pointer-events:none on the page) doesn't block the reader
+      // panel in the inline-delete UI tests. Harmless for the API tests.
+      users: [users.alice, users.bob, users.mod].map((u) => ({
+        ...u,
+        tutorialsCompleted: ["chapter-v1"],
+      })),
       books: [bookFixture.book],
       verses: bookFixture.verses,
     });

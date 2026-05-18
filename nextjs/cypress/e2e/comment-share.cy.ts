@@ -16,11 +16,13 @@ function getVerseId(
   return cy
     .request("GET", `/api/books/${abbrev}/verses/${chapter}`)
     .then((res) => {
-      const v = (res.body as Array<{ _id: string; verseNumber: number }>).find(
-        (x) => x.verseNumber === verseNumber,
-      );
-      expect(v, `verse ${abbrev} ${chapter}:${verseNumber}`).to.exist;
-      return v!._id;
+      const verse = (
+        res.body as Array<{ _id: string; verseNumber: number }>
+      ).find((item) => item.verseNumber === verseNumber);
+      if (!verse) {
+        throw new Error(`verse ${abbrev} ${chapter}:${verseNumber} missing`);
+      }
+      return verse._id;
     });
 }
 
@@ -28,7 +30,9 @@ describe("Multi-category badges + share card", () => {
   beforeEach(() => {
     cy.resetDb();
     cy.seedDb({
-      users: [users.alice],
+      // chapter tutorial pre-completed — its coach-mark overlay otherwise
+      // covers the reader panel and blocks the share button.
+      users: [{ ...users.alice, tutorialsCompleted: ["chapter-v1"] }],
       books: [bookFixture.book],
       verses: bookFixture.verses,
     });
