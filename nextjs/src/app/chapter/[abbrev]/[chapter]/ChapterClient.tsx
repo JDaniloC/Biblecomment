@@ -1156,6 +1156,26 @@ export default function ChapterClient({
                               </button>
                             )}
                           </div>
+
+                          {/* Owner: delete inline so they don't have to hunt
+                              for the comment on their profile. Backend still
+                              authorizes owner|moderator; we surface it only to
+                              the author here per product decision. */}
+                          {isOwner && (
+                            <button
+                              type="button"
+                              aria-label="Excluir comentário"
+                              title="Excluir"
+                              data-testid={`delete-${comment._id}`}
+                              className="flex items-center justify-center w-7 h-7 ml-1 rounded-[5px] border-none bg-transparent cursor-pointer text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                              onClick={() => handleDelete(comment._id)}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

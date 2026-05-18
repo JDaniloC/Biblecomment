@@ -275,4 +275,48 @@ describe("Comments — full lifecycle", () => {
       });
     });
   });
+
+  describe("Inline delete (reader panel)", () => {
+    it("author can delete their own comment from the reader panel", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      getVerseId("gn", 1, 1).then((verseId) => {
+        cy.request("POST", `/api/comments/${verseId}`, {
+          text: "alice inline-delete target",
+          tags: ["devocional"],
+        }).then((res) => {
+          const id = res.body._id as string;
+
+          cy.visit("/verses/gn/1");
+          cy.get("li#1 button").first().click();
+          cy.contains("alice inline-delete target").should("be.visible");
+
+          cy.get(`[data-testid="delete-${id}"]`).click();
+          cy.get('[role="alertdialog"]').should("be.visible");
+          cy.get('[role="alertdialog"] button[data-variant="danger"]').click();
+
+          cy.contains("alice inline-delete target").should("not.exist");
+        });
+      });
+    });
+
+    it("non-author does not see the delete button on someone else's comment", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      getVerseId("gn", 1, 1).then((verseId) => {
+        cy.request("POST", `/api/comments/${verseId}`, {
+          text: "alice owns this one",
+          tags: ["devocional"],
+        }).then((res) => {
+          const id = res.body._id as string;
+
+          cy.clearCookies();
+          cy.loginAs(users.bob.email, users.bob.password);
+          cy.visit("/verses/gn/1");
+          cy.get("li#1 button").first().click();
+          cy.contains("alice owns this one").should("be.visible");
+
+          cy.get(`[data-testid="delete-${id}"]`).should("not.exist");
+        });
+      });
+    });
+  });
 });
