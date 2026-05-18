@@ -11,28 +11,28 @@ import { useRouter } from "next/navigation";
  * router.replace'd here, with a plain link as the no-JS fallback.
  */
 export function ShareForward({ href }: { href: string }) {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace(href);
-  }, [router, href]);
+	const router = useRouter();
+	useEffect(() => {
+		router.replace(href);
+	}, [router, href]);
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        textAlign: "center",
-      }}
-    >
-      <p>
-        Abrindo o comentário no contexto…{" "}
-        <a href={href} className="text-brand underline">
-          Toque aqui se não for redirecionado
-        </a>
-      </p>
-    </div>
-  );
+	return (
+		<div
+			style={{
+				minHeight: "100vh",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+				padding: 24,
+				textAlign: "center",
+			}}
+		>
+			<p>
+				Abrindo o comentário no contexto…{" "}
+				<a href={href} className="text-brand underline">
+					Toque aqui se não for redirecionado
+				</a>
+			</p>
+		</div>
+	);
 }
