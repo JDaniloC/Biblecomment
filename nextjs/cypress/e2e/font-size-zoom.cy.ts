@@ -28,9 +28,10 @@ describe("Accessibility — global zoom", () => {
 
   function bodyZoom(): Cypress.Chainable<string> {
     return cy
-      .document()
-      .then((doc) =>
-        doc.defaultView!.getComputedStyle(doc.body).zoom as unknown as string,
+      .window()
+      .then(
+        (win) =>
+          win.getComputedStyle(win.document.body).zoom as unknown as string,
       );
   }
 

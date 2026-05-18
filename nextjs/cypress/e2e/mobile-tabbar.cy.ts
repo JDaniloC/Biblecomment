@@ -57,9 +57,9 @@ describe("Mobile bottom tab bar", () => {
     cy.get('[data-testid="header-tools-panel"]').within(() => {
       cy.findByLabelText("Aumentar tamanho do texto").click();
     });
-    cy.document().then((doc) =>
+    cy.window().then((win) =>
       expect(
-        doc.defaultView!.getComputedStyle(doc.body).zoom as unknown as string,
+        win.getComputedStyle(win.document.body).zoom as unknown as string,
       ).to.eq("1.1"),
     );
   });
