@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
+import { TagBadges } from "@/components/TagBadges";
 import { BadgeCard } from "@/app/profile/_components/BadgeCard";
 import { getBadge } from "@/lib/badges/catalog";
 import { followService } from "@/services/follow";
@@ -350,12 +351,13 @@ export default function PublicProfileClient({
                   data-testid="public-profile-comment-card"
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
                 >
-                  <div className="flex items-center gap-2 mb-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 mb-2 text-xs">
                     {c.bookReference && (
                       <span className="inline-flex items-center bg-brand-tint rounded px-2 h-5 font-bold text-brand whitespace-nowrap">
                         {c.bookReference}
                       </span>
                     )}
+                    <TagBadges tags={c.tags} />
                     <span className="ml-auto text-slate-400 dark:text-slate-500">
                       {dateFormat(c.createdAt)}
                     </span>

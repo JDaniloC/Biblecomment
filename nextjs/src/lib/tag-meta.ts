@@ -20,11 +20,20 @@ export const TAG_META: Record<string, TagMeta> = {
   inspirado:  { label: "Inspirado",  color: "#7c3aed", bg: "rgba(124,58,237,0.08)", border: "#8b5cf6", icon: "pen" },
 };
 
-export const TAG_ORDER = ["devocional", "exegese", "pessoal", "inspirado"] as const;
+// Ordered most personal → most studied. Drives badge/compose/edit order and,
+// via getTagMeta, which tag colors the comment card's left border.
+export const TAG_ORDER = ["pessoal", "devocional", "inspirado", "exegese"] as const;
+
+function normalizeTags(tags: string[]): string[] {
+  // "exegetico" is a legacy alias for "exegese" (same TAG_META entry, but
+  // only "exegese" is in TAG_ORDER) — fold it so it isn't dropped.
+  return tags.map((t) => (t === "exegetico" ? "exegese" : t));
+}
 
 export function getTagMeta(tags: string[]): TagMeta | null {
+  const norm = normalizeTags(tags);
   for (const t of TAG_ORDER) {
-    if (tags.includes(t)) return TAG_META[t];
+    if (norm.includes(t)) return TAG_META[t];
   }
   return null;
 }
@@ -39,4 +48,18 @@ const NEUTRAL: TagMeta = {
 
 export function getTagMetaOrNeutral(tags: string[]): TagMeta {
   return getTagMeta(tags) ?? NEUTRAL;
+}
+
+/**
+ * All categories of a comment as ordered, deduped metas (most personal →
+ * most studied). Empty / no-known-tag input yields `[NEUTRAL]` so callers
+ * never special-case the "Comentário" fallback. `getTagMetas(t)[0]` always
+ * equals `getTagMetaOrNeutral(t)`.
+ */
+export function getTagMetas(tags: string[]): TagMeta[] {
+  const norm = normalizeTags(tags);
+  const metas = TAG_ORDER.filter((t) => norm.includes(t)).map(
+    (t) => TAG_META[t],
+  );
+  return metas.length > 0 ? metas : [NEUTRAL];
 }

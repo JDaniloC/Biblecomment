@@ -42,7 +42,8 @@ interface UserProfile {
   followingCount?: number;
 }
 
-import { getTagMetaOrNeutral } from "@/lib/tag-meta";
+import { getTagMetaOrNeutral, getTagMetas } from "@/lib/tag-meta";
+import { TagBadges } from "@/components/TagBadges";
 import { parseBookRef } from "@/lib/parse-book-ref";
 import { TagIcon } from "@/components/TagIcon";
 import { AppHeader } from "@/components/AppHeader";
@@ -132,17 +133,7 @@ function ProfileCommentCard({
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-2.5">
-        <span
-          className="inline-flex items-center gap-1 rounded-[10px] pl-1.5 pr-2 h-[20.5px] shrink-0"
-          style={{ background: type.bg, color: type.color }}
-        >
-          <span aria-hidden="true" className="flex">
-            <TagIcon name={type.icon} width={12} height={12} />
-          </span>
-          <span className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap">
-            {type.label}
-          </span>
-        </span>
+        <TagBadges tags={comment.tags} className="shrink-0" />
         {comment.bookReference && (
           <span className="inline-flex items-center bg-brand-wash rounded px-[7px] h-5 shrink-0">
             <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
@@ -223,17 +214,7 @@ function FavoriteCard({ comment }: { comment: CommentData }) {
           {comment.username}
         </span>
         {/* Type badge */}
-        <span
-          className="inline-flex items-center gap-1 rounded-[10px] pl-1.5 pr-2 h-[20.5px] shrink-0"
-          style={{ background: type.bg, color: type.color }}
-        >
-          <span aria-hidden="true" className="flex">
-            <TagIcon name={type.icon} width={12} height={12} />
-          </span>
-          <span className="font-semibold text-[11px] leading-[16.5px] whitespace-nowrap">
-            {type.label}
-          </span>
-        </span>
+        <TagBadges tags={comment.tags} className="shrink-0" />
         {/* Verse */}
         {comment.bookReference && (
           <span className="font-bold text-[11px] text-brand whitespace-nowrap shrink-0">
@@ -832,7 +813,11 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
   const filteredFavorites = useMemo(() => {
     let list = favorites;
     if (favTypeFilter !== "Todos") {
-      list = list.filter(c => getCommentType(c.tags).label === favTypeFilter);
+      // Match if ANY of the comment's categories equals the filter (a
+      // multi-tag comment shows up under each of its categories).
+      list = list.filter(c =>
+        getTagMetas(c.tags).some(m => m.label === favTypeFilter),
+      );
     }
     if (favSearch) {
       const q = favSearch.toLowerCase();

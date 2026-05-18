@@ -19,6 +19,8 @@ import { CHAPTER_TUTORIAL, CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import { MarkAsReadButton } from "@/components/MarkAsReadButton";
 import { TAG_META, TAG_ORDER, getTagMetaOrNeutral } from "@/lib/tag-meta";
 import { TagIcon } from "@/components/TagIcon";
+import { TagBadges } from "@/components/TagBadges";
+import { ShareCommentButton } from "@/components/ShareCommentButton";
 import {
   toggleLikeAction,
   reportCommentAction,
@@ -1012,14 +1014,9 @@ export default function ChapterClient({
                       >
                         {/* Header row: type icon + label + username + date */}
                         <div className="flex items-center pt-4 px-[18px] h-9">
-                          {/* Type-specific icon — color matches the tag */}
-                          <span aria-hidden="true" className="flex-shrink-0" style={{ color: meta.color }}>
-                            <TagIcon name={meta.icon} width={18} height={18} />
-                          </span>
-                          {/* Type label */}
-                          <span className="font-semibold text-xs ml-2 whitespace-nowrap" style={{ color: meta.color }}>
-                            {meta.label}
-                          </span>
+                          {/* All categories as colored pills, ordered most
+                              personal → most studied; empty → "Comentário". */}
+                          <TagBadges tags={comment.tags} size="md" />
                           {/* Username — linkar para o perfil público */}
                           <span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto whitespace-nowrap inline-flex items-center gap-1">
                             <Link
@@ -1095,6 +1092,14 @@ export default function ChapterClient({
                             </svg>
                             Contribuir
                           </button>
+
+                          {/* Share as image card (Pinterest-like) */}
+                          <ShareCommentButton
+                            commentId={comment._id}
+                            text={comment.text}
+                            username={comment.username}
+                            reference={comment.bookReference}
+                          />
 
                           {/* N Perspectiva badge */}
                           <div className="ml-auto bg-brand-tint rounded-[12px] h-[22.5px] flex items-center px-2.5 whitespace-nowrap">
