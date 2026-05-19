@@ -8,6 +8,10 @@ node_modules
 
 attached_assets/
 screenshots/
+# But PWA manifest screenshots are real shipped assets (served at
+# /screenshots/* and referenced by manifest.webmanifest).
+!nextjs/public/screenshots/
+!nextjs/public/screenshots/**
 venv
 
 .yarn

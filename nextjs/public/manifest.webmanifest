@@ -1,6 +1,7 @@
 {
   "name": "Bible Comment",
   "short_name": "Bible Comment",
+  "id": "/",
   "description": "Sua biblioteca bíblica para estudo, comentário e discussão.",
   "start_url": "/",
   "scope": "/",
@@ -29,6 +30,29 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home-mobile.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Início — biblioteca, comentários e discussões"
+    },
+    {
+      "src": "/screenshots/reading-mobile.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Leitura de um capítulo com comentários"
+    },
+    {
+      "src": "/screenshots/home-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Bible Comment no desktop"
     }
   ]
 }
