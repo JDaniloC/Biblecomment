@@ -646,8 +646,7 @@ export default function ChapterClient({
 			if (
 				!poppedByBack &&
 				window.location.pathname === openedAtPath &&
-				(window.history.state as { bcPanel?: boolean } | null)?.bcPanel ===
-					true
+				(window.history.state as { bcPanel?: boolean } | null)?.bcPanel === true
 			) {
 				window.history.back();
 			}
