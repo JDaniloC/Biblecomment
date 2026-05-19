@@ -24,6 +24,22 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# TWA / PWA correctness:
+#  - Chrome's Digital Asset Links verification REQUIRES assetlinks.json
+#    served as application/json (and not redirected) or the TWA shows a
+#    browser address bar instead of running chromeless.
+#  - The web manifest should be application/manifest+json (it currently
+#    serves as application/octet-stream).
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
 # Required env vars (set in Netlify dashboard, never committed):
 #   MONGODB_URI            — Atlas connection string
 #   NEXTAUTH_SECRET        — random 32-byte secret (openssl rand -base64 32)
