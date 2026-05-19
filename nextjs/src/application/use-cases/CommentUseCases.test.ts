@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { DeleteCommentUseCase } from "./CommentUseCases";
+import { DeleteCommentUseCase, CreateCommentUseCase } from "./CommentUseCases";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import type { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import type { Comment } from "@/domain/entities/Comment";
 
 function fakeComment(overrides: Partial<Comment> = {}): Comment {
@@ -66,5 +67,36 @@ describe("DeleteCommentUseCase", () => {
     expect(del).toHaveBeenCalledWith("c1");
     expect(likeCascade).toHaveBeenCalledWith("c1");
     expect(reportCascade).toHaveBeenCalledWith("c1");
+  });
+});
+
+describe("CreateCommentUseCase (plan_community: no community gate)", () => {
+  it("a non-member can comment and no communitySlug is written", async () => {
+    const create = vi.fn(
+      async (input: Partial<Comment>) => fakeComment({ ...input, _id: "new" }),
+    );
+    const commentRepo = { create } as unknown as ICommentRepository;
+    const verseRepo = {
+      findById: vi.fn().mockResolvedValue({
+        _id: "v1",
+        abbrev: "gn",
+        chapter: 1,
+        verseNumber: 1,
+        reference: "Gn 1:1",
+      }),
+    } as unknown as IVerseRepository;
+
+    const uc = new CreateCommentUseCase(commentRepo, verseRepo);
+    const c = await uc.execute({
+      verseId: "v1",
+      username: "stranger",
+      text: "olá",
+      tags: [],
+    });
+
+    const arg = create.mock.calls[0][0] as Partial<Comment>;
+    expect(arg.communitySlug).toBeUndefined();
+    expect(c.communitySlug).toBeUndefined();
+    expect(arg.username).toBe("stranger");
   });
 });

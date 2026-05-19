@@ -121,7 +121,7 @@ export async function reportCommentAction(
  */
 export async function createCommentAction(
   verseId: string,
-  draft: { text: string; tags?: string[]; onTitle?: boolean; communitySlug?: string },
+  draft: { text: string; tags?: string[]; onTitle?: boolean },
 ): Promise<ActionResult<Comment>> {
   const session = await auth();
   if (!session?.user) return authError();
@@ -174,7 +174,6 @@ export async function createCommentAction(
       text: draft.text,
       tags,
       onTitle,
-      communitySlug: draft.communitySlug,
     });
 
     if (comment._id) {

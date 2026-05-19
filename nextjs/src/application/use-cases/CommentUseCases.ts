@@ -91,27 +91,10 @@ export class CreateCommentUseCase {
 
     const bookRef = verse.reference ?? `${verse.abbrev} ${verse.chapter}:${verse.verseNumber}`;
 
-    // Community gate: when the caller targets a community, we verify the
-    // community exists and the author belongs to it. Posting to /communities
-    // a user doesn't belong to should fail loudly rather than silently
-    // demoting the post to the general feed.
-    let communitySlug: string | undefined;
-    if (input.communitySlug) {
-      if (!this.communityRepo || !this.membershipRepo || !this.userRepo) {
-        throw new Error("Community posting not configured");
-      }
-      const community = await this.communityRepo.findBySlug(input.communitySlug);
-      if (!community || !community._id) throw new Error("Community not found");
-
-      const author = await this.userRepo.findByUsername(input.username);
-      if (!author || !author._id) throw new Error("Author not found");
-
-      const isMember = await this.membershipRepo.isMember(author._id, community._id);
-      if (!isMember) throw new Error("Not a community member");
-
-      communitySlug = community.slug;
-    }
-
+    // plan_community: commenting no longer chooses/joins a community.
+    // Community↔comment is derived from approved membership at read time
+    // (see partitionByApproved). communitySlug is never written by this
+    // path; legacy values on old docs are kept but ignored on read.
     return this.commentRepo.create({
       verseId: verse._id ?? "",
       username: input.username,
@@ -119,7 +102,6 @@ export class CreateCommentUseCase {
       bookReference: bookRef,
       text: input.text,
       tags: input.tags,
-      communitySlug,
     });
   }
 }
