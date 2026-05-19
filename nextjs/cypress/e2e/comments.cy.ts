@@ -351,4 +351,35 @@ describe("Comments — full lifecycle", () => {
 			});
 		});
 	});
+
+	// Regression: in a standalone PWA the Android back gesture maps to
+	// history.back(). The panel used to be pure React state with no
+	// history entry, so back navigated away from the chapter (and EXITED
+	// the app when it was the first history entry) instead of just
+	// closing the comment panel.
+	describe("Back gesture closes the comment panel (PWA)", () => {
+		it("browser/Android back closes the panel and stays on the chapter", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			cy.visit("/verses/gn/1");
+			cy.get("li#1 button").first().click();
+			cy.get('[aria-label="Fechar comentários"]').should("be.visible");
+
+			cy.go("back");
+
+			cy.location("pathname").should("eq", "/verses/gn/1");
+			cy.get('[aria-label="Fechar comentários"]').should("not.exist");
+		});
+
+		it("closing with the X button still works and stays on the chapter", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			cy.visit("/verses/gn/1");
+			cy.get("li#1 button").first().click();
+			cy.get('[aria-label="Fechar comentários"]').should("be.visible");
+
+			cy.get('[aria-label="Fechar comentários"]').click();
+
+			cy.location("pathname").should("eq", "/verses/gn/1");
+			cy.get('[aria-label="Fechar comentários"]').should("not.exist");
+		});
+	});
 });

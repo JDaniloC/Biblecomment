@@ -622,6 +622,38 @@ export default function ChapterClient({
 		return () => document.body.classList.remove("bc-hide-tabbar");
 	}, [showSidebar]);
 
+	// Android / browser back must CLOSE the open comment panel, not navigate
+	// away. In a standalone PWA the system back maps to history.back(); with
+	// no synthetic history entry it pops the page — and EXITS the app when
+	// the chapter is the first entry (PWA launched from icon / share deep
+	// link). Push one entry while the panel is open; a popstate (back) then
+	// just closes it. On a non-back close (X / Esc / re-tapping the same
+	// verse) we pop our own entry to keep the history stack balanced —
+	// skipped if we navigated away (pathname changed, e.g. tapping an
+	// in-panel @username link) so we don't hijack that navigation.
+	useEffect(() => {
+		if (!showSidebar || typeof window === "undefined") return;
+		const openedAtPath = window.location.pathname;
+		let poppedByBack = false;
+		window.history.pushState({ bcPanel: true }, "");
+		const onPop = () => {
+			poppedByBack = true;
+			handleClose();
+		};
+		window.addEventListener("popstate", onPop);
+		return () => {
+			window.removeEventListener("popstate", onPop);
+			if (
+				!poppedByBack &&
+				window.location.pathname === openedAtPath &&
+				(window.history.state as { bcPanel?: boolean } | null)?.bcPanel ===
+					true
+			) {
+				window.history.back();
+			}
+		};
+	}, [showSidebar, handleClose]);
+
 	// Swipe-to-navigate (touch only, mobile). Threshold ~60px horizontal,
 	// ignored if vertical movement dominates (avoids hijacking scrolls)
 	// or if the sidebar is open (would conflict with closing the drawer).
