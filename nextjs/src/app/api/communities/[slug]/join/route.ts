@@ -3,33 +3,36 @@ import { auth } from "@/lib/auth";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
-import {
-  JoinCommunityUseCase,
-  LeaveCommunityUseCase,
-} from "@/application/use-cases/CommunityUseCases";
+import { RequestJoinCommunityUseCase } from "@/application/use-cases/CommunityUseCases";
 
 export const dynamic = "force-dynamic";
 
-/** POST = join (idempotent). DELETE = leave (idempotent). */
+async function sessionUserId(): Promise<string | null> {
+  const session = await auth();
+  if (!session?.user?.email) return null;
+  const u = await new MongoUserRepository().findByEmail(session.user.email);
+  return u?._id ?? null;
+}
+
+/** POST = request to join (pending). DELETE = cancel request / leave. */
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user?.email) {
+  const userId = await sessionUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { slug } = await params;
   try {
-    const result = await new JoinCommunityUseCase(
+    await new RequestJoinCommunityUseCase(
       new MongoCommunityRepository(),
       new MongoCommunityMembershipRepository(),
-      new MongoUserRepository(),
-    ).execute(session.user.email, slug.toLowerCase());
-    return NextResponse.json(result);
+    ).execute({ slug: slug.toLowerCase(), userId });
+    return NextResponse.json({ status: "pending" });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown";
-    if (msg.includes("Community")) {
+    if (msg.includes("não encontrada")) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.json({ error: msg }, { status: 500 });
@@ -40,23 +43,28 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user?.email) {
+  const userId = await sessionUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { slug } = await params;
   try {
-    const result = await new LeaveCommunityUseCase(
-      new MongoCommunityRepository(),
-      new MongoCommunityMembershipRepository(),
-      new MongoUserRepository(),
-    ).execute(session.user.email, slug.toLowerCase());
-    return NextResponse.json(result);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown";
-    if (msg.includes("Community")) {
+    const communities = new MongoCommunityRepository();
+    const memberships = new MongoCommunityMembershipRepository();
+    const c = await communities.findBySlug(slug.toLowerCase());
+    if (!c || !c._id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    const wasApproved = (await memberships.approvedUserIds(c._id)).includes(
+      userId,
+    );
+    const removed = await memberships.remove(userId, c._id);
+    if (removed && wasApproved) {
+      await communities.incrementMemberCount(c._id, -1);
+    }
+    return NextResponse.json({ removed });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
