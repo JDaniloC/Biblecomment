@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/components/Logo";
 
 export default function LoginPage() {
   return (
@@ -58,7 +58,7 @@ function LoginContent() {
             aria-hidden-focus). Mouse users still get the click; keyboard
             users reach /  via the "Voltar à página inicial" link below. */}
         <Link href="/" tabIndex={-1} className="flex items-center gap-3 no-underline">
-          <Image src="/assets/logo.svg" alt="" width={40} height={40} />
+          <Logo width={40} height={40} />
           <div>
             <div className="font-bold text-stone-800 dark:text-stone-100 leading-tight">
               Bible Comment
@@ -104,7 +104,7 @@ function LoginContent() {
             href="/"
             className="md:hidden flex items-center justify-center gap-2 mb-8 no-underline"
           >
-            <Image src="/assets/logo.svg" alt="" width={32} height={32} />
+            <Logo width={32} height={32} />
             <span className="font-bold text-stone-800 dark:text-stone-100">
               Bible Comment
             </span>

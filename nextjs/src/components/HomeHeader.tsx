@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthMenu } from "@/components/AuthMenu";
+import { Logo } from "@/components/Logo";
 
 interface SessionUser {
   name?: string | null;
@@ -31,7 +32,7 @@ export function HomeHeader({ user }: Props) {
     <header className="bg-white dark:bg-slate-900 dark:border-b dark:border-slate-800 shadow-sm sticky top-0 z-20">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <Link href={logoHref} className="flex items-center gap-2 sm:gap-3 shrink-0 no-underline" aria-label="Bible Comment — início">
-          <img src="/assets/logo.svg" alt="" aria-hidden="true" width={36} height={36} />
+          <Logo width={36} height={36} />
           <div className="hidden sm:block">
             <h1 className="text-sm font-bold text-gray-800 dark:text-slate-100 leading-tight">Bible Comment</h1>
             <span className="text-xs text-gray-500 dark:text-slate-400">A Program for His Glory</span>

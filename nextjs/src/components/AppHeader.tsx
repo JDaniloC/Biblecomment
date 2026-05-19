@@ -6,6 +6,7 @@ import OmniSearch from "@/app/_components/OmniSearch";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { AuthMenu } from "@/components/AuthMenu";
+import { Logo } from "@/components/Logo";
 
 interface SessionUser {
   name?: string | null;
@@ -42,7 +43,7 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
     <header className="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 flex-shrink-0">
       <div className="h-full max-w-6xl mx-auto flex items-center px-3 md:px-6 gap-3 md:gap-4">
         <Link href="/" className="flex items-center gap-3 flex-shrink-0 no-underline" aria-label="Bible Comment — início">
-          <img src="/assets/logo.svg" alt="" aria-hidden="true" width={42} height={42} className="block w-9 h-9 md:w-[42px] md:h-[42px]" />
+          <Logo width={42} height={42} className="w-9 h-9 md:w-[42px] md:h-[42px]" />
           <div className="hidden sm:block">
             <div className="font-bold text-[15px] text-slate-800 dark:text-slate-100 leading-[22.5px] whitespace-nowrap">BibleComment</div>
             <div className="font-light text-[11px] text-[#888] dark:text-slate-400 leading-[16.5px] whitespace-nowrap">A Program for His Glory</div>

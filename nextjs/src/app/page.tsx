@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 import Image from "next/image";
 import { HomeHeader } from "@/components/HomeHeader";
+import { Logo } from "@/components/Logo";
 import BooksIndex from "@/components/BooksIndex/BooksIndex";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
@@ -343,7 +344,7 @@ export default async function RootPage() {
       <footer className="border-t border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-6 px-4">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-400 dark:text-stone-500">
           <div className="flex items-center gap-2">
-            <Image src="/assets/logo.svg" alt="Bible Comment" width={20} height={20} className="opacity-60" />
+            <Logo alt="Bible Comment" width={20} height={20} className="opacity-60" />
             <span>Bible Comment &mdash; A Program for His Glory</span>
           </div>
           <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">

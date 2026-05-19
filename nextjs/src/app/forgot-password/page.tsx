@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/components/Logo";
 import { usersService } from "@/services/users";
 
 export default function ForgotPasswordPage() {
@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
         className="hidden md:flex flex-col justify-between bg-gradient-to-br from-amber-50 to-stone-100 dark:from-slate-900 dark:to-slate-950 p-12 border-r border-stone-200 dark:border-slate-800"
       >
         <Link href="/" className="flex items-center gap-3 no-underline">
-          <Image src="/assets/logo.svg" alt="" width={40} height={40} />
+          <Logo width={40} height={40} />
           <div>
             <div className="font-bold text-stone-800 dark:text-stone-100 leading-tight">
               Bible Comment
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
             href="/"
             className="md:hidden flex items-center justify-center gap-2 mb-8 no-underline"
           >
-            <Image src="/assets/logo.svg" alt="" width={32} height={32} />
+            <Logo width={32} height={32} />
             <span className="font-bold text-stone-800 dark:text-stone-100">
               Bible Comment
             </span>

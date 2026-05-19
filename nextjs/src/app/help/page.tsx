@@ -4,6 +4,7 @@ import Introduction from "./Introduction";
 import AboutComment from "./AboutComment";
 import AboutActions from "./AboutActions";
 import HelpAccount from "./HelpAccount";
+import { Logo } from "@/components/Logo";
 
 export default function HelpPage() {
   return (
@@ -17,7 +18,7 @@ export default function HelpPage() {
             <Image src="/assets/backArrow.svg" alt="Voltar" width={20} height={20} className="dark:invert dark:opacity-80" />
           </Link>
           <div className="flex items-center gap-2">
-            <Image src="/assets/logo.svg" alt="Bible Comment" width={24} height={24} className="opacity-70" />
+            <Logo alt="Bible Comment" width={24} height={24} className="opacity-70" />
             <h1 className="text-base font-bold text-stone-800 dark:text-stone-100">Sobre o Bible Comment</h1>
           </div>
         </div>

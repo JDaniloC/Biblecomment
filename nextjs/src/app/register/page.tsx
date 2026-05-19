@@ -3,7 +3,7 @@
 import { Suspense, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/components/Logo";
 import { usersService } from "@/services/users";
 import { sanitizeUsername, MIN_USERNAME_LEN } from "@/lib/sanitize-username";
 
@@ -71,7 +71,7 @@ function RegisterContent() {
             out of the tab order so the aria-hidden aside has no focusable
             descendants. Keyboard path home is the bottom "Voltar" link. */}
         <Link href="/" tabIndex={-1} className="flex items-center gap-3 no-underline">
-          <Image src="/assets/logo.svg" alt="" width={40} height={40} />
+          <Logo width={40} height={40} />
           <div>
             <div className="font-bold text-stone-800 dark:text-stone-100 leading-tight">
               Bible Comment
@@ -134,7 +134,7 @@ function RegisterContent() {
             href="/"
             className="md:hidden flex items-center justify-center gap-2 mb-8 no-underline"
           >
-            <Image src="/assets/logo.svg" alt="" width={32} height={32} />
+            <Logo width={32} height={32} />
             <span className="font-bold text-stone-800 dark:text-stone-100">
               Bible Comment
             </span>
