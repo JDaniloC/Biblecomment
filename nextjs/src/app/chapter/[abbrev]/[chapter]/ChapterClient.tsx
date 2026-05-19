@@ -1345,13 +1345,22 @@ export default function ChapterClient({
 												className="bg-white dark:bg-slate-900 border-l-4 border border-solid rounded-r-lg overflow-hidden shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)]"
 												style={{ borderColor }}
 											>
-												{/* Header row: type icon + label + username + date */}
-												<div className="flex items-center pt-4 px-[18px] h-9">
+												{/* Header row: category pills + username + date.
+                            No fixed height — with 2+ categories the pills
+                            wrap to a second line; a locked h-9 used to clip
+                            them into the paragraph below ("rente ao texto").
+                            items-start keeps the username aligned to the
+                            first pill row. */}
+												<div className="flex items-start gap-2 pt-4 pb-1.5 px-[18px]">
 													{/* All categories as colored pills, ordered most
                               personal → most studied; empty → "Comentário". */}
-													<TagBadges tags={comment.tags} size="md" />
+													<TagBadges
+														tags={comment.tags}
+														size="md"
+														className="min-w-0"
+													/>
 													{/* Username — linkar para o perfil público */}
-													<span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto whitespace-nowrap inline-flex items-center gap-1">
+													<span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 ml-auto shrink-0 pt-0.5 whitespace-nowrap inline-flex items-center gap-1">
 														<Link
 															href={`/u/${comment.username}`}
 															className="hover:underline"
@@ -1486,14 +1495,12 @@ export default function ChapterClient({
 														reference={comment.bookReference}
 													/>
 
-													{/* N Perspectiva badge */}
-													<div className="ml-auto bg-brand-tint rounded-[12px] h-[22.5px] flex items-center px-2.5 whitespace-nowrap">
-														<span className="font-semibold text-[11px] text-brand">
-															{comment.likeCount > 0
-																? `${comment.likeCount} Perspectiva${comment.likeCount !== 1 ? "s" : ""}`
-																: "0 Perspectivas"}
-														</span>
-													</div>
+													{/* The "N Perspectivas" badge was removed: it merely
+                              re-displayed comment.likeCount, which the
+                              "Útil · N" button already shows — pure
+                              duplication. Spacer keeps the moderation /
+                              owner icon controls right-aligned. */}
+													<div className="ml-auto" />
 
 													{/* Moderator-only: toggle the admin-verified badge inline. */}
 													{user?.moderator && (

@@ -10,9 +10,12 @@ import { CommentShareCard } from "@/components/CommentShareCard";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// public/assets/logo.png is actually a JPEG (mislabeled), which satori
+// silently fails to decode — the card rendered with a blank logo slot.
+// icon-512.png is a real, square, transparent PNG (the app/PWA mark).
 async function logoDataUri(): Promise<string> {
 	const buf = await readFile(
-		path.join(process.cwd(), "public", "assets", "logo.png"),
+		path.join(process.cwd(), "public", "icons", "icon-512.png"),
 	);
 	return `data:image/png;base64,${buf.toString("base64")}`;
 }

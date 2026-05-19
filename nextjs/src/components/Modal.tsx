@@ -103,7 +103,7 @@ export default function Modal({
     : { "aria-label": ariaLabel ?? "Diálogo" };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4">
+    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center pt-16 md:pt-0 px-4">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}

@@ -34,24 +34,39 @@ export function CommentShareCard({
 				fontFamily: "sans-serif",
 			}}
 		>
-			{/* Header: logo + wordmark */}
+			{/* Header: mirrors the in-app AppHeader exactly —
+			    logo + "BibleComment" title + "A Program for His Glory"
+			    subtitle, same colors/weights. */}
 			<div style={{ display: "flex", alignItems: "center", gap: 18 }}>
 				{/* eslint-disable-next-line @next/next/no-img-element */}
 				<img
 					src={logoDataUri}
 					alt=""
-					width={wide ? 52 : 64}
-					height={wide ? 52 : 64}
+					width={wide ? 60 : 76}
+					height={wide ? 60 : 76}
 				/>
-				<div
-					style={{
-						display: "flex",
-						fontSize: wide ? 30 : 36,
-						fontWeight: 700,
-						color: brand,
-					}}
-				>
-					Bible Comment
+				<div style={{ display: "flex", flexDirection: "column" }}>
+					<div
+						style={{
+							display: "flex",
+							fontSize: wide ? 32 : 40,
+							fontWeight: 700,
+							color: "#1e293b",
+							lineHeight: 1.2,
+						}}
+					>
+						BibleComment
+					</div>
+					<div
+						style={{
+							display: "flex",
+							fontSize: wide ? 18 : 22,
+							fontWeight: 300,
+							color: "#888888",
+						}}
+					>
+						A Program for His Glory
+					</div>
 				</div>
 			</div>
 

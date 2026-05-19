@@ -17,22 +17,42 @@ export function ShareForward({ href }: { href: string }) {
 	}, [router, href]);
 
 	return (
-		<div
-			style={{
-				minHeight: "100vh",
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "center",
-				padding: 24,
-				textAlign: "center",
-			}}
-		>
-			<p>
-				Abrindo o comentário no contexto…{" "}
-				<a href={href} className="text-brand underline">
+		<div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
+			<div className="flex flex-col items-center gap-6 text-center max-w-sm">
+				{/* eslint-disable-next-line @next/next/no-img-element */}
+				<img
+					src="/assets/logo.svg"
+					alt=""
+					aria-hidden="true"
+					width={64}
+					height={64}
+					className="w-16 h-16"
+				/>
+				<div>
+					<div className="font-bold text-lg text-slate-800 dark:text-slate-100 leading-tight">
+						BibleComment
+					</div>
+					<div className="font-light text-xs text-[#888] dark:text-slate-400">
+						A Program for His Glory
+					</div>
+				</div>
+
+				<div
+					className="w-7 h-7 rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-brand animate-spin"
+					role="status"
+					aria-label="Carregando"
+				/>
+
+				<p className="text-sm text-slate-600 dark:text-slate-300 m-0">
+					Abrindo o comentário no contexto…
+				</p>
+				<a
+					href={href}
+					className="text-sm font-semibold text-brand hover:underline"
+				>
 					Toque aqui se não for redirecionado
 				</a>
-			</p>
+			</div>
 		</div>
 	);
 }
