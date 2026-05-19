@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { notificationsService } from "@/services/notifications";
+import { PushToggle } from "@/components/PushToggle";
 import type { Notification } from "@/domain/entities/Notification";
 
 const POLL_INTERVAL_MS = 60_000;
@@ -100,6 +101,7 @@ export function NotificationsPanel({ onNavigate }: { onNavigate?: () => void }) 
           </button>
         )}
       </div>
+      <PushToggle />
       <div className="flex-1 overflow-y-auto">
         {loading && items.length === 0 ? (
           <div className="px-4 py-8 text-center text-xs text-slate-400 dark:text-slate-500">Carregando…</div>

@@ -3,6 +3,39 @@ import { Notification } from "@/domain/entities/Notification";
 import { NotificationModel, INotificationDocument } from "@/infrastructure/database/models/NotificationModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import mongoose from "mongoose";
+import { PushNotificationService } from "@/application/services/PushNotificationService";
+import { MongoPushSubscriptionRepository } from "@/infrastructure/repositories/MongoPushSubscriptionRepository";
+import { webPushSender } from "@/infrastructure/push/WebPushSender";
+
+let pushService: PushNotificationService | null = null;
+
+/**
+ * Best-effort Web Push mirror of an in-app notification. Fire-and-forget
+ * — never awaited, never throws into the notification flow. Skips
+ * entirely when VAPID isn't configured (no Mongo cost in CI/dev).
+ */
+function firePush(n: {
+  recipient: string;
+  message: string;
+  url: string;
+  type: string;
+}): void {
+  if (!process.env.VAPID_PUBLIC_KEY) return;
+  if (!pushService) {
+    pushService = new PushNotificationService(
+      new MongoPushSubscriptionRepository(),
+      webPushSender,
+    );
+  }
+  pushService
+    .sendToUser(n.recipient, {
+      title: "Bible Comment",
+      body: n.message,
+      url: n.url,
+      tag: n.type,
+    })
+    .catch(() => undefined);
+}
 
 function toEntity(doc: INotificationDocument): Notification {
   return {
@@ -23,7 +56,9 @@ export class MongoNotificationRepository implements INotificationRepository {
   async create(notification: Omit<Notification, "_id" | "createdAt" | "read">): Promise<Notification> {
     await connectToDatabase();
     const doc = await NotificationModel.create({ ...notification, read: false });
-    return toEntity(doc);
+    const entity = toEntity(doc);
+    firePush(entity);
+    return entity;
   }
 
   async createMany(notifications: Omit<Notification, "_id" | "createdAt" | "read">[]): Promise<number> {
@@ -31,6 +66,14 @@ export class MongoNotificationRepository implements INotificationRepository {
     await connectToDatabase();
     const docs = notifications.map((n) => ({ ...n, read: false }));
     const inserted = await NotificationModel.insertMany(docs, { ordered: false });
+    for (const n of notifications) {
+      firePush({
+        recipient: n.recipient,
+        message: n.message,
+        url: n.url,
+        type: n.type,
+      });
+    }
     return inserted.length;
   }
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -43,6 +43,7 @@ type ResultRow =
 
 export default function SearchClient({ user }: { user: SessionUser }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ResultRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,6 +74,24 @@ export default function SearchClient({ user }: { user: SessionUser }) {
       }
     }, 500);
   }, []);
+
+  // Prefill + auto-run from ?q= / ?text= so the manifest share_target
+  // ("/search?q={text}") and the "Buscar" app shortcut land on results.
+  // Runs once; /login already round-trips callbackUrl so a shared link
+  // continues here after auth.
+  const didInitFromUrl = useRef(false);
+  useEffect(() => {
+    if (didInitFromUrl.current) return;
+    const initial = (
+      searchParams?.get("q") ??
+      searchParams?.get("text") ??
+      ""
+    ).trim();
+    if (initial) {
+      didInitFromUrl.current = true;
+      handleSearch(initial);
+    }
+  }, [searchParams, handleSearch]);
 
   const goTo = useCallback(
     (row: ResultRow) => {

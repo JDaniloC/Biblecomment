@@ -173,3 +173,18 @@ export const CreateCommunitySchema = z.object({
   description: z.string().max(500).optional().default(""),
 });
 export type CreateCommunityBody = z.infer<typeof CreateCommunitySchema>;
+
+// Web Push: the browser PushSubscription.toJSON() shape.
+export const PushSubscribeSchema = z.object({
+  endpoint: z.string().url().max(2000),
+  keys: z.object({
+    p256dh: z.string().min(1).max(255),
+    auth: z.string().min(1).max(255),
+  }),
+});
+export type PushSubscribeBody = z.infer<typeof PushSubscribeSchema>;
+
+export const PushUnsubscribeSchema = z.object({
+  endpoint: z.string().url().max(2000),
+});
+export type PushUnsubscribeBody = z.infer<typeof PushUnsubscribeSchema>;

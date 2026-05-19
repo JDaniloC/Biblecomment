@@ -70,3 +70,39 @@ Prereq (done in repo): the prod manifest is valid and now served as
 - No JDK/Android SDK needed for PWABuilder (it builds in the cloud).
   Local env (JAVA_HOME = Android Studio JBR, ANDROID_HOME set) is only
   needed for the parked Capacitor path or signing the `.aab` locally.
+
+---
+
+## PWA capabilities shipped (PWABuilder follow-up)
+
+The TWA inherits these from the PWA automatically:
+
+- **Service worker** — offline shell + previously-visited chapters are
+  readable offline (stale-while-revalidate on `/verses/*`); `/api/*`
+  always network. (`nextjs/public/sw.js`)
+- **Web Push** — opt-in toggle in the notifications panel; fires on the
+  existing in-app notification events (discussion answer, mentions, new
+  follower, badge). Requires VAPID env (below); disabled gracefully when
+  absent.
+- **Manifest**: `id`, `screenshots`, `shortcuts` (Ler/Buscar/Discussões/
+  Comunidades), `share_target` (shared text → `/search?q=`),
+  `launch_handler` (navigate-existing).
+
+### Web Push setup
+1. `npx web-push generate-vapid-keys`
+2. Set in Netlify env (never commit the private key):
+   `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, optional `VAPID_SUBJECT`.
+3. Deploy. Users enable via the bell → notifications panel toggle.
+
+### Deferred manifest items (need Play listing / external)
+- `related_applications` + `prefer_related_applications` — point the PWA
+  at the published Play app (do **after** the TWA is live so the install
+  prompt offers the native app).
+- `iarc_rating_id` — from the IARC/Play content-rating questionnaire at
+  store submission.
+
+### Explicitly skipped (YAGNI for a pt-BR Bible reading/comment app)
+`widgets`, `edge_side_panel`, `note_taking`, `window-controls-overlay`,
+`tabbed`, `file_handlers`, `protocol_handlers`, `scope_extensions`,
+`display_override` — no user value for this product; maintainer cost >
+benefit. Revisit only if a concrete need appears.

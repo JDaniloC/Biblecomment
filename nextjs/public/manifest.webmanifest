@@ -54,5 +54,42 @@
       "form_factor": "wide",
       "label": "Bible Comment no desktop"
     }
+  ],
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "share_target": {
+    "action": "/search",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "text": "q"
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "Continuar leitura",
+      "short_name": "Ler",
+      "url": "/home",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Buscar versículo ou comentário",
+      "short_name": "Buscar",
+      "url": "/search",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Discussões",
+      "short_name": "Discussões",
+      "url": "/discussions",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Comunidades",
+      "short_name": "Comunidades",
+      "url": "/communities",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
   ]
 }
