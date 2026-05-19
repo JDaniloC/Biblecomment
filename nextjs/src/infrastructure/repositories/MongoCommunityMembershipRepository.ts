@@ -11,6 +11,8 @@ function toEntity(doc: ICommunityMembershipDocument): CommunityMembership {
     _id: doc._id?.toString(),
     userId: doc.userId,
     communityId: doc.communityId,
+    status: doc.status ?? "approved",
+    role: doc.role ?? "member",
     joinedAt: doc.joinedAt,
   };
 }
@@ -79,5 +81,88 @@ export class MongoCommunityMembershipRepository
       joinedAt: -1,
     });
     return docs.map(toEntity);
+  }
+
+  // ── Moderation / prioritization (plan_community) ──
+
+  async createRequest(userId: string, communityId: string): Promise<void> {
+    await connectToDatabase();
+    await CommunityMembershipModel.updateOne(
+      { userId, communityId },
+      { $setOnInsert: { userId, communityId, status: "pending", role: "member" } },
+      { upsert: true },
+    );
+  }
+
+  async listByStatus(
+    communityId: string,
+    status: "pending" | "approved",
+  ): Promise<CommunityMembership[]> {
+    await connectToDatabase();
+    const docs = await CommunityMembershipModel.find({
+      communityId,
+      status,
+    }).sort({ joinedAt: 1 });
+    return docs.map(toEntity);
+  }
+
+  async setStatus(
+    userId: string,
+    communityId: string,
+    status: "pending" | "approved",
+  ): Promise<boolean> {
+    await connectToDatabase();
+    const r = await CommunityMembershipModel.updateOne(
+      { userId, communityId },
+      { $set: { status } },
+    );
+    return (r.modifiedCount ?? 0) > 0;
+  }
+
+  async remove(userId: string, communityId: string): Promise<boolean> {
+    await connectToDatabase();
+    const r = await CommunityMembershipModel.deleteOne({ userId, communityId });
+    return (r.deletedCount ?? 0) > 0;
+  }
+
+  async countApproved(communityId: string): Promise<number> {
+    await connectToDatabase();
+    return CommunityMembershipModel.countDocuments({
+      communityId,
+      status: "approved",
+    });
+  }
+
+  async approvedUserIds(communityId: string): Promise<string[]> {
+    await connectToDatabase();
+    const docs = await CommunityMembershipModel.find(
+      { communityId, status: "approved" },
+      { userId: 1, _id: 0 },
+    ).lean();
+    return docs.map((d) => d.userId);
+  }
+
+  async setRole(
+    userId: string,
+    communityId: string,
+    role: "member" | "moderator",
+  ): Promise<boolean> {
+    await connectToDatabase();
+    const r = await CommunityMembershipModel.updateOne(
+      { userId, communityId },
+      { $set: { role } },
+    );
+    return (r.modifiedCount ?? 0) > 0;
+  }
+
+  async isModerator(userId: string, communityId: string): Promise<boolean> {
+    await connectToDatabase();
+    const doc = await CommunityMembershipModel.exists({
+      userId,
+      communityId,
+      role: "moderator",
+      status: "approved",
+    });
+    return doc !== null;
   }
 }
