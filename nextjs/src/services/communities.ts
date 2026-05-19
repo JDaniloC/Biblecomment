@@ -48,4 +48,63 @@ export const communityService = {
     };
     return body.communities ?? [];
   },
+
+  // ── plan_community moderation flows ──
+
+  async myStatus(
+    slug: string,
+  ): Promise<{ status: "none" | "pending" | "approved"; role: "member" | "moderator" }> {
+    const res = await fetch(`/api/communities/${slug}/membership/me`);
+    if (!res.ok) throw new Error(await parseError(res));
+    return res.json();
+  },
+
+  async requestJoin(slug: string): Promise<void> {
+    const res = await fetch(`/api/communities/${slug}/join`, { method: "POST" });
+    if (!res.ok) throw new Error(await parseError(res));
+  },
+
+  /** Cancel a pending request, or leave an approved membership. */
+  async cancelOrLeave(slug: string): Promise<void> {
+    const res = await fetch(`/api/communities/${slug}/join`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await parseError(res));
+  },
+
+  async listRequests(
+    slug: string,
+  ): Promise<{ userId: string; username: string | null; joinedAt?: string }[]> {
+    const res = await fetch(`/api/communities/${slug}/requests`);
+    if (!res.ok) throw new Error(await parseError(res));
+    const body = (await res.json()) as {
+      requests: { userId: string; username: string | null; joinedAt?: string }[];
+    };
+    return body.requests ?? [];
+  },
+
+  async approve(slug: string, userId: string): Promise<void> {
+    const res = await fetch(
+      `/api/communities/${slug}/requests/${userId}`,
+      { method: "POST" },
+    );
+    if (!res.ok) throw new Error(await parseError(res));
+  },
+
+  async reject(slug: string, userId: string): Promise<void> {
+    const res = await fetch(
+      `/api/communities/${slug}/requests/${userId}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) throw new Error(await parseError(res));
+  },
+
+  async setModerator(
+    slug: string,
+    userId: string,
+    makeModerator: boolean,
+  ): Promise<void> {
+    const res = await fetch(`/api/communities/${slug}/moderators/${userId}`, {
+      method: makeModerator ? "POST" : "DELETE",
+    });
+    if (!res.ok) throw new Error(await parseError(res));
+  },
 };
