@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Modal from "@/components/Modal";
 import { useNotification } from "@/contexts/NotificationContext";
 import {
@@ -30,30 +30,51 @@ export function ShareCommentButton({
 }: Props) {
 	const { handleNotification } = useNotification();
 	const [open, setOpen] = useState(false);
+	const [sharing, setSharing] = useState(false);
 
-	const origin = typeof window !== "undefined" ? window.location.origin : "";
-	const shareUrl = formatCommentShareUrl(commentId, origin);
-	const ogUrl = `${origin}/api/og/comment/${commentId}`;
-	const shareText = formatCommentShare(
-		{ text: clampForCard(text), username, reference },
-		shareUrl,
-	);
+	// Derive once per input change — otherwise these recompute every render
+	// and defeat the useCallback memoization of onWebShare / onCopy.
+	const { shareUrl, ogUrl, shareText } = useMemo(() => {
+		const origin =
+			typeof window !== "undefined" ? window.location.origin : "";
+		const url = formatCommentShareUrl(commentId, origin);
+		return {
+			shareUrl: url,
+			ogUrl: `${origin}/api/og/comment/${commentId}`,
+			shareText: formatCommentShare(
+				{ text: clampForCard(text), username, reference },
+				url,
+			),
+		};
+	}, [commentId, text, username, reference]);
 
 	const onWebShare = useCallback(async () => {
+		if (sharing) return;
 		const nav = navigator as Navigator & {
 			canShare?: (d: ShareData) => boolean;
 		};
+		setSharing(true);
 		try {
-			// Try sharing the actual image file where supported (iOS Safari etc).
+			// Try sharing the actual image file where supported (iOS Safari
+			// etc). The OG endpoint can be slow (satori render) — cap the
+			// wait at 1.5s so we don't lose the user-activation gesture;
+			// fall back to text+url share if it doesn't resolve in time.
 			try {
-				const blob = await (await fetch(ogUrl)).blob();
-				const file = new File([blob], "comentario.png", { type: "image/png" });
+				const ctrl = new AbortController();
+				const timer = setTimeout(() => ctrl.abort(), 1500);
+				const blob = await (
+					await fetch(ogUrl, { signal: ctrl.signal })
+				).blob();
+				clearTimeout(timer);
+				const file = new File([blob], "comentario.png", {
+					type: "image/png",
+				});
 				if (nav.canShare?.({ files: [file] })) {
 					await nav.share({ files: [file], text: shareText, url: shareUrl });
 					return;
 				}
 			} catch {
-				/* fall through to text/url share */
+				/* timeout / unsupported → text+url share */
 			}
 			await nav.share({ text: shareText, url: shareUrl });
 		} catch (e) {
@@ -61,8 +82,10 @@ export function ShareCommentButton({
 			if ((e as Error)?.name !== "AbortError") {
 				handleNotification("error", "Não foi possível compartilhar.");
 			}
+		} finally {
+			setSharing(false);
 		}
-	}, [ogUrl, shareText, shareUrl, handleNotification]);
+	}, [ogUrl, shareText, shareUrl, handleNotification, sharing]);
 
 	const onCopy = useCallback(async () => {
 		try {
@@ -127,9 +150,10 @@ export function ShareCommentButton({
 							<button
 								type="button"
 								onClick={onWebShare}
-								className="flex-1 min-w-[120px] bg-brand text-white text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition"
+								disabled={sharing}
+								className="flex-1 min-w-[120px] bg-brand text-white text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
 							>
-								Compartilhar
+								{sharing ? "Preparando…" : "Compartilhar"}
 							</button>
 						)}
 						<button

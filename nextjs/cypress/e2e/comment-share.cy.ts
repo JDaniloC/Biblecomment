@@ -86,9 +86,9 @@ describe("Multi-category badges + share card", () => {
 				cy.contains("comentário para compartilhar").should("be.visible");
 
 				cy.get('[aria-label="Compartilhar comentário"]').first().click();
-				cy.get(
-					'[role="dialog"], [aria-label="Compartilhar comentário"]',
-				).should("exist");
+				// Assert the modal itself opened — not the trigger button,
+				// which also carries aria-label="Compartilhar comentário".
+				cy.get('[role="dialog"]').should("be.visible");
 				cy.get('img[alt="Pré-visualização do card do comentário"]')
 					.should("have.attr", "src")
 					.and("include", `/api/og/comment/${id}`);
