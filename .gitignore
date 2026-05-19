@@ -34,3 +34,11 @@ yarn.lock
 
 # Backfill script for badges — kept locally, run on-demand against prod.
 nextjs/scripts/badges-backfill.js
+
+# Capacitor mobile shell (Phase 0). The android/ native project is
+# committed (Capacitor convention) except its build/gradle output.
+mobile/node_modules/
+mobile/android/app/build/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/local.properties
