@@ -42,3 +42,5 @@ mobile/android/app/build/
 mobile/android/.gradle/
 mobile/android/build/
 mobile/android/local.properties
+
+.idea/
