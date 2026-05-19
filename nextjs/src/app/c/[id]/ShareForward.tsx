@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Logo } from "@/components/Logo";
 
 /**
  * Humans hitting a shared /c/<id> link get bounced to the verse in context.
@@ -19,15 +20,7 @@ export function ShareForward({ href }: { href: string }) {
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
 			<div className="flex flex-col items-center gap-6 text-center max-w-sm">
-				{/* eslint-disable-next-line @next/next/no-img-element */}
-				<img
-					src="/assets/logo.svg"
-					alt=""
-					aria-hidden="true"
-					width={64}
-					height={64}
-					className="w-16 h-16"
-				/>
+				<Logo width={64} height={64} className="w-16 h-16" />
 				<div>
 					<div className="font-bold text-lg text-slate-800 dark:text-slate-100 leading-tight">
 						BibleComment

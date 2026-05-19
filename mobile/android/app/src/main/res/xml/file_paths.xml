@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Narrowed from the Capacitor default (external-path/cache-path
+     path="."), which exposed the whole shared storage + cache root via
+     FileProvider. Phase 0 uses no file-sharing plugins; these are
+     app-scoped subdirs so a future plugin still resolves the named
+     roots without broad exposure. NOTE: `npx cap add android` would
+     regenerate this — re-apply after a platform re-add. -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path name="my_images" path="Pictures" />
+    <cache-path name="my_cache_images" path="shared" />
+</paths>
