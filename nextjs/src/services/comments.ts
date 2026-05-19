@@ -20,7 +20,10 @@ export interface CommentDraft {
 
 export interface ChapterCommentsResponse {
   titleComments: Comment[];
-  verseComments: Comment[];
+  /** Comments by approved members of the active community (?community=). */
+  prioritized: Comment[];
+  /** Comments by everyone else; full list when no active community. */
+  others: Comment[];
 }
 
 /**
@@ -74,9 +77,9 @@ export const commentsService = {
   async getForChapter(
     abbrev: string,
     chapter: number,
-    communityFilter?: string[] | null,
+    activeCommunity?: string | null,
   ): Promise<ChapterCommentsResponse> {
-    const qs = buildCommunityQuery(communityFilter);
+    const qs = buildCommunityQuery(activeCommunity);
     const res = await axios.get<ChapterCommentsResponse>(
       `/api/comments/chapter/${abbrev}/${chapter}${qs}`,
     );
@@ -87,9 +90,9 @@ export const commentsService = {
     abbrev: string,
     chapter: number,
     verse: number,
-    communityFilter?: string[] | null,
+    activeCommunity?: string | null,
   ): Promise<ChapterCommentsResponse> {
-    const qs = buildCommunityQuery(communityFilter);
+    const qs = buildCommunityQuery(activeCommunity);
     const res = await axios.get<ChapterCommentsResponse>(
       `/api/comments/chapter/${abbrev}/${chapter}/${verse}${qs}`,
     );
@@ -97,7 +100,6 @@ export const commentsService = {
   },
 };
 
-function buildCommunityQuery(filter: string[] | null | undefined): string {
-  if (!filter) return "";
-  return `?communities=${encodeURIComponent(filter.join(","))}`;
+function buildCommunityQuery(slug: string | null | undefined): string {
+  return slug ? `?community=${encodeURIComponent(slug)}` : "";
 }

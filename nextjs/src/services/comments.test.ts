@@ -128,21 +128,36 @@ describe("commentsService", () => {
   });
 
   describe("getForChapter", () => {
-    it("GETs /api/comments/chapter/:abbrev/:chapter and returns title+verse comments", async () => {
+    it("GETs /api/comments/chapter/:abbrev/:chapter and returns title + prioritized + others", async () => {
       mockedAxios.get.mockResolvedValueOnce({
-        data: { titleComments: [fakeComment({ onTitle: true })], verseComments: [fakeComment()] },
+        data: {
+          titleComments: [fakeComment({ onTitle: true })],
+          prioritized: [fakeComment({ username: "alice" })],
+          others: [fakeComment({ username: "bob" })],
+        },
       });
       const result = await commentsService.getForChapter("gn", 1);
       expect(mockedAxios.get).toHaveBeenCalledWith("/api/comments/chapter/gn/1");
       expect(result.titleComments).toHaveLength(1);
-      expect(result.verseComments).toHaveLength(1);
+      expect(result.prioritized).toHaveLength(1);
+      expect(result.others).toHaveLength(1);
+    });
+
+    it("passes ?community= when an active community is provided", async () => {
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { titleComments: [], prioritized: [], others: [] },
+      });
+      await commentsService.getForChapter("gn", 1, "reformados");
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        "/api/comments/chapter/gn/1?community=reformados",
+      );
     });
   });
 
   describe("getForVerse", () => {
     it("GETs /api/comments/chapter/:abbrev/:chapter/:verse", async () => {
       mockedAxios.get.mockResolvedValueOnce({
-        data: { titleComments: [], verseComments: [] },
+        data: { titleComments: [], prioritized: [], others: [] },
       });
       await commentsService.getForVerse("gn", 1, 1);
       expect(mockedAxios.get).toHaveBeenCalledWith("/api/comments/chapter/gn/1/1");

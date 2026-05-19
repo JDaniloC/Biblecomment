@@ -161,7 +161,34 @@ async function seed(uri) {
 			updatedAt: new Date(),
 		})),
 	);
-	await db.collection("users").insertMany(userDocs);
+	const userIns = await db.collection("users").insertMany(userDocs);
+	const aliceId = String(userIns.insertedIds[0]); // FIXTURES.users[0] = alice
+	const bobId = String(userIns.insertedIds[1]); // = bob (NOT a member)
+
+	// Demo community for the plan_community read-path: alice is an
+	// approved moderator of "reformados"; bob is not a member. The
+	// comment endpoint with ?community=reformados then partitions
+	// alice's comments into `prioritized` and bob's into `others`.
+	const nowC = new Date();
+	const commIns = await db.collection("communities").insertOne({
+		slug: "reformados",
+		name: "Reformados",
+		description: "Comunidade de demonstração (plan_community)",
+		createdBy: aliceId,
+		memberCount: 1,
+		createdAt: nowC,
+		updatedAt: nowC,
+	});
+	await db.collection("communitymemberships").insertMany([
+		{
+			userId: aliceId,
+			communityId: String(commIns.insertedId),
+			status: "approved",
+			role: "moderator",
+			joinedAt: nowC,
+		},
+	]);
+	void bobId;
 
 	await db.collection("books").insertOne(FIXTURES.book);
 	const { insertedIds } = await db
