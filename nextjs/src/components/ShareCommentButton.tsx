@@ -35,8 +35,7 @@ export function ShareCommentButton({
 	// Derive once per input change — otherwise these recompute every render
 	// and defeat the useCallback memoization of onWebShare / onCopy.
 	const { shareUrl, ogUrl, shareText } = useMemo(() => {
-		const origin =
-			typeof window !== "undefined" ? window.location.origin : "";
+		const origin = typeof window !== "undefined" ? window.location.origin : "";
 		const url = formatCommentShareUrl(commentId, origin);
 		return {
 			shareUrl: url,
@@ -62,9 +61,7 @@ export function ShareCommentButton({
 			try {
 				const ctrl = new AbortController();
 				const timer = setTimeout(() => ctrl.abort(), 1500);
-				const blob = await (
-					await fetch(ogUrl, { signal: ctrl.signal })
-				).blob();
+				const blob = await (await fetch(ogUrl, { signal: ctrl.signal })).blob();
 				clearTimeout(timer);
 				const file = new File([blob], "comentario.png", {
 					type: "image/png",
