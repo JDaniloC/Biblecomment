@@ -38,4 +38,14 @@ export const communityService = {
     const res = await fetch(`/api/communities/${slug}/join`, { method: "DELETE" });
     if (!res.ok) throw new Error(await parseError(res));
   },
+
+  /** The signed-in user's APPROVED communities (active-community selector). */
+  async myApproved(): Promise<{ slug: string; name: string }[]> {
+    const res = await fetch("/api/communities/mine");
+    if (!res.ok) throw new Error(await parseError(res));
+    const body = (await res.json()) as {
+      communities: { slug: string; name: string }[];
+    };
+    return body.communities ?? [];
+  },
 };

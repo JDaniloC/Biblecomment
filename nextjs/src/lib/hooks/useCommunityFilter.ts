@@ -1,87 +1,98 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { communityService } from "@/services/communities";
 
 const STORAGE_PREFIX = "bc:community-filter:";
 
-export const GENERAL_BUCKET = "general";
-
-/**
- * Selected community filter state, persisted to localStorage per-username so
- * different accounts on the same browser don't share the same chip selection.
- *
- * Storage shape: an array of slugs. The literal "general" represents the
- * unmarked / geral feed bucket. An empty array equals "show nothing" — the
- * chapter API maps that to "general only" so toggling all chips off still
- * shows something. `null` (default) means "no filter applied" — chapters
- * show every comment, mirroring legacy behavior so anonymous users and
- * users in zero communities don't even see the chip row.
- */
-export type CommunityFilter = string[] | null;
-
-function storageKey(username?: string | null): string {
+export function activeStorageKey(username?: string | null): string {
   return `${STORAGE_PREFIX}${username ?? "anon"}`;
 }
 
-export function useCommunityFilter(
-  username?: string | null,
-): {
-  selected: CommunityFilter;
-  setSelected: (next: CommunityFilter) => void;
-  toggle: (slug: string) => void;
-  queryString: string;
-} {
-  const [selected, setSelectedState] = useState<CommunityFilter>(null);
-  const [hydrated, setHydrated] = useState(false);
+/**
+ * Stored value is a plain slug string (single active community) or the
+ * key is absent (= no active community → all comments in `others`).
+ * Legacy multi-select stored a JSON array; treat that as "none" so the
+ * old shape degrades gracefully instead of becoming a bogus slug.
+ */
+export function parseActive(raw: string | null): string | null {
+  if (raw === null) return null;
+  const v = raw.trim();
+  if (!v || v.startsWith("[") || v.startsWith("{")) return null;
+  return v;
+}
 
-  // Hydrate on mount — localStorage isn't available during SSR.
+/** Query string for the comment API: `?community=slug` or empty. */
+export function activeQueryString(active: string | null): string {
+  return active ? `?community=${encodeURIComponent(active)}` : "";
+}
+
+export interface ApprovedCommunity {
+  slug: string;
+  name: string;
+}
+
+/**
+ * The reader's single active community (plan_community). `active`
+ * persists per-username to localStorage as a plain slug; `setActive`
+ * (null) clears it. `memberships` lists the user's APPROVED communities
+ * to populate the selector. Pure helpers above are unit-tested; the
+ * hook just wires them to React + localStorage (no RTL in this repo).
+ */
+export function useActiveCommunity(username?: string | null): {
+  active: string | null;
+  setActive: (slug: string | null) => void;
+  memberships: ApprovedCommunity[];
+} {
+  const [active, setActiveState] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [memberships, setMemberships] = useState<ApprovedCommunity[]>([]);
+
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(storageKey(username));
-      if (raw === null) {
-        setSelectedState(null);
-      } else {
-        const parsed = JSON.parse(raw) as unknown;
-        setSelectedState(Array.isArray(parsed) ? (parsed as string[]) : null);
-      }
+      setActiveState(parseActive(localStorage.getItem(activeStorageKey(username))));
     } catch {
-      setSelectedState(null);
+      setActiveState(null);
     } finally {
       setHydrated(true);
     }
   }, [username]);
 
-  const setSelected = useCallback(
-    (next: CommunityFilter) => {
-      setSelectedState(next);
+  useEffect(() => {
+    if (!username) {
+      setMemberships([]);
+      return;
+    }
+    let cancelled = false;
+    communityService
+      .myApproved()
+      .then((list) => {
+        if (!cancelled) setMemberships(list);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberships([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [username]);
+
+  const setActive = useCallback(
+    (slug: string | null) => {
+      setActiveState(slug);
       if (!hydrated) return;
       try {
-        if (next === null) {
-          localStorage.removeItem(storageKey(username));
+        if (slug === null) {
+          localStorage.removeItem(activeStorageKey(username));
         } else {
-          localStorage.setItem(storageKey(username), JSON.stringify(next));
+          localStorage.setItem(activeStorageKey(username), slug);
         }
       } catch {
-        // localStorage may be disabled (private mode, full quota). Silently
-        // keep in-memory state — the filter still works for the session.
+        // localStorage disabled (private mode/quota) — keep in-memory.
       }
     },
     [hydrated, username],
   );
 
-  const toggle = useCallback(
-    (slug: string) => {
-      const current = selected ?? [];
-      const next = current.includes(slug)
-        ? current.filter((s) => s !== slug)
-        : [...current, slug];
-      setSelected(next);
-    },
-    [selected, setSelected],
-  );
-
-  const queryString =
-    selected === null ? "" : `?communities=${encodeURIComponent(selected.join(","))}`;
-
-  return { selected, setSelected, toggle, queryString };
+  return { active, setActive, memberships };
 }
