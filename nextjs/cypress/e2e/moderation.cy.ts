@@ -146,7 +146,8 @@ describe("Moderation endpoints", () => {
           cy.request("/api/comments/chapter/gn/1/1").then((listRes) => {
             const all = [
               ...(listRes.body.titleComments ?? []),
-              ...(listRes.body.verseComments ?? []),
+              ...(listRes.body.prioritized ?? []),
+              ...(listRes.body.others ?? []),
             ];
             const stillThere = all.find((c: { _id: string }) => c._id === reportedId);
             expect(stillThere, "comment must NOT be deleted, only reports cleared").to.exist;

@@ -70,7 +70,8 @@ describe("Comments — full lifecycle", () => {
 			cy.request("/api/comments/chapter/gn/1/1").then((res) => {
 				const all = [
 					...(res.body.titleComments ?? []),
-					...(res.body.verseComments ?? []),
+					...(res.body.prioritized ?? []),
+					...(res.body.others ?? []),
 				];
 				const mine = all.find(
 					(c: { username: string }) => c.username === "alice",

@@ -87,10 +87,28 @@ export interface SeedVerse {
   reference?: string;
 }
 
+export interface SeedCommunity {
+  slug: string;
+  name: string;
+  description?: string;
+  /** username of the creator; resolved to User._id at seed time. */
+  createdBy: string;
+  memberCount?: number;
+}
+
+export interface SeedCommunityMembership {
+  username: string;
+  communitySlug: string;
+  status: "pending" | "approved";
+  role?: "member" | "moderator";
+}
+
 export interface SeedPayload {
   users?: SeedUser[];
   books?: SeedBook[];
   verses?: SeedVerse[];
+  communities?: SeedCommunity[];
+  communityMemberships?: SeedCommunityMembership[];
 }
 
 export async function findUserByEmail(email: string): Promise<{
@@ -351,5 +369,59 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
 
   if (payload.verses?.length) {
     await db.collection("verses").insertMany(payload.verses);
+  }
+
+  // plan_community fixtures: resolve usernames → User._id (and slugs →
+  // Community._id for memberships) since the storage uses ids.
+  if (payload.communities?.length) {
+    const usernames = [...new Set(payload.communities.map((c) => c.createdBy))];
+    const userDocs = await db
+      .collection("users")
+      .find({ username: { $in: usernames } }, { projection: { _id: 1, username: 1 } })
+      .toArray();
+    const userIdByName = new Map(
+      userDocs.map((u) => [u.username as string, String(u._id)]),
+    );
+    const docs = payload.communities.map((c) => ({
+      slug: c.slug,
+      name: c.name,
+      description: c.description ?? "",
+      createdBy: userIdByName.get(c.createdBy) ?? "",
+      memberCount: c.memberCount ?? 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+    await db.collection("communities").insertMany(docs);
+  }
+
+  if (payload.communityMemberships?.length) {
+    const usernames = [
+      ...new Set(payload.communityMemberships.map((m) => m.username)),
+    ];
+    const userDocs = await db
+      .collection("users")
+      .find({ username: { $in: usernames } }, { projection: { _id: 1, username: 1 } })
+      .toArray();
+    const userIdByName = new Map(
+      userDocs.map((u) => [u.username as string, String(u._id)]),
+    );
+    const slugs = [
+      ...new Set(payload.communityMemberships.map((m) => m.communitySlug)),
+    ];
+    const commDocs = await db
+      .collection("communities")
+      .find({ slug: { $in: slugs } }, { projection: { _id: 1, slug: 1 } })
+      .toArray();
+    const commIdBySlug = new Map(
+      commDocs.map((c) => [c.slug as string, String(c._id)]),
+    );
+    const docs = payload.communityMemberships.map((m) => ({
+      userId: userIdByName.get(m.username) ?? "",
+      communityId: commIdBySlug.get(m.communitySlug) ?? "",
+      status: m.status,
+      role: m.role ?? "member",
+      joinedAt: new Date(),
+    }));
+    await db.collection("communitymemberships").insertMany(docs);
   }
 }

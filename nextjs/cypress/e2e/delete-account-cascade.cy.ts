@@ -117,7 +117,8 @@ describe("LGPD — delete account cascade", () => {
             cy.request("GET", "/api/comments/chapter/gn/1/1").then((preRes) => {
               const all = [
                 ...(preRes.body.titleComments ?? []),
-                ...(preRes.body.verseComments ?? []),
+                ...(preRes.body.prioritized ?? []),
+                ...(preRes.body.others ?? []),
               ];
               const bobPre = all.find((c: { _id: string }) => c._id === bobCommentId);
               expect(bobPre.likeCount, "bob's comment shows 1 like pre-delete").to.eq(1);
@@ -168,7 +169,8 @@ describe("LGPD — delete account cascade", () => {
             cy.request("GET", "/api/comments/chapter/gn/1/1").then((postRes) => {
               const all = [
                 ...(postRes.body.titleComments ?? []),
-                ...(postRes.body.verseComments ?? []),
+                ...(postRes.body.prioritized ?? []),
+                ...(postRes.body.others ?? []),
               ];
 
               const aliceCmt = all.find((c: { _id: string }) => c._id === aliceCommentId);
