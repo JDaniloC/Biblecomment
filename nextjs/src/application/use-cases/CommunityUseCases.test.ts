@@ -1,14 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   CreateCommunityUseCase,
-  JoinCommunityUseCase,
-  LeaveCommunityUseCase,
+  RequestJoinCommunityUseCase,
+  ListJoinRequestsUseCase,
+  ApproveMemberUseCase,
+  RejectMemberUseCase,
+  SetModeratorUseCase,
   MAX_COMMUNITIES_PER_USER,
 } from "./CommunityUseCases";
 import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
 import type { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { Community } from "@/domain/entities/Community";
+import type { CommunityMembership } from "@/domain/entities/CommunityMembership";
 import type { User } from "@/domain/entities/User";
 
 function makeUserRepo(users: Record<string, User>): IUserRepository {
@@ -64,7 +68,8 @@ function makeCommunityRepo(): ICommunityRepository & {
       return { items: Array.from(items.values()), total: items.size };
     },
     async countCreatedBy(userId) {
-      return Array.from(items.values()).filter((c) => c.createdBy === userId).length;
+      return Array.from(items.values()).filter((c) => c.createdBy === userId)
+        .length;
     },
     async findManyByIds(ids) {
       return ids.map((id) => items.get(id)).filter((x): x is Community => !!x);
@@ -76,17 +81,20 @@ function makeCommunityRepo(): ICommunityRepository & {
   };
 }
 
+type Row = { status: "pending" | "approved"; role: "member" | "moderator" };
+
 function makeMembershipRepo(): ICommunityMembershipRepository & {
-  _rows: Set<string>;
+  _rows: Map<string, Row>;
 } {
-  const rows = new Set<string>();
+  const rows = new Map<string, Row>();
   const key = (u: string, c: string) => `${u}::${c}`;
+  const split = (k: string) => k.split("::");
   return {
     _rows: rows,
     async join(userId, communityId) {
       const k = key(userId, communityId);
       if (rows.has(k)) return false;
-      rows.add(k);
+      rows.set(k, { status: "approved", role: "member" });
       return true;
     },
     async leave(userId, communityId) {
@@ -96,38 +104,84 @@ function makeMembershipRepo(): ICommunityMembershipRepository & {
       return rows.has(key(userId, communityId));
     },
     async listCommunityIdsForUser(userId) {
-      return Array.from(rows)
+      return [...rows.keys()]
         .filter((k) => k.startsWith(`${userId}::`))
-        .map((k) => k.split("::")[1]);
+        .map((k) => split(k)[1]);
     },
     async listMemberIds(communityId, page, pageSize) {
-      const all = Array.from(rows)
+      const all = [...rows.keys()]
         .filter((k) => k.endsWith(`::${communityId}`))
-        .map((k) => k.split("::")[0]);
+        .map((k) => split(k)[0]);
       const start = (page - 1) * pageSize;
       return { items: all.slice(start, start + pageSize), total: all.length };
     },
-    async listForUser() {
-      return [];
+    async listForUser(userId) {
+      return [...rows.entries()]
+        .filter(([k]) => k.startsWith(`${userId}::`))
+        .map(([k, v]): CommunityMembership => {
+          const [u, c] = split(k);
+          return { userId: u, communityId: c, ...v };
+        });
+    },
+    async createRequest(userId, communityId) {
+      const k = key(userId, communityId);
+      if (!rows.has(k)) rows.set(k, { status: "pending", role: "member" });
+    },
+    async listByStatus(communityId, status) {
+      return [...rows.entries()]
+        .filter(([k, v]) => k.endsWith(`::${communityId}`) && v.status === status)
+        .map(([k, v]): CommunityMembership => {
+          const [u, c] = split(k);
+          return { userId: u, communityId: c, ...v };
+        });
+    },
+    async setStatus(userId, communityId, status) {
+      const r = rows.get(key(userId, communityId));
+      if (!r || r.status === status) return false;
+      r.status = status;
+      return true;
+    },
+    async remove(userId, communityId) {
+      return rows.delete(key(userId, communityId));
+    },
+    async countApproved(communityId) {
+      return [...rows.entries()].filter(
+        ([k, v]) => k.endsWith(`::${communityId}`) && v.status === "approved",
+      ).length;
+    },
+    async approvedUserIds(communityId) {
+      return [...rows.entries()]
+        .filter(([k, v]) => k.endsWith(`::${communityId}`) && v.status === "approved")
+        .map(([k]) => split(k)[0]);
+    },
+    async setRole(userId, communityId, role) {
+      const r = rows.get(key(userId, communityId));
+      if (!r || r.role === role) return false;
+      r.role = role;
+      return true;
+    },
+    async isModerator(userId, communityId) {
+      const r = rows.get(key(userId, communityId));
+      return !!r && r.role === "moderator" && r.status === "approved";
     },
   };
 }
 
-describe("CreateCommunityUseCase", () => {
-  const alice: User = {
-    _id: "u-alice",
-    email: "alice@example.com",
-    username: "alice",
-    displayName: "Alice",
-    password: "hash",
-    state: "SP",
-    belief: "catholic",
-    showBelief: false,
-    moderator: false,
-    tutorialsCompleted: [],
-    badges: [],
-  };
+const alice: User = {
+  _id: "u-alice",
+  email: "alice@example.com",
+  username: "alice",
+  displayName: "Alice",
+  password: "hash",
+  state: "SP",
+  belief: "catholic",
+  showBelief: false,
+  moderator: false,
+  tutorialsCompleted: [],
+  badges: [],
+};
 
+describe("CreateCommunityUseCase", () => {
   let communityRepo: ReturnType<typeof makeCommunityRepo>;
   let userRepo: IUserRepository;
   let usecase: CreateCommunityUseCase;
@@ -204,70 +258,105 @@ describe("CreateCommunityUseCase", () => {
   });
 });
 
-describe("JoinCommunityUseCase + LeaveCommunityUseCase", () => {
-  const alice: User = {
-    _id: "u-alice",
-    email: "alice@example.com",
-    username: "alice",
-    displayName: "Alice",
-    password: "hash",
-    state: "SP",
-    belief: "catholic",
-    showBelief: false,
-    moderator: false,
-    tutorialsCompleted: [],
-    badges: [],
-  };
-
+describe("Community moderation use-cases", () => {
   let communityRepo: ReturnType<typeof makeCommunityRepo>;
   let membershipRepo: ReturnType<typeof makeMembershipRepo>;
-  let userRepo: IUserRepository;
-  let join: JoinCommunityUseCase;
-  let leave: LeaveCommunityUseCase;
+  let communityId: string;
 
   beforeEach(async () => {
     communityRepo = makeCommunityRepo();
     membershipRepo = makeMembershipRepo();
-    userRepo = makeUserRepo({ "alice@example.com": alice });
-    join = new JoinCommunityUseCase(communityRepo, membershipRepo, userRepo);
-    leave = new LeaveCommunityUseCase(communityRepo, membershipRepo, userRepo);
-    await communityRepo.create({
-      slug: "reformados",
-      name: "Reformados",
+    const c = await communityRepo.create({
+      slug: "alpha",
+      name: "Alpha",
       description: "",
-      createdBy: "u-other",
+      createdBy: "creator",
     });
+    communityId = c._id!;
   });
 
-  it("joins and bumps memberCount on first join only", async () => {
-    const r1 = await join.execute("alice@example.com", "reformados");
-    expect(r1.joined).toBe(true);
-    const c1 = await communityRepo.findBySlug("reformados");
-    expect(c1?.memberCount).toBe(1);
-
-    const r2 = await join.execute("alice@example.com", "reformados");
-    expect(r2.joined).toBe(false);
-    const c2 = await communityRepo.findBySlug("reformados");
-    expect(c2?.memberCount).toBe(1);
-  });
-
-  it("leaves and decrements only when a row was removed", async () => {
-    await join.execute("alice@example.com", "reformados");
-    const r1 = await leave.execute("alice@example.com", "reformados");
-    expect(r1.left).toBe(true);
-    const c1 = await communityRepo.findBySlug("reformados");
-    expect(c1?.memberCount).toBe(0);
-
-    // Idempotent leave: no row to remove, no decrement.
-    const r2 = await leave.execute("alice@example.com", "reformados");
-    expect(r2.left).toBe(false);
-    const c2 = await communityRepo.findBySlug("reformados");
-    expect(c2?.memberCount).toBe(0);
-  });
-
-  it("rejects unknown community", async () => {
-    await expect(join.execute("alice@example.com", "ghost")).rejects.toThrow(
-      /community/i,
+  it("RequestJoinCommunityUseCase creates a pending membership", async () => {
+    const uc = new RequestJoinCommunityUseCase(communityRepo, membershipRepo);
+    await uc.execute({ slug: "alpha", userId: "u1" });
+    expect(await membershipRepo.listByStatus(communityId, "pending")).toHaveLength(
+      1,
     );
+  });
+
+  it("RequestJoin throws on unknown community", async () => {
+    const uc = new RequestJoinCommunityUseCase(communityRepo, membershipRepo);
+    await expect(
+      uc.execute({ slug: "ghost", userId: "u1" }),
+    ).rejects.toThrow(/não encontrada/i);
+  });
+
+  it("ApproveMemberUseCase rejects when actor is not a moderator", async () => {
+    const uc = new ApproveMemberUseCase(communityRepo, membershipRepo);
+    await expect(
+      uc.execute({ slug: "alpha", actorId: "stranger", targetUserId: "u1" }),
+    ).rejects.toThrow(/moderador/i);
+  });
+
+  it("ApproveMember approves and bumps memberCount when actor is moderator", async () => {
+    await membershipRepo.createRequest("u1", communityId);
+    await membershipRepo.createRequest("mod", communityId);
+    await membershipRepo.setStatus("mod", communityId, "approved");
+    await membershipRepo.setRole("mod", communityId, "moderator");
+
+    const uc = new ApproveMemberUseCase(communityRepo, membershipRepo);
+    await uc.execute({ slug: "alpha", actorId: "mod", targetUserId: "u1" });
+
+    expect(await membershipRepo.approvedUserIds(communityId)).toContain("u1");
+    expect((await communityRepo.findBySlug("alpha"))?.memberCount).toBe(1);
+  });
+
+  it("ListJoinRequestsUseCase: moderator sees pending, stranger is rejected", async () => {
+    await membershipRepo.createRequest("u1", communityId);
+    await membershipRepo.createRequest("mod", communityId);
+    await membershipRepo.setStatus("mod", communityId, "approved");
+    await membershipRepo.setRole("mod", communityId, "moderator");
+
+    const uc = new ListJoinRequestsUseCase(communityRepo, membershipRepo);
+    const pending = await uc.execute({ slug: "alpha", actorId: "mod" });
+    expect(pending.map((m) => m.userId)).toContain("u1");
+    await expect(
+      uc.execute({ slug: "alpha", actorId: "stranger" }),
+    ).rejects.toThrow(/moderador/i);
+  });
+
+  it("RejectMemberUseCase removes the membership", async () => {
+    await membershipRepo.createRequest("u1", communityId);
+    await membershipRepo.createRequest("mod", communityId);
+    await membershipRepo.setStatus("mod", communityId, "approved");
+    await membershipRepo.setRole("mod", communityId, "moderator");
+
+    const uc = new RejectMemberUseCase(communityRepo, membershipRepo);
+    await uc.execute({ slug: "alpha", actorId: "mod", targetUserId: "u1" });
+    expect(await membershipRepo.listByStatus(communityId, "pending")).toHaveLength(
+      0,
+    );
+  });
+
+  it("SetModeratorUseCase: only the creator can promote", async () => {
+    await membershipRepo.createRequest("u1", communityId);
+    await membershipRepo.setStatus("u1", communityId, "approved");
+
+    const uc = new SetModeratorUseCase(communityRepo, membershipRepo);
+    await expect(
+      uc.execute({
+        slug: "alpha",
+        actorId: "not-creator",
+        targetUserId: "u1",
+        makeModerator: true,
+      }),
+    ).rejects.toThrow(/criador/i);
+
+    await uc.execute({
+      slug: "alpha",
+      actorId: "creator",
+      targetUserId: "u1",
+      makeModerator: true,
+    });
+    expect(await membershipRepo.isModerator("u1", communityId)).toBe(true);
   });
 });

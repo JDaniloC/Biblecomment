@@ -51,46 +51,118 @@ export class CreateCommunityUseCase {
   }
 }
 
-export class JoinCommunityUseCase {
-  constructor(
-    private readonly communityRepo: ICommunityRepository,
-    private readonly membershipRepo: ICommunityMembershipRepository,
-    private readonly userRepo: IUserRepository,
-  ) {}
+// ── Community as prioritization profile (plan_community) ──
+// Membership is request → moderator approves; the comment↔community
+// association is DERIVED from approved membership (no communitySlug on
+// new comments). Moderators = creator + creator-appointed.
 
-  async execute(actorEmail: string, slug: string): Promise<{ joined: boolean }> {
-    const [actor, community] = await Promise.all([
-      this.userRepo.findByEmail(actorEmail),
-      this.communityRepo.findBySlug(slug),
-    ]);
-    if (!actor || !actor._id) throw new Error("Actor not found");
-    if (!community || !community._id) throw new Error("Community not found");
-
-    const joined = await this.membershipRepo.join(actor._id, community._id);
-    // Only bump the denormalized counter when the membership is fresh; the
-    // repo's join() short-circuits duplicates so this can't double-count.
-    if (joined) await this.communityRepo.incrementMemberCount(community._id, 1);
-    return { joined };
+async function assertModerator(
+  memberships: ICommunityMembershipRepository,
+  actorId: string,
+  communityId: string,
+): Promise<void> {
+  if (!(await memberships.isModerator(actorId, communityId))) {
+    throw new Error("Apenas moderadores");
   }
 }
 
-export class LeaveCommunityUseCase {
+export class RequestJoinCommunityUseCase {
   constructor(
-    private readonly communityRepo: ICommunityRepository,
-    private readonly membershipRepo: ICommunityMembershipRepository,
-    private readonly userRepo: IUserRepository,
+    private readonly communities: ICommunityRepository,
+    private readonly memberships: ICommunityMembershipRepository,
   ) {}
+  async execute({ slug, userId }: { slug: string; userId: string }) {
+    const c = await this.communities.findBySlug(slug);
+    if (!c || !c._id) throw new Error("Comunidade não encontrada");
+    await this.memberships.createRequest(userId, c._id);
+  }
+}
 
-  async execute(actorEmail: string, slug: string): Promise<{ left: boolean }> {
-    const [actor, community] = await Promise.all([
-      this.userRepo.findByEmail(actorEmail),
-      this.communityRepo.findBySlug(slug),
-    ]);
-    if (!actor || !actor._id) throw new Error("Actor not found");
-    if (!community || !community._id) throw new Error("Community not found");
+export class ListJoinRequestsUseCase {
+  constructor(
+    private readonly communities: ICommunityRepository,
+    private readonly memberships: ICommunityMembershipRepository,
+  ) {}
+  async execute({ slug, actorId }: { slug: string; actorId: string }) {
+    const c = await this.communities.findBySlug(slug);
+    if (!c || !c._id) throw new Error("Comunidade não encontrada");
+    await assertModerator(this.memberships, actorId, c._id);
+    return this.memberships.listByStatus(c._id, "pending");
+  }
+}
 
-    const left = await this.membershipRepo.leave(actor._id, community._id);
-    if (left) await this.communityRepo.incrementMemberCount(community._id, -1);
-    return { left };
+export class ApproveMemberUseCase {
+  constructor(
+    private readonly communities: ICommunityRepository,
+    private readonly memberships: ICommunityMembershipRepository,
+  ) {}
+  async execute({
+    slug,
+    actorId,
+    targetUserId,
+  }: {
+    slug: string;
+    actorId: string;
+    targetUserId: string;
+  }) {
+    const c = await this.communities.findBySlug(slug);
+    if (!c || !c._id) throw new Error("Comunidade não encontrada");
+    await assertModerator(this.memberships, actorId, c._id);
+    const changed = await this.memberships.setStatus(
+      targetUserId,
+      c._id,
+      "approved",
+    );
+    if (changed) await this.communities.incrementMemberCount(c._id, 1);
+  }
+}
+
+export class RejectMemberUseCase {
+  constructor(
+    private readonly communities: ICommunityRepository,
+    private readonly memberships: ICommunityMembershipRepository,
+  ) {}
+  async execute({
+    slug,
+    actorId,
+    targetUserId,
+  }: {
+    slug: string;
+    actorId: string;
+    targetUserId: string;
+  }) {
+    const c = await this.communities.findBySlug(slug);
+    if (!c || !c._id) throw new Error("Comunidade não encontrada");
+    await assertModerator(this.memberships, actorId, c._id);
+    await this.memberships.remove(targetUserId, c._id);
+  }
+}
+
+export class SetModeratorUseCase {
+  constructor(
+    private readonly communities: ICommunityRepository,
+    private readonly memberships: ICommunityMembershipRepository,
+  ) {}
+  async execute({
+    slug,
+    actorId,
+    targetUserId,
+    makeModerator,
+  }: {
+    slug: string;
+    actorId: string;
+    targetUserId: string;
+    makeModerator: boolean;
+  }) {
+    const c = await this.communities.findBySlug(slug);
+    if (!c || !c._id) throw new Error("Comunidade não encontrada");
+    if (c.createdBy !== actorId) {
+      throw new Error("Apenas o criador gerencia moderadores");
+    }
+    await this.memberships.setRole(
+      targetUserId,
+      c._id,
+      makeModerator ? "moderator" : "member",
+    );
   }
 }
