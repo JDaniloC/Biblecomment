@@ -99,6 +99,50 @@ async function main() {
   }
   console.log(`[migrate] memberCount recomputed (off): ${recounted}`);
 
+  // 4) Backfill CommunityFollow rows for every approved member — the
+  //    plan_community follow-up assumes "approved => auto-followed", and
+  //    pre-existing approved users won't be reapproved to trigger the
+  //    auto-follow side effect of ApproveMemberUseCase.
+  const approved = await db
+    .collection("communitymemberships")
+    .find({ status: "approved" })
+    .toArray();
+  let followsInserted = 0;
+  for (const m of approved) {
+    const existing = await db
+      .collection("communityfollows")
+      .findOne({ userId: String(m.userId), communityId: String(m.communityId) });
+    if (existing) continue;
+    followsInserted++;
+    if (!DRY) {
+      await db.collection("communityfollows").insertOne({
+        userId: String(m.userId),
+        communityId: String(m.communityId),
+        followedAt: m.joinedAt ?? new Date(),
+      });
+    }
+  }
+  console.log(`[migrate] community follows backfilled: ${followsInserted}`);
+
+  // 5) Recompute followerCount per community from CommunityFollow rows.
+  let followerRecounted = 0;
+  for (const c of communities) {
+    const count = await db.collection("communityfollows").countDocuments({
+      communityId: String(c._id),
+    });
+    if (count !== (c.followerCount ?? 0)) {
+      followerRecounted++;
+      if (!DRY) {
+        await db
+          .collection("communities")
+          .updateOne({ _id: c._id }, { $set: { followerCount: count } });
+      }
+    }
+  }
+  console.log(
+    `[migrate] followerCount recomputed (off): ${followerRecounted}`,
+  );
+
   console.log(
     DRY
       ? "[migrate] DRY RUN done — no writes performed."

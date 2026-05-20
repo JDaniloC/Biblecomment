@@ -128,6 +128,9 @@ const COLLECTIONS = [
 	"comments",
 	"commentlikes",
 	"commentreports",
+	"communities",
+	"communitymemberships",
+	"communityfollows",
 	"discussions",
 	"discussionanswers",
 	"notifications",
@@ -176,6 +179,11 @@ async function seed(uri) {
 		description: "Comunidade de demonstração (plan_community)",
 		createdBy: aliceId,
 		memberCount: 1,
+		// alice follows her own community by default (plan_community
+		// follow-up: approving a member auto-follows; we mirror that
+		// invariant in the seed so the picker shows Reformados out of the
+		// box).
+		followerCount: 1,
 		createdAt: nowC,
 		updatedAt: nowC,
 	});
@@ -188,6 +196,11 @@ async function seed(uri) {
 			joinedAt: nowC,
 		},
 	]);
+	await db.collection("communityfollows").insertOne({
+		userId: aliceId,
+		communityId: String(commIns.insertedId),
+		followedAt: nowC,
+	});
 	void bobId;
 
 	await db.collection("books").insertOne(FIXTURES.book);

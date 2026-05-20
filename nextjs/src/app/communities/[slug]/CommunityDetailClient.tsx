@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { communityService } from "@/services/communities";
@@ -109,6 +109,26 @@ export default function CommunityDetailClient({
     };
   }, [viewer, community.slug]);
 
+  // Follow is orthogonal to membership (plan_community follow-up). Resolve
+  // the follow flag separately so the "Seguir/Seguindo" toggle reflects
+  // the viewer's actual state on first paint after hydration.
+  const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followerCount, setFollowerCount] = useState(community.followerCount);
+  useEffect(() => {
+    if (!viewer) return;
+    let cancelled = false;
+    communityService
+      .myFollowStatus(community.slug)
+      .then((r) => {
+        if (!cancelled) setFollowing(r.following);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [viewer, community.slug]);
+
   // Moderator viewers get the pending list.
   useEffect(() => {
     const isModerator = role === "moderator" || isCreator;
@@ -125,17 +145,53 @@ export default function CommunityDetailClient({
     };
   }, [role, isCreator, viewer, community.slug]);
   const [comments, setComments] = useState(initialComments);
-  const [commentsTotal] = useState(initialCommentsTotal);
+  const [commentsTotal, setCommentsTotal] = useState(initialCommentsTotal);
   const [commentsPage, setCommentsPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Search bar over the community's comments (plan_community follow-up).
+  // Debounce server hits — typing "joão" shouldn't fire 4 requests.
+  const [commentQuery, setCommentQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setActiveQuery(commentQuery.trim()), 250);
+    return () => clearTimeout(t);
+  }, [commentQuery]);
+
+  // Re-query page 1 whenever the active query changes. We intentionally
+  // skip the initial render (activeQuery=="" matches SSR-seeded list).
+  const didMount = useRef(false);
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+    let cancelled = false;
+    const qs = new URLSearchParams({ page: "1" });
+    if (activeQuery) qs.set("q", activeQuery);
+    fetch(`/api/communities/${community.slug}/comments?${qs}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((json: { items: CommunityCommentItem[]; total: number }) => {
+        if (cancelled) return;
+        setComments(json.items);
+        setCommentsTotal(json.total);
+        setCommentsPage(1);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [activeQuery, community.slug]);
 
   async function loadMoreComments() {
     if (loadingMore || comments.length >= commentsTotal) return;
     setLoadingMore(true);
     try {
       const next = commentsPage + 1;
+      const qs = new URLSearchParams({ page: String(next) });
+      if (activeQuery) qs.set("q", activeQuery);
       const res = await fetch(
-        `/api/communities/${community.slug}/comments?page=${next}`,
+        `/api/communities/${community.slug}/comments?${qs}`,
       );
       if (!res.ok) throw new Error("fetch failed");
       const json = (await res.json()) as { items: CommunityCommentItem[] };
@@ -192,6 +248,35 @@ export default function CommunityDetailClient({
     }
   }
 
+  async function handleToggleFollow() {
+    if (!viewer || followBusy) return;
+    setFollowBusy(true);
+    const wasFollowing = following;
+    // Optimistic — flip locally; revert on failure.
+    setFollowing(!wasFollowing);
+    setFollowerCount((n) => (wasFollowing ? Math.max(0, n - 1) : n + 1));
+    try {
+      if (wasFollowing) await communityService.unfollow(community.slug);
+      else await communityService.follow(community.slug);
+    } catch {
+      setFollowing(wasFollowing);
+      setFollowerCount((n) => (wasFollowing ? n + 1 : Math.max(0, n - 1)));
+      handleNotification("error", "Não foi possível atualizar o follow.");
+    } finally {
+      setFollowBusy(false);
+    }
+  }
+
+  // Pending-list filter for moderators (plan_community follow-up). Tiny
+  // list → client-side substring match is fine.
+  const [pendingFilter, setPendingFilter] = useState("");
+  const filteredPending =
+    pendingFilter.trim() === ""
+      ? pending
+      : pending.filter((r) =>
+          (r.username ?? "").toLowerCase().includes(pendingFilter.trim().toLowerCase()),
+        );
+
   async function handleReject(userId: string) {
     if (busy) return;
     setBusy(true);
@@ -232,6 +317,11 @@ export default function CommunityDetailClient({
               <p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
                 <span data-testid="community-member-count">{memberCount}</span>{" "}
                 {memberCount === 1 ? "membro" : "membros"}
+                {" · "}
+                <span data-testid="community-follower-count">
+                  {followerCount}
+                </span>{" "}
+                {followerCount === 1 ? "seguidor" : "seguidores"}
                 {creatorUsername && (
                   <>
                     {" · criada por "}
@@ -245,35 +335,58 @@ export default function CommunityDetailClient({
                 )}
               </p>
             </div>
-            {viewer && !isCreator && (
-              <div
-                className="flex items-center gap-2"
-                data-testid="community-membership-toggle"
-                data-status={status}
-              >
-                {status === "pending" && (
-                  <span className="text-xs text-amber-700 dark:text-amber-300 font-semibold">
-                    Solicitação enviada
-                  </span>
-                )}
+            {viewer && (
+              <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                {/* Follow is independent from membership — anyone can follow,
+                    no moderation hop. Membership controls whose comments
+                    are exhibited on this page (see CommunityCommentsList). */}
                 <button
                   type="button"
-                  onClick={
-                    status === "none" ? handleRequestJoin : handleCancelOrLeave
-                  }
-                  disabled={busy}
+                  onClick={handleToggleFollow}
+                  disabled={followBusy}
+                  data-testid="community-follow-toggle"
+                  data-following={following ? "true" : "false"}
                   className={`text-sm font-semibold px-4 py-2 rounded-md transition disabled:opacity-60 ${
-                    status === "none"
-                      ? "bg-brand text-white hover:bg-brand/90"
-                      : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-900/60"
+                    following
+                      ? "border border-brand text-brand hover:bg-brand/10"
+                      : "bg-brand text-white hover:bg-brand/90"
                   }`}
                 >
-                  {status === "none"
-                    ? "Solicitar entrada"
-                    : status === "pending"
-                      ? "Cancelar"
-                      : "Sair"}
+                  {following ? "Seguindo" : "Seguir"}
                 </button>
+                {!isCreator && (
+                  <div
+                    className="flex items-center gap-2"
+                    data-testid="community-membership-toggle"
+                    data-status={status}
+                  >
+                    {status === "pending" && (
+                      <span className="text-xs text-amber-700 dark:text-amber-300 font-semibold">
+                        Solicitação enviada
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={
+                        status === "none"
+                          ? handleRequestJoin
+                          : handleCancelOrLeave
+                      }
+                      disabled={busy}
+                      className={`text-sm font-semibold px-3 py-1.5 rounded-md transition disabled:opacity-60 ${
+                        status === "none"
+                          ? "border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-brand hover:text-brand"
+                          : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-900/60"
+                      }`}
+                    >
+                      {status === "none"
+                        ? "Solicitar entrada"
+                        : status === "pending"
+                          ? "Cancelar"
+                          : "Sair"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             {isCreator && (
@@ -301,13 +414,28 @@ export default function CommunityDetailClient({
             <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
               Moderação · solicitações pendentes ({pending.length})
             </h2>
+            {pending.length > 0 && (
+              <input
+                type="text"
+                value={pendingFilter}
+                onChange={(e) => setPendingFilter(e.target.value)}
+                placeholder="Filtrar por @usuário…"
+                aria-label="Filtrar solicitações pendentes"
+                data-testid="community-pending-filter"
+                className="w-full mb-3 px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
+              />
+            )}
             {pending.length === 0 ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Nenhuma solicitação pendente.
               </p>
+            ) : filteredPending.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Nenhum @usuário casa com o filtro.
+              </p>
             ) : (
               <ul className="flex flex-col gap-2">
-                {pending.map((r) => (
+                {filteredPending.map((r) => (
                   <li
                     key={r.userId}
                     data-testid={`pending-request-${r.userId}`}
@@ -353,9 +481,20 @@ export default function CommunityDetailClient({
         )}
 
         <section data-testid="community-comments" className="mb-6">
-          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
-            Comentários ({commentsTotal})
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+              Comentários ({commentsTotal})
+            </h2>
+            <input
+              type="search"
+              value={commentQuery}
+              onChange={(e) => setCommentQuery(e.target.value)}
+              placeholder="Buscar nos comentários…"
+              aria-label="Buscar nos comentários da comunidade"
+              data-testid="community-comments-search"
+              className="flex-1 min-w-[180px] max-w-[260px] px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+          </div>
 
           {comments.length === 0 ? (
             <p

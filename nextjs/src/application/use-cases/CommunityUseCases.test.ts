@@ -6,13 +6,19 @@ import {
   ApproveMemberUseCase,
   RejectMemberUseCase,
   SetModeratorUseCase,
+  FollowCommunityUseCase,
+  UnfollowCommunityUseCase,
+  MyFollowedCommunitiesUseCase,
+  MyFollowStatusUseCase,
   MAX_COMMUNITIES_PER_USER,
 } from "./CommunityUseCases";
 import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
 import type { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
+import type { ICommunityFollowRepository } from "@/domain/repositories/ICommunityFollowRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { Community } from "@/domain/entities/Community";
 import type { CommunityMembership } from "@/domain/entities/CommunityMembership";
+import type { CommunityFollow } from "@/domain/entities/CommunityFollow";
 import type { User } from "@/domain/entities/User";
 
 function makeUserRepo(users: Record<string, User>): IUserRepository {
@@ -53,6 +59,7 @@ function makeCommunityRepo(): ICommunityRepository & {
         description: input.description,
         createdBy: input.createdBy,
         memberCount: 0,
+        followerCount: 0,
         createdAt: new Date(),
       };
       items.set(c._id!, c);
@@ -77,6 +84,67 @@ function makeCommunityRepo(): ICommunityRepository & {
     async incrementMemberCount(id, delta) {
       const c = items.get(id);
       if (c) c.memberCount += delta;
+    },
+    async incrementFollowerCount(id, delta) {
+      const c = items.get(id);
+      if (c) c.followerCount += delta;
+    },
+  };
+}
+
+function makeFollowRepo(): ICommunityFollowRepository & {
+  _rows: Map<string, Date>;
+} {
+  const rows = new Map<string, Date>();
+  const key = (u: string, c: string) => `${u}::${c}`;
+  return {
+    _rows: rows,
+    async follow(userId, communityId) {
+      const k = key(userId, communityId);
+      if (rows.has(k)) return false;
+      rows.set(k, new Date());
+      return true;
+    },
+    async unfollow(userId, communityId) {
+      return rows.delete(key(userId, communityId));
+    },
+    async isFollowing(userId, communityId) {
+      return rows.has(key(userId, communityId));
+    },
+    async followedCommunityIds(userId) {
+      return [...rows.entries()]
+        .filter(([k]) => k.startsWith(`${userId}::`))
+        // Newest follow first — sort by followedAt desc to mirror Mongo.
+        .sort((a, b) => b[1].getTime() - a[1].getTime())
+        .map(([k]) => k.split("::")[1]);
+    },
+    async listForUser(userId) {
+      return [...rows.entries()]
+        .filter(([k]) => k.startsWith(`${userId}::`))
+        .map(
+          ([k, t]): CommunityFollow => ({
+            userId: k.split("::")[0],
+            communityId: k.split("::")[1],
+            followedAt: t,
+          }),
+        );
+    },
+    async countByCommunity(communityId) {
+      return [...rows.keys()].filter((k) => k.endsWith(`::${communityId}`)).length;
+    },
+    async removeAllByUser(userId) {
+      const prev = rows.size;
+      [...rows.keys()]
+        .filter((k) => k.startsWith(`${userId}::`))
+        .forEach((k) => rows.delete(k));
+      return prev - rows.size;
+    },
+    async removeAllByCommunity(communityId) {
+      const prev = rows.size;
+      [...rows.keys()]
+        .filter((k) => k.endsWith(`::${communityId}`))
+        .forEach((k) => rows.delete(k));
+      return prev - rows.size;
     },
   };
 }
@@ -358,5 +426,111 @@ describe("Community moderation use-cases", () => {
       makeModerator: true,
     });
     expect(await membershipRepo.isModerator("u1", communityId)).toBe(true);
+  });
+});
+
+describe("Community follow use-cases (plan_community follow-up)", () => {
+  let communityRepo: ReturnType<typeof makeCommunityRepo>;
+  let membershipRepo: ReturnType<typeof makeMembershipRepo>;
+  let followRepo: ReturnType<typeof makeFollowRepo>;
+  let communityId: string;
+
+  beforeEach(async () => {
+    communityRepo = makeCommunityRepo();
+    membershipRepo = makeMembershipRepo();
+    followRepo = makeFollowRepo();
+    const c = await communityRepo.create({
+      slug: "alpha",
+      name: "Alpha",
+      description: "",
+      createdBy: "creator",
+    });
+    communityId = c._id!;
+  });
+
+  it("FollowCommunityUseCase increments followerCount on first follow only", async () => {
+    const uc = new FollowCommunityUseCase(communityRepo, followRepo);
+    const first = await uc.execute({ slug: "alpha", userId: "u1" });
+    expect(first.alreadyFollowed).toBe(false);
+    expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(1);
+
+    // Idempotent — second tap doesn't double-count.
+    const second = await uc.execute({ slug: "alpha", userId: "u1" });
+    expect(second.alreadyFollowed).toBe(true);
+    expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(1);
+  });
+
+  it("UnfollowCommunityUseCase only decrements when a row was actually removed", async () => {
+    const f = new FollowCommunityUseCase(communityRepo, followRepo);
+    const u = new UnfollowCommunityUseCase(communityRepo, followRepo);
+    await f.execute({ slug: "alpha", userId: "u1" });
+    expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(1);
+
+    const ok = await u.execute({ slug: "alpha", userId: "u1" });
+    expect(ok.didRemove).toBe(true);
+    expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(0);
+
+    // Unfollowing again is a no-op (doesn't go negative).
+    const noop = await u.execute({ slug: "alpha", userId: "u1" });
+    expect(noop.didRemove).toBe(false);
+    expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(0);
+  });
+
+  it("MyFollowedCommunitiesUseCase preserves newest-follow-first order", async () => {
+    await communityRepo.create({
+      slug: "beta",
+      name: "Beta",
+      description: "",
+      createdBy: "creator",
+    });
+    const f = new FollowCommunityUseCase(communityRepo, followRepo);
+    await f.execute({ slug: "alpha", userId: "u1" });
+    // Bump timestamp so beta is strictly newer.
+    await new Promise((r) => setTimeout(r, 5));
+    await f.execute({ slug: "beta", userId: "u1" });
+
+    const uc = new MyFollowedCommunitiesUseCase(communityRepo, followRepo);
+    const list = await uc.execute("u1");
+    expect(list.map((c) => c.slug)).toEqual(["beta", "alpha"]);
+  });
+
+  it("MyFollowStatusUseCase returns following:false for unknown community", async () => {
+    const uc = new MyFollowStatusUseCase(communityRepo, followRepo);
+    expect(await uc.execute({ slug: "ghost", userId: "u1" })).toEqual({
+      following: false,
+    });
+  });
+
+  it("ApproveMember auto-follows the approved member when follow repo is wired", async () => {
+    await membershipRepo.createRequest("u1", communityId);
+    await membershipRepo.createRequest("mod", communityId);
+    await membershipRepo.setStatus("mod", communityId, "approved");
+    await membershipRepo.setRole("mod", communityId, "moderator");
+
+    const uc = new ApproveMemberUseCase(
+      communityRepo,
+      membershipRepo,
+      followRepo,
+    );
+    await uc.execute({ slug: "alpha", actorId: "mod", targetUserId: "u1" });
+
+    expect(await followRepo.isFollowing("u1", communityId)).toBe(true);
+    expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(1);
+    // memberCount also bumped (existing behavior preserved).
+    expect((await communityRepo.findBySlug("alpha"))?.memberCount).toBe(1);
+  });
+
+  it("ApproveMember without follow repo still works (back-compat)", async () => {
+    await membershipRepo.createRequest("u1", communityId);
+    await membershipRepo.createRequest("mod", communityId);
+    await membershipRepo.setStatus("mod", communityId, "approved");
+    await membershipRepo.setRole("mod", communityId, "moderator");
+
+    // No follow repo — only the membership/memberCount side runs.
+    const uc = new ApproveMemberUseCase(communityRepo, membershipRepo);
+    await uc.execute({ slug: "alpha", actorId: "mod", targetUserId: "u1" });
+
+    expect((await communityRepo.findBySlug("alpha"))?.memberCount).toBe(1);
+    expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(0);
   });
 });

@@ -137,6 +137,7 @@ describe("ListCommunityCommentsUseCase (plan_community: by approved members)", (
       ["alice", "bob"],
       1,
       20,
+      undefined,
     );
     expect(result.total).toBe(1);
     expect(result.items[0]?.username).toBe("alice");

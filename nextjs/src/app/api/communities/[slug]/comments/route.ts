@@ -21,12 +21,13 @@ export async function GET(
   const { slug } = await params;
   const url = new URL(req.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10));
+  const q = url.searchParams.get("q") ?? undefined;
   const result = await new ListCommunityCommentsUseCase(
     new MongoCommentRepository(),
     new MongoCommunityRepository(),
     new MongoCommunityMembershipRepository(),
     new MongoUserRepository(),
-  ).execute(slug.toLowerCase(), page, PAGE_SIZE);
+  ).execute(slug.toLowerCase(), page, PAGE_SIZE, { q });
 
   const items = result.items.map((c) => ({
     _id: c._id,

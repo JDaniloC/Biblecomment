@@ -125,7 +125,12 @@ export default function ChapterClient({
 		pessoal: false,
 		inspirado: false,
 	});
-	const community = useActiveCommunity(user?.username);
+	// The picker now lives in the AppHeader profile dropdown (plan_community
+	// follow-up). The reader only needs `active` to drive the comment
+	// partition — skip the followed-list fetch on every chapter load.
+	const community = useActiveCommunity(user?.username, {
+		withFollowed: false,
+	});
 	const [composeSubmitting, setComposeSubmitting] = useState(false);
 	const [editingComment, setEditingComment] = useState<CommentData | null>(
 		null,
@@ -760,40 +765,10 @@ export default function ChapterClient({
 							/>
 						</div>
 
-						{/* Active community selector (plan_community): single approved
-                community at a time. Comments by approved members of the
-                selected community become "prioritized"; everyone else
-                collapses behind "Ver outros comentários". Hidden when the
-                user has no approved communities. */}
-						{user && community.memberships.length > 0 && (
-							<div
-								data-testid="community-filter-row"
-								className="flex flex-wrap items-center gap-2 mb-5 text-[12px]"
-							>
-								<label
-									htmlFor="active-community-select"
-									className="text-slate-500 dark:text-slate-400 font-medium"
-								>
-									Comunidade ativa:
-								</label>
-								<select
-									id="active-community-select"
-									data-testid="active-community-select"
-									value={community.active ?? ""}
-									onChange={(e) =>
-										community.setActive(e.target.value || null)
-									}
-									className="px-2.5 py-1 rounded-md border bg-transparent text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
-								>
-									<option value="">Nenhuma</option>
-									{community.memberships.map((c) => (
-										<option key={c.slug} value={c.slug}>
-											{c.name}
-										</option>
-									))}
-								</select>
-							</div>
-						)}
+						{/* Active community picker moved to the AppHeader profile
+                dropdown in the plan_community follow-up. The reader still
+                reads the active slug from localStorage to partition
+                comments — only the chooser surface changed. */}
 
 						{(titleCount > 0 || isTitleMode) && (
 							<button

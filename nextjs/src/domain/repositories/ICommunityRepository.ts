@@ -17,7 +17,12 @@ export interface ICommunityRepository {
    * Insert a new community. Throws on duplicate slug (caller can map to a
    * 409 — the use case is responsible for surfacing the friendly error).
    */
-  create(input: Omit<Community, "_id" | "createdAt" | "updatedAt" | "memberCount">): Promise<Community>;
+  create(
+    input: Omit<
+      Community,
+      "_id" | "createdAt" | "updatedAt" | "memberCount" | "followerCount"
+    >,
+  ): Promise<Community>;
   findById(id: string): Promise<Community | null>;
   findBySlug(slug: string): Promise<Community | null>;
   /** Public listing for the discovery page (newest-first when no query). */
@@ -28,4 +33,10 @@ export interface ICommunityRepository {
   findManyByIds(ids: string[]): Promise<Community[]>;
   /** Adjust `memberCount` by `delta` (typically +1 or -1). */
   incrementMemberCount(id: string, delta: number): Promise<void>;
+  /**
+   * Adjust `followerCount` by `delta`. Follow is viewer-controlled — anyone
+   * can opt-in — so this fires from the follow/unfollow use cases without
+   * any moderation hop. See [[CommunityFollow]].
+   */
+  incrementFollowerCount(id: string, delta: number): Promise<void>;
 }

@@ -1,9 +1,12 @@
 /**
  * Public community a user can create and others can join.
  *
- * `memberCount` is denormalized for cheap rendering on the listing page —
- * the repo keeps it in sync via $inc on join/leave. Truth lives in the
- * CommunityMembership collection if the counter ever drifts.
+ * Two viewer-facing counters, both denormalized for cheap rendering:
+ *  - `memberCount` — approved memberships; bumped on approve/leave.
+ *  - `followerCount` — viewer opt-ins; bumped on follow/unfollow.
+ * Truth lives in the join collections (CommunityMembership /
+ * CommunityFollow) — the migration script reconciles both if a counter
+ * ever drifts.
  *
  * `createdBy` is the creator's `User._id` (not username), keeping the
  * foreign key stable across username changes — same convention as Follow.
@@ -15,6 +18,7 @@ export interface Community {
   description: string;
   createdBy: string;
   memberCount: number;
+  followerCount: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

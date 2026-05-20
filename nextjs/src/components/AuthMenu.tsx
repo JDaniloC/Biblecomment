@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useConfirm } from "@/contexts/ConfirmContext";
+import { CommunityActiveSelector } from "@/components/CommunityActiveSelector";
 
 interface SessionUser {
   name?: string | null;
@@ -97,6 +98,17 @@ export function AuthMenu({ user, loginCallbackUrl }: Props) {
                 {user.name ?? user.username}
               </div>
               <div className="font-normal text-xs text-slate-400 dark:text-slate-500 leading-[18px]">@{user.username}</div>
+            </div>
+            {/* Active community picker (plan_community follow-up). Lists the
+                communities the viewer FOLLOWS — picking one prioritizes
+                comments by approved members of that community in the
+                reader. Membership status (pending/approved) is decided
+                elsewhere on the community page. */}
+            <div className="px-3 pt-2.5 pb-2 border-b border-slate-100 dark:border-slate-800">
+              <CommunityActiveSelector
+                username={user.username}
+                onPick={() => setOpen(false)}
+              />
             </div>
             <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2.5 h-[35.5px] pl-4 no-underline">
               <span className="text-slate-600 dark:text-slate-300 flex">{ICONS.user}</span>

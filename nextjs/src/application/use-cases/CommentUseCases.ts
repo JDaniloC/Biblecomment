@@ -34,8 +34,16 @@ export class ListCommunityCommentsUseCase {
    *
    * Returns `{ items: [], total: 0 }` for an unknown slug or a community
    * with no approved members — no DB churn for either case.
+   *
+   * `q` is an optional substring search (case-insensitive) over comment
+   * text + bookReference. Used by the search bar on /communities/<slug>.
    */
-  async execute(slug: string, page: number, pageSize: number) {
+  async execute(
+    slug: string,
+    page: number,
+    pageSize: number,
+    opts?: { q?: string },
+  ) {
     const community = await this.communityRepo.findBySlug(slug);
     if (!community?._id) return { items: [], total: 0 };
     const userIds = await this.membershipRepo.approvedUserIds(community._id);
@@ -43,7 +51,12 @@ export class ListCommunityCommentsUseCase {
     const users = await this.userRepo.findManyByIds(userIds);
     const usernames = users.map((u) => u.username).filter(Boolean);
     if (usernames.length === 0) return { items: [], total: 0 };
-    return this.commentRepo.findByUsernamesPaginated(usernames, page, pageSize);
+    return this.commentRepo.findByUsernamesPaginated(
+      usernames,
+      page,
+      pageSize,
+      opts,
+    );
   }
 }
 

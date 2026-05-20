@@ -78,12 +78,25 @@ export class MongoCommentRepository implements ICommentRepository {
     usernames: string[],
     page: number,
     pageSize: number,
+    opts?: { q?: string },
   ): Promise<{ items: Comment[]; total: number }> {
     if (usernames.length === 0) return { items: [], total: 0 };
     await connectToDatabase();
     const safePage = Math.max(1, page);
     const safeSize = Math.max(1, Math.min(pageSize, 200));
-    const filter = { username: { $in: usernames } };
+    const filter: Record<string, unknown> = {
+      username: { $in: usernames },
+    };
+    const q = opts?.q?.trim();
+    if (q) {
+      // Case-insensitive substring on text/bookReference — simple regex
+      // rather than $text so short queries (1-2 chars) still match. The
+      // username predicate already narrows the candidate set drastically
+      // (community members only), so the regex cost is bounded.
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(escaped, "i");
+      filter.$or = [{ text: re }, { bookReference: re }];
+    }
     const [docs, total] = await Promise.all([
       CommentModel.find(filter)
         .sort({ createdAt: -1, _id: -1 })

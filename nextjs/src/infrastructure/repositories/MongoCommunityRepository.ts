@@ -18,6 +18,9 @@ function toEntity(doc: ICommunityDocument): Community {
     description: doc.description,
     createdBy: doc.createdBy,
     memberCount: doc.memberCount,
+    // Older docs predate followerCount; treat absence as zero so existing
+    // communities don't render NaN until the migration script touches them.
+    followerCount: doc.followerCount ?? 0,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -25,7 +28,10 @@ function toEntity(doc: ICommunityDocument): Community {
 
 export class MongoCommunityRepository implements ICommunityRepository {
   async create(
-    input: Omit<Community, "_id" | "createdAt" | "updatedAt" | "memberCount">,
+    input: Omit<
+      Community,
+      "_id" | "createdAt" | "updatedAt" | "memberCount" | "followerCount"
+    >,
   ): Promise<Community> {
     await connectToDatabase();
     const doc = await CommunityModel.create({
@@ -34,6 +40,7 @@ export class MongoCommunityRepository implements ICommunityRepository {
       description: input.description ?? "",
       createdBy: input.createdBy,
       memberCount: 0,
+      followerCount: 0,
     });
     return toEntity(doc);
   }
@@ -89,5 +96,13 @@ export class MongoCommunityRepository implements ICommunityRepository {
   async incrementMemberCount(id: string, delta: number): Promise<void> {
     await connectToDatabase();
     await CommunityModel.updateOne({ _id: id }, { $inc: { memberCount: delta } });
+  }
+
+  async incrementFollowerCount(id: string, delta: number): Promise<void> {
+    await connectToDatabase();
+    await CommunityModel.updateOne(
+      { _id: id },
+      { $inc: { followerCount: delta } },
+    );
   }
 }

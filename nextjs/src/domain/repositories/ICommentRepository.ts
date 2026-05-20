@@ -26,11 +26,16 @@ export interface ICommentRepository {
    * members of this community" — caller resolves membership → usernames
    * first, then hands the set here. Empty list short-circuits to
    * `{ items: [], total: 0 }` (no DB hit).
+   *
+   * `q` is an optional case-insensitive substring match over `text` and
+   * `bookReference`. Skipped when blank. Indexed via the existing $text
+   * + regex paths used by findForModeration.
    */
   findByUsernamesPaginated(
     usernames: string[],
     page: number,
     pageSize: number,
+    opts?: { q?: string },
   ): Promise<{ items: Comment[]; total: number }>;
   findByUsername(username: string): Promise<Comment[]>;
   /**

@@ -138,7 +138,9 @@ export default function CommunitiesClient({
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     /{c.slug} · {c.memberCount}{" "}
-                    {c.memberCount === 1 ? "membro" : "membros"}
+                    {c.memberCount === 1 ? "membro" : "membros"} ·{" "}
+                    {c.followerCount}{" "}
+                    {c.followerCount === 1 ? "seguidor" : "seguidores"}
                   </p>
                   {c.description && (
                     <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2">

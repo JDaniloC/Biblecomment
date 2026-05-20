@@ -27,7 +27,7 @@ export function activeQueryString(active: string | null): string {
   return active ? `?community=${encodeURIComponent(active)}` : "";
 }
 
-export interface ApprovedCommunity {
+export interface FollowedCommunity {
   slug: string;
   name: string;
 }
@@ -35,18 +35,27 @@ export interface ApprovedCommunity {
 /**
  * The reader's single active community (plan_community). `active`
  * persists per-username to localStorage as a plain slug; `setActive`
- * (null) clears it. `memberships` lists the user's APPROVED communities
- * to populate the selector. Pure helpers above are unit-tested; the
+ * (null) clears it. `followed` lists the user's followed communities
+ * to populate the picker. Pure helpers above are unit-tested; the
  * hook just wires them to React + localStorage (no RTL in this repo).
+ *
+ * `withFollowed` defaults to true (preserves the picker use case).
+ * Consumers that only need `active` to drive a query — e.g. the chapter
+ * reader, now that the picker lives in the AppHeader profile dropdown —
+ * pass `false` to skip the GET /api/communities/mine round-trip on
+ * every chapter load.
  */
-export function useActiveCommunity(username?: string | null): {
+export function useActiveCommunity(
+  username?: string | null,
+  { withFollowed = true }: { withFollowed?: boolean } = {},
+): {
   active: string | null;
   setActive: (slug: string | null) => void;
-  memberships: ApprovedCommunity[];
+  followed: FollowedCommunity[];
 } {
   const [active, setActiveState] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
-  const [memberships, setMemberships] = useState<ApprovedCommunity[]>([]);
+  const [followed, setFollowed] = useState<FollowedCommunity[]>([]);
 
   useEffect(() => {
     try {
@@ -59,23 +68,23 @@ export function useActiveCommunity(username?: string | null): {
   }, [username]);
 
   useEffect(() => {
-    if (!username) {
-      setMemberships([]);
+    if (!username || !withFollowed) {
+      setFollowed([]);
       return;
     }
     let cancelled = false;
     communityService
-      .myApproved()
+      .myFollowed()
       .then((list) => {
-        if (!cancelled) setMemberships(list);
+        if (!cancelled) setFollowed(list);
       })
       .catch(() => {
-        if (!cancelled) setMemberships([]);
+        if (!cancelled) setFollowed([]);
       });
     return () => {
       cancelled = true;
     };
-  }, [username]);
+  }, [username, withFollowed]);
 
   const setActive = useCallback(
     (slug: string | null) => {
@@ -94,5 +103,5 @@ export function useActiveCommunity(username?: string | null): {
     [hydrated, username],
   );
 
-  return { active, setActive, memberships };
+  return { active, setActive, followed };
 }

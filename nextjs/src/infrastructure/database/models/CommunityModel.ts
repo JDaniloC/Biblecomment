@@ -6,6 +6,7 @@ export interface ICommunityDocument extends Document {
   description: string;
   createdBy: string;
   memberCount: number;
+  followerCount: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -24,6 +25,7 @@ const CommunitySchema = new Schema<ICommunityDocument>(
     description: { type: String, default: "", trim: true, maxlength: 500 },
     createdBy: { type: String, required: true, index: true },
     memberCount: { type: Number, default: 0, min: 0 },
+    followerCount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true },
 );

@@ -39,14 +39,39 @@ export const communityService = {
     if (!res.ok) throw new Error(await parseError(res));
   },
 
-  /** The signed-in user's APPROVED communities (active-community selector). */
-  async myApproved(): Promise<{ slug: string; name: string }[]> {
+  /**
+   * The signed-in user's FOLLOWED communities (active-community selector
+   * options). plan_community follow-up: follow is a viewer opt-in,
+   * separate from membership. The URL stays `/mine` for back-compat with
+   * the existing route — only the semantics changed.
+   */
+  async myFollowed(): Promise<{ slug: string; name: string }[]> {
     const res = await fetch("/api/communities/mine");
     if (!res.ok) throw new Error(await parseError(res));
     const body = (await res.json()) as {
       communities: { slug: string; name: string }[];
     };
     return body.communities ?? [];
+  },
+
+  async follow(slug: string): Promise<void> {
+    const res = await fetch(`/api/communities/${slug}/follow`, {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error(await parseError(res));
+  },
+
+  async unfollow(slug: string): Promise<void> {
+    const res = await fetch(`/api/communities/${slug}/follow`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error(await parseError(res));
+  },
+
+  async myFollowStatus(slug: string): Promise<{ following: boolean }> {
+    const res = await fetch(`/api/communities/${slug}/follow/me`);
+    if (!res.ok) throw new Error(await parseError(res));
+    return res.json();
   },
 
   // ── plan_community moderation flows ──

@@ -41,6 +41,7 @@ const COLLECTIONS = [
   "follows",
   "communities",
   "communitymemberships",
+  "communityfollows",
 ];
 
 export async function resetDatabase(): Promise<void> {
@@ -103,12 +104,18 @@ export interface SeedCommunityMembership {
   role?: "member" | "moderator";
 }
 
+export interface SeedCommunityFollow {
+  username: string;
+  communitySlug: string;
+}
+
 export interface SeedPayload {
   users?: SeedUser[];
   books?: SeedBook[];
   verses?: SeedVerse[];
   communities?: SeedCommunity[];
   communityMemberships?: SeedCommunityMembership[];
+  communityFollows?: SeedCommunityFollow[];
 }
 
 export async function findUserByEmail(email: string): Promise<{
@@ -392,6 +399,46 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
       updatedAt: new Date(),
     }));
     await db.collection("communities").insertMany(docs);
+  }
+
+  if (payload.communityFollows?.length) {
+    const usernames = [
+      ...new Set(payload.communityFollows.map((f) => f.username)),
+    ];
+    const userDocs = await db
+      .collection("users")
+      .find({ username: { $in: usernames } }, { projection: { _id: 1, username: 1 } })
+      .toArray();
+    const userIdByName = new Map(
+      userDocs.map((u) => [u.username as string, String(u._id)]),
+    );
+    const slugs = [
+      ...new Set(payload.communityFollows.map((f) => f.communitySlug)),
+    ];
+    const commDocs = await db
+      .collection("communities")
+      .find({ slug: { $in: slugs } }, { projection: { _id: 1, slug: 1 } })
+      .toArray();
+    const commIdBySlug = new Map(
+      commDocs.map((c) => [c.slug as string, String(c._id)]),
+    );
+    const docs = payload.communityFollows.map((f) => ({
+      userId: userIdByName.get(f.username) ?? "",
+      communityId: commIdBySlug.get(f.communitySlug) ?? "",
+      followedAt: new Date(),
+    }));
+    await db.collection("communityfollows").insertMany(docs);
+    // Bump followerCount per community so the listing/detail headers
+    // show the right number on first render.
+    for (const slug of slugs) {
+      const count = docs.filter(
+        (d) => d.communityId === commIdBySlug.get(slug),
+      ).length;
+      if (count === 0) continue;
+      await db
+        .collection("communities")
+        .updateOne({ slug }, { $inc: { followerCount: count } });
+    }
   }
 
   if (payload.communityMemberships?.length) {

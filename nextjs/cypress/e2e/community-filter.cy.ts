@@ -37,6 +37,12 @@ describe("Active-community read-path (plan_community)", () => {
           role: "moderator",
         },
       ],
+      // Follow rows drive the picker (plan_community follow-up). Alice
+      // follows her own community by default — approve auto-follows IRL,
+      // but seeds inject rows directly.
+      communityFollows: [
+        { username: users.alice.username, communitySlug: "reformados" },
+      ],
     });
 
     cy.loginAs(users.alice.email, users.alice.password);
@@ -113,9 +119,18 @@ describe("Active-community read-path (plan_community)", () => {
           role: "moderator",
         },
       ],
+      // Follow rows drive the picker (plan_community follow-up). Alice
+      // follows her own community by default — approve auto-follows IRL,
+      // but seeds inject rows directly.
+      communityFollows: [
+        { username: users.alice.username, communitySlug: "reformados" },
+      ],
     });
     cy.loginAs(users.alice.email, users.alice.password);
     cy.visit("/verses/gn/1");
+    // Picker now lives in the AppHeader profile dropdown — click the
+    // avatar to open it before asserting the combobox is mounted.
+    cy.get('[aria-label="Menu da conta"]').click();
     cy.get('[data-testid="active-community-select"]').should("exist");
   });
 });
