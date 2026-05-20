@@ -62,11 +62,39 @@ export function verseDeepLinkPath(verse: ShareVerseCoords): string {
 /**
  * Trim and cap card text. Never exceeds `max` (the ellipsis is counted);
  * text exactly at the boundary is returned untouched (no ellipsis).
+ *
+ * Default is 1000 — matches the platform's effective comment cap. The
+ * card font auto-shrinks via [[pickCardFontSize]] so longer text still
+ * fits without mid-word "decorrer d…" cutoffs.
  */
-export function clampForCard(text: string, max = 280): string {
+export function clampForCard(text: string, max = 1000): string {
 	const trimmed = text.trim();
 	if (trimmed.length <= max) return trimmed;
 	return `${trimmed.slice(0, max - 1).trimEnd()}…`;
+}
+
+/**
+ * Pick a body font size for the share card based on how much text it has
+ * to render. Tiered (not continuous) so the rendered card stays visually
+ * stable across small length deltas — two cards in the same tier look
+ * the same. Calibrated against the square card body area (~904×584 px
+ * inside 88px padding); `wide` shaves ~25% to fit the 1200×630 OG box.
+ *
+ * Exposed (and tested) separately so the card component stays a pure
+ * presentation file — no math hidden in the JSX.
+ */
+export function pickCardFontSize(
+	length: number,
+	format: "square" | "wide" = "square",
+): number {
+	const wide = format === "wide";
+	// Tier boundaries are in characters; the rightmost tier handles the
+	// 1000-char cap from `clampForCard`.
+	if (length <= 200) return wide ? 40 : 52;
+	if (length <= 320) return wide ? 34 : 44;
+	if (length <= 480) return wide ? 28 : 36;
+	if (length <= 700) return wide ? 24 : 30;
+	return wide ? 20 : 26;
 }
 
 /** Formatted, copy-pasteable share text + link. */

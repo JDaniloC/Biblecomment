@@ -4,6 +4,7 @@ import {
 	formatCommentReference,
 	verseDeepLinkPath,
 	clampForCard,
+	pickCardFontSize,
 	formatCommentShare,
 	commentToCardProps,
 } from "./share-comment";
@@ -55,7 +56,7 @@ describe("clampForCard", () => {
 		expect(clampForCard("  hello world  ", 280)).toBe("hello world");
 	});
 	it("truncates with an ellipsis and never exceeds max length", () => {
-		const long = "a".repeat(500);
+		const long = "a".repeat(1500);
 		const out = clampForCard(long, 280);
 		expect(out.length).toBeLessThanOrEqual(280);
 		expect(out.endsWith("…")).toBe(true);
@@ -63,6 +64,30 @@ describe("clampForCard", () => {
 	it("does not add an ellipsis exactly at the boundary", () => {
 		const exact = "x".repeat(280);
 		expect(clampForCard(exact, 280)).toBe(exact);
+	});
+	it("defaults to a 1000-char cap matching the platform comment limit", () => {
+		const long = "a".repeat(1500);
+		const out = clampForCard(long);
+		expect(out.length).toBe(1000);
+		expect(out.endsWith("…")).toBe(true);
+	});
+});
+
+describe("pickCardFontSize", () => {
+	it("uses the largest tier for short text", () => {
+		expect(pickCardFontSize(120)).toBe(52);
+		expect(pickCardFontSize(120, "wide")).toBe(40);
+	});
+	it("shrinks monotonically as text grows", () => {
+		const lengths = [50, 250, 400, 600, 900];
+		const sizes = lengths.map((l) => pickCardFontSize(l));
+		for (let i = 1; i < sizes.length; i++) {
+			expect(sizes[i]).toBeLessThan(sizes[i - 1]);
+		}
+	});
+	it("clamps at the smallest tier for max-length comments", () => {
+		expect(pickCardFontSize(1000)).toBe(26);
+		expect(pickCardFontSize(1000, "wide")).toBe(20);
 	});
 });
 
