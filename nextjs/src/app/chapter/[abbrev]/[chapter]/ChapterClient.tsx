@@ -174,7 +174,9 @@ export default function ChapterClient({
 		!isTitleMode &&
 		community.active !== null &&
 		comments.length > prioritizedCount;
-	const hiddenOthersCount = hasOthersToggle ? comments.length - prioritizedCount : 0;
+	const hiddenOthersCount = hasOthersToggle
+		? comments.length - prioritizedCount
+		: 0;
 	const visibleVerseList =
 		hasOthersToggle && !othersExpanded
 			? comments.slice(0, prioritizedCount)

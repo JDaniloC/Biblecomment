@@ -5,8 +5,8 @@
  * grants the community a slot in the user's active-community selector.
  */
 export interface CommunityFollow {
-  _id?: string;
-  userId: string;
-  communityId: string;
-  followedAt?: Date;
+	_id?: string;
+	userId: string;
+	communityId: string;
+	followedAt?: Date;
 }

@@ -20,87 +20,95 @@ export const dynamic = "force-dynamic";
  * Comment↔community is derived from approved membership (plan_community).
  */
 async function approvedUsernames(url: URL): Promise<Set<string>> {
-  const slug = url.searchParams.get("community")?.trim().toLowerCase();
-  if (!slug) return new Set();
-  const community = await new MongoCommunityRepository().findBySlug(slug);
-  if (!community?._id) return new Set();
-  const ids = await new MongoCommunityMembershipRepository().approvedUserIds(
-    community._id,
-  );
-  if (ids.length === 0) return new Set();
-  const users = await new MongoUserRepository().findManyByIds(ids);
-  return new Set(users.map((u) => u.username));
+	const slug = url.searchParams.get("community")?.trim().toLowerCase();
+	if (!slug) return new Set();
+	const community = await new MongoCommunityRepository().findBySlug(slug);
+	if (!community?._id) return new Set();
+	const ids = await new MongoCommunityMembershipRepository().approvedUserIds(
+		community._id,
+	);
+	if (ids.length === 0) return new Set();
+	const users = await new MongoUserRepository().findManyByIds(ids);
+	return new Set(users.map((u) => u.username));
 }
 
-export async function GET(req: Request, { params }: { params: Promise<Params> }) {
-  try {
-    const { abbrev, chapter, verse } = await params;
-    const chapterNum = parseInt(chapter, 10);
-    const verseNum = parseInt(verse, 10);
-    if (isNaN(chapterNum) || isNaN(verseNum)) return badRequest("Invalid params");
+export async function GET(
+	req: Request,
+	{ params }: { params: Promise<Params> },
+) {
+	try {
+		const { abbrev, chapter, verse } = await params;
+		const chapterNum = parseInt(chapter, 10);
+		const verseNum = parseInt(verse, 10);
+		if (isNaN(chapterNum) || isNaN(verseNum))
+			return badRequest("Invalid params");
 
-    await connectToDatabase();
+		await connectToDatabase();
 
-    const verseDoc = await VerseModel.findOne({
-      abbrev,
-      chapter: chapterNum,
-      verseNumber: verseNum,
-    });
-    if (!verseDoc) {
-      return NextResponse.json({ titleComments: [], prioritized: [], others: [] });
-    }
+		const verseDoc = await VerseModel.findOne({
+			abbrev,
+			chapter: chapterNum,
+			verseNumber: verseNum,
+		});
+		if (!verseDoc) {
+			return NextResponse.json({
+				titleComments: [],
+				prioritized: [],
+				others: [],
+			});
+		}
 
-    const comments = await CommentModel.find({ verseId: verseDoc._id })
-      .sort({ createdAt: -1 })
-      .lean();
-    const session = await auth();
-    const stats = await buildLikeStats(
-      comments.map((c) => c._id.toString()),
-      session?.user?.id,
-    );
+		const comments = await CommentModel.find({ verseId: verseDoc._id })
+			.sort({ createdAt: -1 })
+			.lean();
+		const session = await auth();
+		const stats = await buildLikeStats(
+			comments.map((c) => c._id.toString()),
+			session?.user?.id,
+		);
 
-    const titleComments = comments
-      .filter((c) => c.onTitle)
-      .map((c) => ({
-        _id: c._id.toString(),
-        text: c.text,
-        tags: c.tags,
-        username: c.username,
-        bookReference: c.bookReference,
-        createdAt: c.createdAt,
-        likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
-        likedByMe: stats.likedByViewer.has(c._id.toString()),
-        verified: c.verified ?? false,
-        verifiedBy: c.verifiedBy,
-        communitySlug: c.communitySlug,
-        onTitle: c.onTitle,
-      }));
+		const titleComments = comments
+			.filter((c) => c.onTitle)
+			.map((c) => ({
+				_id: c._id.toString(),
+				text: c.text,
+				tags: c.tags,
+				username: c.username,
+				bookReference: c.bookReference,
+				createdAt: c.createdAt,
+				likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
+				likedByMe: stats.likedByViewer.has(c._id.toString()),
+				verified: c.verified ?? false,
+				verifiedBy: c.verifiedBy,
+				communitySlug: c.communitySlug,
+				onTitle: c.onTitle,
+			}));
 
-    const verseComments = comments
-      .filter((c) => !c.onTitle)
-      .map((c) => ({
-        _id: c._id.toString(),
-        text: c.text,
-        tags: c.tags,
-        username: c.username,
-        bookReference: c.bookReference,
-        createdAt: c.createdAt,
-        likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
-        likedByMe: stats.likedByViewer.has(c._id.toString()),
-        verified: c.verified ?? false,
-        verifiedBy: c.verifiedBy,
-        communitySlug: c.communitySlug,
-        verseId: c.verseId.toString(),
-        onTitle: c.onTitle,
-      }));
+		const verseComments = comments
+			.filter((c) => !c.onTitle)
+			.map((c) => ({
+				_id: c._id.toString(),
+				text: c.text,
+				tags: c.tags,
+				username: c.username,
+				bookReference: c.bookReference,
+				createdAt: c.createdAt,
+				likeCount: stats.countByCommentId.get(c._id.toString()) ?? 0,
+				likedByMe: stats.likedByViewer.has(c._id.toString()),
+				verified: c.verified ?? false,
+				verifiedBy: c.verifiedBy,
+				communitySlug: c.communitySlug,
+				verseId: c.verseId.toString(),
+				onTitle: c.onTitle,
+			}));
 
-    const { prioritized, others } = partitionByApproved(
-      verseComments,
-      await approvedUsernames(new URL(req.url)),
-    );
+		const { prioritized, others } = partitionByApproved(
+			verseComments,
+			await approvedUsernames(new URL(req.url)),
+		);
 
-    return NextResponse.json({ titleComments, prioritized, others });
-  } catch (err) {
-    return serverError(err);
-  }
+		return NextResponse.json({ titleComments, prioritized, others });
+	} catch (err) {
+		return serverError(err);
+	}
 }

@@ -65,6 +65,7 @@ Prereq (done in repo): the prod manifest is valid and now served as
    (recheck step 3, and that the deployed file isn't redirected/HTML).
 
 ### Notes
+
 - Multiple `sha256_cert_fingerprints` are allowed (we list both Play +
   upload). Extra/old fingerprints don't break verification.
 - No JDK/Android SDK needed for PWABuilder (it builds in the cloud).
@@ -89,12 +90,14 @@ The TWA inherits these from the PWA automatically:
   `launch_handler` (navigate-existing).
 
 ### Web Push setup
+
 1. `npx web-push generate-vapid-keys`
 2. Set in Netlify env (never commit the private key):
    `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, optional `VAPID_SUBJECT`.
 3. Deploy. Users enable via the bell → notifications panel toggle.
 
 ### Deferred manifest items (need Play listing / external)
+
 - `related_applications` + `prefer_related_applications` — point the PWA
   at the published Play app (do **after** the TWA is live so the install
   prompt offers the native app).
@@ -102,6 +105,7 @@ The TWA inherits these from the PWA automatically:
   store submission.
 
 ### Explicitly skipped (YAGNI for a pt-BR Bible reading/comment app)
+
 `widgets`, `edge_side_panel`, `note_taking`, `window-controls-overlay`,
 `tabbed`, `file_handlers`, `protocol_handlers`, `scope_extensions`,
 `display_override` — no user value for this product; maintainer cost >

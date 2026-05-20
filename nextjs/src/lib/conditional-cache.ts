@@ -12,16 +12,17 @@ import { unstable_cache } from "next/cache";
 // cache on disk (.next/cache) outlives the process. Without skipping,
 // the next dev:mongo session reads back verseIds from a previous seed
 // and downstream queries (countsForChapter, etc.) silently return empty.
-const SKIP =
-  process.env.CYPRESS === "1" || process.env.BC_SKIP_CACHE === "1";
+const SKIP = process.env.CYPRESS === "1" || process.env.BC_SKIP_CACHE === "1";
 
-export function conditionalCache<F extends (...args: never[]) => Promise<unknown>>(
-  fn: F,
-  keyParts: string[],
-  options: { revalidate: number; tags: string[] },
+export function conditionalCache<
+	F extends (...args: never[]) => Promise<unknown>,
+>(
+	fn: F,
+	keyParts: string[],
+	options: { revalidate: number; tags: string[] },
 ): F {
-  if (SKIP) return fn;
-  // unstable_cache narrows its generic in a way that conflicts with our
-  // simpler shape; the cast is safe because we hand the same fn back.
-  return unstable_cache(fn as never, keyParts, options) as F;
+	if (SKIP) return fn;
+	// unstable_cache narrows its generic in a way that conflicts with our
+	// simpler shape; the cast is safe because we hand the same fn back.
+	return unstable_cache(fn as never, keyParts, options) as F;
 }

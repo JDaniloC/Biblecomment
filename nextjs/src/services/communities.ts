@@ -3,133 +3,146 @@
 import type { Community } from "@/domain/entities/Community";
 
 async function parseError(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { error?: string };
-    return body?.error ?? `HTTP ${res.status}`;
-  } catch {
-    return `HTTP ${res.status}`;
-  }
+	try {
+		const body = (await res.json()) as { error?: string };
+		return body?.error ?? `HTTP ${res.status}`;
+	} catch {
+		return `HTTP ${res.status}`;
+	}
 }
 
 export interface ListCommunitiesResponse {
-  items: Community[];
-  total: number;
-  page: number;
-  pageSize: number;
+	items: Community[];
+	total: number;
+	page: number;
+	pageSize: number;
 }
 
 export const communityService = {
-  async list(params: { page?: number; q?: string } = {}): Promise<ListCommunitiesResponse> {
-    const qs = new URLSearchParams();
-    if (params.page) qs.set("page", String(params.page));
-    if (params.q && params.q.trim().length > 0) qs.set("q", params.q.trim());
-    const url = `/api/communities${qs.size ? `?${qs}` : ""}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(await parseError(res));
-    return (await res.json()) as ListCommunitiesResponse;
-  },
+	async list(
+		params: { page?: number; q?: string } = {},
+	): Promise<ListCommunitiesResponse> {
+		const qs = new URLSearchParams();
+		if (params.page) qs.set("page", String(params.page));
+		if (params.q && params.q.trim().length > 0) qs.set("q", params.q.trim());
+		const url = `/api/communities${qs.size ? `?${qs}` : ""}`;
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(await parseError(res));
+		return (await res.json()) as ListCommunitiesResponse;
+	},
 
-  async join(slug: string): Promise<void> {
-    const res = await fetch(`/api/communities/${slug}/join`, { method: "POST" });
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async join(slug: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/join`, {
+			method: "POST",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  async leave(slug: string): Promise<void> {
-    const res = await fetch(`/api/communities/${slug}/join`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async leave(slug: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/join`, {
+			method: "DELETE",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  /**
-   * The signed-in user's FOLLOWED communities (active-community selector
-   * options). plan_community follow-up: follow is a viewer opt-in,
-   * separate from membership. The URL stays `/mine` for back-compat with
-   * the existing route — only the semantics changed.
-   */
-  async myFollowed(): Promise<{ slug: string; name: string }[]> {
-    const res = await fetch("/api/communities/mine");
-    if (!res.ok) throw new Error(await parseError(res));
-    const body = (await res.json()) as {
-      communities: { slug: string; name: string }[];
-    };
-    return body.communities ?? [];
-  },
+	/**
+	 * The signed-in user's FOLLOWED communities (active-community selector
+	 * options). plan_community follow-up: follow is a viewer opt-in,
+	 * separate from membership. The URL stays `/mine` for back-compat with
+	 * the existing route — only the semantics changed.
+	 */
+	async myFollowed(): Promise<{ slug: string; name: string }[]> {
+		const res = await fetch("/api/communities/mine");
+		if (!res.ok) throw new Error(await parseError(res));
+		const body = (await res.json()) as {
+			communities: { slug: string; name: string }[];
+		};
+		return body.communities ?? [];
+	},
 
-  async follow(slug: string): Promise<void> {
-    const res = await fetch(`/api/communities/${slug}/follow`, {
-      method: "POST",
-    });
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async follow(slug: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/follow`, {
+			method: "POST",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  async unfollow(slug: string): Promise<void> {
-    const res = await fetch(`/api/communities/${slug}/follow`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async unfollow(slug: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/follow`, {
+			method: "DELETE",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  async myFollowStatus(slug: string): Promise<{ following: boolean }> {
-    const res = await fetch(`/api/communities/${slug}/follow/me`);
-    if (!res.ok) throw new Error(await parseError(res));
-    return res.json();
-  },
+	async myFollowStatus(slug: string): Promise<{ following: boolean }> {
+		const res = await fetch(`/api/communities/${slug}/follow/me`);
+		if (!res.ok) throw new Error(await parseError(res));
+		return res.json();
+	},
 
-  // ── plan_community moderation flows ──
+	// ── plan_community moderation flows ──
 
-  async myStatus(
-    slug: string,
-  ): Promise<{ status: "none" | "pending" | "approved"; role: "member" | "moderator" }> {
-    const res = await fetch(`/api/communities/${slug}/membership/me`);
-    if (!res.ok) throw new Error(await parseError(res));
-    return res.json();
-  },
+	async myStatus(slug: string): Promise<{
+		status: "none" | "pending" | "approved";
+		role: "member" | "moderator";
+	}> {
+		const res = await fetch(`/api/communities/${slug}/membership/me`);
+		if (!res.ok) throw new Error(await parseError(res));
+		return res.json();
+	},
 
-  async requestJoin(slug: string): Promise<void> {
-    const res = await fetch(`/api/communities/${slug}/join`, { method: "POST" });
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async requestJoin(slug: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/join`, {
+			method: "POST",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  /** Cancel a pending request, or leave an approved membership. */
-  async cancelOrLeave(slug: string): Promise<void> {
-    const res = await fetch(`/api/communities/${slug}/join`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	/** Cancel a pending request, or leave an approved membership. */
+	async cancelOrLeave(slug: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/join`, {
+			method: "DELETE",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  async listRequests(
-    slug: string,
-  ): Promise<{ userId: string; username: string | null; joinedAt?: string }[]> {
-    const res = await fetch(`/api/communities/${slug}/requests`);
-    if (!res.ok) throw new Error(await parseError(res));
-    const body = (await res.json()) as {
-      requests: { userId: string; username: string | null; joinedAt?: string }[];
-    };
-    return body.requests ?? [];
-  },
+	async listRequests(
+		slug: string,
+	): Promise<{ userId: string; username: string | null; joinedAt?: string }[]> {
+		const res = await fetch(`/api/communities/${slug}/requests`);
+		if (!res.ok) throw new Error(await parseError(res));
+		const body = (await res.json()) as {
+			requests: {
+				userId: string;
+				username: string | null;
+				joinedAt?: string;
+			}[];
+		};
+		return body.requests ?? [];
+	},
 
-  async approve(slug: string, userId: string): Promise<void> {
-    const res = await fetch(
-      `/api/communities/${slug}/requests/${userId}`,
-      { method: "POST" },
-    );
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async approve(slug: string, userId: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/requests/${userId}`, {
+			method: "POST",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  async reject(slug: string, userId: string): Promise<void> {
-    const res = await fetch(
-      `/api/communities/${slug}/requests/${userId}`,
-      { method: "DELETE" },
-    );
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async reject(slug: string, userId: string): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/requests/${userId}`, {
+			method: "DELETE",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 
-  async setModerator(
-    slug: string,
-    userId: string,
-    makeModerator: boolean,
-  ): Promise<void> {
-    const res = await fetch(`/api/communities/${slug}/moderators/${userId}`, {
-      method: makeModerator ? "POST" : "DELETE",
-    });
-    if (!res.ok) throw new Error(await parseError(res));
-  },
+	async setModerator(
+		slug: string,
+		userId: string,
+		makeModerator: boolean,
+	): Promise<void> {
+		const res = await fetch(`/api/communities/${slug}/moderators/${userId}`, {
+			method: makeModerator ? "POST" : "DELETE",
+		});
+		if (!res.ok) throw new Error(await parseError(res));
+	},
 };

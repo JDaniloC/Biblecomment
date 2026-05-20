@@ -17,25 +17,25 @@ export const dynamic = "force-dynamic";
  * orthogonal to membership status (approve auto-creates a follow row).
  */
 export async function GET() {
-  try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ communities: [] });
-    }
-    const user = await new MongoUserRepository().findByEmail(
-      session.user.email,
-    );
-    if (!user?._id) return NextResponse.json({ communities: [] });
+	try {
+		const session = await auth();
+		if (!session?.user?.email) {
+			return NextResponse.json({ communities: [] });
+		}
+		const user = await new MongoUserRepository().findByEmail(
+			session.user.email,
+		);
+		if (!user?._id) return NextResponse.json({ communities: [] });
 
-    const followed = await new MyFollowedCommunitiesUseCase(
-      new MongoCommunityRepository(),
-      new MongoCommunityFollowRepository(),
-    ).execute(user._id);
+		const followed = await new MyFollowedCommunitiesUseCase(
+			new MongoCommunityRepository(),
+			new MongoCommunityFollowRepository(),
+		).execute(user._id);
 
-    return NextResponse.json({
-      communities: followed.map((c) => ({ slug: c.slug, name: c.name })),
-    });
-  } catch (err) {
-    return serverError(err);
-  }
+		return NextResponse.json({
+			communities: followed.map((c) => ({ slug: c.slug, name: c.name })),
+		});
+	} catch (err) {
+		return serverError(err);
+	}
 }

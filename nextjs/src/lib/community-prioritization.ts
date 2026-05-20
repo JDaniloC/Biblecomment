@@ -9,14 +9,14 @@
  * the author username (not User._id).
  */
 export function partitionByApproved<T extends { username: string }>(
-  comments: T[],
-  approvedUsernames: ReadonlySet<string>,
+	comments: T[],
+	approvedUsernames: ReadonlySet<string>,
 ): { prioritized: T[]; others: T[] } {
-  const prioritized: T[] = [];
-  const others: T[] = [];
-  for (const c of comments) {
-    if (approvedUsernames.has(c.username)) prioritized.push(c);
-    else others.push(c);
-  }
-  return { prioritized, others };
+	const prioritized: T[] = [];
+	const others: T[] = [];
+	for (const c of comments) {
+		if (approvedUsernames.has(c.username)) prioritized.push(c);
+		else others.push(c);
+	}
+	return { prioritized, others };
 }

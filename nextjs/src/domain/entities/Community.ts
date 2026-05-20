@@ -12,13 +12,13 @@
  * foreign key stable across username changes — same convention as Follow.
  */
 export interface Community {
-  _id?: string;
-  slug: string;
-  name: string;
-  description: string;
-  createdBy: string;
-  memberCount: number;
-  followerCount: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+	_id?: string;
+	slug: string;
+	name: string;
+	description: string;
+	createdBy: string;
+	memberCount: number;
+	followerCount: number;
+	createdAt?: Date;
+	updatedAt?: Date;
 }
