@@ -980,8 +980,8 @@ export default function CommunityDetailClient({
 							Zona de risco
 						</h3>
 						<p className="text-sm text-slate-700 dark:text-slate-200 mb-3">
-							Excluir esta comunidade remove a página, os pedidos de entrada,
-							os membros aprovados e os seguidores. Os comentários ficam
+							Excluir esta comunidade remove a página, os pedidos de entrada, os
+							membros aprovados e os seguidores. Os comentários ficam
 							preservados nos versículos — apenas perdem a priorização desta
 							comunidade.
 						</p>

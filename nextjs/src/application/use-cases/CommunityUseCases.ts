@@ -465,13 +465,7 @@ export class DeleteCommunityUseCase {
 		private readonly follows: ICommunityFollowRepository,
 	) {}
 
-	async execute({
-		slug,
-		actorId,
-	}: {
-		slug: string;
-		actorId: string;
-	}): Promise<{
+	async execute({ slug, actorId }: { slug: string; actorId: string }): Promise<{
 		removedMemberships: number;
 		removedFollows: number;
 	}> {

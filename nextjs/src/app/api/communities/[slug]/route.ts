@@ -10,29 +10,29 @@ export const dynamic = "force-dynamic";
 
 /** Detail endpoint. Includes `isMember` when an authed viewer is present. */
 export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ slug: string }> },
+	_req: Request,
+	{ params }: { params: Promise<{ slug: string }> },
 ) {
-  const { slug } = await params;
-  const communityRepo = new MongoCommunityRepository();
-  const community = await communityRepo.findBySlug(slug.toLowerCase());
-  if (!community) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+	const { slug } = await params;
+	const communityRepo = new MongoCommunityRepository();
+	const community = await communityRepo.findBySlug(slug.toLowerCase());
+	if (!community) {
+		return NextResponse.json({ error: "Not found" }, { status: 404 });
+	}
 
-  const session = await auth();
-  let isMember = false;
-  if (session?.user?.email) {
-    const userRepo = new MongoUserRepository();
-    const viewer = await userRepo.findByEmail(session.user.email);
-    if (viewer?._id && community._id) {
-      isMember = await new MongoCommunityMembershipRepository().isMember(
-        viewer._id,
-        community._id,
-      );
-    }
-  }
-  return NextResponse.json({ community, isMember });
+	const session = await auth();
+	let isMember = false;
+	if (session?.user?.email) {
+		const userRepo = new MongoUserRepository();
+		const viewer = await userRepo.findByEmail(session.user.email);
+		if (viewer?._id && community._id) {
+			isMember = await new MongoCommunityMembershipRepository().isMember(
+				viewer._id,
+				community._id,
+			);
+		}
+	}
+	return NextResponse.json({ community, isMember });
 }
 
 /**
@@ -41,40 +41,40 @@ export async function GET(
  * pivot). 401 unauth, 403 non-creator, 404 missing.
  */
 export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ slug: string }> },
+	_req: Request,
+	{ params }: { params: Promise<{ slug: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const { slug } = await params;
+	const session = await auth();
+	if (!session?.user?.email) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
+	const { slug } = await params;
 
-  const userRepo = new MongoUserRepository();
-  const viewer = await userRepo.findByEmail(session.user.email);
-  if (!viewer?._id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+	const userRepo = new MongoUserRepository();
+	const viewer = await userRepo.findByEmail(session.user.email);
+	if (!viewer?._id) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
 
-  const useCase = new DeleteCommunityUseCase(
-    new MongoCommunityRepository(),
-    new MongoCommunityMembershipRepository(),
-    new MongoCommunityFollowRepository(),
-  );
-  try {
-    const result = await useCase.execute({
-      slug: slug.toLowerCase(),
-      actorId: viewer._id,
-    });
-    return NextResponse.json({ ok: true, ...result });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Erro desconhecido";
-    if (message.includes("não encontrada")) {
-      return NextResponse.json({ error: message }, { status: 404 });
-    }
-    if (message.includes("Apenas o criador")) {
-      return NextResponse.json({ error: message }, { status: 403 });
-    }
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+	const useCase = new DeleteCommunityUseCase(
+		new MongoCommunityRepository(),
+		new MongoCommunityMembershipRepository(),
+		new MongoCommunityFollowRepository(),
+	);
+	try {
+		const result = await useCase.execute({
+			slug: slug.toLowerCase(),
+			actorId: viewer._id,
+		});
+		return NextResponse.json({ ok: true, ...result });
+	} catch (err) {
+		const message = err instanceof Error ? err.message : "Erro desconhecido";
+		if (message.includes("não encontrada")) {
+			return NextResponse.json({ error: message }, { status: 404 });
+		}
+		if (message.includes("Apenas o criador")) {
+			return NextResponse.json({ error: message }, { status: 403 });
+		}
+		return NextResponse.json({ error: message }, { status: 500 });
+	}
 }
