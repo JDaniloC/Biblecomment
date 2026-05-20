@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { CommunityPeopleModal } from "@/components/CommunityPeopleModal";
 import { communityService } from "@/services/communities";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import type { Community } from "@/domain/entities/Community";
 
 interface ViewerSession {
@@ -77,6 +79,8 @@ export default function CommunityDetailClient({
 	initialCommentsTotal,
 }: Props) {
 	const { handleNotification } = useNotification();
+	const confirm = useConfirm();
+	const router = useRouter();
 	type Status = "none" | "pending" | "approved";
 	const [status, setStatus] = useState<Status>(
 		initialIsMember ? "approved" : "none",
@@ -155,6 +159,28 @@ export default function CommunityDetailClient({
 			cancelled = true;
 		};
 	}, [isCreator, community.slug]);
+
+	async function handleDeleteCommunity() {
+		if (busy) return;
+		const ok = await confirm({
+			title: `Excluir a comunidade "${community.name}"?`,
+			description:
+				"Esta ação é irreversível. Os vínculos de membros e seguidores serão removidos, e a página da comunidade deixará de existir. Os comentários dos integrantes permanecem em seus versículos, mas perdem a priorização desta comunidade.",
+			confirmLabel: "Excluir comunidade",
+			variant: "danger",
+		});
+		if (!ok) return;
+		setBusy(true);
+		try {
+			await communityService.delete(community.slug);
+			handleNotification("success", "Comunidade excluída.");
+			router.push("/communities");
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : "Erro ao excluir.";
+			handleNotification("error", msg);
+			setBusy(false);
+		}
+	}
 
 	async function handleToggleModerator(userId: string, currentlyMod: boolean) {
 		if (busy) return;
@@ -710,6 +736,32 @@ export default function CommunityDetailClient({
 						</div>
 					)}
 				</section>
+
+				{isCreator && (
+					<section
+						data-testid="community-danger-zone"
+						className="mt-8 border border-red-200 dark:border-red-900/60 bg-red-50/40 dark:bg-red-950/20 rounded-xl p-5"
+					>
+						<h2 className="text-base font-semibold text-red-700 dark:text-red-300 mb-1">
+							Zona de risco
+						</h2>
+						<p className="text-sm text-slate-700 dark:text-slate-200 mb-3">
+							Excluir esta comunidade remove a página, os pedidos de entrada,
+							os membros aprovados e os seguidores. Os comentários ficam
+							preservados nos versículos — apenas perdem a priorização desta
+							comunidade.
+						</p>
+						<button
+							type="button"
+							onClick={handleDeleteCommunity}
+							disabled={busy}
+							data-testid="community-delete"
+							className="text-sm font-semibold px-4 py-2 rounded-md border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition disabled:opacity-60"
+						>
+							Excluir comunidade
+						</button>
+					</section>
+				)}
 			</main>
 			<CommunityPeopleModal
 				slug={community.slug}

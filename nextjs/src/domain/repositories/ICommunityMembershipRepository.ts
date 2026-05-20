@@ -62,4 +62,10 @@ export interface ICommunityMembershipRepository {
 		role: "member" | "moderator",
 	): Promise<boolean>;
 	isModerator(userId: string, communityId: string): Promise<boolean>;
+	/**
+	 * Cascade-remove every membership row (pending + approved) for a
+	 * community. Used by [[DeleteCommunityUseCase]] — returns the deletion
+	 * count so the caller can audit-log it.
+	 */
+	removeAllByCommunity(communityId: string): Promise<number>;
 }

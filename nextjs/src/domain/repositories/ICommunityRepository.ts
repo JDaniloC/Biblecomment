@@ -39,4 +39,6 @@ export interface ICommunityRepository {
 	 * any moderation hop. See [[CommunityFollow]].
 	 */
 	incrementFollowerCount(id: string, delta: number): Promise<void>;
+	/** Hard-delete by id. Returns `true` if a row was actually removed. */
+	deleteById(id: string): Promise<boolean>;
 }

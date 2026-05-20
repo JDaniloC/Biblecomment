@@ -186,4 +186,23 @@ export const communityService = {
 		});
 		if (!res.ok) throw new Error(await parseError(res));
 	},
+
+	/**
+	 * Creator-only hard delete. Server cascades memberships + follows;
+	 * comments stay (they're anchored to verses).
+	 */
+	async delete(
+		slug: string,
+	): Promise<{ removedMemberships: number; removedFollows: number }> {
+		const res = await fetch(`/api/communities/${slug}`, { method: "DELETE" });
+		if (!res.ok) throw new Error(await parseError(res));
+		const body = (await res.json().catch(() => ({}))) as {
+			removedMemberships?: number;
+			removedFollows?: number;
+		};
+		return {
+			removedMemberships: body.removedMemberships ?? 0,
+			removedFollows: body.removedFollows ?? 0,
+		};
+	},
 };

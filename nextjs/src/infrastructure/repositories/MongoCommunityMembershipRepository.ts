@@ -201,4 +201,10 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		});
 		return doc !== null;
 	}
+
+	async removeAllByCommunity(communityId: string): Promise<number> {
+		await connectToDatabase();
+		const r = await CommunityMembershipModel.deleteMany({ communityId });
+		return r.deletedCount ?? 0;
+	}
 }

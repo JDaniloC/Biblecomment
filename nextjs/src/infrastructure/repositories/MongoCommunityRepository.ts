@@ -110,4 +110,10 @@ export class MongoCommunityRepository implements ICommunityRepository {
 			{ $inc: { followerCount: delta } },
 		);
 	}
+
+	async deleteById(id: string): Promise<boolean> {
+		await connectToDatabase();
+		const result = await CommunityModel.deleteOne({ _id: id });
+		return (result.deletedCount ?? 0) > 0;
+	}
 }
