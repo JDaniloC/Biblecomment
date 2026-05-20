@@ -5,21 +5,28 @@ version = 1
 # browser code" (JS-0002) misclassifies these as browser modules.
 exclude_patterns = ["nextjs/scripts/**"]
 
+# Treat Cypress specs + Vitest files as tests so DeepSource downgrades
+# anti-pattern rules that target production code. JS-0354 in particular
+# fires on Chai's BDD getter idiom (`expect(x).to.exist`) — a no-op-
+# looking expression that is actually the recommended assertion.
+test_patterns = [
+  "nextjs/cypress/e2e/**/*.cy.ts",
+  "nextjs/cypress/tasks/**/*.ts",
+  "nextjs/src/**/*.test.ts",
+]
+
 [[analyzers]]
 name = "javascript"
 enabled = true
 
   [analyzers.meta]
   plugins = ["react"]
-  # Treat Cypress specs and Vitest files as tests so DeepSource downgrades
-  # anti-patterns that are part of the BDD idiom — e.g. JS-0354 firing on
-  # `expect(x).to.exist` because `.exist` is a Chai getter, not a no-op
-  # expression.
-  test_patterns = [
-    "nextjs/cypress/e2e/**/*.cy.ts",
-    "nextjs/cypress/tasks/**/*.ts",
-    "nextjs/src/**/*.test.ts",
-  ]
+  # The JS analyzer's "browser-only" defaults misclassify our Node
+  # scripts + tooling. Declaring environments here makes DeepSource
+  # apply the right rule set per file (Cypress globals, Vitest mocks,
+  # Node modules), which silences a separate batch of false positives
+  # the `exclude_patterns` + `test_patterns` pair don't cover.
+  environment = ["nodejs", "browser", "cypress", "vitest"]
 
 [[transformers]]
 name = "prettier"
