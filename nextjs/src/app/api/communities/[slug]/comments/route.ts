@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
+import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { ListCommunityCommentsUseCase } from "@/application/use-cases/CommentUseCases";
 
 const PAGE_SIZE = 20;
 
 export const dynamic = "force-dynamic";
 
-/** Paginated comments posted to this community, newest-first. */
+/**
+ * Paginated comments by approved members of this community, newest-first.
+ * plan_community: linkage is derived from `CommunityMembership` (status =
+ * approved), not from a `communitySlug` tag on the Comment doc.
+ */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> },
@@ -16,6 +23,9 @@ export async function GET(
   const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10));
   const result = await new ListCommunityCommentsUseCase(
     new MongoCommentRepository(),
+    new MongoCommunityRepository(),
+    new MongoCommunityMembershipRepository(),
+    new MongoUserRepository(),
   ).execute(slug.toLowerCase(), page, PAGE_SIZE);
 
   const items = result.items.map((c) => ({

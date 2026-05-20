@@ -20,6 +20,18 @@ export interface ICommentRepository {
   findByVerseIdFiltered(verseId: string, communities: CommunityFilter): Promise<Comment[]>;
   /** Paginated comments for a single community, newest-first. */
   findByCommunity(slug: string, page: number, pageSize: number): Promise<{ items: Comment[]; total: number }>;
+  /**
+   * Page-paginated comments authored by anyone in `usernames`, newest-first.
+   * Used by the community page (plan_community): "comments by approved
+   * members of this community" — caller resolves membership → usernames
+   * first, then hands the set here. Empty list short-circuits to
+   * `{ items: [], total: 0 }` (no DB hit).
+   */
+  findByUsernamesPaginated(
+    usernames: string[],
+    page: number,
+    pageSize: number,
+  ): Promise<{ items: Comment[]; total: number }>;
   findByUsername(username: string): Promise<Comment[]>;
   /**
    * DB-paginated variant of `findByUsername`. Used by the profile comments

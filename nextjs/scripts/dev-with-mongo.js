@@ -240,6 +240,11 @@ async function main() {
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
 		AUTH_TRUST_HOST: "true",
 		NODE_ENV: "development",
+		// Each dev:mongo run spins a fresh memory-mongo with new ObjectIds,
+		// but Next's unstable_cache persists on disk under .next/cache. Skip
+		// the cache wrapper for these runs so verseIds, counts, etc. always
+		// reflect the just-seeded DB (see src/lib/conditional-cache.ts).
+		BC_SKIP_CACHE: "1",
 		// Capture password-reset emails locally so /api/_test/last-email can
 		// hand back the link instead of relying on a real Resend account.
 		EMAIL_TRANSPORT: process.env.EMAIL_TRANSPORT ?? "memory",

@@ -45,6 +45,9 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 
   const commentsResult = await new ListCommunityCommentsUseCase(
     new MongoCommentRepository(),
+    communityRepo,
+    new MongoCommunityMembershipRepository(),
+    userRepo,
   ).execute(lowSlug, 1, INITIAL_COMMENTS);
   const initialComments = commentsResult.items.map((c) => ({
     _id: c._id ?? "",

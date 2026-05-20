@@ -19,10 +19,31 @@ export class GetVerseCommentsUseCase {
 }
 
 export class ListCommunityCommentsUseCase {
-  constructor(private readonly commentRepo: ICommentRepository) {}
+  constructor(
+    private readonly commentRepo: ICommentRepository,
+    private readonly communityRepo: ICommunityRepository,
+    private readonly membershipRepo: ICommunityMembershipRepository,
+    private readonly userRepo: IUserRepository,
+  ) {}
 
+  /**
+   * plan_community: comments are linked to a community via **approved
+   * membership** of the author, not via a `communitySlug` tag on the
+   * comment. We resolve community → approved userIds → usernames → comments
+   * authored by anyone in that set, paginated, newest-first.
+   *
+   * Returns `{ items: [], total: 0 }` for an unknown slug or a community
+   * with no approved members — no DB churn for either case.
+   */
   async execute(slug: string, page: number, pageSize: number) {
-    return this.commentRepo.findByCommunity(slug, page, pageSize);
+    const community = await this.communityRepo.findBySlug(slug);
+    if (!community?._id) return { items: [], total: 0 };
+    const userIds = await this.membershipRepo.approvedUserIds(community._id);
+    if (userIds.length === 0) return { items: [], total: 0 };
+    const users = await this.userRepo.findManyByIds(userIds);
+    const usernames = users.map((u) => u.username).filter(Boolean);
+    if (usernames.length === 0) return { items: [], total: 0 };
+    return this.commentRepo.findByUsernamesPaginated(usernames, page, pageSize);
   }
 }
 

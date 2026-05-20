@@ -74,6 +74,26 @@ export class MongoCommentRepository implements ICommentRepository {
     return { items: docs.map(toEntity), total };
   }
 
+  async findByUsernamesPaginated(
+    usernames: string[],
+    page: number,
+    pageSize: number,
+  ): Promise<{ items: Comment[]; total: number }> {
+    if (usernames.length === 0) return { items: [], total: 0 };
+    await connectToDatabase();
+    const safePage = Math.max(1, page);
+    const safeSize = Math.max(1, Math.min(pageSize, 200));
+    const filter = { username: { $in: usernames } };
+    const [docs, total] = await Promise.all([
+      CommentModel.find(filter)
+        .sort({ createdAt: -1, _id: -1 })
+        .skip((safePage - 1) * safeSize)
+        .limit(safeSize),
+      CommentModel.countDocuments(filter),
+    ]);
+    return { items: docs.map(toEntity), total };
+  }
+
   async findByUsername(username: string): Promise<Comment[]> {
     await connectToDatabase();
     const docs = await CommentModel.find({ username }).sort({ createdAt: -1 });

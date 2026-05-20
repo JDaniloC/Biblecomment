@@ -1,7 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
-import { DeleteCommentUseCase, CreateCommentUseCase } from "./CommentUseCases";
+import {
+  DeleteCommentUseCase,
+  CreateCommentUseCase,
+  ListCommunityCommentsUseCase,
+} from "./CommentUseCases";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { IVerseRepository } from "@/domain/repositories/IVerseRepository";
+import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
+import type { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
+import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { Comment } from "@/domain/entities/Comment";
 
 function fakeComment(overrides: Partial<Comment> = {}): Comment {
@@ -67,6 +74,105 @@ describe("DeleteCommentUseCase", () => {
     expect(del).toHaveBeenCalledWith("c1");
     expect(likeCascade).toHaveBeenCalledWith("c1");
     expect(reportCascade).toHaveBeenCalledWith("c1");
+  });
+});
+
+describe("ListCommunityCommentsUseCase (plan_community: by approved members)", () => {
+  // Helper: minimal community membership + comment repo fakes.
+  const mkRepos = (overrides: {
+    community?: { _id: string; slug: string } | null;
+    approvedUserIds?: string[];
+    users?: Array<{ _id: string; username: string }>;
+    commentsResult?: { items: Comment[]; total: number };
+  }) => {
+    const community =
+      overrides.community === undefined
+        ? { _id: "comm1", slug: "reformados" }
+        : overrides.community;
+    const findByUsernamesPaginated = vi
+      .fn()
+      .mockResolvedValue(overrides.commentsResult ?? { items: [], total: 0 });
+    return {
+      commentRepo: {
+        findByUsernamesPaginated,
+      } as unknown as ICommentRepository,
+      communityRepo: {
+        findBySlug: vi.fn().mockResolvedValue(community),
+      } as unknown as ICommunityRepository,
+      membershipRepo: {
+        approvedUserIds: vi
+          .fn()
+          .mockResolvedValue(overrides.approvedUserIds ?? []),
+      } as unknown as ICommunityMembershipRepository,
+      userRepo: {
+        findManyByIds: vi.fn().mockResolvedValue(overrides.users ?? []),
+      } as unknown as IUserRepository,
+      findByUsernamesPaginated,
+    };
+  };
+
+  it("resolves community → approved userIds → usernames → comments", async () => {
+    const { commentRepo, communityRepo, membershipRepo, userRepo, findByUsernamesPaginated } =
+      mkRepos({
+        approvedUserIds: ["u1", "u2"],
+        users: [
+          { _id: "u1", username: "alice" },
+          { _id: "u2", username: "bob" },
+        ],
+        commentsResult: {
+          items: [fakeComment({ _id: "c1", username: "alice" })],
+          total: 1,
+        },
+      });
+
+    const uc = new ListCommunityCommentsUseCase(
+      commentRepo,
+      communityRepo,
+      membershipRepo,
+      userRepo,
+    );
+    const result = await uc.execute("reformados", 1, 20);
+
+    expect(findByUsernamesPaginated).toHaveBeenCalledWith(
+      ["alice", "bob"],
+      1,
+      20,
+    );
+    expect(result.total).toBe(1);
+    expect(result.items[0]?.username).toBe("alice");
+  });
+
+  it("returns empty for unknown slug — no membership/user/comment queries", async () => {
+    const { commentRepo, communityRepo, membershipRepo, userRepo, findByUsernamesPaginated } =
+      mkRepos({ community: null });
+
+    const uc = new ListCommunityCommentsUseCase(
+      commentRepo,
+      communityRepo,
+      membershipRepo,
+      userRepo,
+    );
+    const result = await uc.execute("ghost", 1, 20);
+
+    expect(result).toEqual({ items: [], total: 0 });
+    expect(membershipRepo.approvedUserIds).not.toHaveBeenCalled();
+    expect(findByUsernamesPaginated).not.toHaveBeenCalled();
+  });
+
+  it("returns empty when community has no approved members", async () => {
+    const { commentRepo, communityRepo, membershipRepo, userRepo, findByUsernamesPaginated } =
+      mkRepos({ approvedUserIds: [] });
+
+    const uc = new ListCommunityCommentsUseCase(
+      commentRepo,
+      communityRepo,
+      membershipRepo,
+      userRepo,
+    );
+    const result = await uc.execute("reformados", 1, 20);
+
+    expect(result).toEqual({ items: [], total: 0 });
+    expect(findByUsernamesPaginated).not.toHaveBeenCalled();
   });
 });
 
