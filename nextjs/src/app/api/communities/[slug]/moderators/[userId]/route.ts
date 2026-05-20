@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { SetModeratorUseCase } from "@/application/use-cases/CommunityUseCases";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,8 @@ async function setModerator(
 		await new SetModeratorUseCase(
 			new MongoCommunityRepository(),
 			new MongoCommunityMembershipRepository(),
+			new MongoUserRepository(),
+			new MongoNotificationRepository(),
 		).execute({
 			slug: slug.toLowerCase(),
 			actorId: actor,

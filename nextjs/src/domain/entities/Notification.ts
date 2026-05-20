@@ -3,9 +3,21 @@ export type NotificationType =
   | "comment_mention"
   | "answer_mention"
   | "badge_unlocked"
-  | "new_follower";
+  | "new_follower"
+  // plan_community follow-up: viewer-facing events on the community
+  // lifecycle. The resource is the Community itself (resourceType:
+  // "community", resourceId: Community._id; url points to
+  // /communities/<slug>).
+  | "community_join_requested"
+  | "community_join_approved"
+  | "community_role_promoted";
 
-export type NotificationResourceType = "discussion" | "comment" | "badge" | "user";
+export type NotificationResourceType =
+  | "discussion"
+  | "comment"
+  | "badge"
+  | "user"
+  | "community";
 
 export interface Notification {
   _id?: string;

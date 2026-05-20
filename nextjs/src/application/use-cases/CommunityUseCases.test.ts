@@ -16,7 +16,9 @@ import {
 import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
 import type { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
 import type { ICommunityFollowRepository } from "@/domain/repositories/ICommunityFollowRepository";
+import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import type { Notification } from "@/domain/entities/Notification";
 import type { Community } from "@/domain/entities/Community";
 import type { CommunityMembership } from "@/domain/entities/CommunityMembership";
 import type { CommunityFollow } from "@/domain/entities/CommunityFollow";
@@ -619,5 +621,199 @@ describe("ListCommunityMembersUseCase", () => {
 			userRepo,
 		).execute("ghost");
 		expect(list).toEqual([]);
+	});
+});
+
+function makeNotificationsRepo(): INotificationRepository & {
+	_rows: Notification[];
+} {
+	const rows: Notification[] = [];
+	return {
+		_rows: rows,
+		async create(n) {
+			const doc: Notification = { ...n, read: false, _id: `n-${rows.length + 1}` };
+			rows.push(doc);
+			return doc;
+		},
+		async createMany(many) {
+			for (const n of many) {
+				rows.push({ ...n, read: false, _id: `n-${rows.length + 1}` });
+			}
+			return many.length;
+		},
+		async findByRecipient() {
+			return [];
+		},
+		async countUnread() {
+			return 0;
+		},
+		async markAsRead() {
+			return null;
+		},
+		async markAllAsRead() {
+			return 0;
+		},
+		async deleteForUser() {
+			return 0;
+		},
+		async userHasMentioned() {
+			return false;
+		},
+		async existsFor() {
+			return false;
+		},
+		async renameUsername() {
+			return 0;
+		},
+	};
+}
+
+function makeUserRepoWithIds(byId: Record<string, string>): IUserRepository {
+	return {
+		findByEmail: async () => null,
+		findByUsername: async () => null,
+		findByUsernamePublic: async () => null,
+		searchByUsernamePrefix: async () => [],
+		findByUsernames: async () => [],
+		findManyByIds: async (ids) =>
+			ids
+				.filter((id) => byId[id])
+				.map(
+					(id) =>
+						({
+							_id: id,
+							email: `${id}@x`,
+							username: byId[id],
+							password: "",
+							state: "",
+							belief: "",
+							showBelief: false,
+							moderator: false,
+							tutorialsCompleted: [],
+							badges: [],
+						}) as User,
+				),
+		findAll: async () => [],
+		findAllPaginated: async () => [],
+		create: async () => ({}) as User,
+		updatePassword: async () => {},
+		updatePasswordById: async () => {},
+		update: async () => null,
+		markTutorialCompleted: async () => {},
+		addBadges: async () => [],
+		delete: async () => {},
+	};
+}
+
+describe("Community notifications (plan_community follow-up)", () => {
+	let communityRepo: ReturnType<typeof makeCommunityRepo>;
+	let membershipRepo: ReturnType<typeof makeMembershipRepo>;
+	let followRepo: ReturnType<typeof makeFollowRepo>;
+	let notificationsRepo: ReturnType<typeof makeNotificationsRepo>;
+	let userRepo: IUserRepository;
+	let communityId: string;
+
+	beforeEach(async () => {
+		communityRepo = makeCommunityRepo();
+		membershipRepo = makeMembershipRepo();
+		followRepo = makeFollowRepo();
+		notificationsRepo = makeNotificationsRepo();
+		userRepo = makeUserRepoWithIds({
+			"u-alice": "alice",
+			"u-bob": "bob",
+			"u-carol": "carol",
+		});
+		const c = await communityRepo.create({
+			slug: "alpha",
+			name: "Alpha",
+			description: "",
+			createdBy: "u-alice", // alice is creator
+		});
+		communityId = c._id!;
+		// Alice is also an approved moderator (post-migration invariant).
+		await membershipRepo.createRequest("u-alice", communityId);
+		await membershipRepo.setStatus("u-alice", communityId, "approved");
+		await membershipRepo.setRole("u-alice", communityId, "moderator");
+	});
+
+	it("RequestJoin notifies all moderators (and creator) but not the requester", async () => {
+		// Add carol as a second moderator so we exercise the multi-recipient path.
+		await membershipRepo.createRequest("u-carol", communityId);
+		await membershipRepo.setStatus("u-carol", communityId, "approved");
+		await membershipRepo.setRole("u-carol", communityId, "moderator");
+
+		const uc = new RequestJoinCommunityUseCase(
+			communityRepo,
+			membershipRepo,
+			userRepo,
+			notificationsRepo,
+		);
+		await uc.execute({ slug: "alpha", userId: "u-bob" });
+
+		const sent = notificationsRepo._rows;
+		expect(sent).toHaveLength(2);
+		expect(sent.every((n) => n.type === "community_join_requested")).toBe(true);
+		expect(sent.map((n) => n.recipient).sort()).toEqual(["alice", "carol"]);
+		expect(sent.every((n) => n.actor === "bob")).toBe(true);
+	});
+
+	it("ApproveMember notifies the approved user only on first approval", async () => {
+		await membershipRepo.createRequest("u-bob", communityId);
+
+		const uc = new ApproveMemberUseCase(
+			communityRepo,
+			membershipRepo,
+			followRepo,
+			userRepo,
+			notificationsRepo,
+		);
+		await uc.execute({
+			slug: "alpha",
+			actorId: "u-alice",
+			targetUserId: "u-bob",
+		});
+
+		expect(notificationsRepo._rows).toHaveLength(1);
+		const n = notificationsRepo._rows[0];
+		expect(n.recipient).toBe("bob");
+		expect(n.actor).toBe("alice");
+		expect(n.type).toBe("community_join_approved");
+
+		// Re-approving is a no-op upstream → no second notification.
+		await uc.execute({
+			slug: "alpha",
+			actorId: "u-alice",
+			targetUserId: "u-bob",
+		});
+		expect(notificationsRepo._rows).toHaveLength(1);
+	});
+
+	it("SetModerator notifies on promote, silent on demote", async () => {
+		await membershipRepo.createRequest("u-bob", communityId);
+		await membershipRepo.setStatus("u-bob", communityId, "approved");
+
+		const uc = new SetModeratorUseCase(
+			communityRepo,
+			membershipRepo,
+			userRepo,
+			notificationsRepo,
+		);
+		await uc.execute({
+			slug: "alpha",
+			actorId: "u-alice",
+			targetUserId: "u-bob",
+			makeModerator: true,
+		});
+		expect(notificationsRepo._rows).toHaveLength(1);
+		expect(notificationsRepo._rows[0].type).toBe("community_role_promoted");
+
+		// Demote → no new notification (silent by design).
+		await uc.execute({
+			slug: "alpha",
+			actorId: "u-alice",
+			targetUserId: "u-bob",
+			makeModerator: false,
+		});
+		expect(notificationsRepo._rows).toHaveLength(1);
 	});
 });

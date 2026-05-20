@@ -2,6 +2,7 @@ import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepos
 import type { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
 import type { ICommunityFollowRepository } from "@/domain/repositories/ICommunityFollowRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { Community } from "@/domain/entities/Community";
 
 /** Hard cap on communities a single user can create. Surfaced as friendly UI error in Phase 4.2. */
@@ -71,11 +72,54 @@ export class RequestJoinCommunityUseCase {
 	constructor(
 		private readonly communities: ICommunityRepository,
 		private readonly memberships: ICommunityMembershipRepository,
+		// Optional so existing callers / tests compile. When the full set
+		// is wired, a successful request fires a notification to every
+		// moderator (and the creator) of the community.
+		private readonly userRepo?: IUserRepository,
+		private readonly notifications?: INotificationRepository,
 	) {}
 	async execute({ slug, userId }: { slug: string; userId: string }) {
 		const c = await this.communities.findBySlug(slug);
 		if (!c || !c._id) throw new Error("Comunidade não encontrada");
 		await this.memberships.createRequest(userId, c._id);
+		// Notify all moderators (and the creator). Awaited but defensively
+		// caught so a notification glitch never undoes the membership write
+		// — the join row is the source of truth.
+		if (this.notifications && this.userRepo) {
+			try {
+				await this.notifyModeratorsOfRequest(c, userId);
+			} catch {
+				/* notifications are best-effort */
+			}
+		}
+	}
+
+	private async notifyModeratorsOfRequest(c: Community, requesterId: string) {
+		if (!this.notifications || !this.userRepo || !c._id) return;
+		// Recipients = approved moderators + creator (deduped). The creator
+		// always sees the request even if they aren't formally a moderator
+		// row (shouldn't happen after the migration, but defensive).
+		const rows = await this.memberships.listByStatus(c._id, "approved");
+		const targetIds = new Set<string>(
+			rows.filter((m) => m.role === "moderator").map((m) => m.userId),
+		);
+		targetIds.add(c.createdBy);
+		targetIds.delete(requesterId); // never notify the requester themselves
+		const targets = await this.userRepo.findManyByIds([...targetIds]);
+		const [requester] = await this.userRepo.findManyByIds([requesterId]);
+		const requesterUsername = requester?.username ?? "alguém";
+		const docs = targets
+			.filter((u) => u.username)
+			.map((u) => ({
+				recipient: u.username,
+				actor: requesterUsername,
+				type: "community_join_requested" as const,
+				resourceType: "community" as const,
+				resourceId: c._id ?? "",
+				message: `@${requesterUsername} solicitou entrar em ${c.name}.`,
+				url: `/communities/${c.slug}`,
+			}));
+		if (docs.length > 0) await this.notifications.createMany(docs);
 	}
 }
 
@@ -101,6 +145,8 @@ export class ApproveMemberUseCase {
 		// so an approved member is auto-followed — they presumably want their
 		// own community in the selector by default.
 		private readonly follows?: ICommunityFollowRepository,
+		private readonly userRepo?: IUserRepository,
+		private readonly notifications?: INotificationRepository,
 	) {}
 	async execute({
 		slug,
@@ -126,6 +172,38 @@ export class ApproveMemberUseCase {
 			const created = await this.follows.follow(targetUserId, c._id);
 			if (created) await this.communities.incrementFollowerCount(c._id, 1);
 		}
+		// Notify the approved user. Only fires when the status flipped this
+		// turn — re-approving someone already approved is a no-op upstream
+		// so we skip the notification too.
+		if (changed && this.notifications && this.userRepo) {
+			try {
+				await this.notifyApproved(c, targetUserId, actorId);
+			} catch {
+				/* best-effort */
+			}
+		}
+	}
+
+	private async notifyApproved(
+		c: Community,
+		targetUserId: string,
+		actorId: string,
+	) {
+		if (!this.notifications || !this.userRepo || !c._id) return;
+		const [target, actor] = await Promise.all([
+			this.userRepo.findManyByIds([targetUserId]).then((l) => l[0]),
+			this.userRepo.findManyByIds([actorId]).then((l) => l[0]),
+		]);
+		if (!target?.username) return;
+		await this.notifications.create({
+			recipient: target.username,
+			actor: actor?.username ?? "alguém",
+			type: "community_join_approved",
+			resourceType: "community",
+			resourceId: c._id,
+			message: `Você foi aprovado em ${c.name}.`,
+			url: `/communities/${c.slug}`,
+		});
 	}
 }
 
@@ -273,6 +351,8 @@ export class SetModeratorUseCase {
 	constructor(
 		private readonly communities: ICommunityRepository,
 		private readonly memberships: ICommunityMembershipRepository,
+		private readonly userRepo?: IUserRepository,
+		private readonly notifications?: INotificationRepository,
 	) {}
 	async execute({
 		slug,
@@ -290,10 +370,47 @@ export class SetModeratorUseCase {
 		if (c.createdBy !== actorId) {
 			throw new Error("Apenas o criador gerencia moderadores");
 		}
-		await this.memberships.setRole(
+		const changed = await this.memberships.setRole(
 			targetUserId,
 			c._id,
 			makeModerator ? "moderator" : "member",
 		);
+		// Only fire on promotion (member → moderator). Demotion is silent —
+		// being demoted isn't a celebratory event and the user may already
+		// notice via the UI.
+		if (
+			changed &&
+			makeModerator &&
+			this.notifications &&
+			this.userRepo
+		) {
+			try {
+				await this.notifyPromoted(c, targetUserId, actorId);
+			} catch {
+				/* best-effort */
+			}
+		}
+	}
+
+	private async notifyPromoted(
+		c: Community,
+		targetUserId: string,
+		actorId: string,
+	) {
+		if (!this.notifications || !this.userRepo || !c._id) return;
+		const [target, actor] = await Promise.all([
+			this.userRepo.findManyByIds([targetUserId]).then((l) => l[0]),
+			this.userRepo.findManyByIds([actorId]).then((l) => l[0]),
+		]);
+		if (!target?.username) return;
+		await this.notifications.create({
+			recipient: target.username,
+			actor: actor?.username ?? "alguém",
+			type: "community_role_promoted",
+			resourceType: "community",
+			resourceId: c._id,
+			message: `Você foi promovido a moderador em ${c.name}.`,
+			url: `/communities/${c.slug}`,
+		});
 	}
 }

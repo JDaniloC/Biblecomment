@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { RequestJoinCommunityUseCase } from "@/application/use-cases/CommunityUseCases";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,8 @@ export async function POST(
 		await new RequestJoinCommunityUseCase(
 			new MongoCommunityRepository(),
 			new MongoCommunityMembershipRepository(),
+			new MongoUserRepository(),
+			new MongoNotificationRepository(),
 		).execute({ slug: slug.toLowerCase(), userId });
 		return NextResponse.json({ status: "pending" });
 	} catch (err) {

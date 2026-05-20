@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoCommunityFollowRepository } from "@/infrastructure/repositories/MongoCommunityFollowRepository";
+import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
 	ApproveMemberUseCase,
 	RejectMemberUseCase,
@@ -42,6 +44,9 @@ export async function POST(
 		await new ApproveMemberUseCase(
 			new MongoCommunityRepository(),
 			new MongoCommunityMembershipRepository(),
+			new MongoCommunityFollowRepository(),
+			new MongoUserRepository(),
+			new MongoNotificationRepository(),
 		).execute({
 			slug: slug.toLowerCase(),
 			actorId: actor,
