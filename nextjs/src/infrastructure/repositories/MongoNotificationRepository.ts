@@ -23,7 +23,16 @@ function firePush(n: {
 	url: string;
 	type: string;
 }): void {
-	if (!process.env.VAPID_PUBLIC_KEY) return;
+	// web-push needs BOTH keys + the subject to sign payloads. A partial env
+	// (e.g., only NEXT_PUBLIC_VAPID_PUBLIC_KEY in prod) would still pass a
+	// public-only check and then crash downstream. Bail before instantiation.
+	if (
+		!process.env.VAPID_PUBLIC_KEY ||
+		!process.env.VAPID_PRIVATE_KEY ||
+		!process.env.VAPID_SUBJECT
+	) {
+		return;
+	}
 	if (!pushService) {
 		pushService = new PushNotificationService(
 			new MongoPushSubscriptionRepository(),

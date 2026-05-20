@@ -293,9 +293,16 @@ export default function CommunityDetailClient({
 		if (busy) return;
 		setBusy(true);
 		try {
-			await communityService.approve(community.slug, userId);
+			// `changed` is false when the membership was already approved (e.g.
+			// rapid double-click) — only bump the optimistic counter on a real
+			// flip so the UI doesn't drift away from the server's truth
+			// (Copilot review on PR #205).
+			const { changed } = await communityService.approve(
+				community.slug,
+				userId,
+			);
 			setPending((prev) => prev.filter((r) => r.userId !== userId));
-			setMemberCount((c) => c + 1);
+			if (changed) setMemberCount((c) => c + 1);
 		} catch {
 			handleNotification("error", "Erro ao aprovar.");
 		} finally {

@@ -220,6 +220,10 @@ function makeMembershipRepo(): ICommunityMembershipRepository & {
 		async remove(userId, communityId) {
 			return rows.delete(key(userId, communityId));
 		},
+		async getStatus(userId, communityId) {
+			const r = rows.get(key(userId, communityId));
+			return r ? r.status : null;
+		},
 		async countApproved(communityId) {
 			return [...rows.entries()].filter(
 				([k, v]) => k.endsWith(`::${communityId}`) && v.status === "approved",

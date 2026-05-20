@@ -51,6 +51,21 @@ export class MongoPushSubscriptionRepository implements IPushSubscriptionReposit
 		await PushSubscriptionModel.deleteOne({ endpoint });
 	}
 
+	/**
+	 * Owner-scoped delete — only removes the row when both endpoint AND
+	 * username match. Returns whether a row was actually deleted so the
+	 * caller can distinguish "not yours" from "already gone" (both return
+	 * `false`; both are 200 OK to the client, but useful for logs).
+	 */
+	async deleteByEndpointForUser(
+		endpoint: string,
+		username: string,
+	): Promise<boolean> {
+		await connectToDatabase();
+		const res = await PushSubscriptionModel.deleteOne({ endpoint, username });
+		return (res.deletedCount ?? 0) > 0;
+	}
+
 	async deleteByEndpoints(endpoints: string[]): Promise<number> {
 		if (endpoints.length === 0) return 0;
 		await connectToDatabase();

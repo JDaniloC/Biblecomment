@@ -1,7 +1,12 @@
 // Bible Comment service worker — PWA shell + offline reading + web push.
 // Bump CACHE_VERSION to force clients to drop old caches on activate.
-const CACHE_VERSION = "biblecomment-v2";
-const RUNTIME_CACHE = "biblecomment-runtime-v2";
+// Bumped to v3 to evict the biblecomment-runtime-v2 cache: v2 cached
+// /verses/ HTML which was server-rendered with session-derived props
+// and could leak across users on a shared device (Copilot review on
+// PR #205). Existing clients running v2 will drop that cache on
+// activate as soon as they pick up this SW.
+const CACHE_VERSION = "biblecomment-v3";
+const RUNTIME_CACHE = "biblecomment-runtime-v3";
 const SHELL_ASSETS = [
 	"/",
 	"/offline",
@@ -57,36 +62,26 @@ self.addEventListener("fetch", (event) => {
 	// session data would be worse than a network error.
 	if (url.pathname.startsWith("/api/")) return;
 
-	// Navigation requests: network-first. Successful chapter pages are
-	// cached so a previously-visited chapter is readable offline; on a
-	// network failure serve the cached page, else the /offline shell.
+	// Navigation requests: network-first → /offline fallback. We deliberately
+	// do NOT cache /verses/ HTML even though it would enable offline reading
+	// of visited chapters: those pages are server-rendered with session-
+	// derived props (user-specific verse badges, "marcar como lido", etc.),
+	// and a single cached entry would leak one user's personalized view to
+	// the next user on a shared device. A future revision could opt into
+	// offline chapter reading by serving an anonymous variant + a
+	// cookie-aware cache key — out of scope here.
 	if (request.mode === "navigate") {
 		event.respondWith(
-			fetch(request)
-				.then((response) => {
-					if (response.ok && url.pathname.startsWith("/verses/")) {
-						const clone = response.clone();
-						caches
-							.open(RUNTIME_CACHE)
-							.then((cache) => cache.put(request, clone))
-							.catch(() => undefined);
-					}
-					return response;
-				})
-				.catch(() =>
-					caches.match(request).then(
-						(cached) =>
-							cached ||
-							caches.match("/offline").then(
-								(offline) =>
-									offline ||
-									new Response("Offline", {
-										status: 503,
-										headers: { "Content-Type": "text/plain; charset=utf-8" },
-									}),
-							),
-					),
+			fetch(request).catch(() =>
+				caches.match("/offline").then(
+					(offline) =>
+						offline ||
+						new Response("Offline", {
+							status: 503,
+							headers: { "Content-Type": "text/plain; charset=utf-8" },
+						}),
 				),
+			),
 		);
 		return;
 	}

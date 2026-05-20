@@ -34,6 +34,17 @@ export interface ICommunityMembershipRepository {
 		status: "pending" | "approved",
 	): Promise<boolean>;
 	remove(userId: string, communityId: string): Promise<boolean>;
+	/**
+	 * Returns this (user, community) row's status — or `null` if no row
+	 * exists. Single O(1) lookup against the composite unique index;
+	 * cheaper than `approvedUserIds().includes(userId)` for big
+	 * communities. Used by the leave route to decide whether to
+	 * decrement memberCount.
+	 */
+	getStatus(
+		userId: string,
+		communityId: string,
+	): Promise<"pending" | "approved" | null>;
 	countApproved(communityId: string): Promise<number>;
 	approvedUserIds(communityId: string): Promise<string[]>;
 	setRole(

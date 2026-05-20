@@ -182,6 +182,10 @@ export class ApproveMemberUseCase {
 				/* best-effort */
 			}
 		}
+		// Returned so the route can echo it to the client, which uses it to
+		// avoid drifting the optimistic memberCount on a re-approval no-op
+		// (Copilot review on PR #205).
+		return { changed };
 	}
 
 	private async notifyApproved(

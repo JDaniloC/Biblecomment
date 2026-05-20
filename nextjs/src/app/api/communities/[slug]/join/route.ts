@@ -58,14 +58,18 @@ export async function DELETE(
 		if (!c || !c._id) {
 			return NextResponse.json({ error: "Not found" }, { status: 404 });
 		}
-		const wasApproved = (await memberships.approvedUserIds(c._id)).includes(
-			userId,
-		);
+		// O(1) lookup against the (userId, communityId) unique index —
+		// replaces an earlier `approvedUserIds().includes()` scan that was
+		// O(N) on the approved-member list (Copilot review on PR #205).
+		const prev = await memberships.getStatus(userId, c._id);
 		const removed = await memberships.remove(userId, c._id);
-		if (removed && wasApproved) {
+		if (removed && prev === "approved") {
 			await communities.incrementMemberCount(c._id, -1);
 		}
-		return NextResponse.json({ removed });
+		return NextResponse.json({
+			removed,
+			wasApproved: prev === "approved",
+		});
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : "Unknown";
 		return NextResponse.json({ error: msg }, { status: 500 });

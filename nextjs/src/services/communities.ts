@@ -31,19 +31,10 @@ export const communityService = {
 		return (await res.json()) as ListCommunitiesResponse;
 	},
 
-	async join(slug: string): Promise<void> {
-		const res = await fetch(`/api/communities/${slug}/join`, {
-			method: "POST",
-		});
-		if (!res.ok) throw new Error(await parseError(res));
-	},
-
-	async leave(slug: string): Promise<void> {
-		const res = await fetch(`/api/communities/${slug}/join`, {
-			method: "DELETE",
-		});
-		if (!res.ok) throw new Error(await parseError(res));
-	},
+	// `join` / `leave` removed — `requestJoin` and `cancelOrLeave` cover
+	// the same routes with names that match the plan_community lifecycle
+	// (request → moderator approves → leave). Having both pairs was an
+	// API hazard flagged by the Copilot review on PR #205.
 
 	/**
 	 * The signed-in user's FOLLOWED communities (active-community selector
@@ -144,11 +135,22 @@ export const communityService = {
 		return body.requests ?? [];
 	},
 
-	async approve(slug: string, userId: string): Promise<void> {
+	/**
+	 * `changed` is true only when the membership status flipped from
+	 * pending → approved. The community page uses it to avoid drifting
+	 * the optimistic memberCount when a moderator double-clicks Aprovar
+	 * on a row that was already approved.
+	 */
+	async approve(
+		slug: string,
+		userId: string,
+	): Promise<{ changed: boolean }> {
 		const res = await fetch(`/api/communities/${slug}/requests/${userId}`, {
 			method: "POST",
 		});
 		if (!res.ok) throw new Error(await parseError(res));
+		const body = (await res.json().catch(() => ({}))) as { changed?: boolean };
+		return { changed: body.changed ?? true };
 	},
 
 	async reject(slug: string, userId: string): Promise<void> {

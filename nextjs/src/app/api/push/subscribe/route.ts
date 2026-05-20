@@ -37,7 +37,10 @@ export async function DELETE(req: Request) {
 		if (!parsed.ok) return parsed.response;
 
 		const repo = new MongoPushSubscriptionRepository();
-		await repo.deleteByEndpoint(parsed.data.endpoint);
+		// Owner-scoped — defense against another signed-in user passing in
+		// someone else's endpoint to wipe their push subscription. The route
+		// stays 200 OK either way so an attacker can't probe ownership.
+		await repo.deleteByEndpointForUser(parsed.data.endpoint, user.username);
 		return NextResponse.json({ ok: true });
 	} catch (err) {
 		return serverError(err);

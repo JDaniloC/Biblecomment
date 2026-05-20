@@ -41,7 +41,7 @@ export async function POST(
 	}
 	const { slug, userId } = await params;
 	try {
-		await new ApproveMemberUseCase(
+		const r = await new ApproveMemberUseCase(
 			new MongoCommunityRepository(),
 			new MongoCommunityMembershipRepository(),
 			new MongoCommunityFollowRepository(),
@@ -52,7 +52,7 @@ export async function POST(
 			actorId: actor,
 			targetUserId: userId,
 		});
-		return NextResponse.json({ ok: true });
+		return NextResponse.json({ ok: true, changed: r.changed });
 	} catch (err) {
 		return mapError(err);
 	}

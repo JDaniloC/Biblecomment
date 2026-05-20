@@ -130,6 +130,18 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		return (r.deletedCount ?? 0) > 0;
 	}
 
+	async getStatus(
+		userId: string,
+		communityId: string,
+	): Promise<"pending" | "approved" | null> {
+		await connectToDatabase();
+		const doc = await CommunityMembershipModel.findOne(
+			{ userId, communityId },
+			{ status: 1, _id: 0 },
+		).lean();
+		return (doc?.status as "pending" | "approved" | undefined) ?? null;
+	}
+
 	async countApproved(communityId: string): Promise<number> {
 		await connectToDatabase();
 		return CommunityMembershipModel.countDocuments({
