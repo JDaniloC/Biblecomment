@@ -142,18 +142,37 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		return (doc?.status as "pending" | "approved" | undefined) ?? null;
 	}
 
+	async findOne(
+		userId: string,
+		communityId: string,
+	): Promise<CommunityMembership | null> {
+		await connectToDatabase();
+		const doc = await CommunityMembershipModel.findOne({ userId, communityId });
+		return doc ? toEntity(doc) : null;
+	}
+
 	async countApproved(communityId: string): Promise<number> {
 		await connectToDatabase();
+		// Match toEntity()'s legacy convention: rows without `status` are
+		// treated as approved (pre-migration data). The migration script
+		// backfills these but the query stays defensive so reads can't be
+		// off-by-N when a fresh DB hasn't been migrated yet.
 		return CommunityMembershipModel.countDocuments({
 			communityId,
-			status: "approved",
+			$or: [{ status: "approved" }, { status: { $exists: false } }],
 		});
 	}
 
 	async approvedUserIds(communityId: string): Promise<string[]> {
 		await connectToDatabase();
+		// See `countApproved` — same defensive predicate so callers like
+		// `ListCommunityCommentsUseCase` and the comment prioritization
+		// path don't drop legacy-data members on the floor.
 		const docs = await CommunityMembershipModel.find(
-			{ communityId, status: "approved" },
+			{
+				communityId,
+				$or: [{ status: "approved" }, { status: { $exists: false } }],
+			},
 			{ userId: 1, _id: 0 },
 		).lean();
 		return docs.map((d) => d.userId);

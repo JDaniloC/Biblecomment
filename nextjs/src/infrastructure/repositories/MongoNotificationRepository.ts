@@ -23,14 +23,12 @@ function firePush(n: {
 	url: string;
 	type: string;
 }): void {
-	// web-push needs BOTH keys + the subject to sign payloads. A partial env
-	// (e.g., only NEXT_PUBLIC_VAPID_PUBLIC_KEY in prod) would still pass a
-	// public-only check and then crash downstream. Bail before instantiation.
-	if (
-		!process.env.VAPID_PUBLIC_KEY ||
-		!process.env.VAPID_PRIVATE_KEY ||
-		!process.env.VAPID_SUBJECT
-	) {
+	// web-push needs BOTH keys to sign payloads. A partial env (e.g., only
+	// NEXT_PUBLIC_VAPID_PUBLIC_KEY in prod) would still pass a public-only
+	// check and then crash downstream. VAPID_SUBJECT is optional —
+	// WebPushSender falls back to a default mailto: when unset, matching
+	// what `mobile/README.md` documents.
+	if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
 		return;
 	}
 	if (!pushService) {

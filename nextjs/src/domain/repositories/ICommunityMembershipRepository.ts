@@ -45,6 +45,15 @@ export interface ICommunityMembershipRepository {
 		userId: string,
 		communityId: string,
 	): Promise<"pending" | "approved" | null>;
+	/**
+	 * Single-row lookup (O(1) via the composite unique index). Used by
+	 * /membership/me to avoid `listForUser` + in-memory find when only
+	 * one community is in scope.
+	 */
+	findOne(
+		userId: string,
+		communityId: string,
+	): Promise<CommunityMembership | null>;
 	countApproved(communityId: string): Promise<number>;
 	approvedUserIds(communityId: string): Promise<string[]>;
 	setRole(

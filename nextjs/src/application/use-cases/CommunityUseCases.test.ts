@@ -237,6 +237,11 @@ function makeMembershipRepo(): ICommunityMembershipRepository & {
 			const r = rows.get(key(userId, communityId));
 			return r ? r.status : null;
 		},
+		async findOne(userId, communityId) {
+			const r = rows.get(key(userId, communityId));
+			if (!r) return null;
+			return { userId, communityId, ...r };
+		},
 		async countApproved(communityId) {
 			return [...rows.entries()].filter(
 				([k, v]) => k.endsWith(`::${communityId}`) && v.status === "approved",

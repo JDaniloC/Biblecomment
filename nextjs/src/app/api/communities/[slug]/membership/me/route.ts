@@ -31,10 +31,13 @@ export async function GET(
 		if (!community?._id) {
 			return NextResponse.json({ status: "none", role: "member" });
 		}
-		const list = await new MongoCommunityMembershipRepository().listForUser(
+		// Single-row O(1) lookup via the (userId, communityId) unique index —
+		// replaces an earlier `listForUser` + Array.find that loaded every
+		// community membership the viewer had (Copilot review on PR #205).
+		const row = await new MongoCommunityMembershipRepository().findOne(
 			user._id,
+			community._id,
 		);
-		const row = list.find((m) => m.communityId === community._id);
 		return NextResponse.json({
 			status: row?.status ?? "none",
 			role: row?.role ?? "member",

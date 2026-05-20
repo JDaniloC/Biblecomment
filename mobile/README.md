@@ -78,9 +78,14 @@ Prereq (done in repo): the prod manifest is valid and now served as
 
 The TWA inherits these from the PWA automatically:
 
-- **Service worker** — offline shell + previously-visited chapters are
-  readable offline (stale-while-revalidate on `/verses/*`); `/api/*`
-  always network. (`nextjs/public/sw.js`)
+- **Service worker** — offline shell only. Visited chapter pages are
+  **not** cached because `/verses/*` is server-rendered with
+  session-derived props (per-user verse badges, "marcar como lido",
+  prioritization), and a shared SW cache entry would leak across
+  users on a shared device. Navigations fall back to `/offline` when
+  the network drops; `/api/*` always goes to the network. A future
+  revision can opt back into offline chapter reading via an anonymous
+  variant + cookie-aware cache key. (`nextjs/public/sw.js`)
 - **Web Push** — opt-in toggle in the notifications panel; fires on the
   existing in-app notification events (discussion answer, mentions, new
   follower, badge). Requires VAPID env (below); disabled gracefully when

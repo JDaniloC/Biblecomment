@@ -24,8 +24,13 @@ interface Props {
  * `slug` and keyboard-navigates with Up/Down/Enter/Esc.
  *
  * `data-testid="active-community-select"` is preserved from the legacy
- * <select> so Cypress fixtures keep working — the new behavior is gated
- * on the `[role="combobox"]` shape.
+ * <select> so Cypress fixtures keep working. The interactive surface
+ * follows the WAI-ARIA "Editable Combobox With List Autocomplete"
+ * pattern: the search <input> carries `role="combobox"` +
+ * `aria-controls` + `aria-expanded`, and the dropdown <ul> is the
+ * popup `role="listbox"`. `aria-activedescendant` points at the
+ * highlighted option so screen readers track keyboard navigation
+ * without focus jumping out of the input.
  */
 export function CommunityActiveSelector({ username, onPick }: Props) {
 	const { active, setActive, followed } = useActiveCommunity(username);
@@ -34,6 +39,11 @@ export function CommunityActiveSelector({ username, onPick }: Props) {
 	const [highlight, setHighlight] = useState(0);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const popupRef = useRef<HTMLDivElement>(null);
+	// Stable IDs so the combobox can point at its listbox via
+	// aria-controls and at the highlighted row via aria-activedescendant.
+	const listboxId = "bc-active-community-listbox";
+	const optionId = (slug: string | null) =>
+		`bc-active-community-opt-${slug ?? "none"}`;
 
 	const activeName = followed.find((c) => c.slug === active)?.name ?? null;
 
@@ -146,7 +156,6 @@ export function CommunityActiveSelector({ username, onPick }: Props) {
 			{open && (
 				<div
 					ref={popupRef}
-					role="listbox"
 					className="absolute left-0 right-0 top-[calc(100%+4px)] z-[60] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg overflow-hidden"
 				>
 					<div className="p-2 border-b border-slate-100 dark:border-slate-800">
@@ -158,11 +167,24 @@ export function CommunityActiveSelector({ username, onPick }: Props) {
 							onKeyDown={onKeyDown}
 							placeholder="Buscar comunidade…"
 							aria-label="Buscar comunidade"
+							role="combobox"
+							aria-controls={listboxId}
+							aria-expanded={open}
+							aria-autocomplete="list"
+							aria-activedescendant={
+								options[highlight]
+									? optionId(options[highlight].slug)
+									: undefined
+							}
 							data-testid="active-community-search"
 							className="w-full px-2.5 py-1.5 rounded-md text-[13px] border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
 						/>
 					</div>
-					<ul className="max-h-60 overflow-y-auto py-1">
+					<ul
+						id={listboxId}
+						role="listbox"
+						className="max-h-60 overflow-y-auto py-1"
+					>
 						{options.length === 1 && query.trim() !== "" && (
 							<li className="px-3 py-2 text-[12px] text-slate-400 dark:text-slate-500">
 								Nenhuma correspondência.
@@ -174,6 +196,7 @@ export function CommunityActiveSelector({ username, onPick }: Props) {
 							return (
 								<li
 									key={opt.slug ?? "__none__"}
+									id={optionId(opt.slug)}
 									role="option"
 									aria-selected={selected}
 									data-testid={`active-community-option-${opt.slug ?? "none"}`}

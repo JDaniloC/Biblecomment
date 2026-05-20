@@ -1,4 +1,7 @@
-// Bible Comment service worker — PWA shell + offline reading + web push.
+// Bible Comment service worker — PWA shell + offline fallback + web push.
+// (We do NOT cache /verses/ HTML for offline reading anymore — those
+// pages are session-personalized and a shared cache entry could leak
+// between users on the same device. See navigation branch below.)
 // Bump CACHE_VERSION to force clients to drop old caches on activate.
 // Bumped to v3 to evict the biblecomment-runtime-v2 cache: v2 cached
 // /verses/ HTML which was server-rendered with session-derived props
