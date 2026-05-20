@@ -11,6 +11,7 @@ import {
 	MyFollowedCommunitiesUseCase,
 	MyFollowStatusUseCase,
 	ListCommunityMembersUseCase,
+	ListCommunityFollowersUseCase,
 	MAX_COMMUNITIES_PER_USER,
 } from "./CommunityUseCases";
 import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
@@ -133,6 +134,20 @@ function makeFollowRepo(): ICommunityFollowRepository & {
 						followedAt: t,
 					}),
 				);
+		},
+		async listByCommunity(communityId) {
+			return (
+				[...rows.entries()]
+					.filter(([k]) => k.endsWith(`::${communityId}`))
+					.sort((a, b) => b[1].getTime() - a[1].getTime())
+					.map(
+						([k, t]): CommunityFollow => ({
+							userId: k.split("::")[0],
+							communityId: k.split("::")[1],
+							followedAt: t,
+						}),
+					)
+			);
 		},
 		async countByCommunity(communityId) {
 			return [...rows.keys()].filter((k) => k.endsWith(`::${communityId}`))
@@ -625,6 +640,71 @@ describe("ListCommunityMembersUseCase", () => {
 			userRepo,
 		).execute("ghost");
 		expect(list).toEqual([]);
+	});
+});
+
+describe("ListCommunityFollowersUseCase", () => {
+	it("returns follower userIds enriched with username, newest follow first", async () => {
+		const communityRepo = makeCommunityRepo();
+		const followRepo = makeFollowRepo();
+		const userRepo: IUserRepository = {
+			findByEmail: async () => null,
+			findByUsername: async () => null,
+			findByUsernamePublic: async () => null,
+			searchByUsernamePrefix: async () => [],
+			findByUsernames: async () => [],
+			findManyByIds: async (ids) =>
+				ids.map(
+					(id) =>
+						({
+							_id: id,
+							email: `${id}@x`,
+							username:
+								{ "u-alice": "alice", "u-bob": "bob" }[id] ?? id,
+							password: "",
+							state: "",
+							belief: "",
+							showBelief: false,
+							moderator: false,
+							tutorialsCompleted: [],
+							badges: [],
+						}) as User,
+				),
+			findAll: async () => [],
+			findAllPaginated: async () => [],
+			create: async () => ({}) as User,
+			updatePassword: async () => {},
+			updatePasswordById: async () => {},
+			update: async () => null,
+			markTutorialCompleted: async () => {},
+			addBadges: async () => [],
+			delete: async () => {},
+		};
+		const c = await communityRepo.create({
+			slug: "alpha",
+			name: "Alpha",
+			description: "",
+			createdBy: "u-alice",
+		});
+		await followRepo.follow("u-alice", c._id!);
+		await new Promise((r) => setTimeout(r, 5));
+		await followRepo.follow("u-bob", c._id!);
+
+		const list = await new ListCommunityFollowersUseCase(
+			communityRepo,
+			followRepo,
+			userRepo,
+		).execute("alpha");
+		expect(list.map((p) => p.username)).toEqual(["bob", "alice"]);
+	});
+
+	it("returns empty for unknown slug", async () => {
+		const out = await new ListCommunityFollowersUseCase(
+			makeCommunityRepo(),
+			makeFollowRepo(),
+			makeUserRepo({}),
+		).execute("ghost");
+		expect(out).toEqual([]);
 	});
 });
 

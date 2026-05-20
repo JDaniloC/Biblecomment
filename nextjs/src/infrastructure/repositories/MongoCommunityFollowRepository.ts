@@ -61,6 +61,14 @@ export class MongoCommunityFollowRepository implements ICommunityFollowRepositor
 		return docs.map(toEntity);
 	}
 
+	async listByCommunity(communityId: string): Promise<CommunityFollow[]> {
+		await connectToDatabase();
+		const docs = await CommunityFollowModel.find({ communityId }).sort({
+			followedAt: -1,
+		});
+		return docs.map(toEntity);
+	}
+
 	async countByCommunity(communityId: string): Promise<number> {
 		await connectToDatabase();
 		return CommunityFollowModel.countDocuments({ communityId });

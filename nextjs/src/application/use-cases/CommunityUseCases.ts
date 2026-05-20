@@ -317,7 +317,38 @@ export class UnfollowCommunityUseCase {
 	}
 }
 
-/** Returns the user's followed communities, newest follow first. */
+/**
+ * List the followers of a community, enriched with username, newest
+ * follow first. Used by the followers modal on /communities/<slug>;
+ * public (the count is already visible in the header).
+ */
+export interface CommunityFollowerView {
+	userId: string;
+	username: string | null;
+	followedAt?: Date;
+}
+
+export class ListCommunityFollowersUseCase {
+	constructor(
+		private readonly communities: ICommunityRepository,
+		private readonly follows: ICommunityFollowRepository,
+		private readonly userRepo: IUserRepository,
+	) {}
+	async execute(slug: string): Promise<CommunityFollowerView[]> {
+		const c = await this.communities.findBySlug(slug);
+		if (!c?._id) return [];
+		const rows = await this.follows.listByCommunity(c._id);
+		if (rows.length === 0) return [];
+		const users = await this.userRepo.findManyByIds(rows.map((r) => r.userId));
+		const usernameById = new Map(users.map((u) => [u._id ?? "", u.username]));
+		return rows.map((r) => ({
+			userId: r.userId,
+			username: usernameById.get(r.userId) ?? null,
+			followedAt: r.followedAt,
+		}));
+	}
+}
+
 export class MyFollowedCommunitiesUseCase {
 	constructor(
 		private readonly communities: ICommunityRepository,

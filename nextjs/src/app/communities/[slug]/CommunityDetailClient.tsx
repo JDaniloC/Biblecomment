@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
+import { CommunityPeopleModal } from "@/components/CommunityPeopleModal";
 import { communityService } from "@/services/communities";
 import { useNotification } from "@/contexts/NotificationContext";
 import type { Community } from "@/domain/entities/Community";
@@ -83,6 +84,9 @@ export default function CommunityDetailClient({
 	const [role, setRole] = useState<"member" | "moderator">("member");
 	const [memberCount, setMemberCount] = useState(community.memberCount);
 	const [busy, setBusy] = useState(false);
+	const [peopleModal, setPeopleModal] = useState<
+		"members" | "followers" | null
+	>(null);
 	// Pending join requests, fetched only when the viewer is a moderator.
 	const [pending, setPending] = useState<
 		{ userId: string; username: string | null; joinedAt?: string }[]
@@ -380,13 +384,29 @@ export default function CommunityDetailClient({
 								/{community.slug}
 							</p>
 							<p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
-								<span data-testid="community-member-count">{memberCount}</span>{" "}
-								{memberCount === 1 ? "membro" : "membros"}
+								<button
+									type="button"
+									onClick={() => setPeopleModal("members")}
+									data-testid="open-members-modal"
+									className="hover:text-brand underline-offset-2 hover:underline cursor-pointer"
+								>
+									<span data-testid="community-member-count">
+										{memberCount}
+									</span>{" "}
+									{memberCount === 1 ? "membro" : "membros"}
+								</button>
 								{" · "}
-								<span data-testid="community-follower-count">
-									{followerCount}
-								</span>{" "}
-								{followerCount === 1 ? "seguidor" : "seguidores"}
+								<button
+									type="button"
+									onClick={() => setPeopleModal("followers")}
+									data-testid="open-followers-modal"
+									className="hover:text-brand underline-offset-2 hover:underline cursor-pointer"
+								>
+									<span data-testid="community-follower-count">
+										{followerCount}
+									</span>{" "}
+									{followerCount === 1 ? "seguidor" : "seguidores"}
+								</button>
 								{creatorUsername && (
 									<>
 										{" · criada por "}
@@ -687,6 +707,11 @@ export default function CommunityDetailClient({
 					)}
 				</section>
 			</main>
+			<CommunityPeopleModal
+				slug={community.slug}
+				mode={peopleModal}
+				onClose={() => setPeopleModal(null)}
+			/>
 		</div>
 	);
 }

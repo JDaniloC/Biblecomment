@@ -120,6 +120,25 @@ export const communityService = {
 		return body.members ?? [];
 	},
 
+	async listFollowers(slug: string): Promise<
+		{
+			userId: string;
+			username: string | null;
+			followedAt: string | null;
+		}[]
+	> {
+		const res = await fetch(`/api/communities/${slug}/followers`);
+		if (!res.ok) throw new Error(await parseError(res));
+		const body = (await res.json()) as {
+			followers: {
+				userId: string;
+				username: string | null;
+				followedAt: string | null;
+			}[];
+		};
+		return body.followers ?? [];
+	},
+
 	async listRequests(
 		slug: string,
 	): Promise<{ userId: string; username: string | null; joinedAt?: string }[]> {

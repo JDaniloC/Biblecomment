@@ -14,6 +14,11 @@ export interface ICommunityFollowRepository {
 	followedCommunityIds(userId: string): Promise<string[]>;
 	/** Raw rows for tests / audit. */
 	listForUser(userId: string): Promise<CommunityFollow[]>;
+	/**
+	 * Followers of a community, newest follow first. Used by the
+	 * followers modal — caller resolves userIds to usernames.
+	 */
+	listByCommunity(communityId: string): Promise<CommunityFollow[]>;
 	/** Live follower count (used by the backfill + reconciliation jobs). */
 	countByCommunity(communityId: string): Promise<number>;
 	/** LGPD cascade: drop every follow row by this user. */
