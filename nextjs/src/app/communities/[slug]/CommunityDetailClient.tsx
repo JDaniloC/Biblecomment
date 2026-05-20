@@ -168,7 +168,11 @@ export default function CommunityDetailClient({
 			),
 		);
 		try {
-			await communityService.setModerator(community.slug, userId, !currentlyMod);
+			await communityService.setModerator(
+				community.slug,
+				userId,
+				!currentlyMod,
+			);
 		} catch {
 			setMembers((prev) =>
 				prev.map((m) =>

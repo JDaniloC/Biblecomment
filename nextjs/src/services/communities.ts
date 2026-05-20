@@ -160,10 +160,7 @@ export const communityService = {
 	 * the optimistic memberCount when a moderator double-clicks Aprovar
 	 * on a row that was already approved.
 	 */
-	async approve(
-		slug: string,
-		userId: string,
-	): Promise<{ changed: boolean }> {
+	async approve(slug: string, userId: string): Promise<{ changed: boolean }> {
 		const res = await fetch(`/api/communities/${slug}/requests/${userId}`, {
 			method: "POST",
 		});

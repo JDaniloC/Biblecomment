@@ -245,13 +245,15 @@ export class ListCommunityMembersUseCase {
 		// (alphabetical). Tie-breaking on username keeps the order stable
 		// between refreshes so the UI doesn't visually shuffle on re-fetch.
 		return rows
-			.map((m): CommunityMemberView => ({
-				userId: m.userId,
-				username: usernameById.get(m.userId) ?? null,
-				role: m.role ?? "member",
-				isCreator: m.userId === c.createdBy,
-				joinedAt: m.joinedAt,
-			}))
+			.map(
+				(m): CommunityMemberView => ({
+					userId: m.userId,
+					username: usernameById.get(m.userId) ?? null,
+					role: m.role ?? "member",
+					isCreator: m.userId === c.createdBy,
+					joinedAt: m.joinedAt,
+				}),
+			)
 			.sort((a, b) => {
 				if (a.isCreator !== b.isCreator) return a.isCreator ? -1 : 1;
 				if (a.role !== b.role) return a.role === "moderator" ? -1 : 1;
@@ -413,12 +415,7 @@ export class SetModeratorUseCase {
 		// Only fire on promotion (member → moderator). Demotion is silent —
 		// being demoted isn't a celebratory event and the user may already
 		// notice via the UI.
-		if (
-			changed &&
-			makeModerator &&
-			this.notifications &&
-			this.userRepo
-		) {
+		if (changed && makeModerator && this.notifications && this.userRepo) {
 			try {
 				await this.notifyPromoted(c, targetUserId, actorId);
 			} catch {

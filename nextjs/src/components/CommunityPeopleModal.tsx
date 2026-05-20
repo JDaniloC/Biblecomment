@@ -78,7 +78,9 @@ export function CommunityPeopleModal({ slug, mode, onClose }: Props) {
 		filter.trim() === ""
 			? items
 			: items.filter((p) =>
-					(p.username ?? "").toLowerCase().includes(filter.trim().toLowerCase()),
+					(p.username ?? "")
+						.toLowerCase()
+						.includes(filter.trim().toLowerCase()),
 				);
 
 	const title =

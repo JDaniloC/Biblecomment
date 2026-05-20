@@ -136,18 +136,16 @@ function makeFollowRepo(): ICommunityFollowRepository & {
 				);
 		},
 		async listByCommunity(communityId) {
-			return (
-				[...rows.entries()]
-					.filter(([k]) => k.endsWith(`::${communityId}`))
-					.sort((a, b) => b[1].getTime() - a[1].getTime())
-					.map(
-						([k, t]): CommunityFollow => ({
-							userId: k.split("::")[0],
-							communityId: k.split("::")[1],
-							followedAt: t,
-						}),
-					)
-			);
+			return [...rows.entries()]
+				.filter(([k]) => k.endsWith(`::${communityId}`))
+				.sort((a, b) => b[1].getTime() - a[1].getTime())
+				.map(
+					([k, t]): CommunityFollow => ({
+						userId: k.split("::")[0],
+						communityId: k.split("::")[1],
+						followedAt: t,
+					}),
+				);
 		},
 		async countByCommunity(communityId) {
 			return [...rows.keys()].filter((k) => k.endsWith(`::${communityId}`))
@@ -587,7 +585,13 @@ describe("ListCommunityMembersUseCase", () => {
 						({
 							_id: id,
 							email: `${id}@x`,
-							username: { "u-alice": "alice", "u-bob": "bob", "u-carol": "carol", "u-dave": "dave" }[id] ?? id,
+							username:
+								{
+									"u-alice": "alice",
+									"u-bob": "bob",
+									"u-carol": "carol",
+									"u-dave": "dave",
+								}[id] ?? id,
 							password: "",
 							state: "",
 							belief: "",
@@ -624,7 +628,12 @@ describe("ListCommunityMembersUseCase", () => {
 			userRepo,
 		).execute("alpha");
 
-		expect(list.map((m) => m.username)).toEqual(["alice", "carol", "bob", "dave"]);
+		expect(list.map((m) => m.username)).toEqual([
+			"alice",
+			"carol",
+			"bob",
+			"dave",
+		]);
 		expect(list[0].isCreator).toBe(true);
 		expect(list[1].role).toBe("moderator");
 		expect(list[2].role).toBe("member");
@@ -659,8 +668,7 @@ describe("ListCommunityFollowersUseCase", () => {
 						({
 							_id: id,
 							email: `${id}@x`,
-							username:
-								{ "u-alice": "alice", "u-bob": "bob" }[id] ?? id,
+							username: { "u-alice": "alice", "u-bob": "bob" }[id] ?? id,
 							password: "",
 							state: "",
 							belief: "",
@@ -715,7 +723,11 @@ function makeNotificationsRepo(): INotificationRepository & {
 	return {
 		_rows: rows,
 		async create(n) {
-			const doc: Notification = { ...n, read: false, _id: `n-${rows.length + 1}` };
+			const doc: Notification = {
+				...n,
+				read: false,
+				_id: `n-${rows.length + 1}`,
+			};
 			rows.push(doc);
 			return doc;
 		},
