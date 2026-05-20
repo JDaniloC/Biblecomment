@@ -6,8 +6,12 @@
  * idempotent.
  */
 export interface CommunityMembership {
-  _id?: string;
-  userId: string;
-  communityId: string;
-  joinedAt?: Date;
+	_id?: string;
+	userId: string;
+	communityId: string;
+	/** "pending" until a moderator approves; "approved" members are prioritized. */
+	status: "pending" | "approved";
+	/** "moderator" can approve requests and promote others; creator seeded as moderator. */
+	role: "member" | "moderator";
+	joinedAt?: Date;
 }

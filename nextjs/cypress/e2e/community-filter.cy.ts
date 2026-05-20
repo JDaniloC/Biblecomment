@@ -1,153 +1,138 @@
 /**
- * Phase 4.4 — chapter reader filters comments by community.
+ * plan_community read-path: ?community=<slug> partitions a verse's
+ * comments into `prioritized` (by approved members) and `others`. The
+ * reader's "Comunidade ativa" selector + "Ver outros comentários (N)"
+ * toggle implement this on the client.
  *
- * - chips row only appears for users in at least one community
- * - toggling a chip hides/shows the matching comments
- * - selection persists across reload (localStorage)
+ * Local Cypress is unusable on the maintainer's host — CI is the gate.
  */
-
 import users from "../fixtures/users.json";
+import bookFixture from "../fixtures/book-gn.json";
 
-const BOOK = {
-  abbrev: "gn",
-  name: "Gênesis",
-  chapters: 50,
-  testament: "old",
-  group: "pentateuco",
-  author: "Moisés",
-};
-const VERSE = {
-  abbrev: "gn",
-  chapter: 1,
-  verseNumber: 1,
-  text: "No princípio criou Deus os céus e a terra.",
-  reference: "Gênesis 1:1",
-};
-const LONG_GERAL =
-  "Comentario geral sem comunidade, deve sempre aparecer no leitor a menos que o usuario oculte explicitamente o bucket Geral. ".repeat(
-    2,
-  );
-const LONG_REFORMADOS =
-  "Comentario marcado com a comunidade reformados, so aparece quando o usuario deixa o chip slash reformados ativo. ".repeat(
-    2,
-  );
-const SNIPPET_GERAL = "Comentario geral sem comunidade";
-const SNIPPET_REFORMADOS = "Comentario marcado com a comunidade reformados";
+describe("Active-community read-path (plan_community)", () => {
+	// alice authors a comment on Gn 1:1; she is the approved moderator of
+	// "reformados". bob authors another comment; he is NOT a member.
+	// Without ?community → both in `others`. With ?community=reformados →
+	// alice in `prioritized`, bob in `others`.
+	it("partitions comments by approved membership", () => {
+		cy.resetDb();
+		cy.seedDb({
+			users: [users.alice, users.bob],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+			communities: [
+				{
+					slug: "reformados",
+					name: "Reformados",
+					description: "fixture",
+					createdBy: users.alice.username,
+					memberCount: 1,
+				},
+			],
+			communityMemberships: [
+				{
+					username: users.alice.username,
+					communitySlug: "reformados",
+					status: "approved",
+					role: "moderator",
+				},
+			],
+			// Follow rows drive the picker (plan_community follow-up). Alice
+			// follows her own community by default — approve auto-follows IRL,
+			// but seeds inject rows directly.
+			communityFollows: [
+				{ username: users.alice.username, communitySlug: "reformados" },
+			],
+		});
 
-function fetchVerseId(): Cypress.Chainable<string> {
-  return cy
-    .request("GET", `/api/books/${VERSE.abbrev}/verses/${VERSE.chapter}`)
-    .then((res) => {
-      const list = res.body as Array<{ _id: string; verseNumber: number }>;
-      const v = list.find((x) => x.verseNumber === VERSE.verseNumber);
-      expect(v, "seeded verse").to.exist;
-      return v!._id;
-    });
-}
+		cy.loginAs(users.alice.email, users.alice.password);
+		cy.request("GET", "/api/books/gn/verses/1").then((res) => {
+			const v = (res.body as Array<{ _id: string; verseNumber: number }>).find(
+				(x) => x.verseNumber === 1,
+			);
+			if (!v) throw new Error("Gn 1:1 not seeded");
+			cy.request("POST", `/api/comments/${v._id}`, {
+				text: "alice deve ser priorizada",
+				tags: ["devocional"],
+			});
+			cy.clearCookies();
+			cy.loginAs(users.bob.email, users.bob.password);
+			cy.request("POST", `/api/comments/${v._id}`, {
+				text: "bob não-membro",
+				tags: ["pessoal"],
+			});
+		});
 
-describe("Community filter in chapter reader (Phase 4.4)", () => {
-  beforeEach(() => {
-    cy.resetDb();
-    cy.seedDb({
-      users: [
-        { ...users.alice, tutorialsCompleted: ["chapter-v1"] },
-        { ...users.bob, tutorialsCompleted: ["chapter-v1"] },
-      ],
-      books: [BOOK],
-      verses: [VERSE],
-    });
+		// No community → everything in others.
+		cy.request("GET", "/api/comments/chapter/gn/1/1").then((r) => {
+			expect(
+				r.body.prioritized,
+				"no community → prioritized empty",
+			).to.have.length(0);
+			const names = (r.body.others ?? []).map(
+				(c: { username: string }) => c.username,
+			);
+			expect(names).to.include.members(["alice", "bob"]);
+		});
 
-    // Set up: alice creates and joins reformados, then posts one community
-    // comment + one general comment so the chip toggle has both buckets to
-    // act on.
-    cy.loginAs(users.alice.email, users.alice.password);
-    cy.request("POST", "/api/communities", {
-      slug: "reformados",
-      name: "Reformados",
-      description: "",
-    });
-    cy.request("POST", "/api/communities/reformados/join");
-    fetchVerseId().then((verseId) => {
-      cy.request("POST", `/api/comments/${verseId}`, {
-        text: LONG_REFORMADOS,
-        tags: ["devocional"],
-        communitySlug: "reformados",
-      });
-      cy.request("POST", `/api/comments/${verseId}`, {
-        text: LONG_GERAL,
-        tags: ["devocional"],
-      });
-    });
-  });
+		// ?community=reformados → alice prioritized, bob in others.
+		cy.request("GET", "/api/comments/chapter/gn/1/1?community=reformados").then(
+			(r) => {
+				const pri = (r.body.prioritized ?? []).map(
+					(c: { username: string }) => c.username,
+				);
+				const oth = (r.body.others ?? []).map(
+					(c: { username: string }) => c.username,
+				);
+				expect(pri).to.deep.eq(["alice"]);
+				expect(oth).to.deep.eq(["bob"]);
+			},
+		);
 
-  it("hides reformados comments when the chip is toggled off", () => {
-    // Sanity-check the membership lookup the chip row depends on. Surfacing
-    // a clear API failure here beats chasing a generic "element not found".
-    cy.request("GET", "/api/users/me/communities").then((res) => {
-      expect(res.body.items, "alice's communities").to.have.length(1);
-      expect(res.body.items[0].slug).to.eq("reformados");
-    });
+		// Unknown slug → fallback (everything in others, prioritized empty).
+		cy.request("GET", "/api/comments/chapter/gn/1/1?community=ghost").then(
+			(r) => {
+				expect(r.body.prioritized).to.have.length(0);
+				expect(r.body.others).to.have.length(2);
+			},
+		);
+	});
 
-    cy.visit(`/verses/${VERSE.abbrev}/${VERSE.chapter}`);
-    // Filter row is visible because alice belongs to one community.
-    cy.get('[data-testid="community-filter-row"]').should("be.visible");
-
-    cy.get("li#1 button").first().click();
-
-    // Both comments visible initially (no filter active).
-    cy.contains(SNIPPET_REFORMADOS).should("be.visible");
-    cy.contains(SNIPPET_GERAL).should("be.visible");
-
-    // Toggle /reformados off — only Geral remains.
-    cy.get('[data-testid="community-filter-chip-reformados"]').click();
-    cy.get('[data-testid="community-filter-chip-reformados"]').should(
-      "have.attr",
-      "data-active",
-      "false",
-    );
-    cy.contains(SNIPPET_REFORMADOS).should("not.exist");
-    cy.contains(SNIPPET_GERAL).should("be.visible");
-  });
-
-  it("persists selection across reload", () => {
-    cy.visit(`/verses/${VERSE.abbrev}/${VERSE.chapter}`);
-    cy.get('[data-testid="community-filter-chip-general"]').click();
-    cy.get('[data-testid="community-filter-chip-general"]').should(
-      "have.attr",
-      "data-active",
-      "false",
-    );
-
-    cy.reload();
-    // Same alice, same chapter — chip should still be off after the page reload.
-    cy.get('[data-testid="community-filter-chip-general"]').should(
-      "have.attr",
-      "data-active",
-      "false",
-    );
-  });
-
-  it("reset clears the saved filter", () => {
-    cy.visit(`/verses/${VERSE.abbrev}/${VERSE.chapter}`);
-    cy.get('[data-testid="community-filter-chip-reformados"]').click();
-    cy.get('[data-testid="community-filter-reset"]').click();
-    // After reset every chip is back to active = true.
-    cy.get('[data-testid="community-filter-chip-reformados"]').should(
-      "have.attr",
-      "data-active",
-      "true",
-    );
-    cy.get('[data-testid="community-filter-chip-general"]').should(
-      "have.attr",
-      "data-active",
-      "true",
-    );
-  });
-
-  it("does not render the chip row for users in zero communities", () => {
-    cy.clearCookies();
-    cy.loginAs(users.bob.email, users.bob.password);
-    cy.visit(`/verses/${VERSE.abbrev}/${VERSE.chapter}`);
-    cy.get('[data-testid="community-filter-row"]').should("not.exist");
-  });
+	it("reader UI exposes the active-community selector", () => {
+		cy.resetDb();
+		cy.seedDb({
+			users: [users.alice],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+			communities: [
+				{
+					slug: "reformados",
+					name: "Reformados",
+					description: "fixture",
+					createdBy: users.alice.username,
+					memberCount: 1,
+				},
+			],
+			communityMemberships: [
+				{
+					username: users.alice.username,
+					communitySlug: "reformados",
+					status: "approved",
+					role: "moderator",
+				},
+			],
+			// Follow rows drive the picker (plan_community follow-up). Alice
+			// follows her own community by default — approve auto-follows IRL,
+			// but seeds inject rows directly.
+			communityFollows: [
+				{ username: users.alice.username, communitySlug: "reformados" },
+			],
+		});
+		cy.loginAs(users.alice.email, users.alice.password);
+		cy.visit("/verses/gn/1");
+		// Picker now lives in the AppHeader profile dropdown — click the
+		// avatar to open it before asserting the combobox is mounted.
+		cy.get('[aria-label="Menu da conta"]').click();
+		cy.get('[data-testid="active-community-select"]').should("exist");
+	});
 });

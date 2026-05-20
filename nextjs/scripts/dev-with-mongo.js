@@ -128,6 +128,9 @@ const COLLECTIONS = [
 	"comments",
 	"commentlikes",
 	"commentreports",
+	"communities",
+	"communitymemberships",
+	"communityfollows",
 	"discussions",
 	"discussionanswers",
 	"notifications",
@@ -161,7 +164,47 @@ async function seed(uri) {
 			updatedAt: new Date(),
 		})),
 	);
-	await db.collection("users").insertMany(userDocs);
+	const userIns = await db.collection("users").insertMany(userDocs);
+	const aliceId = String(userIns.insertedIds[0]); // FIXTURES.users[0] = alice
+	const bobId = String(userIns.insertedIds[1]); // = bob (NOT a member)
+
+	// Demo community for the plan_community read-path: alice is an
+	// approved moderator of "reformados"; bob is not a member. The
+	// comment endpoint with ?community=reformados then partitions
+	// alice's comments into `prioritized` and bob's into `others`.
+	const nowC = new Date();
+	const commIns = await db.collection("communities").insertOne({
+		slug: "reformados",
+		name: "Reformados",
+		description: "Comunidade de demonstração (plan_community)",
+		createdBy: aliceId,
+		memberCount: 1,
+		// alice follows her own community by default (plan_community
+		// follow-up: approving a member auto-follows; we mirror that
+		// invariant in the seed so the picker shows Reformados out of the
+		// box).
+		followerCount: 1,
+		createdAt: nowC,
+		updatedAt: nowC,
+	});
+	await db.collection("communitymemberships").insertMany([
+		{
+			userId: aliceId,
+			communityId: String(commIns.insertedId),
+			status: "approved",
+			role: "moderator",
+			joinedAt: nowC,
+		},
+	]);
+	await db.collection("communityfollows").insertOne({
+		userId: aliceId,
+		communityId: String(commIns.insertedId),
+		followedAt: nowC,
+	});
+	// bobId intentionally unused — kept around for ad-hoc seed extensions
+	// (e.g. seeding bob into a community). Reference it so eslint doesn't
+	// complain about unused vars.
+	if (bobId === "") throw new Error("unreachable");
 
 	await db.collection("books").insertOne(FIXTURES.book);
 	const { insertedIds } = await db
@@ -213,6 +256,11 @@ async function main() {
 		NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
 		AUTH_TRUST_HOST: "true",
 		NODE_ENV: "development",
+		// Each dev:mongo run spins a fresh memory-mongo with new ObjectIds,
+		// but Next's unstable_cache persists on disk under .next/cache. Skip
+		// the cache wrapper for these runs so verseIds, counts, etc. always
+		// reflect the just-seeded DB (see src/lib/conditional-cache.ts).
+		BC_SKIP_CACHE: "1",
 		// Capture password-reset emails locally so /api/_test/last-email can
 		// hand back the link instead of relying on a real Resend account.
 		EMAIL_TRANSPORT: process.env.EMAIL_TRANSPORT ?? "memory",

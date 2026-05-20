@@ -6,10 +6,7 @@ import Link from "next/link";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { commentsService } from "@/services/comments";
-import {
-	useCommunityFilter,
-	GENERAL_BUCKET,
-} from "@/lib/hooks/useCommunityFilter";
+import { useActiveCommunity } from "@/lib/hooks/useCommunityFilter";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/lib/comment-data";
@@ -104,6 +101,11 @@ export default function ChapterClient({
 	const [isTitleMode, setIsTitleMode] = useState(false);
 	const [comments, setComments] = useState<CommentData[]>([]);
 	const [titleComments, setTitleComments] = useState<CommentData[]>([]);
+	// Number of "prioritized" items at the start of `comments`
+	// (plan_community: partition by active community). 0 = no
+	// prioritization → render `comments` flat.
+	const [prioritizedCount, setPrioritizedCount] = useState(0);
+	const [othersExpanded, setOthersExpanded] = useState(false);
 	const [loadingComments, setLoadingComments] = useState(false);
 	const [countMap, setCountMap] = useState<Record<string, number>>(
 		initialCountMap ?? {},
@@ -123,11 +125,12 @@ export default function ChapterClient({
 		pessoal: false,
 		inspirado: false,
 	});
-	const [composeCommunity, setComposeCommunity] = useState<string>("");
-	const [userCommunities, setUserCommunities] = useState<
-		{ slug: string; name: string }[]
-	>([]);
-	const communityFilter = useCommunityFilter(user?.username);
+	// The picker now lives in the AppHeader profile dropdown (plan_community
+	// follow-up). The reader only needs `active` to drive the comment
+	// partition — skip the followed-list fetch on every chapter load.
+	const community = useActiveCommunity(user?.username, {
+		withFollowed: false,
+	});
 	const [composeSubmitting, setComposeSubmitting] = useState(false);
 	const [editingComment, setEditingComment] = useState<CommentData | null>(
 		null,
@@ -164,17 +167,34 @@ export default function ChapterClient({
 	const prevChapter = chapter > 1 ? chapter - 1 : null;
 	const nextChapter = chapter < book.chapters ? chapter + 1 : null;
 
-	const activeComments = isTitleMode ? titleComments : comments;
+	// plan_community: when an active community is selected and there are
+	// non-prioritized comments, hide them behind a "Ver outros comentários"
+	// toggle. With no active community, prioritizedCount is 0 → full list.
+	const hasOthersToggle =
+		!isTitleMode &&
+		community.active !== null &&
+		comments.length > prioritizedCount;
+	const hiddenOthersCount = hasOthersToggle
+		? comments.length - prioritizedCount
+		: 0;
+	const visibleVerseList =
+		hasOthersToggle && !othersExpanded
+			? comments.slice(0, prioritizedCount)
+			: comments;
+	const activeComments = isTitleMode ? titleComments : visibleVerseList;
 
 	const loadCounts = useCallback(async () => {
 		try {
 			const res = await commentsService.getForChapter(
 				book.abbrev,
 				chapter,
-				communityFilter.selected,
+				community.active,
 			);
 			const tc = (res.titleComments ?? []) as unknown as CommentData[];
-			const vc = (res.verseComments ?? []) as unknown as CommentData[];
+			const vc = [
+				...((res.prioritized ?? []) as unknown as CommentData[]),
+				...((res.others ?? []) as unknown as CommentData[]),
+			];
 			setTitleCount(tc.length);
 			const map: Record<string, number> = {};
 			vc.forEach((c) => {
@@ -184,15 +204,15 @@ export default function ChapterClient({
 		} catch {
 			// Comment counts are non-critical UI metadata; failures shouldn't surface.
 		}
-	}, [book.abbrev, chapter, communityFilter.selected]);
+	}, [book.abbrev, chapter, community.active]);
 
 	useEffect(() => {
 		// Skip the first paint when SSR already provided counts (no filter), but
 		// re-fetch on every filter change so the per-verse badges reflect the
 		// selected communities.
-		if (hasInitialCounts && communityFilter.selected === null) return;
+		if (hasInitialCounts && community.active === null) return;
 		loadCounts();
-	}, [hasInitialCounts, loadCounts, communityFilter.selected]);
+	}, [hasInitialCounts, loadCounts, community.active]);
 
 	// Reload the open panel's comments whenever the filter changes — keeps
 	// the sidebar in sync with the chips without making the user close +
@@ -207,7 +227,7 @@ export default function ChapterClient({
 					const res = await commentsService.getForChapter(
 						book.abbrev,
 						chapter,
-						communityFilter.selected,
+						community.active,
 					);
 					if (!cancelled)
 						setTitleComments(
@@ -223,10 +243,15 @@ export default function ChapterClient({
 						book.abbrev,
 						chapter,
 						selectedVerse.verseNumber,
-						communityFilter.selected,
+						community.active,
 					);
-					if (!cancelled)
-						setComments((res.verseComments ?? []) as unknown as CommentData[]);
+					if (!cancelled) {
+						const p = (res.prioritized ?? []) as unknown as CommentData[];
+						const o = (res.others ?? []) as unknown as CommentData[];
+						setComments([...p, ...o]);
+						setPrioritizedCount(p.length);
+						setOthersExpanded(false);
+					}
 				} catch {}
 			}
 		}
@@ -235,31 +260,7 @@ export default function ChapterClient({
 			cancelled = true;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [communityFilter.selected]);
-
-	// Fetch the user's communities once, on mount, so the "Postar em" select
-	// is already populated when the composer opens. Anonymous viewers skip the
-	// fetch entirely — the endpoint returns [] for them anyway, but cutting
-	// the request keeps the network panel clean.
-	useEffect(() => {
-		if (!user) return;
-		let cancelled = false;
-		(async () => {
-			try {
-				const res = await fetch("/api/users/me/communities");
-				if (!res.ok) return;
-				const data = (await res.json()) as {
-					items: { slug: string; name: string }[];
-				};
-				if (!cancelled) setUserCommunities(data.items);
-			} catch {
-				// Non-critical metadata fetch — silently keep the select empty.
-			}
-		})();
-		return () => {
-			cancelled = true;
-		};
-	}, [user]);
+	}, [community.active]);
 
 	const openTitlePanel = useCallback(async () => {
 		setIsTitleMode(true);
@@ -270,7 +271,7 @@ export default function ChapterClient({
 			const res = await commentsService.getForChapter(
 				book.abbrev,
 				chapter,
-				communityFilter.selected,
+				community.active,
 			);
 			setTitleComments((res.titleComments ?? []) as unknown as CommentData[]);
 		} catch {
@@ -278,7 +279,7 @@ export default function ChapterClient({
 		} finally {
 			setLoadingComments(false);
 		}
-	}, [book.abbrev, chapter, communityFilter.selected, handleNotification]);
+	}, [book.abbrev, chapter, community.active, handleNotification]);
 
 	const openVersePanel = useCallback(
 		async (verse: Verse) => {
@@ -296,9 +297,13 @@ export default function ChapterClient({
 					book.abbrev,
 					chapter,
 					verse.verseNumber,
-					communityFilter.selected,
+					community.active,
 				);
-				setComments((res.verseComments ?? []) as unknown as CommentData[]);
+				const p = (res.prioritized ?? []) as unknown as CommentData[];
+				const o = (res.others ?? []) as unknown as CommentData[];
+				setComments([...p, ...o]);
+				setPrioritizedCount(p.length);
+				setOthersExpanded(false);
 			} catch {
 				handleNotification("error", "Erro ao carregar comentários.");
 			} finally {
@@ -310,7 +315,7 @@ export default function ChapterClient({
 			chapter,
 			isTitleMode,
 			selectedVerse,
-			communityFilter.selected,
+			community.active,
 			handleNotification,
 		],
 	);
@@ -331,7 +336,6 @@ export default function ChapterClient({
 			pessoal: false,
 			inspirado: false,
 		});
-		setComposeCommunity("");
 		setComposing(false);
 	}, []);
 
@@ -375,7 +379,6 @@ export default function ChapterClient({
 					onTitle: isTitleMode,
 					text: composeText,
 					tags: tagList,
-					communitySlug: composeCommunity || undefined,
 				});
 				if (!result.ok) {
 					handleNotification("error", result.error || "Erro ao publicar.");
@@ -405,7 +408,6 @@ export default function ChapterClient({
 			requireLogin,
 			composeText,
 			composeTags,
-			composeCommunity,
 			isTitleMode,
 			book.abbrev,
 			chapter,
@@ -765,74 +767,10 @@ export default function ChapterClient({
 							/>
 						</div>
 
-						{/* Community filter chips — only renders for users in at least
-                one community. Geral is always available; clicking it toggles
-                showing the unmarked feed alongside the chosen communities. */}
-						{user &&
-							userCommunities.length > 0 &&
-							(() => {
-								const allChips = [
-									GENERAL_BUCKET,
-									...userCommunities.map((c) => c.slug),
-								];
-								// "null" means "all on" by default — first click switches to an
-								// explicit list (every chip minus the clicked one), so the
-								// visual stays consistent: tapping an active chip turns it off.
-								const handleChipClick = (slug: string) => {
-									if (communityFilter.selected === null) {
-										communityFilter.setSelected(
-											allChips.filter((s) => s !== slug),
-										);
-									} else {
-										communityFilter.toggle(slug);
-									}
-								};
-								return (
-									<div
-										data-testid="community-filter-row"
-										className="flex flex-wrap items-center gap-2 mb-5 text-[12px]"
-									>
-										<span className="text-slate-500 dark:text-slate-400 font-medium">
-											Mostrar:
-										</span>
-										{[
-											{ slug: GENERAL_BUCKET, name: "Geral" },
-											...userCommunities,
-										].map((c) => {
-											const isActive =
-												communityFilter.selected === null
-													? true
-													: communityFilter.selected.includes(c.slug);
-											return (
-												<button
-													key={c.slug}
-													type="button"
-													onClick={() => handleChipClick(c.slug)}
-													data-testid={`community-filter-chip-${c.slug}`}
-													data-active={isActive ? "true" : "false"}
-													className={`px-2.5 py-1 rounded-full border transition font-medium ${
-														isActive
-															? "bg-brand text-white border-brand"
-															: "bg-transparent text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand hover:text-brand"
-													}`}
-												>
-													{c.slug === GENERAL_BUCKET ? "Geral" : `/${c.slug}`}
-												</button>
-											);
-										})}
-										{communityFilter.selected !== null && (
-											<button
-												type="button"
-												onClick={() => communityFilter.setSelected(null)}
-												data-testid="community-filter-reset"
-												className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 hover:text-brand underline"
-											>
-												limpar filtro
-											</button>
-										)}
-									</div>
-								);
-							})()}
+						{/* Active community picker moved to the AppHeader profile
+                dropdown in the plan_community follow-up. The reader still
+                reads the active slug from localStorage to partition
+                comments — only the chooser surface changed. */}
 
 						{(titleCount > 0 || isTitleMode) && (
 							<button
@@ -1119,28 +1057,6 @@ export default function ChapterClient({
 												<p className="text-[13px] text-slate-600 dark:text-slate-300 leading-5 m-0">
 													{selectedVerse.verseNumber}. {selectedVerse.text}
 												</p>
-											</div>
-										)}
-
-										{/* Postar em — comunidade do usuário ou geral */}
-										{userCommunities.length > 0 && (
-											<div className="pt-3 px-4">
-												<label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-													Postar em
-												</label>
-												<select
-													value={composeCommunity}
-													onChange={(e) => setComposeCommunity(e.target.value)}
-													data-testid="compose-community-select"
-													className="w-full h-9 px-3 rounded-[7px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] text-slate-700 dark:text-slate-200 cursor-pointer"
-												>
-													<option value="">Geral</option>
-													{userCommunities.map((c) => (
-														<option key={c.slug} value={c.slug}>
-															/{c.slug} — {c.name}
-														</option>
-													))}
-												</select>
 											</div>
 										)}
 
@@ -1658,6 +1574,16 @@ export default function ChapterClient({
 											</div>
 										);
 									})}
+									{hasOthersToggle && !othersExpanded && (
+										<button
+											type="button"
+											data-testid="show-other-comments"
+											onClick={() => setOthersExpanded(true)}
+											className="block w-full mt-2 text-[12px] font-medium text-slate-500 dark:text-slate-400 hover:text-brand py-2"
+										>
+											Ver outros comentários ({hiddenOthersCount})
+										</button>
+									)}
 								</div>
 							)}
 						</div>

@@ -6,15 +6,23 @@ import { unstable_cache } from "next/cache";
 // surfaces as cascading "Versículo não encontrado" failures. Bypassing
 // the cache in CYPRESS mode keeps reads honest at a negligible cost
 // (memory-server is in-process anyway).
-const SKIP = process.env.CYPRESS === "1";
+//
+// BC_SKIP_CACHE covers the same hazard for `npm run dev:mongo`: each
+// run spins up a fresh memory-mongo with new ObjectIds, but Next's data
+// cache on disk (.next/cache) outlives the process. Without skipping,
+// the next dev:mongo session reads back verseIds from a previous seed
+// and downstream queries (countsForChapter, etc.) silently return empty.
+const SKIP = process.env.CYPRESS === "1" || process.env.BC_SKIP_CACHE === "1";
 
-export function conditionalCache<F extends (...args: never[]) => Promise<unknown>>(
-  fn: F,
-  keyParts: string[],
-  options: { revalidate: number; tags: string[] },
+export function conditionalCache<
+	F extends (...args: never[]) => Promise<unknown>,
+>(
+	fn: F,
+	keyParts: string[],
+	options: { revalidate: number; tags: string[] },
 ): F {
-  if (SKIP) return fn;
-  // unstable_cache narrows its generic in a way that conflicts with our
-  // simpler shape; the cast is safe because we hand the same fn back.
-  return unstable_cache(fn as never, keyParts, options) as F;
+	if (SKIP) return fn;
+	// unstable_cache narrows its generic in a way that conflicts with our
+	// simpler shape; the cast is safe because we hand the same fn back.
+	return unstable_cache(fn as never, keyParts, options) as F;
 }

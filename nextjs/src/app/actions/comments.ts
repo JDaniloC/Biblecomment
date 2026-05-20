@@ -11,13 +11,13 @@ import { MongoNotificationRepository } from "@/infrastructure/repositories/Mongo
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import {
-  ToggleLikeUseCase,
-  ReportCommentUseCase,
-  DeleteCommentUseCase,
-  CreateCommentUseCase,
-  UpdateCommentUseCase,
-  type ToggleLikeResult,
-  type ReportCommentResult,
+	ToggleLikeUseCase,
+	ReportCommentUseCase,
+	DeleteCommentUseCase,
+	CreateCommentUseCase,
+	UpdateCommentUseCase,
+	type ToggleLikeResult,
+	type ReportCommentResult,
 } from "@/application/use-cases/CommentUseCases";
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import type { Comment } from "@/domain/entities/Comment";
@@ -32,16 +32,16 @@ const MENTION_REGEX = /@[A-Za-z0-9_]+/;
  * serialize this directly to the client.
  */
 export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
+	| { ok: true; data: T }
+	| { ok: false; error: string };
 
 function authError(): ActionResult<never> {
-  return { ok: false, error: "Unauthorized" };
+	return { ok: false, error: "Unauthorized" };
 }
 
 function appError(err: unknown, fallback: string): ActionResult<never> {
-  if (err instanceof Error) return { ok: false, error: err.message };
-  return { ok: false, error: fallback };
+	if (err instanceof Error) return { ok: false, error: err.message };
+	return { ok: false, error: fallback };
 }
 
 /**
@@ -50,35 +50,38 @@ function appError(err: unknown, fallback: string): ActionResult<never> {
  * can update the UI without a re-fetch.
  */
 export async function toggleLikeAction(
-  commentId: string,
+	commentId: string,
 ): Promise<ActionResult<ToggleLikeResult>> {
-  const session = await auth();
-  if (!session?.user) return authError();
+	const session = await auth();
+	if (!session?.user) return authError();
 
-  try {
-    const useCase = new ToggleLikeUseCase(
-      new MongoCommentRepository(),
-      new MongoCommentLikeRepository(),
-    );
-    const result = await useCase.execute(commentId, session.user.id);
-    // Only fire the badge evaluator when this toggle ADDED a like — toggling
-    // off doesn't progress the user toward `first-like`.
-    if (result.likedByMe) {
-      await evaluateBadges({
-        userId: session.user.id,
-        username: session.user.username,
-        axes: ["interaction"],
-        hints: { hasGivenLike: true },
-      });
-    }
-    // Chapter pages render the like count server-side; revalidate so the
-    // server-rendered HTML reflects the new state on next navigation.
-    revalidatePath("/verses/[abbrev]/[number]", "page");
-    return { ok: true, data: result };
-  } catch (err) {
-    logger.error({ err, action: "toggleLikeAction", commentId }, "toggle like failed");
-    return appError(err, "Erro ao curtir.");
-  }
+	try {
+		const useCase = new ToggleLikeUseCase(
+			new MongoCommentRepository(),
+			new MongoCommentLikeRepository(),
+		);
+		const result = await useCase.execute(commentId, session.user.id);
+		// Only fire the badge evaluator when this toggle ADDED a like — toggling
+		// off doesn't progress the user toward `first-like`.
+		if (result.likedByMe) {
+			await evaluateBadges({
+				userId: session.user.id,
+				username: session.user.username,
+				axes: ["interaction"],
+				hints: { hasGivenLike: true },
+			});
+		}
+		// Chapter pages render the like count server-side; revalidate so the
+		// server-rendered HTML reflects the new state on next navigation.
+		revalidatePath("/verses/[abbrev]/[number]", "page");
+		return { ok: true, data: result };
+	} catch (err) {
+		logger.error(
+			{ err, action: "toggleLikeAction", commentId },
+			"toggle like failed",
+		);
+		return appError(err, "Erro ao curtir.");
+	}
 }
 
 /**
@@ -87,27 +90,30 @@ export async function toggleLikeAction(
  * reporting twice is a no-op.
  */
 export async function reportCommentAction(
-  commentId: string,
+	commentId: string,
 ): Promise<ActionResult<ReportCommentResult>> {
-  const session = await auth();
-  if (!session?.user) return authError();
+	const session = await auth();
+	if (!session?.user) return authError();
 
-  try {
-    const useCase = new ReportCommentUseCase(
-      new MongoCommentRepository(),
-      new MongoCommentReportRepository(),
-    );
-    const result = await useCase.execute(
-      commentId,
-      session.user.id,
-      session.user.username,
-    );
-    revalidatePath("/verses/[abbrev]/[number]", "page");
-    return { ok: true, data: result };
-  } catch (err) {
-    logger.error({ err, action: "reportCommentAction", commentId }, "report failed");
-    return appError(err, "Erro ao reportar.");
-  }
+	try {
+		const useCase = new ReportCommentUseCase(
+			new MongoCommentRepository(),
+			new MongoCommentReportRepository(),
+		);
+		const result = await useCase.execute(
+			commentId,
+			session.user.id,
+			session.user.username,
+		);
+		revalidatePath("/verses/[abbrev]/[number]", "page");
+		return { ok: true, data: result };
+	} catch (err) {
+		logger.error(
+			{ err, action: "reportCommentAction", commentId },
+			"report failed",
+		);
+		return appError(err, "Erro ao reportar.");
+	}
 }
 
 /**
@@ -120,170 +126,195 @@ export async function reportCommentAction(
  * including NotifyMentionsUseCase wiring.
  */
 export async function createCommentAction(
-  verseId: string,
-  draft: { text: string; tags?: string[]; onTitle?: boolean; communitySlug?: string },
+	verseId: string,
+	draft: { text: string; tags?: string[]; onTitle?: boolean },
 ): Promise<ActionResult<Comment>> {
-  const session = await auth();
-  if (!session?.user) return authError();
+	const session = await auth();
+	if (!session?.user) return authError();
 
-  if (!draft.text || !draft.text.trim()) {
-    return { ok: false, error: "text é obrigatório" };
-  }
+	if (!draft.text || !draft.text.trim()) {
+		return { ok: false, error: "text é obrigatório" };
+	}
 
-  try {
-    const parts = verseId.split("/").filter(Boolean);
-    if (parts.length < 2 || parts.length > 3) {
-      return { ok: false, error: "Invalid verse slug" };
-    }
+	try {
+		const parts = verseId.split("/").filter(Boolean);
+		if (parts.length < 2 || parts.length > 3) {
+			return { ok: false, error: "Invalid verse slug" };
+		}
 
-    const abbrev = parts[0].toLowerCase();
-    const chapter = parseInt(parts[1], 10);
-    const verseNum = parts.length === 3 ? parseInt(parts[2], 10) : null;
-    if (isNaN(chapter) || (verseNum !== null && isNaN(verseNum))) {
-      return { ok: false, error: "Invalid verse slug" };
-    }
+		const abbrev = parts[0].toLowerCase();
+		const chapter = parseInt(parts[1], 10);
+		const verseNum = parts.length === 3 ? parseInt(parts[2], 10) : null;
+		if (isNaN(chapter) || (verseNum !== null && isNaN(verseNum))) {
+			return { ok: false, error: "Invalid verse slug" };
+		}
 
-    const verseRepo = new MongoVerseRepository();
-    const titleSlug = parts.length === 2;
-    let verse;
-    if (titleSlug) {
-      const verses = await verseRepo.findByAbbrevAndChapter(abbrev, chapter);
-      verse = verses[0] ?? null;
-    } else {
-      verse = await verseRepo.findByAbbrevChapterVerse(abbrev, chapter, verseNum!);
-    }
-    if (!verse || !verse._id) {
-      return { ok: false, error: "Verse not found" };
-    }
+		const verseRepo = new MongoVerseRepository();
+		const titleSlug = parts.length === 2;
+		let verse;
+		if (titleSlug) {
+			const verses = await verseRepo.findByAbbrevAndChapter(abbrev, chapter);
+			verse = verses[0] ?? null;
+		} else {
+			verse = await verseRepo.findByAbbrevChapterVerse(
+				abbrev,
+				chapter,
+				verseNum!,
+			);
+		}
+		if (!verse || !verse._id) {
+			return { ok: false, error: "Verse not found" };
+		}
 
-    // Title slug forces onTitle=true (matches the chapter-level POST route).
-    const onTitle = titleSlug ? true : (draft.onTitle ?? false);
-    const tags = draft.tags ?? [];
+		// Title slug forces onTitle=true (matches the chapter-level POST route).
+		const onTitle = titleSlug ? true : (draft.onTitle ?? false);
+		const tags = draft.tags ?? [];
 
-    const commentRepo = new MongoCommentRepository();
-    const useCase = new CreateCommentUseCase(
-      commentRepo,
-      verseRepo,
-      new MongoCommunityRepository(),
-      new MongoCommunityMembershipRepository(),
-      new MongoUserRepository(),
-    );
-    const comment = await useCase.execute({
-      verseId: verse._id,
-      username: session.user.username,
-      text: draft.text,
-      tags,
-      onTitle,
-      communitySlug: draft.communitySlug,
-    });
+		const commentRepo = new MongoCommentRepository();
+		const useCase = new CreateCommentUseCase(
+			commentRepo,
+			verseRepo,
+			new MongoCommunityRepository(),
+			new MongoCommunityMembershipRepository(),
+			new MongoUserRepository(),
+		);
+		const comment = await useCase.execute({
+			verseId: verse._id,
+			username: session.user.username,
+			text: draft.text,
+			tags,
+			onTitle,
+		});
 
-    if (comment._id) {
-      const notifyMentions = new NotifyMentionsUseCase(
-        new MongoUserRepository(),
-        new MongoNotificationRepository(),
-      );
-      await notifyMentions.execute({
-        text: draft.text,
-        actor: session.user.username,
-        type: "comment_mention",
-        resourceType: "comment",
-        resourceId: comment._id,
-        url: `/verses/${verse.abbrev}/${verse.chapter}#${verse.verseNumber}`,
-      });
-    }
+		if (comment._id) {
+			const notifyMentions = new NotifyMentionsUseCase(
+				new MongoUserRepository(),
+				new MongoNotificationRepository(),
+			);
+			await notifyMentions.execute({
+				text: draft.text,
+				actor: session.user.username,
+				type: "comment_mention",
+				resourceType: "comment",
+				resourceId: comment._id,
+				url: `/verses/${verse.abbrev}/${verse.chapter}#${verse.verseNumber}`,
+			});
+		}
 
-    await evaluateBadges({
-      userId: session.user.id,
-      username: session.user.username,
-      axes: ["commenter-volume", "commenter-diversity", "commenter-tags", "interaction"],
-      hints: {
-        hasMentioned: MENTION_REGEX.test(draft.text) || undefined,
-      },
-    });
+		await evaluateBadges({
+			userId: session.user.id,
+			username: session.user.username,
+			axes: [
+				"commenter-volume",
+				"commenter-diversity",
+				"commenter-tags",
+				"interaction",
+			],
+			hints: {
+				hasMentioned: MENTION_REGEX.test(draft.text) || undefined,
+			},
+		});
 
-    revalidatePath("/verses/[abbrev]/[number]", "page");
-    // Fresh comments have no like rows — return well-formed stats so the
-    // client doesn't render `Útil · ` (undefined) on the optimistic insert.
-    return { ok: true, data: { ...comment, likeCount: 0, likedByMe: false } };
-  } catch (err) {
-    logger.error({ err, action: "createCommentAction", verseId }, "create comment failed");
-    return appError(err, "Erro ao criar comentário.");
-  }
+		revalidatePath("/verses/[abbrev]/[number]", "page");
+		// Fresh comments have no like rows — return well-formed stats so the
+		// client doesn't render `Útil · ` (undefined) on the optimistic insert.
+		return { ok: true, data: { ...comment, likeCount: 0, likedByMe: false } };
+	} catch (err) {
+		logger.error(
+			{ err, action: "createCommentAction", verseId },
+			"create comment failed",
+		);
+		return appError(err, "Erro ao criar comentário.");
+	}
 }
 
 /**
  * Update a comment's text/tags. Owner only — UpdateCommentUseCase enforces.
  */
 export async function updateCommentAction(
-  commentId: string,
-  draft: { text: string; tags?: string[] },
+	commentId: string,
+	draft: { text: string; tags?: string[] },
 ): Promise<ActionResult<Comment>> {
-  const session = await auth();
-  if (!session?.user) return authError();
+	const session = await auth();
+	if (!session?.user) return authError();
 
-  if (!draft.text || !draft.text.trim()) {
-    return { ok: false, error: "text é obrigatório" };
-  }
+	if (!draft.text || !draft.text.trim()) {
+		return { ok: false, error: "text é obrigatório" };
+	}
 
-  try {
-    const repo = new MongoCommentRepository();
-    const useCase = new UpdateCommentUseCase(repo);
-    const updated = await useCase.execute(
-      commentId,
-      session.user.username,
-      draft.text,
-      draft.tags ?? [],
-    );
-    // Re-enrich so the client keeps a consistent { likeCount, likedByMe }
-    // contract across create / update / read paths.
-    const likeRepo = new MongoCommentLikeRepository();
-    const [counts, liked] = await Promise.all([
-      likeRepo.countByComment([commentId]),
-      likeRepo.whichLiked(session.user.id, [commentId]),
-    ]);
-    revalidatePath("/verses/[abbrev]/[number]", "page");
-    return {
-      ok: true,
-      data: {
-        ...updated,
-        likeCount: counts.get(commentId) ?? 0,
-        likedByMe: liked.has(commentId),
-      },
-    };
-  } catch (err) {
-    if (err instanceof Error) {
-      if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
-      if (err.message === "Comment not found") return { ok: false, error: "NotFound" };
-    }
-    logger.error({ err, action: "updateCommentAction", commentId }, "update comment failed");
-    return appError(err, "Erro ao atualizar comentário.");
-  }
+	try {
+		const repo = new MongoCommentRepository();
+		const useCase = new UpdateCommentUseCase(repo);
+		const updated = await useCase.execute(
+			commentId,
+			session.user.username,
+			draft.text,
+			draft.tags ?? [],
+		);
+		// Re-enrich so the client keeps a consistent { likeCount, likedByMe }
+		// contract across create / update / read paths.
+		const likeRepo = new MongoCommentLikeRepository();
+		const [counts, liked] = await Promise.all([
+			likeRepo.countByComment([commentId]),
+			likeRepo.whichLiked(session.user.id, [commentId]),
+		]);
+		revalidatePath("/verses/[abbrev]/[number]", "page");
+		return {
+			ok: true,
+			data: {
+				...updated,
+				likeCount: counts.get(commentId) ?? 0,
+				likedByMe: liked.has(commentId),
+			},
+		};
+	} catch (err) {
+		if (err instanceof Error) {
+			if (err.message === "Unauthorized")
+				return { ok: false, error: "Forbidden" };
+			if (err.message === "Comment not found")
+				return { ok: false, error: "NotFound" };
+		}
+		logger.error(
+			{ err, action: "updateCommentAction", commentId },
+			"update comment failed",
+		);
+		return appError(err, "Erro ao atualizar comentário.");
+	}
 }
 
 /**
  * Delete a comment. Owner OR moderator only — the use case enforces.
  */
 export async function deleteCommentAction(
-  commentId: string,
+	commentId: string,
 ): Promise<ActionResult<{ deleted: true }>> {
-  const session = await auth();
-  if (!session?.user) return authError();
+	const session = await auth();
+	if (!session?.user) return authError();
 
-  try {
-    const useCase = new DeleteCommentUseCase(
-      new MongoCommentRepository(),
-      new MongoCommentLikeRepository(),
-      new MongoCommentReportRepository(),
-    );
-    await useCase.execute(commentId, session.user.username, session.user.moderator);
-    revalidatePath("/verses/[abbrev]/[number]", "page");
-    return { ok: true, data: { deleted: true } };
-  } catch (err) {
-    if (err instanceof Error) {
-      if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
-      if (err.message === "Comment not found") return { ok: false, error: "NotFound" };
-    }
-    logger.error({ err, action: "deleteCommentAction", commentId }, "delete failed");
-    return appError(err, "Erro ao excluir.");
-  }
+	try {
+		const useCase = new DeleteCommentUseCase(
+			new MongoCommentRepository(),
+			new MongoCommentLikeRepository(),
+			new MongoCommentReportRepository(),
+		);
+		await useCase.execute(
+			commentId,
+			session.user.username,
+			session.user.moderator,
+		);
+		revalidatePath("/verses/[abbrev]/[number]", "page");
+		return { ok: true, data: { deleted: true } };
+	} catch (err) {
+		if (err instanceof Error) {
+			if (err.message === "Unauthorized")
+				return { ok: false, error: "Forbidden" };
+			if (err.message === "Comment not found")
+				return { ok: false, error: "NotFound" };
+		}
+		logger.error(
+			{ err, action: "deleteCommentAction", commentId },
+			"delete failed",
+		);
+		return appError(err, "Erro ao excluir.");
+	}
 }

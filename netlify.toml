@@ -51,5 +51,11 @@
 #   SENTRY_ORG             — slug of the Sentry org (build-time, source maps)
 #   SENTRY_PROJECT         — slug of the Sentry project (build-time, source maps)
 #   SENTRY_AUTH_TOKEN      — internal-integration token w/ `project:releases` scope (build-time only)
+#   VAPID_PUBLIC_KEY       — Web Push public key (also sent to clients) — `npx web-push generate-vapid-keys`
+#   VAPID_PRIVATE_KEY      — Web Push private key (server only, NEVER commit)
+#   VAPID_SUBJECT          — optional, mailto: contact (defaults to mailto:felipe@simpleread.foundation)
+#
+# Web Push is disabled gracefully when VAPID_PUBLIC_KEY/PRIVATE_KEY are
+# absent (the opt-in UI hides itself; no notification cost).
 #
 # Do NOT set EMAIL_TRANSPORT in production — it's a Cypress/dev-only switch.
