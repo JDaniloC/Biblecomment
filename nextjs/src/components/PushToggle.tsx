@@ -103,8 +103,8 @@ export function PushToggle() {
 					method: "DELETE",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ endpoint: sub.endpoint }),
-				}).catch(() => undefined);
-				await sub.unsubscribe().catch(() => undefined);
+				}).catch(() => {});
+				await sub.unsubscribe().catch(() => {});
 			}
 			setStatus("off");
 		} catch {

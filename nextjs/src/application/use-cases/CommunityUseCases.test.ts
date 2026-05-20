@@ -244,7 +244,7 @@ function makeMembershipRepo(): ICommunityMembershipRepository & {
 		},
 		async isModerator(userId, communityId) {
 			const r = rows.get(key(userId, communityId));
-			return !!r && r.role === "moderator" && r.status === "approved";
+			return Boolean(r) && r?.role === "moderator" && r?.status === "approved";
 		},
 	};
 }

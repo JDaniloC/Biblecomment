@@ -185,7 +185,7 @@ export class DeleteCommentUseCase {
 	async execute(
 		id: string,
 		username: string,
-		isModerator: boolean = false,
+		isModerator = false,
 	): Promise<void> {
 		const comment = await this.commentRepo.findById(id);
 		if (!comment) throw new Error("Comment not found");
@@ -197,10 +197,10 @@ export class DeleteCommentUseCase {
 		// the delete (the source of truth for "is this comment alive" is the
 		// CommentModel doc, which we just removed).
 		if (this.likeRepo) {
-			await this.likeRepo.deleteAllByComment(id).catch(() => undefined);
+			await this.likeRepo.deleteAllByComment(id).catch(() => {});
 		}
 		if (this.reportRepo) {
-			await this.reportRepo.deleteAllByComment(id).catch(() => undefined);
+			await this.reportRepo.deleteAllByComment(id).catch(() => {});
 		}
 	}
 }

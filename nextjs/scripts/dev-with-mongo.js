@@ -201,7 +201,10 @@ async function seed(uri) {
 		communityId: String(commIns.insertedId),
 		followedAt: nowC,
 	});
-	void bobId;
+	// bobId intentionally unused — kept around for ad-hoc seed extensions
+	// (e.g. seeding bob into a community). Reference it so eslint doesn't
+	// complain about unused vars.
+	if (bobId === "") throw new Error("unreachable");
 
 	await db.collection("books").insertOne(FIXTURES.book);
 	const { insertedIds } = await db

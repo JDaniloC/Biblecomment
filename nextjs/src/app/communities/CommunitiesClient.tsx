@@ -17,14 +17,12 @@ interface ViewerSession {
 interface Props {
 	initialItems: Community[];
 	initialTotal: number;
-	pageSize: number;
 	viewer: ViewerSession | null;
 }
 
 export default function CommunitiesClient({
 	initialItems,
 	initialTotal,
-	pageSize,
 	viewer,
 }: Props) {
 	const { handleNotification } = useNotification();

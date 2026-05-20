@@ -31,7 +31,6 @@ interface Props {
 	viewer: ViewerSession | null;
 	initialComments: CommunityCommentItem[];
 	initialCommentsTotal: number;
-	commentsPageSize: number;
 }
 
 /**
@@ -75,7 +74,6 @@ export default function CommunityDetailClient({
 	viewer,
 	initialComments,
 	initialCommentsTotal,
-	commentsPageSize,
 }: Props) {
 	const { handleNotification } = useNotification();
 	type Status = "none" | "pending" | "approved";
@@ -103,7 +101,7 @@ export default function CommunityDetailClient({
 					setRole(r.role);
 				}
 			})
-			.catch(() => undefined);
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
@@ -123,7 +121,7 @@ export default function CommunityDetailClient({
 			.then((r) => {
 				if (!cancelled) setFollowing(r.following);
 			})
-			.catch(() => undefined);
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
@@ -148,7 +146,7 @@ export default function CommunityDetailClient({
 			.then((list) => {
 				if (!cancelled) setMembers(list);
 			})
-			.catch(() => undefined);
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
@@ -194,7 +192,7 @@ export default function CommunityDetailClient({
 			.then((reqs) => {
 				if (!cancelled) setPending(reqs);
 			})
-			.catch(() => undefined);
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
@@ -232,7 +230,7 @@ export default function CommunityDetailClient({
 				setCommentsTotal(json.total);
 				setCommentsPage(1);
 			})
-			.catch(() => undefined);
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};

@@ -24,7 +24,6 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 	const session = await auth();
 	let isMember = false;
 	let isCreator = false;
-	let creatorUsername: string | undefined;
 
 	const userRepo = new MongoUserRepository();
 	if (session?.user?.email) {
@@ -41,7 +40,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 	// Resolve creator username for display — falls back to "alguém" if the
 	// user account was hard-deleted (rare, but the page should still render).
 	const [creator] = await userRepo.findManyByIds([community.createdBy]);
-	creatorUsername = creator?.username;
+	const creatorUsername = creator?.username;
 
 	const commentsResult = await new ListCommunityCommentsUseCase(
 		new MongoCommentRepository(),
@@ -76,7 +75,6 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 			viewer={viewer}
 			initialComments={initialComments}
 			initialCommentsTotal={commentsResult.total}
-			commentsPageSize={INITIAL_COMMENTS}
 		/>
 	);
 }

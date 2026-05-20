@@ -8,8 +8,8 @@ function sub(endpoint: string): StoredPushSubscription {
 	return {
 		username: "alice",
 		endpoint,
-		p256dh: "p_" + endpoint,
-		auth: "a_" + endpoint,
+		p256dh: `p_${endpoint}`,
+		auth: `a_${endpoint}`,
 	};
 }
 

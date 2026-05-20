@@ -24,7 +24,6 @@ export default async function CommunitiesPage() {
     <CommunitiesClient
       initialItems={result.items}
       initialTotal={result.total}
-      pageSize={PAGE_SIZE}
       viewer={viewer}
     />
   );

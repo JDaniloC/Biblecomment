@@ -1,11 +1,25 @@
 version = 1
 
+# Node-only scripts that legitimately use console.log (migrations,
+# dev orchestrator, safety helpers). DeepSource's "no console in
+# browser code" (JS-0002) misclassifies these as browser modules.
+exclude_patterns = ["nextjs/scripts/**"]
+
 [[analyzers]]
 name = "javascript"
 enabled = true
 
   [analyzers.meta]
   plugins = ["react"]
+  # Treat Cypress specs and Vitest files as tests so DeepSource downgrades
+  # anti-patterns that are part of the BDD idiom — e.g. JS-0354 firing on
+  # `expect(x).to.exist` because `.exist` is a Chai getter, not a no-op
+  # expression.
+  test_patterns = [
+    "nextjs/cypress/e2e/**/*.cy.ts",
+    "nextjs/cypress/tasks/**/*.ts",
+    "nextjs/src/**/*.test.ts",
+  ]
 
 [[transformers]]
 name = "prettier"

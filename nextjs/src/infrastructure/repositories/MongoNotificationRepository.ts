@@ -46,7 +46,7 @@ function firePush(n: {
 			url: n.url,
 			tag: n.type,
 		})
-		.catch(() => undefined);
+		.catch(() => {});
 }
 
 function toEntity(doc: INotificationDocument): Notification {

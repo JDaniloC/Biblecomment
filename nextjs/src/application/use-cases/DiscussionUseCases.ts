@@ -180,7 +180,7 @@ export class DeleteDiscussionUseCase {
     // Cascade answers for the dead discussion. Best-effort — failure here
     // doesn't undo the discussion delete (the parent row is already gone).
     if (this.answerRepo) {
-      await this.answerRepo.deleteByDiscussion(id).catch(() => undefined);
+      await this.answerRepo.deleteByDiscussion(id).catch(() => {});
     }
   }
 }
