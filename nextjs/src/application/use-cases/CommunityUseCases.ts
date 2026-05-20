@@ -129,6 +129,55 @@ export class ApproveMemberUseCase {
 	}
 }
 
+/**
+ * List approved members of a community, enriched with username + role + an
+ * `isCreator` flag. Used by the community-detail page to render the
+ * moderator-management list — the role badge + the (creator-only) "Tornar
+ * moderador" toggle.
+ *
+ * Anyone signed-in can read this; the moderation actions on top of it are
+ * still gated downstream by SetModeratorUseCase (creator-only).
+ */
+export interface CommunityMemberView {
+	userId: string;
+	username: string | null;
+	role: "member" | "moderator";
+	isCreator: boolean;
+	joinedAt?: Date;
+}
+
+export class ListCommunityMembersUseCase {
+	constructor(
+		private readonly communities: ICommunityRepository,
+		private readonly memberships: ICommunityMembershipRepository,
+		private readonly userRepo: IUserRepository,
+	) {}
+	async execute(slug: string): Promise<CommunityMemberView[]> {
+		const c = await this.communities.findBySlug(slug);
+		if (!c?._id) return [];
+		const rows = await this.memberships.listByStatus(c._id, "approved");
+		if (rows.length === 0) return [];
+		const users = await this.userRepo.findManyByIds(rows.map((m) => m.userId));
+		const usernameById = new Map(users.map((u) => [u._id ?? "", u.username]));
+		// Creator first, then moderators (alphabetical), then plain members
+		// (alphabetical). Tie-breaking on username keeps the order stable
+		// between refreshes so the UI doesn't visually shuffle on re-fetch.
+		return rows
+			.map((m): CommunityMemberView => ({
+				userId: m.userId,
+				username: usernameById.get(m.userId) ?? null,
+				role: m.role ?? "member",
+				isCreator: m.userId === c.createdBy,
+				joinedAt: m.joinedAt,
+			}))
+			.sort((a, b) => {
+				if (a.isCreator !== b.isCreator) return a.isCreator ? -1 : 1;
+				if (a.role !== b.role) return a.role === "moderator" ? -1 : 1;
+				return (a.username ?? "").localeCompare(b.username ?? "", "pt-BR");
+			});
+	}
+}
+
 export class RejectMemberUseCase {
 	constructor(
 		private readonly communities: ICommunityRepository,

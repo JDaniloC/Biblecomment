@@ -106,6 +106,29 @@ export const communityService = {
 		if (!res.ok) throw new Error(await parseError(res));
 	},
 
+	async listMembers(slug: string): Promise<
+		{
+			userId: string;
+			username: string | null;
+			role: "member" | "moderator";
+			isCreator: boolean;
+			joinedAt: string | null;
+		}[]
+	> {
+		const res = await fetch(`/api/communities/${slug}/members`);
+		if (!res.ok) throw new Error(await parseError(res));
+		const body = (await res.json()) as {
+			members: {
+				userId: string;
+				username: string | null;
+				role: "member" | "moderator";
+				isCreator: boolean;
+				joinedAt: string | null;
+			}[];
+		};
+		return body.members ?? [];
+	},
+
 	async listRequests(
 		slug: string,
 	): Promise<{ userId: string; username: string | null; joinedAt?: string }[]> {

@@ -129,6 +129,61 @@ export default function CommunityDetailClient({
 		};
 	}, [viewer, community.slug]);
 
+	// Approved members list (creator-only management). Anyone can read it
+	// via the API but we only render the toggles for the creator.
+	const [members, setMembers] = useState<
+		{
+			userId: string;
+			username: string | null;
+			role: "member" | "moderator";
+			isCreator: boolean;
+			joinedAt: string | null;
+		}[]
+	>([]);
+	useEffect(() => {
+		if (!isCreator) return;
+		let cancelled = false;
+		communityService
+			.listMembers(community.slug)
+			.then((list) => {
+				if (!cancelled) setMembers(list);
+			})
+			.catch(() => undefined);
+		return () => {
+			cancelled = true;
+		};
+	}, [isCreator, community.slug]);
+
+	async function handleToggleModerator(userId: string, currentlyMod: boolean) {
+		if (busy) return;
+		setBusy(true);
+		// Optimistic — flip the badge locally; revert on failure.
+		setMembers((prev) =>
+			prev.map((m) =>
+				m.userId === userId
+					? { ...m, role: currentlyMod ? "member" : "moderator" }
+					: m,
+			),
+		);
+		try {
+			await communityService.setModerator(community.slug, userId, !currentlyMod);
+		} catch {
+			setMembers((prev) =>
+				prev.map((m) =>
+					m.userId === userId
+						? { ...m, role: currentlyMod ? "moderator" : "member" }
+						: m,
+				),
+			);
+			handleNotification(
+				"error",
+				"Não foi possível atualizar o papel desse membro.",
+			);
+		} finally {
+			setBusy(false);
+		}
+	}
+
 	// Moderator viewers get the pending list.
 	useEffect(() => {
 		const isModerator = role === "moderator" || isCreator;
@@ -482,6 +537,72 @@ export default function CommunityDetailClient({
 								))}
 							</ul>
 						)}
+					</section>
+				)}
+
+				{isCreator && members.length > 0 && (
+					<section
+						data-testid="community-members"
+						className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-5"
+					>
+						<h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
+							Membros aprovados ({members.length})
+						</h2>
+						<ul className="flex flex-col gap-2">
+							{members.map((m) => {
+								const mod = m.role === "moderator";
+								return (
+									<li
+										key={m.userId}
+										data-testid={`community-member-${m.userId}`}
+										className="flex items-center justify-between gap-3 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
+									>
+										<div className="flex items-center gap-2 min-w-0">
+											{m.username ? (
+												<Link
+													href={`/u/${m.username}`}
+													className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-brand truncate"
+												>
+													@{m.username}
+												</Link>
+											) : (
+												<span className="text-sm text-slate-400 dark:text-slate-500">
+													(usuário removido)
+												</span>
+											)}
+											{m.isCreator && (
+												<span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-tint text-brand">
+													Criadora
+												</span>
+											)}
+											{mod && !m.isCreator && (
+												<span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+													Moderador
+												</span>
+											)}
+										</div>
+										{/* Creator's row is non-toggleable — by convention they're
+                        always a moderator and the SetModerator use-case
+                        rejects creator self-edits anyway. */}
+										{!m.isCreator && (
+											<button
+												type="button"
+												onClick={() => handleToggleModerator(m.userId, mod)}
+												disabled={busy}
+												data-testid={`toggle-mod-${m.userId}`}
+												className={`text-xs font-semibold px-3 py-1.5 rounded-md transition disabled:opacity-60 ${
+													mod
+														? "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-900/60"
+														: "bg-brand text-white hover:bg-brand/90"
+												}`}
+											>
+												{mod ? "Remover moderador" : "Tornar moderador"}
+											</button>
+										)}
+									</li>
+								);
+							})}
+						</ul>
 					</section>
 				)}
 

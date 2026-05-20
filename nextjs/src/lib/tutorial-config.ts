@@ -45,7 +45,7 @@ export const CHAPTER_TUTORIAL: DriveStep[] = [
     popover: {
       title: "Sua conta",
       description:
-        "No menu da sua foto você acessa Perfil, Configurações, Privacidade e a opção de exportar seus dados (LGPD).",
+        "No menu da sua foto você acessa Perfil, Configurações, Privacidade e exportar seus dados (LGPD). Aqui também fica o seletor de comunidade ativa — se você seguir uma comunidade, os comentários dos membros aprovados aparecem priorizados na leitura.",
       side: "left",
     },
   },

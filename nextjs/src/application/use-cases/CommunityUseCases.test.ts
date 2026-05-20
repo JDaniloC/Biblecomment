@@ -10,6 +10,7 @@ import {
 	UnfollowCommunityUseCase,
 	MyFollowedCommunitiesUseCase,
 	MyFollowStatusUseCase,
+	ListCommunityMembersUseCase,
 	MAX_COMMUNITIES_PER_USER,
 } from "./CommunityUseCases";
 import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
@@ -539,5 +540,84 @@ describe("Community follow use-cases (plan_community follow-up)", () => {
 
 		expect((await communityRepo.findBySlug("alpha"))?.memberCount).toBe(1);
 		expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(0);
+	});
+});
+
+describe("ListCommunityMembersUseCase", () => {
+	it("sorts creator → moderators (alphabetical) → members (alphabetical)", async () => {
+		const communityRepo = makeCommunityRepo();
+		const membershipRepo = makeMembershipRepo();
+		const c = await communityRepo.create({
+			slug: "alpha",
+			name: "Alpha",
+			description: "",
+			createdBy: "u-alice",
+		});
+		// alice is the creator; carol is moderator; bob + dave are plain members.
+		const userRepo: IUserRepository = {
+			findByEmail: async () => null,
+			findByUsername: async () => null,
+			findByUsernamePublic: async () => null,
+			searchByUsernamePrefix: async () => [],
+			findByUsernames: async () => [],
+			findManyByIds: async (ids) =>
+				ids.map(
+					(id) =>
+						({
+							_id: id,
+							email: `${id}@x`,
+							username: { "u-alice": "alice", "u-bob": "bob", "u-carol": "carol", "u-dave": "dave" }[id] ?? id,
+							password: "",
+							state: "",
+							belief: "",
+							showBelief: false,
+							moderator: false,
+							tutorialsCompleted: [],
+							badges: [],
+						}) as User,
+				),
+			findAll: async () => [],
+			findAllPaginated: async () => [],
+			create: async () => ({}) as User,
+			updatePassword: async () => {},
+			updatePasswordById: async () => {},
+			update: async () => null,
+			markTutorialCompleted: async () => {},
+			addBadges: async () => [],
+			delete: async () => {},
+		};
+		await membershipRepo.createRequest("u-alice", c._id!);
+		await membershipRepo.setStatus("u-alice", c._id!, "approved");
+		await membershipRepo.setRole("u-alice", c._id!, "moderator");
+		await membershipRepo.createRequest("u-bob", c._id!);
+		await membershipRepo.setStatus("u-bob", c._id!, "approved");
+		await membershipRepo.createRequest("u-carol", c._id!);
+		await membershipRepo.setStatus("u-carol", c._id!, "approved");
+		await membershipRepo.setRole("u-carol", c._id!, "moderator");
+		await membershipRepo.createRequest("u-dave", c._id!);
+		await membershipRepo.setStatus("u-dave", c._id!, "approved");
+
+		const list = await new ListCommunityMembersUseCase(
+			communityRepo,
+			membershipRepo,
+			userRepo,
+		).execute("alpha");
+
+		expect(list.map((m) => m.username)).toEqual(["alice", "carol", "bob", "dave"]);
+		expect(list[0].isCreator).toBe(true);
+		expect(list[1].role).toBe("moderator");
+		expect(list[2].role).toBe("member");
+	});
+
+	it("returns empty for unknown slug", async () => {
+		const communityRepo = makeCommunityRepo();
+		const membershipRepo = makeMembershipRepo();
+		const userRepo = makeUserRepo({});
+		const list = await new ListCommunityMembersUseCase(
+			communityRepo,
+			membershipRepo,
+			userRepo,
+		).execute("ghost");
+		expect(list).toEqual([]);
 	});
 });
