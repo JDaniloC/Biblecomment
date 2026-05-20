@@ -1,5 +1,5 @@
 import { getTagMetas } from "@/lib/tag-meta";
-import type { CommentCardProps } from "@/lib/share-comment";
+import { pickCardFontSize, type CommentCardProps } from "@/lib/share-comment";
 
 /**
  * Inline-styled card consumed by `next/og` ImageResponse (satori) — NO
@@ -17,7 +17,10 @@ export function CommentShareCard({
 }) {
 	const wide = format === "wide";
 	const pad = wide ? 64 : 88;
-	const textSize = wide ? 40 : 52;
+	// Scale the comment text font with its length so a 700-char Sodoma-
+	// style comment doesn't get cut off mid-word at "decorrer d…". Tiered
+	// so visual stability is maintained across small length deltas.
+	const textSize = pickCardFontSize(card.text.length, format);
 	const brand = "#1075d3";
 	const metas = getTagMetas(card.tags);
 

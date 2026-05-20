@@ -446,3 +446,44 @@ export class SetModeratorUseCase {
 		});
 	}
 }
+
+/**
+ * Hard-delete a community. Creator-only — moderators can't dissolve a
+ * group out from under the person who started it. Cascade is fan-out
+ * across the three join collections; comments stay because they belong
+ * to the verse, not the community (the community↔comment link is
+ * derived via `approvedUserIds` and simply yields an empty set once
+ * the rows are gone).
+ *
+ * Returns the per-collection deletion counts so the API can surface
+ * them in the response for audit/UI purposes.
+ */
+export class DeleteCommunityUseCase {
+	constructor(
+		private readonly communities: ICommunityRepository,
+		private readonly memberships: ICommunityMembershipRepository,
+		private readonly follows: ICommunityFollowRepository,
+	) {}
+
+	async execute({ slug, actorId }: { slug: string; actorId: string }): Promise<{
+		removedMemberships: number;
+		removedFollows: number;
+	}> {
+		const community = await this.communities.findBySlug(slug);
+		if (!community || !community._id) {
+			throw new Error("Comunidade não encontrada");
+		}
+		if (community.createdBy !== actorId) {
+			throw new Error("Apenas o criador pode excluir a comunidade");
+		}
+		// Order: drop join rows first so a partial failure leaves the
+		// community visible (and re-attemptable) rather than orphaning
+		// memberships against a missing community.
+		const [removedMemberships, removedFollows] = await Promise.all([
+			this.memberships.removeAllByCommunity(community._id),
+			this.follows.removeAllByCommunity(community._id),
+		]);
+		await this.communities.deleteById(community._id);
+		return { removedMemberships, removedFollows };
+	}
+}

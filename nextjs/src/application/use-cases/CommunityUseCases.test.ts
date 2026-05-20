@@ -12,6 +12,7 @@ import {
 	MyFollowStatusUseCase,
 	ListCommunityMembersUseCase,
 	ListCommunityFollowersUseCase,
+	DeleteCommunityUseCase,
 	MAX_COMMUNITIES_PER_USER,
 } from "./CommunityUseCases";
 import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
@@ -92,6 +93,12 @@ function makeCommunityRepo(): ICommunityRepository & {
 		async incrementFollowerCount(id, delta) {
 			const c = items.get(id);
 			if (c) c.followerCount += delta;
+		},
+		// Fake repo must match the async interface signature even though
+		// the in-memory Map ops are sync — skip DeepSource JS-0116 here.
+		// skipcq: JS-0116
+		async deleteById(id) {
+			return items.delete(id);
 		},
 	};
 }
@@ -263,6 +270,15 @@ function makeMembershipRepo(): ICommunityMembershipRepository & {
 		async isModerator(userId, communityId) {
 			const r = rows.get(key(userId, communityId));
 			return Boolean(r) && r?.role === "moderator" && r?.status === "approved";
+		},
+		// Async signature is interface-mandated — skip JS-0116.
+		// skipcq: JS-0116
+		async removeAllByCommunity(communityId) {
+			const before = rows.size;
+			[...rows.keys()]
+				.filter((k) => k.endsWith(`::${communityId}`))
+				.forEach((k) => rows.delete(k));
+			return before - rows.size;
 		},
 	};
 }
@@ -916,5 +932,84 @@ describe("Community notifications (plan_community follow-up)", () => {
 			makeModerator: false,
 		});
 		expect(notificationsRepo._rows).toHaveLength(1);
+	});
+});
+
+describe("DeleteCommunityUseCase", () => {
+	let communityRepo: ReturnType<typeof makeCommunityRepo>;
+	let membershipRepo: ReturnType<typeof makeMembershipRepo>;
+	let followRepo: ReturnType<typeof makeFollowRepo>;
+	let communityId: string;
+
+	beforeEach(async () => {
+		communityRepo = makeCommunityRepo();
+		membershipRepo = makeMembershipRepo();
+		followRepo = makeFollowRepo();
+		const created = await communityRepo.create({
+			slug: "alpha",
+			name: "Alpha",
+			description: "",
+			createdBy: "u-alice",
+		});
+		communityId = created._id!;
+	});
+
+	it("throws when the community does not exist", async () => {
+		const uc = new DeleteCommunityUseCase(
+			communityRepo,
+			membershipRepo,
+			followRepo,
+		);
+		await expect(
+			uc.execute({ slug: "ghost", actorId: "u-alice" }),
+		).rejects.toThrow(/não encontrada/i);
+	});
+
+	it("forbids deletion by non-creators (even moderators)", async () => {
+		// Promote bob to moderator.
+		await membershipRepo.createRequest("u-bob", communityId);
+		await membershipRepo.setStatus("u-bob", communityId, "approved");
+		await membershipRepo.setRole("u-bob", communityId, "moderator");
+
+		const uc = new DeleteCommunityUseCase(
+			communityRepo,
+			membershipRepo,
+			followRepo,
+		);
+		await expect(
+			uc.execute({ slug: "alpha", actorId: "u-bob" }),
+		).rejects.toThrow(/criador/i);
+
+		// Community still exists, rows untouched.
+		expect(await communityRepo.findBySlug("alpha")).not.toBeNull();
+		expect(
+			await membershipRepo.listByStatus(communityId, "approved"),
+		).toHaveLength(1);
+	});
+
+	it("cascades memberships + follows and removes the community", async () => {
+		await membershipRepo.createRequest("u-bob", communityId);
+		await membershipRepo.setStatus("u-bob", communityId, "approved");
+		await membershipRepo.createRequest("u-carol", communityId);
+		await followRepo.follow("u-bob", communityId);
+		await followRepo.follow("u-dave", communityId);
+
+		const uc = new DeleteCommunityUseCase(
+			communityRepo,
+			membershipRepo,
+			followRepo,
+		);
+		const result = await uc.execute({
+			slug: "alpha",
+			actorId: "u-alice",
+		});
+
+		expect(result.removedMemberships).toBe(2);
+		expect(result.removedFollows).toBe(2);
+		expect(await communityRepo.findBySlug("alpha")).toBeNull();
+		expect(
+			await membershipRepo.listByStatus(communityId, "approved"),
+		).toHaveLength(0);
+		expect(await followRepo.countByCommunity(communityId)).toBe(0);
 	});
 });

@@ -1,12 +1,77 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
-import { CommunityPeopleModal } from "@/components/CommunityPeopleModal";
 import { communityService } from "@/services/communities";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import type { Community } from "@/domain/entities/Community";
+
+type CommunityTab =
+	| "comentarios"
+	| "membros"
+	| "seguidores"
+	| "solicitacoes"
+	| "configuracoes";
+
+// Tab label is the user-facing string; the id key stays a-z slug for
+// stable data-testid / aria-labelledby selectors.
+
+/**
+ * Underline-style tab trigger — mirrors the public profile tab UX
+ * (PublicProfileClient.tsx) so the visual language stays consistent
+ * across the app. Count is rendered as a soft chip; `highlightCount`
+ * flips it amber when there's pending moderator work to do.
+ */
+function TabButton({
+	id,
+	label,
+	count,
+	highlightCount = false,
+	active,
+	onSelect,
+}: {
+	id: CommunityTab;
+	label: string;
+	count?: number;
+	highlightCount?: boolean;
+	active: CommunityTab;
+	onSelect: (id: CommunityTab) => void;
+}) {
+	const selected = active === id;
+	return (
+		<button
+			type="button"
+			role="tab"
+			id={`community-tab-${id}`}
+			aria-selected={selected}
+			data-testid={`community-tab-${id}`}
+			onClick={() => onSelect(id)}
+			className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition flex items-center gap-2 ${
+				selected
+					? "border-brand text-brand"
+					: "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+			}`}
+		>
+			<span>{label}</span>
+			{typeof count === "number" && (
+				<span
+					className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+						highlightCount
+							? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+							: selected
+								? "bg-brand/10 text-brand"
+								: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+					}`}
+				>
+					{count}
+				</span>
+			)}
+		</button>
+	);
+}
 
 interface ViewerSession {
 	name: string;
@@ -77,6 +142,8 @@ export default function CommunityDetailClient({
 	initialCommentsTotal,
 }: Props) {
 	const { handleNotification } = useNotification();
+	const confirm = useConfirm();
+	const router = useRouter();
 	type Status = "none" | "pending" | "approved";
 	const [status, setStatus] = useState<Status>(
 		initialIsMember ? "approved" : "none",
@@ -84,9 +151,7 @@ export default function CommunityDetailClient({
 	const [role, setRole] = useState<"member" | "moderator">("member");
 	const [memberCount, setMemberCount] = useState(community.memberCount);
 	const [busy, setBusy] = useState(false);
-	const [peopleModal, setPeopleModal] = useState<
-		"members" | "followers" | null
-	>(null);
+	const [activeTab, setActiveTab] = useState<CommunityTab>("comentarios");
 	// Pending join requests, fetched only when the viewer is a moderator.
 	const [pending, setPending] = useState<
 		{ userId: string; username: string | null; joinedAt?: string }[]
@@ -131,8 +196,11 @@ export default function CommunityDetailClient({
 		};
 	}, [viewer, community.slug]);
 
-	// Approved members list (creator-only management). Anyone can read it
-	// via the API but we only render the toggles for the creator.
+	// Approved members list. Endpoint is public on purpose (the header
+	// already exposes "N membros" and the slug is public — names are not
+	// sensitive), so we fetch it for everyone now that the Membros tab
+	// renders the roster regardless of viewer role. Mod toggle stays
+	// gated to the creator below.
 	const [members, setMembers] = useState<
 		{
 			userId: string;
@@ -142,19 +210,72 @@ export default function CommunityDetailClient({
 			joinedAt: string | null;
 		}[]
 	>([]);
+	// Distinguish "still loading" from "loaded and empty" so the tab
+	// doesn't flash an "Nenhum membro" empty state during the initial
+	// fetch (Copilot review on PR #206). Defaults to true so the first
+	// paint never lies about the data state.
+	const [loadingMembers, setLoadingMembers] = useState(true);
 	useEffect(() => {
-		if (!isCreator) return;
 		let cancelled = false;
+		setLoadingMembers(true);
 		communityService
 			.listMembers(community.slug)
 			.then((list) => {
 				if (!cancelled) setMembers(list);
 			})
-			.catch(() => {});
+			.catch(() => undefined)
+			.finally(() => {
+				if (!cancelled) setLoadingMembers(false);
+			});
 		return () => {
 			cancelled = true;
 		};
-	}, [isCreator, community.slug]);
+	}, [community.slug]);
+
+	// Followers roster — same public-endpoint reasoning as members. Used
+	// to render the Seguidores tab and the header counter.
+	const [followers, setFollowers] = useState<
+		{ userId: string; username: string | null; followedAt: string | null }[]
+	>([]);
+	const [loadingFollowers, setLoadingFollowers] = useState(true);
+	useEffect(() => {
+		let cancelled = false;
+		setLoadingFollowers(true);
+		communityService
+			.listFollowers(community.slug)
+			.then((list) => {
+				if (!cancelled) setFollowers(list);
+			})
+			.catch(() => undefined)
+			.finally(() => {
+				if (!cancelled) setLoadingFollowers(false);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [community.slug]);
+
+	async function handleDeleteCommunity() {
+		if (busy) return;
+		const ok = await confirm({
+			title: `Excluir a comunidade "${community.name}"?`,
+			description:
+				"Esta ação é irreversível. Os vínculos de membros e seguidores serão removidos, e a página da comunidade deixará de existir. Os comentários dos integrantes permanecem em seus versículos, mas perdem a priorização desta comunidade.",
+			confirmLabel: "Excluir comunidade",
+			variant: "danger",
+		});
+		if (!ok) return;
+		setBusy(true);
+		try {
+			await communityService.delete(community.slug);
+			handleNotification("success", "Comunidade excluída.");
+			router.push("/communities");
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : "Erro ao excluir.";
+			handleNotification("error", msg);
+			setBusy(false);
+		}
+	}
 
 	async function handleToggleModerator(userId: string, currentlyMod: boolean) {
 		if (busy) return;
@@ -335,17 +456,47 @@ export default function CommunityDetailClient({
 		}
 	}
 
-	// Pending-list filter for moderators (plan_community follow-up). Tiny
-	// list → client-side substring match is fine.
+	// Per-tab @username filters. Tiny lists (tens of rows) → client-side
+	// substring match. Independent so switching tabs doesn't surprise the
+	// user with a leftover filter from another tab.
 	const [pendingFilter, setPendingFilter] = useState("");
-	const filteredPending =
-		pendingFilter.trim() === ""
-			? pending
-			: pending.filter((r) =>
-					(r.username ?? "")
-						.toLowerCase()
-						.includes(pendingFilter.trim().toLowerCase()),
-				);
+	const [memberFilter, setMemberFilter] = useState("");
+	const [followerFilter, setFollowerFilter] = useState("");
+	const filteredPending = useMemo(
+		() =>
+			pendingFilter.trim() === ""
+				? pending
+				: pending.filter((r) =>
+						(r.username ?? "")
+							.toLowerCase()
+							.includes(pendingFilter.trim().toLowerCase()),
+					),
+		[pending, pendingFilter],
+	);
+	const filteredMembers = useMemo(
+		() =>
+			memberFilter.trim() === ""
+				? members
+				: members.filter((m) =>
+						(m.username ?? "")
+							.toLowerCase()
+							.includes(memberFilter.trim().toLowerCase()),
+					),
+		[members, memberFilter],
+	);
+	const filteredFollowers = useMemo(
+		() =>
+			followerFilter.trim() === ""
+				? followers
+				: followers.filter((f) =>
+						(f.username ?? "")
+							.toLowerCase()
+							.includes(followerFilter.trim().toLowerCase()),
+					),
+		[followers, followerFilter],
+	);
+
+	const isModerator = role === "moderator" || isCreator;
 
 	async function handleReject(userId: string) {
 		if (busy) return;
@@ -388,9 +539,11 @@ export default function CommunityDetailClient({
 								/{community.slug}
 							</p>
 							<p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
+								{/* Counter pills now jump to the corresponding tab instead
+								    of opening a modal — same destination, less chrome. */}
 								<button
 									type="button"
-									onClick={() => setPeopleModal("members")}
+									onClick={() => setActiveTab("membros")}
 									data-testid="open-members-modal"
 									className="hover:text-brand underline-offset-2 hover:underline cursor-pointer"
 								>
@@ -402,7 +555,7 @@ export default function CommunityDetailClient({
 								{" · "}
 								<button
 									type="button"
-									onClick={() => setPeopleModal("followers")}
+									onClick={() => setActiveTab("seguidores")}
 									data-testid="open-followers-modal"
 									className="hover:text-brand underline-offset-2 hover:underline cursor-pointer"
 								>
@@ -495,14 +648,289 @@ export default function CommunityDetailClient({
 					)}
 				</header>
 
-				{(role === "moderator" || isCreator) && viewer && (
+				<nav
+					role="tablist"
+					aria-label="Seções da comunidade"
+					className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700 mb-5"
+				>
+					<TabButton
+						id="comentarios"
+						label="Comentários"
+						count={commentsTotal}
+						active={activeTab}
+						onSelect={setActiveTab}
+					/>
+					<TabButton
+						id="membros"
+						label="Membros"
+						count={memberCount}
+						active={activeTab}
+						onSelect={setActiveTab}
+					/>
+					<TabButton
+						id="seguidores"
+						label="Seguidores"
+						count={followerCount}
+						active={activeTab}
+						onSelect={setActiveTab}
+					/>
+					{isModerator && viewer && (
+						<TabButton
+							id="solicitacoes"
+							label="Solicitações"
+							count={pending.length}
+							highlightCount={pending.length > 0}
+							active={activeTab}
+							onSelect={setActiveTab}
+						/>
+					)}
+					{isCreator && (
+						<TabButton
+							id="configuracoes"
+							label="Configurações"
+							active={activeTab}
+							onSelect={setActiveTab}
+						/>
+					)}
+				</nav>
+
+				{activeTab === "comentarios" && (
 					<section
-						data-testid="community-moderation"
-						className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-5"
+						role="tabpanel"
+						aria-labelledby="community-tab-comentarios"
+						data-testid="community-comments"
 					>
-						<h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
-							Moderação · solicitações pendentes ({pending.length})
-						</h2>
+						<div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+							<input
+								type="search"
+								value={commentQuery}
+								onChange={(e) => setCommentQuery(e.target.value)}
+								placeholder="Buscar nos comentários…"
+								aria-label="Buscar nos comentários da comunidade"
+								data-testid="community-comments-search"
+								className="flex-1 min-w-[180px] max-w-[260px] px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
+							/>
+						</div>
+
+						{comments.length === 0 ? (
+							<p
+								data-testid="community-comments-empty"
+								className="text-center text-sm text-slate-400 dark:text-slate-500 py-8"
+							>
+								{status === "approved"
+									? "Comente em qualquer versículo — seus comentários serão priorizados para os outros membros desta comunidade."
+									: "Nenhum comentário ainda."}
+							</p>
+						) : (
+							<ul className="flex flex-col gap-3">
+								{comments.map((c) => (
+									<li
+										key={c._id}
+										data-testid={`community-comment-${c._id}`}
+										className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
+									>
+										<div className="flex items-center justify-between gap-2 mb-1">
+											<Link
+												href={`/u/${c.username}`}
+												className="text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-brand truncate"
+											>
+												@{c.username}
+											</Link>
+											<span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">
+												{formatDate(c.createdAt)}
+											</span>
+										</div>
+										<Link
+											href={refToHref(
+												c.bookReference,
+												`/communities/${community.slug}`,
+											)}
+											className="inline-block text-xs font-medium text-brand mb-2 hover:underline"
+										>
+											{c.bookReference}
+										</Link>
+										<p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-6">
+											{c.text}
+										</p>
+									</li>
+								))}
+							</ul>
+						)}
+
+						{comments.length < commentsTotal && (
+							<div className="flex justify-center mt-4">
+								<button
+									type="button"
+									onClick={loadMoreComments}
+									disabled={loadingMore}
+									data-testid="community-comments-load-more"
+									className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+								>
+									{loadingMore ? "Carregando…" : "Carregar mais"}
+								</button>
+							</div>
+						)}
+					</section>
+				)}
+
+				{activeTab === "membros" && (
+					<section
+						role="tabpanel"
+						aria-labelledby="community-tab-membros"
+						data-testid="community-members"
+					>
+						{members.length > 0 && (
+							<input
+								type="search"
+								value={memberFilter}
+								onChange={(e) => setMemberFilter(e.target.value)}
+								placeholder="Filtrar por @usuário…"
+								aria-label="Filtrar membros"
+								data-testid="community-members-filter"
+								className="w-full mb-3 px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
+							/>
+						)}
+						{loadingMembers ? (
+							<p
+								data-testid="community-members-loading"
+								className="text-center text-sm text-slate-400 dark:text-slate-500 py-8"
+							>
+								Carregando…
+							</p>
+						) : members.length === 0 ? (
+							<p className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
+								Nenhum membro aprovado ainda.
+							</p>
+						) : filteredMembers.length === 0 ? (
+							<p className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
+								Nenhum @usuário casa com o filtro.
+							</p>
+						) : (
+							<ul className="flex flex-col">
+								{filteredMembers.map((m) => {
+									const mod = m.role === "moderator";
+									return (
+										<li
+											key={m.userId}
+											data-testid={`community-member-${m.userId}`}
+											className="flex items-center justify-between gap-3 py-3 px-1 border-b border-slate-100 dark:border-slate-800 last:border-0"
+										>
+											<div className="flex items-center gap-2 min-w-0">
+												{m.username ? (
+													<Link
+														href={`/u/${m.username}`}
+														className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-brand truncate"
+													>
+														@{m.username}
+													</Link>
+												) : (
+													<span className="text-sm text-slate-400 dark:text-slate-500">
+														(usuário removido)
+													</span>
+												)}
+												{m.isCreator && (
+													<span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-tint text-brand">
+														Criadora
+													</span>
+												)}
+												{mod && !m.isCreator && (
+													<span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+														Moderador
+													</span>
+												)}
+											</div>
+											{/* Creator's row is non-toggleable — by convention they're
+                        always a moderator and the SetModerator use-case
+                        rejects creator self-edits anyway. Toggle only
+                        renders for the community creator viewer. */}
+											{isCreator && !m.isCreator && (
+												<button
+													type="button"
+													onClick={() => handleToggleModerator(m.userId, mod)}
+													disabled={busy}
+													data-testid={`toggle-mod-${m.userId}`}
+													className={`text-xs font-semibold px-3 py-1.5 rounded-md transition disabled:opacity-60 ${
+														mod
+															? "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-900/60"
+															: "bg-brand text-white hover:bg-brand/90"
+													}`}
+												>
+													{mod ? "Remover moderador" : "Tornar moderador"}
+												</button>
+											)}
+										</li>
+									);
+								})}
+							</ul>
+						)}
+					</section>
+				)}
+
+				{activeTab === "seguidores" && (
+					<section
+						role="tabpanel"
+						aria-labelledby="community-tab-seguidores"
+						data-testid="community-followers"
+					>
+						{followers.length > 0 && (
+							<input
+								type="search"
+								value={followerFilter}
+								onChange={(e) => setFollowerFilter(e.target.value)}
+								placeholder="Filtrar por @usuário…"
+								aria-label="Filtrar seguidores"
+								data-testid="community-followers-filter"
+								className="w-full mb-3 px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
+							/>
+						)}
+						{loadingFollowers ? (
+							<p
+								data-testid="community-followers-loading"
+								className="text-center text-sm text-slate-400 dark:text-slate-500 py-8"
+							>
+								Carregando…
+							</p>
+						) : followers.length === 0 ? (
+							<p className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
+								Ninguém segue esta comunidade ainda.
+							</p>
+						) : filteredFollowers.length === 0 ? (
+							<p className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
+								Nenhum @usuário casa com o filtro.
+							</p>
+						) : (
+							<ul className="flex flex-col">
+								{filteredFollowers.map((f) => (
+									<li
+										key={f.userId}
+										data-testid={`community-follower-${f.userId}`}
+										className="flex items-center gap-3 py-3 px-1 border-b border-slate-100 dark:border-slate-800 last:border-0"
+									>
+										{f.username ? (
+											<Link
+												href={`/u/${f.username}`}
+												className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-brand truncate"
+											>
+												@{f.username}
+											</Link>
+										) : (
+											<span className="text-sm text-slate-400 dark:text-slate-500">
+												(usuário removido)
+											</span>
+										)}
+									</li>
+								))}
+							</ul>
+						)}
+					</section>
+				)}
+
+				{activeTab === "solicitacoes" && isModerator && viewer && (
+					<section
+						role="tabpanel"
+						aria-labelledby="community-tab-solicitacoes"
+						data-testid="community-moderation"
+					>
 						{pending.length > 0 && (
 							<input
 								type="text"
@@ -515,20 +943,20 @@ export default function CommunityDetailClient({
 							/>
 						)}
 						{pending.length === 0 ? (
-							<p className="text-sm text-slate-500 dark:text-slate-400">
+							<p className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
 								Nenhuma solicitação pendente.
 							</p>
 						) : filteredPending.length === 0 ? (
-							<p className="text-sm text-slate-500 dark:text-slate-400">
+							<p className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
 								Nenhum @usuário casa com o filtro.
 							</p>
 						) : (
-							<ul className="flex flex-col gap-2">
+							<ul className="flex flex-col">
 								{filteredPending.map((r) => (
 									<li
 										key={r.userId}
 										data-testid={`pending-request-${r.userId}`}
-										className="flex items-center justify-between gap-3 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
+										className="flex items-center justify-between gap-3 py-3 px-1 border-b border-slate-100 dark:border-slate-800 last:border-0"
 									>
 										{r.username ? (
 											<Link
@@ -569,153 +997,34 @@ export default function CommunityDetailClient({
 					</section>
 				)}
 
-				{isCreator && members.length > 0 && (
+				{activeTab === "configuracoes" && isCreator && (
 					<section
-						data-testid="community-members"
-						className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-5"
+						role="tabpanel"
+						aria-labelledby="community-tab-configuracoes"
+						data-testid="community-danger-zone"
+						className="border border-red-200 dark:border-red-900/60 bg-red-50/40 dark:bg-red-950/20 rounded-xl p-5"
 					>
-						<h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">
-							Membros aprovados ({members.length})
-						</h2>
-						<ul className="flex flex-col gap-2">
-							{members.map((m) => {
-								const mod = m.role === "moderator";
-								return (
-									<li
-										key={m.userId}
-										data-testid={`community-member-${m.userId}`}
-										className="flex items-center justify-between gap-3 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
-									>
-										<div className="flex items-center gap-2 min-w-0">
-											{m.username ? (
-												<Link
-													href={`/u/${m.username}`}
-													className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-brand truncate"
-												>
-													@{m.username}
-												</Link>
-											) : (
-												<span className="text-sm text-slate-400 dark:text-slate-500">
-													(usuário removido)
-												</span>
-											)}
-											{m.isCreator && (
-												<span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-tint text-brand">
-													Criadora
-												</span>
-											)}
-											{mod && !m.isCreator && (
-												<span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
-													Moderador
-												</span>
-											)}
-										</div>
-										{/* Creator's row is non-toggleable — by convention they're
-                        always a moderator and the SetModerator use-case
-                        rejects creator self-edits anyway. */}
-										{!m.isCreator && (
-											<button
-												type="button"
-												onClick={() => handleToggleModerator(m.userId, mod)}
-												disabled={busy}
-												data-testid={`toggle-mod-${m.userId}`}
-												className={`text-xs font-semibold px-3 py-1.5 rounded-md transition disabled:opacity-60 ${
-													mod
-														? "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-300 hover:border-red-200 dark:hover:border-red-900/60"
-														: "bg-brand text-white hover:bg-brand/90"
-												}`}
-											>
-												{mod ? "Remover moderador" : "Tornar moderador"}
-											</button>
-										)}
-									</li>
-								);
-							})}
-						</ul>
+						<h3 className="text-base font-semibold text-red-700 dark:text-red-300 mb-1">
+							Zona de risco
+						</h3>
+						<p className="text-sm text-slate-700 dark:text-slate-200 mb-3">
+							Excluir esta comunidade remove a página, os pedidos de entrada, os
+							membros aprovados e os seguidores. Os comentários ficam
+							preservados nos versículos — apenas perdem a priorização desta
+							comunidade.
+						</p>
+						<button
+							type="button"
+							onClick={handleDeleteCommunity}
+							disabled={busy}
+							data-testid="community-delete"
+							className="text-sm font-semibold px-4 py-2 rounded-md border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition disabled:opacity-60"
+						>
+							Excluir comunidade
+						</button>
 					</section>
 				)}
-
-				<section data-testid="community-comments" className="mb-6">
-					<div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-						<h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-							Comentários ({commentsTotal})
-						</h2>
-						<input
-							type="search"
-							value={commentQuery}
-							onChange={(e) => setCommentQuery(e.target.value)}
-							placeholder="Buscar nos comentários…"
-							aria-label="Buscar nos comentários da comunidade"
-							data-testid="community-comments-search"
-							className="flex-1 min-w-[180px] max-w-[260px] px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
-						/>
-					</div>
-
-					{comments.length === 0 ? (
-						<p
-							data-testid="community-comments-empty"
-							className="text-center text-sm text-slate-400 dark:text-slate-500 py-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl"
-						>
-							{status === "approved"
-								? "Comente em qualquer versículo — seus comentários serão priorizados para os outros membros desta comunidade."
-								: "Nenhum comentário ainda."}
-						</p>
-					) : (
-						<ul className="flex flex-col gap-3">
-							{comments.map((c) => (
-								<li
-									key={c._id}
-									data-testid={`community-comment-${c._id}`}
-									className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
-								>
-									<div className="flex items-center justify-between gap-2 mb-1">
-										<Link
-											href={`/u/${c.username}`}
-											className="text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-brand truncate"
-										>
-											@{c.username}
-										</Link>
-										<span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">
-											{formatDate(c.createdAt)}
-										</span>
-									</div>
-									<Link
-										href={refToHref(
-											c.bookReference,
-											`/communities/${community.slug}`,
-										)}
-										className="inline-block text-xs font-medium text-brand mb-2 hover:underline"
-									>
-										{c.bookReference}
-									</Link>
-									<p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-6">
-										{c.text}
-									</p>
-								</li>
-							))}
-						</ul>
-					)}
-
-					{comments.length < commentsTotal && (
-						<div className="flex justify-center mt-4">
-							<button
-								type="button"
-								onClick={loadMoreComments}
-								disabled={loadingMore}
-								data-testid="community-comments-load-more"
-								className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
-							>
-								{loadingMore ? "Carregando…" : "Carregar mais"}
-							</button>
-						</div>
-					)}
-				</section>
 			</main>
-			<CommunityPeopleModal
-				slug={community.slug}
-				mode={peopleModal}
-				onClose={() => setPeopleModal(null)}
-			/>
 		</div>
 	);
 }
