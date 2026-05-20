@@ -94,6 +94,9 @@ function makeCommunityRepo(): ICommunityRepository & {
 			const c = items.get(id);
 			if (c) c.followerCount += delta;
 		},
+		// Fake repo must match the async interface signature even though
+		// the in-memory Map ops are sync — skip DeepSource JS-0116 here.
+		// skipcq: JS-0116
 		async deleteById(id) {
 			return items.delete(id);
 		},
@@ -268,6 +271,8 @@ function makeMembershipRepo(): ICommunityMembershipRepository & {
 			const r = rows.get(key(userId, communityId));
 			return Boolean(r) && r?.role === "moderator" && r?.status === "approved";
 		},
+		// Async signature is interface-mandated — skip JS-0116.
+		// skipcq: JS-0116
 		async removeAllByCommunity(communityId) {
 			const before = rows.size;
 			[...rows.keys()]
@@ -940,13 +945,13 @@ describe("DeleteCommunityUseCase", () => {
 		communityRepo = makeCommunityRepo();
 		membershipRepo = makeMembershipRepo();
 		followRepo = makeFollowRepo();
-		const c = await communityRepo.create({
+		const created = await communityRepo.create({
 			slug: "alpha",
 			name: "Alpha",
 			description: "",
 			createdBy: "u-alice",
 		});
-		communityId = c._id!;
+		communityId = created._id!;
 	});
 
 	it("throws when the community does not exist", async () => {

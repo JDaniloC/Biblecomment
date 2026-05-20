@@ -111,6 +111,9 @@ export class MongoCommunityRepository implements ICommunityRepository {
 		);
 	}
 
+	// `this` is unused but this method has to live on the class to satisfy
+	// ICommunityRepository — DeepSource JS-0105 here is a false positive.
+	// skipcq: JS-0105
 	async deleteById(id: string): Promise<boolean> {
 		await connectToDatabase();
 		const result = await CommunityModel.deleteOne({ _id: id });

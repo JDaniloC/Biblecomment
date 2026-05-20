@@ -210,14 +210,23 @@ export default function CommunityDetailClient({
 			joinedAt: string | null;
 		}[]
 	>([]);
+	// Distinguish "still loading" from "loaded and empty" so the tab
+	// doesn't flash an "Nenhum membro" empty state during the initial
+	// fetch (Copilot review on PR #206). Defaults to true so the first
+	// paint never lies about the data state.
+	const [loadingMembers, setLoadingMembers] = useState(true);
 	useEffect(() => {
 		let cancelled = false;
+		setLoadingMembers(true);
 		communityService
 			.listMembers(community.slug)
 			.then((list) => {
 				if (!cancelled) setMembers(list);
 			})
-			.catch(() => {});
+			.catch(() => undefined)
+			.finally(() => {
+				if (!cancelled) setLoadingMembers(false);
+			});
 		return () => {
 			cancelled = true;
 		};
@@ -228,14 +237,19 @@ export default function CommunityDetailClient({
 	const [followers, setFollowers] = useState<
 		{ userId: string; username: string | null; followedAt: string | null }[]
 	>([]);
+	const [loadingFollowers, setLoadingFollowers] = useState(true);
 	useEffect(() => {
 		let cancelled = false;
+		setLoadingFollowers(true);
 		communityService
 			.listFollowers(community.slug)
 			.then((list) => {
 				if (!cancelled) setFollowers(list);
 			})
-			.catch(() => {});
+			.catch(() => undefined)
+			.finally(() => {
+				if (!cancelled) setLoadingFollowers(false);
+			});
 		return () => {
 			cancelled = true;
 		};
@@ -683,7 +697,7 @@ export default function CommunityDetailClient({
 				{activeTab === "comentarios" && (
 					<section
 						role="tabpanel"
-						aria-labelledby="community-tab-discussao"
+						aria-labelledby="community-tab-comentarios"
 						data-testid="community-comments"
 					>
 						<div className="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -776,7 +790,14 @@ export default function CommunityDetailClient({
 								className="w-full mb-3 px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
 							/>
 						)}
-						{members.length === 0 ? (
+						{loadingMembers ? (
+							<p
+								data-testid="community-members-loading"
+								className="text-center text-sm text-slate-400 dark:text-slate-500 py-8"
+							>
+								Carregando…
+							</p>
+						) : members.length === 0 ? (
 							<p className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
 								Nenhum membro aprovado ainda.
 							</p>
@@ -862,7 +883,14 @@ export default function CommunityDetailClient({
 								className="w-full mb-3 px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand"
 							/>
 						)}
-						{followers.length === 0 ? (
+						{loadingFollowers ? (
+							<p
+								data-testid="community-followers-loading"
+								className="text-center text-sm text-slate-400 dark:text-slate-500 py-8"
+							>
+								Carregando…
+							</p>
+						) : followers.length === 0 ? (
 							<p className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
 								Ninguém segue esta comunidade ainda.
 							</p>

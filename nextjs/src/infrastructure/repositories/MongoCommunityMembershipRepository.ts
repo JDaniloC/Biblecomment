@@ -202,9 +202,12 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		return doc !== null;
 	}
 
+	// Interface contract — `this` is unused but the method has to live on
+	// the class. DeepSource JS-0105 is a false positive here.
+	// skipcq: JS-0105
 	async removeAllByCommunity(communityId: string): Promise<number> {
 		await connectToDatabase();
-		const r = await CommunityMembershipModel.deleteMany({ communityId });
-		return r.deletedCount ?? 0;
+		const result = await CommunityMembershipModel.deleteMany({ communityId });
+		return result.deletedCount ?? 0;
 	}
 }

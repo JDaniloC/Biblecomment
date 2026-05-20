@@ -68,12 +68,15 @@ export async function DELETE(
 		});
 		return NextResponse.json({ ok: true, ...result });
 	} catch (err) {
+		// Map use-case error strings to the codebase's standard API shape
+		// (404 → "Not found", 403 → "Forbidden") so clients can branch on a
+		// stable contract instead of grepping pt-BR messages. Copilot PR-206.
 		const message = err instanceof Error ? err.message : "Erro desconhecido";
 		if (message.includes("não encontrada")) {
-			return NextResponse.json({ error: message }, { status: 404 });
+			return NextResponse.json({ error: "Not found" }, { status: 404 });
 		}
 		if (message.includes("Apenas o criador")) {
-			return NextResponse.json({ error: message }, { status: 403 });
+			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 		}
 		return NextResponse.json({ error: message }, { status: 500 });
 	}

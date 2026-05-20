@@ -469,19 +469,21 @@ export class DeleteCommunityUseCase {
 		removedMemberships: number;
 		removedFollows: number;
 	}> {
-		const c = await this.communities.findBySlug(slug);
-		if (!c || !c._id) throw new Error("Comunidade não encontrada");
-		if (c.createdBy !== actorId) {
+		const community = await this.communities.findBySlug(slug);
+		if (!community || !community._id) {
+			throw new Error("Comunidade não encontrada");
+		}
+		if (community.createdBy !== actorId) {
 			throw new Error("Apenas o criador pode excluir a comunidade");
 		}
 		// Order: drop join rows first so a partial failure leaves the
 		// community visible (and re-attemptable) rather than orphaning
 		// memberships against a missing community.
 		const [removedMemberships, removedFollows] = await Promise.all([
-			this.memberships.removeAllByCommunity(c._id),
-			this.follows.removeAllByCommunity(c._id),
+			this.memberships.removeAllByCommunity(community._id),
+			this.follows.removeAllByCommunity(community._id),
 		]);
-		await this.communities.deleteById(c._id);
+		await this.communities.deleteById(community._id);
 		return { removedMemberships, removedFollows };
 	}
 }

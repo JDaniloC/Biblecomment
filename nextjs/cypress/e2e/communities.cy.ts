@@ -61,7 +61,12 @@ describe("Communities — Phase 4.2 (CRUD + join/leave)", () => {
     cy.get('[data-testid="community-card-exegetas"]').should("not.exist");
   });
 
-  it("bob joins and leaves a community alice created", () => {
+  it("bob requests entry to a community alice created and can cancel it", () => {
+    // plan_community moved the join model from a single-button flip to
+    // request → moderator approval. This test covers the half bob can
+    // drive alone: status flips none → pending → none on cancel, and the
+    // memberCount only changes after a moderator approves (covered
+    // separately by the moderation specs).
     cy.loginAs(users.alice.email, users.alice.password);
     cy.request("POST", "/api/communities", {
       slug: "exegetas",
@@ -74,22 +79,30 @@ describe("Communities — Phase 4.2 (CRUD + join/leave)", () => {
     cy.visit("/communities/exegetas");
     cy.get('[data-testid="community-member-count"]').should("have.text", "0");
     cy.get('[data-testid="community-membership-toggle"]')
-      .should("have.attr", "data-member", "false")
-      .and("contain.text", "Entrar")
+      .should("have.attr", "data-status", "none")
+      .and("contain.text", "Solicitar entrada")
+      .find("button")
       .click();
 
     cy.get('[data-testid="community-membership-toggle"]').should(
       "have.attr",
-      "data-member",
-      "true",
+      "data-status",
+      "pending",
     );
-    cy.get('[data-testid="community-member-count"]').should("have.text", "1");
+    cy.get('[data-testid="community-membership-toggle"]').should(
+      "contain.text",
+      "Cancelar",
+    );
+    // memberCount stays 0 — only approved memberships bump the counter.
+    cy.get('[data-testid="community-member-count"]').should("have.text", "0");
 
-    cy.get('[data-testid="community-membership-toggle"]').click();
+    cy.get('[data-testid="community-membership-toggle"]')
+      .find("button")
+      .click();
     cy.get('[data-testid="community-membership-toggle"]').should(
       "have.attr",
-      "data-member",
-      "false",
+      "data-status",
+      "none",
     );
     cy.get('[data-testid="community-member-count"]').should("have.text", "0");
   });
