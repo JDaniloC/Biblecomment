@@ -5,11 +5,11 @@ export interface IReadingReminderPreferenceRepository {
 	/** Upserts the row identified by username. */
 	upsert(pref: Omit<ReadingReminderPreference, "_id" | "createdAt" | "updatedAt">): Promise<ReadingReminderPreference>;
 	/**
-	 * Scheduler query: every row where `enabled` is true and the requested
-	 * `hourLocal` is one of `slots`. The caller filters further by tz +
-	 * `lastSentAt` after computing per-user local time.
+	 * Scheduler query: every opted-in row. The cron filters per-user by tz
+	 * + slot + `lastSentAt`. The opted-in set is small, so a full fetch is
+	 * fine and stays correct regardless of the user's timezone.
 	 */
-	findEnabledForSlots(slots: number[]): Promise<ReadingReminderPreference[]>;
+	findAllEnabled(): Promise<ReadingReminderPreference[]>;
 	/** Marks the reminder as sent. Idempotent. */
 	markSent(username: string, sentAt: Date): Promise<void>;
 }

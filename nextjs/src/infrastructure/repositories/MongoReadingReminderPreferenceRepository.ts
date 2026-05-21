@@ -53,15 +53,9 @@ export class MongoReadingReminderPreferenceRepository
 		return toEntity(doc);
 	}
 
-	async findEnabledForSlots(
-		slots: number[],
-	): Promise<ReadingReminderPreference[]> {
-		if (slots.length === 0) return [];
+	async findAllEnabled(): Promise<ReadingReminderPreference[]> {
 		await connectToDatabase();
-		const docs = await ReadingReminderPreferenceModel.find({
-			enabled: true,
-			hourLocal: { $in: slots },
-		});
+		const docs = await ReadingReminderPreferenceModel.find({ enabled: true });
 		return docs.map(toEntity);
 	}
 

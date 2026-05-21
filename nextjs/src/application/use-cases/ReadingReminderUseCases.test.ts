@@ -16,7 +16,7 @@ function makeRepo(
 	return {
 		findByUsername: vi.fn().mockResolvedValue(null),
 		upsert: vi.fn().mockResolvedValue({} as ReadingReminderPreference),
-		findEnabledForSlots: vi.fn().mockResolvedValue([]),
+		findAllEnabled: vi.fn().mockResolvedValue([]),
 		markSent: vi.fn().mockResolvedValue(undefined),
 		...overrides,
 	};

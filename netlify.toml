@@ -54,8 +54,14 @@
 #   VAPID_PUBLIC_KEY       — Web Push public key (also sent to clients) — `npx web-push generate-vapid-keys`
 #   VAPID_PRIVATE_KEY      — Web Push private key (server only, NEVER commit)
 #   VAPID_SUBJECT          — optional, mailto: contact (defaults to mailto:felipe@simpleread.foundation)
+#   CRON_SECRET            — shared secret guarding /api/cron/send-reminders;
+#                            the netlify/functions/send-reminders scheduled
+#                            function forwards it in the x-cron-secret header.
+#                            `openssl rand -hex 32`. Unset → cron route 503s.
 #
 # Web Push is disabled gracefully when VAPID_PUBLIC_KEY/PRIVATE_KEY are
-# absent (the opt-in UI hides itself; no notification cost).
+# absent (the opt-in UI hides itself; no notification cost). The daily
+# reading-reminder cron (send-reminders, every 30 min) is a no-op until
+# CRON_SECRET is set AND at least one user opts in via /profile.
 #
 # Do NOT set EMAIL_TRANSPORT in production — it's a Cypress/dev-only switch.
