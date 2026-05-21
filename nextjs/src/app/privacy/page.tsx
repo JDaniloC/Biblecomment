@@ -81,6 +81,14 @@ export default function PrivacyPage() {
             agente de usuário para depuração e prevenção de abuso. Retidos
             por até 6 meses.
           </li>
+          <li>
+            <strong>Assinatura de notificações push</strong> (opcional) &mdash;
+            ao ativar o sino de notificações, o navegador gera um{" "}
+            <em>endpoint</em> único e um par de chaves públicas que
+            armazenamos para entregar avisos de novas respostas, menções, novos
+            seguidores e conquistas. A assinatura é removida do servidor quando
+            você desativa o toggle ou desinstala o app.
+          </li>
         </ul>
 
         <h2 className="mt-8 text-xl font-semibold text-stone-800 dark:text-stone-100">
@@ -118,6 +126,14 @@ export default function PrivacyPage() {
           ao serviço Sentry para diagnóstico, sem incluir senhas ou tokens.
           Caso esta integração esteja ativa, ela é mencionada aqui de forma
           transparente.
+        </p>
+        <p className="text-stone-700 dark:text-stone-300 leading-relaxed mt-3">
+          A entrega de notificações push, quando ativada, atravessa o serviço
+          de push do seu navegador &mdash; Google FCM no Chrome/Android, Mozilla
+          autopush no Firefox, Apple APNs no Safari. Esses operadores recebem
+          apenas o endpoint cifrado e a carga útil mínima (título, corpo curto
+          e URL de destino dentro do app). Não enviamos identificadores nem
+          conteúdo sensível por esse canal.
         </p>
 
         <h2 className="mt-8 text-xl font-semibold text-stone-800 dark:text-stone-100">
