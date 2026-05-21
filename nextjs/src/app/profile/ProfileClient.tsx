@@ -17,6 +17,7 @@ import { dateFormat } from "@/utils/iconFunction";
 import { useTutorial } from "@/lib/use-tutorial";
 import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import { BadgesTab } from "./_components/BadgesTab";
+import { ReadingReminderCard } from "./_components/ReadingReminderCard";
 
 const { beliefs, states } = collectionsData as {
 	beliefs: string[];
@@ -1375,6 +1376,9 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 									Salvar alterações
 								</button>
 							</div>
+
+							{/* ── Card: Lembrete diário de leitura ── */}
+							<ReadingReminderCard />
 
 							{/* ── Card 2: Privacidade ── */}
 							<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5">
