@@ -5,7 +5,11 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
-import { moderationService, type ModerationCursor } from "@/services/moderation";
+import {
+  moderationService,
+  type ModerationCursor,
+  type AdminUserRow,
+} from "@/services/moderation";
 import { commentsService } from "@/services/comments";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -18,6 +22,8 @@ interface SessionUser {
   moderator: boolean;
 }
 
+type Tab = "reports" | "comments" | "users";
+
 function dateFormat(d?: Date | string) {
   if (!d) return "";
   const dt = typeof d === "string" ? new Date(d) : d;
@@ -25,25 +31,50 @@ function dateFormat(d?: Date | string) {
   return dt.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
+function tabFromUrl(): Tab {
+  if (typeof window === "undefined") return "reports";
+  const t = new URLSearchParams(window.location.search).get("tab");
+  return t === "comments" || t === "users" ? t : "reports";
+}
+
 export default function AdminModerationClient({ user }: { user: SessionUser }) {
   const { handleNotification } = useNotification();
   const confirm = useConfirm();
+
+  // Tab state — kept in `?tab=…` so a deep-linked refresh keeps the active
+  // pane. We mirror to the URL via history.replaceState so the back button
+  // doesn't get polluted with internal tab switches.
+  const [tab, setTabState] = useState<Tab>("reports");
+  useEffect(() => {
+    setTabState(tabFromUrl());
+  }, []);
+  function setTab(next: Tab) {
+    setTabState(next);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", next);
+    window.history.replaceState(null, "", url.toString());
+  }
+
+  // Reports tab
   const [reports, setReports] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // All-comments browser (ux-review #8). Cursor-paginated: no totals, no
-  // page numbers — clicking "Carregar mais" appends the next slice using
-  // the createdAt+id of the last visible row.
+  // Comments tab (cursor-paginated — no totals, no page numbers).
   const [allComments, setAllComments] = useState<Comment[]>([]);
   const [allLoading, setAllLoading] = useState(false);
   const [nextCursor, setNextCursor] = useState<ModerationCursor | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
-  // Promote/demote form
-  const [promoteEmail, setPromoteEmail] = useState("");
-  const [promoteSubmitting, setPromoteSubmitting] = useState(false);
+  // Users tab (cursor-paginated, newest cadastros first).
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersCursor, setUsersCursor] = useState<ModerationCursor | null>(null);
+  const [usersQuery, setUsersQuery] = useState("");
+  const [usersInput, setUsersInput] = useState("");
+  const [promotingEmail, setPromotingEmail] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,7 +88,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     }
   }, [handleNotification]);
 
-  const resetAll = useCallback(
+  const resetAllComments = useCallback(
     async (q: string) => {
       setAllLoading(true);
       try {
@@ -73,7 +104,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     [handleNotification],
   );
 
-  const loadMore = useCallback(async () => {
+  const loadMoreComments = useCallback(async () => {
     if (!nextCursor) return;
     setAllLoading(true);
     try {
@@ -90,13 +121,50 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     }
   }, [handleNotification, nextCursor, searchQuery]);
 
+  const resetUsers = useCallback(
+    async (q: string) => {
+      setUsersLoading(true);
+      try {
+        const { items, nextCursor: next } = await moderationService.listUsers({ q });
+        setUsers(items);
+        setUsersCursor(next);
+      } catch {
+        handleNotification("error", "Erro ao carregar usuários.");
+      } finally {
+        setUsersLoading(false);
+      }
+    },
+    [handleNotification],
+  );
+
+  const loadMoreUsers = useCallback(async () => {
+    if (!usersCursor) return;
+    setUsersLoading(true);
+    try {
+      const { items, nextCursor: next } = await moderationService.listUsers({
+        q: usersQuery,
+        cursor: usersCursor,
+      });
+      setUsers((prev) => [...prev, ...items]);
+      setUsersCursor(next);
+    } catch {
+      handleNotification("error", "Erro ao carregar mais usuários.");
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [handleNotification, usersCursor, usersQuery]);
+
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    resetAll(searchQuery);
-  }, [resetAll, searchQuery]);
+    resetAllComments(searchQuery);
+  }, [resetAllComments, searchQuery]);
+
+  useEffect(() => {
+    resetUsers(usersQuery);
+  }, [resetUsers, usersQuery]);
 
   async function handleClear(id: string) {
     const ok = await confirm({
@@ -186,31 +254,54 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     }
   }
 
-  function submitSearch(e: React.FormEvent) {
+  function submitCommentsSearch(e: React.FormEvent) {
     e.preventDefault();
     setSearchQuery(searchInput.trim());
   }
 
-  async function handlePromote(makeMod: boolean) {
-    if (!promoteEmail.trim()) return;
-    setPromoteSubmitting(true);
+  function submitUsersSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setUsersQuery(usersInput.trim());
+  }
+
+  async function handleUserModeratorToggle(row: AdminUserRow) {
+    const makeMod = !row.moderator;
+    const ok = await confirm({
+      title: makeMod ? "Promover a moderador?" : "Rebaixar de moderador?",
+      description: makeMod
+        ? `@${row.username} ganhará acesso ao painel de moderação.`
+        : `@${row.username} perderá o acesso ao painel de moderação.`,
+      confirmLabel: makeMod ? "Promover" : "Rebaixar",
+    });
+    if (!ok) return;
+    setPromotingEmail(row.email);
     try {
-      const updated = await moderationService.setModerator(promoteEmail.trim(), makeMod);
+      const updated = await moderationService.setModerator(row.email, makeMod);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email === row.email ? { ...u, moderator: updated.moderator } : u,
+        ),
+      );
       handleNotification(
         "success",
         makeMod
-          ? `${updated.username} agora é moderador.`
-          : `${updated.username} deixou de ser moderador.`,
+          ? `@${updated.username} agora é moderador.`
+          : `@${updated.username} deixou de ser moderador.`,
       );
-      setPromoteEmail("");
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 404) handleNotification("error", "Usuário não encontrado.");
       else handleNotification("error", "Erro ao atualizar permissão.");
     } finally {
-      setPromoteSubmitting(false);
+      setPromotingEmail(null);
     }
   }
+
+  const tabs: { id: Tab; label: string; count?: number }[] = [
+    { id: "reports", label: "Reports", count: loading ? undefined : reports.length },
+    { id: "comments", label: "Comentários" },
+    { id: "users", label: "Usuários" },
+  ];
 
   return (
     <div className="min-h-screen bg-[#f9f9f7] dark:bg-slate-950">
@@ -228,269 +319,402 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
         </button>
       </header>
 
-      <main id="main-content" className="max-w-4xl mx-auto px-6 pt-8 pb-16 flex flex-col gap-8">
-        {/* Reports list */}
-        <section>
-          <div className="flex items-baseline justify-between mb-4">
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              Comentários reportados
-              {!loading && <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500">({reports.length})</span>}
-            </h1>
-            <button
-              type="button"
-              onClick={load}
-              className="text-xs text-brand hover:underline disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? "Atualizando…" : "Atualizar"}
-            </button>
-          </div>
+      <main id="main-content" className="max-w-4xl mx-auto px-6 pt-8 pb-16 flex flex-col gap-6">
+        {/* Tab bar — horizontal scroll on narrow viewports. */}
+        <nav
+          role="tablist"
+          aria-label="Seções da moderação"
+          className="flex gap-1 border-b border-slate-200 dark:border-slate-700 overflow-x-auto"
+        >
+          {tabs.map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                data-testid={`tab-${t.id}`}
+                onClick={() => setTab(t.id)}
+                className={
+                  active
+                    ? "px-4 py-2.5 text-sm font-semibold border-b-2 border-brand text-brand whitespace-nowrap"
+                    : "px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 whitespace-nowrap"
+                }
+              >
+                {t.label}
+                {typeof t.count === "number" && (
+                  <span className="ml-1.5 text-xs font-normal text-slate-400 dark:text-slate-500">
+                    ({t.count})
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
 
-          {loading ? (
-            <div className="text-center text-slate-400 py-10">Carregando…</div>
-          ) : reports.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              Nenhum comentário reportado no momento.
+        {/* Reports tab */}
+        {tab === "reports" && (
+          <section role="tabpanel">
+            <div className="flex items-baseline justify-between mb-4">
+              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                Comentários reportados
+              </h1>
+              <button
+                type="button"
+                onClick={load}
+                className="text-xs text-brand hover:underline disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? "Atualizando…" : "Atualizar"}
+              </button>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {reports.map((c) => (
-                <div
-                  key={c._id}
-                  className="bg-white dark:bg-slate-900 border-l-4 border-y border-r border-slate-200 dark:border-slate-700 border-l-red-400 rounded-r-[10px] py-3.5 px-[18px]"
-                >
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Link
-                      href={`/u/${c.username}`}
-                      className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 hover:underline"
-                    >
-                      @{c.username}
-                    </Link>
-                    {c.bookReference && (
-                      <span className="inline-flex items-center bg-brand-tint rounded px-[7px] h-5 shrink-0">
-                        <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
-                          {c.bookReference}
+
+            {loading ? (
+              <div className="text-center text-slate-400 py-10">Carregando…</div>
+            ) : reports.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                Nenhum comentário reportado no momento.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {reports.map((c) => (
+                  <div
+                    key={c._id}
+                    className="bg-white dark:bg-slate-900 border-l-4 border-y border-r border-slate-200 dark:border-slate-700 border-l-red-400 rounded-r-[10px] py-3.5 px-[18px]"
+                  >
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <Link
+                        href={`/u/${c.username}`}
+                        className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 hover:underline"
+                      >
+                        @{c.username}
+                      </Link>
+                      {c.bookReference && (
+                        <span className="inline-flex items-center bg-brand-tint rounded px-[7px] h-5 shrink-0">
+                          <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
+                            {c.bookReference}
+                          </span>
                         </span>
+                      )}
+                      <span className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
+                        {(c.reportCount ?? 0)} report{(c.reportCount ?? 0) !== 1 ? "s" : ""}
                       </span>
-                    )}
-                    <span className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
-                      {(c.reportCount ?? 0)} report{(c.reportCount ?? 0) !== 1 ? "s" : ""}
-                    </span>
-                    <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
-                      {dateFormat(c.createdAt)}
-                    </span>
+                      <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
+                        {dateFormat(c.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-gray-700 dark:text-slate-200 leading-[22.75px] m-0 mb-3 whitespace-pre-wrap">
+                      {c.text}
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                        Reportado por: {(c.reporters ?? []).join(", ")}
+                      </span>
+                      <div className="ml-auto flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleClear(c._id!)}
+                          disabled={busyId === c._id}
+                          className="text-[12px] px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                        >
+                          Limpar reports
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(c._id!)}
+                          disabled={busyId === c._id}
+                          className="text-[12px] px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
+                        >
+                          Deletar comentário
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-[13px] text-gray-700 dark:text-slate-200 leading-[22.75px] m-0 mb-3 whitespace-pre-wrap">
-                    {c.text}
-                  </p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                      Reportado por: {(c.reporters ?? []).join(", ")}
-                    </span>
-                    <div className="ml-auto flex gap-2">
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Comments tab */}
+        {tab === "comments" && (
+          <section role="tabpanel">
+            <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                Todos os comentários
+                {!allLoading && allComments.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500">
+                    ({allComments.length}
+                    {nextCursor ? "+" : ""})
+                  </span>
+                )}
+              </h2>
+              <button
+                type="button"
+                onClick={() => resetAllComments(searchQuery)}
+                className="text-xs text-brand hover:underline disabled:opacity-50"
+                disabled={allLoading}
+              >
+                {allLoading && allComments.length === 0 ? "Atualizando…" : "Atualizar"}
+              </button>
+            </div>
+
+            <form onSubmit={submitCommentsSearch} className="mb-4 flex gap-2 flex-wrap">
+              <label htmlFor="mod-search" className="sr-only">Buscar comentários</label>
+              <input
+                id="mod-search"
+                type="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Buscar por texto, usuário ou referência…"
+                className="flex-1 min-w-[200px] border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+              <button
+                type="submit"
+                className="text-sm font-semibold px-4 py-2 rounded-md bg-brand text-white hover:opacity-90 transition disabled:opacity-50"
+                disabled={allLoading}
+              >
+                Buscar
+              </button>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput("");
+                    setSearchQuery("");
+                  }}
+                  className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                >
+                  Limpar
+                </button>
+              )}
+            </form>
+
+            {allLoading && allComments.length === 0 ? (
+              <div className="text-center text-slate-400 py-10">Carregando…</div>
+            ) : allComments.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                {searchQuery ? "Nenhum comentário encontrado para essa busca." : "Nenhum comentário cadastrado."}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {allComments.map((c) => (
+                  <div
+                    key={c._id}
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-[18px]"
+                  >
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <Link
+                        href={`/u/${c.username}`}
+                        className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 hover:underline"
+                      >
+                        @{c.username}
+                      </Link>
+                      {c.bookReference && (
+                        <span className="inline-flex items-center bg-brand-tint rounded px-[7px] h-5 shrink-0">
+                          <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
+                            {c.bookReference}
+                          </span>
+                        </span>
+                      )}
+                      {c.verified && (
+                        <span
+                          className="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full px-2.5 h-5 text-[11px] font-semibold"
+                          title={c.verifiedBy ? `Verificado por @${c.verifiedBy}` : "Verificado"}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          Verificado
+                        </span>
+                      )}
+                      {(c.reportCount ?? 0) > 0 && (
+                        <span className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
+                          {c.reportCount} report{c.reportCount !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
+                        {dateFormat(c.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-gray-700 dark:text-slate-200 leading-[22.75px] m-0 mb-3 whitespace-pre-wrap">
+                      {c.text}
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
                       <button
                         type="button"
-                        onClick={() => handleClear(c._id!)}
+                        onClick={() => handleToggleVerified(c._id!)}
                         disabled={busyId === c._id}
-                        className="text-[12px] px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                        className={
+                          c.verified
+                            ? "text-[12px] px-3 py-1.5 rounded-md border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition disabled:opacity-50"
+                            : "text-[12px] px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-50"
+                        }
                       >
-                        Limpar reports
+                        {c.verified ? "Desverificar" : "Verificar"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(c._id!)}
+                        onClick={() => handleDeleteFromAll(c._id!)}
                         disabled={busyId === c._id}
                         className="text-[12px] px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
                       >
-                        Deletar comentário
+                        Deletar
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+                ))}
 
-        {/* All comments browser */}
-        <section>
-          <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              Todos os comentários
-              {!allLoading && allComments.length > 0 && (
-                <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500">
-                  ({allComments.length}
-                  {nextCursor ? "+" : ""})
-                </span>
-              )}
-            </h2>
-            <button
-              type="button"
-              onClick={() => resetAll(searchQuery)}
-              className="text-xs text-brand hover:underline disabled:opacity-50"
-              disabled={allLoading}
-            >
-              {allLoading && allComments.length === 0 ? "Atualizando…" : "Atualizar"}
-            </button>
-          </div>
+                {nextCursor && (
+                  <div className="flex items-center justify-center mt-2">
+                    <button
+                      type="button"
+                      onClick={loadMoreComments}
+                      disabled={allLoading}
+                      className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                    >
+                      {allLoading ? "Carregando…" : "Carregar mais"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
-          <form onSubmit={submitSearch} className="mb-4 flex gap-2 flex-wrap">
-            <label htmlFor="mod-search" className="sr-only">Buscar comentários</label>
-            <input
-              id="mod-search"
-              type="search"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Buscar por texto, usuário ou referência…"
-              className="flex-1 min-w-[200px] border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-            <button
-              type="submit"
-              className="text-sm font-semibold px-4 py-2 rounded-md bg-brand text-white hover:opacity-90 transition disabled:opacity-50"
-              disabled={allLoading}
-            >
-              Buscar
-            </button>
-            {searchQuery && (
+        {/* Users tab — newest cadastros first, with inline promote/demote. */}
+        {tab === "users" && (
+          <section role="tabpanel">
+            <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                Usuários cadastrados
+                {!usersLoading && users.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500">
+                    ({users.length}
+                    {usersCursor ? "+" : ""})
+                  </span>
+                )}
+              </h2>
               <button
                 type="button"
-                onClick={() => {
-                  setSearchInput("");
-                  setSearchQuery("");
-                }}
-                className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                onClick={() => resetUsers(usersQuery)}
+                className="text-xs text-brand hover:underline disabled:opacity-50"
+                disabled={usersLoading}
               >
-                Limpar
+                {usersLoading && users.length === 0 ? "Atualizando…" : "Atualizar"}
               </button>
-            )}
-          </form>
-
-          {allLoading && allComments.length === 0 ? (
-            <div className="text-center text-slate-400 py-10">Carregando…</div>
-          ) : allComments.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-              {searchQuery ? "Nenhum comentário encontrado para essa busca." : "Nenhum comentário cadastrado."}
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {allComments.map((c) => (
-                <div
-                  key={c._id}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-[18px]"
+
+            <form onSubmit={submitUsersSearch} className="mb-4 flex gap-2 flex-wrap">
+              <label htmlFor="users-search" className="sr-only">Buscar usuários</label>
+              <input
+                id="users-search"
+                type="search"
+                value={usersInput}
+                onChange={(e) => setUsersInput(e.target.value)}
+                placeholder="Buscar por username, email ou nome…"
+                className="flex-1 min-w-[200px] border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+              <button
+                type="submit"
+                className="text-sm font-semibold px-4 py-2 rounded-md bg-brand text-white hover:opacity-90 transition disabled:opacity-50"
+                disabled={usersLoading}
+              >
+                Buscar
+              </button>
+              {usersQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUsersInput("");
+                    setUsersQuery("");
+                  }}
+                  className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                 >
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Link
-                      href={`/u/${c.username}`}
-                      className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 hover:underline"
-                    >
-                      @{c.username}
-                    </Link>
-                    {c.bookReference && (
-                      <span className="inline-flex items-center bg-brand-tint rounded px-[7px] h-5 shrink-0">
-                        <span className="font-bold text-xs text-brand leading-[18px] whitespace-nowrap">
-                          {c.bookReference}
-                        </span>
-                      </span>
-                    )}
-                    {c.verified && (
-                      <span
-                        className="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full px-2.5 h-5 text-[11px] font-semibold"
-                        title={c.verifiedBy ? `Verificado por @${c.verifiedBy}` : "Verificado"}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        Verificado
-                      </span>
-                    )}
-                    {(c.reportCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
-                        {c.reportCount} report{c.reportCount !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                    <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
-                      {dateFormat(c.createdAt)}
-                    </span>
-                  </div>
-                  <p className="text-[13px] text-gray-700 dark:text-slate-200 leading-[22.75px] m-0 mb-3 whitespace-pre-wrap">
-                    {c.text}
-                  </p>
-                  <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleVerified(c._id!)}
-                      disabled={busyId === c._id}
-                      className={
-                        c.verified
-                          ? "text-[12px] px-3 py-1.5 rounded-md border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition disabled:opacity-50"
-                          : "text-[12px] px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition disabled:opacity-50"
-                      }
-                    >
-                      {c.verified ? "Desverificar" : "Verificar"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteFromAll(c._id!)}
-                      disabled={busyId === c._id}
-                      className="text-[12px] px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
-                    >
-                      Deletar
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {/* Cursor-based "load more" — no totals, no page numbers. */}
-              {nextCursor && (
-                <div className="flex items-center justify-center mt-2">
-                  <button
-                    type="button"
-                    onClick={loadMore}
-                    disabled={allLoading}
-                    className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
-                  >
-                    {allLoading ? "Carregando…" : "Carregar mais"}
-                  </button>
-                </div>
+                  Limpar
+                </button>
               )}
-            </div>
-          )}
-        </section>
+            </form>
 
-        {/* Moderator promotion */}
-        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">
-            Permissões de moderador
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            Promova ou rebaixe um usuário pelo email cadastrado.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="email"
-              value={promoteEmail}
-              onChange={(e) => setPromoteEmail(e.target.value)}
-              placeholder="email@usuario.com"
-              className="flex-1 border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-            <button
-              type="button"
-              onClick={() => handlePromote(true)}
-              disabled={promoteSubmitting || !promoteEmail.trim()}
-              className="text-sm font-semibold px-4 py-2 rounded-md bg-brand text-white hover:opacity-90 transition disabled:opacity-50"
-            >
-              Promover
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePromote(false)}
-              disabled={promoteSubmitting || !promoteEmail.trim()}
-              className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
-            >
-              Rebaixar
-            </button>
-          </div>
-        </section>
+            {usersLoading && users.length === 0 ? (
+              <div className="text-center text-slate-400 py-10">Carregando…</div>
+            ) : users.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                {usersQuery ? "Nenhum usuário encontrado para essa busca." : "Nenhum usuário cadastrado."}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {users.map((u) => (
+                  <div
+                    key={u._id}
+                    data-testid={`admin-user-${u.username}`}
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-3.5 px-[18px] flex flex-col gap-2"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link
+                        href={`/u/${u.username}`}
+                        className="font-semibold text-[14px] text-slate-800 dark:text-slate-100 hover:underline"
+                      >
+                        @{u.username}
+                      </Link>
+                      {u.displayName && u.displayName !== u.username && (
+                        <span className="text-[12px] text-slate-500 dark:text-slate-400">
+                          ({u.displayName})
+                        </span>
+                      )}
+                      {u.moderator && (
+                        <span className="inline-flex items-center bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
+                          Moderador
+                        </span>
+                      )}
+                      <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
+                        Desde {dateFormat(u.createdAt)}
+                      </span>
+                    </div>
+                    <div className="text-[12px] text-slate-500 dark:text-slate-400">
+                      {u.email}
+                      {u.state && <span className="ml-2 text-slate-400 dark:text-slate-500">· {u.state}</span>}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      <Link
+                        href={`/u/${u.username}`}
+                        className="text-[12px] px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      >
+                        Ver perfil
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleUserModeratorToggle(u)}
+                        disabled={promotingEmail === u.email}
+                        className={
+                          u.moderator
+                            ? "text-[12px] px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                            : "text-[12px] px-3 py-1.5 rounded-md bg-brand text-white hover:opacity-90 transition disabled:opacity-50"
+                        }
+                      >
+                        {u.moderator ? "Rebaixar" : "Promover"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {usersCursor && (
+                  <div className="flex items-center justify-center mt-2">
+                    <button
+                      type="button"
+                      onClick={loadMoreUsers}
+                      disabled={usersLoading}
+                      className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                    >
+                      {usersLoading ? "Carregando…" : "Carregar mais"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
         <p className="text-[11px] text-slate-400 dark:text-slate-600 text-center">
           Logado como <strong>{user.username}</strong> · moderador

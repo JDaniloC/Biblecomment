@@ -40,6 +40,7 @@ function makeRepos(opts: {
     findManyByIds: async () => [],
     findAll: async () => [],
     findAllPaginated: async () => [],
+    findForModeration: async () => ({ items: [], nextCursor: null }),
     create: async () => ({} as never),
     updatePassword: async () => {},
     updatePasswordById: async () => {},

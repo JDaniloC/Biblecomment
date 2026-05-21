@@ -1,5 +1,11 @@
 import { User } from "../entities/User";
 import { PublicUserDTO } from "../dto/PublicUserDTO";
+import { AdminUserDTO } from "../dto/AdminUserDTO";
+
+export interface AdminUserCursor {
+  createdAt: Date;
+  id: string;
+}
 
 export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
@@ -20,6 +26,21 @@ export interface IUserRepository {
   findManyByIds(userIds: string[]): Promise<User[]>;
   findAll(): Promise<User[]>;
   findAllPaginated(page: number, pageSize: number): Promise<User[]>;
+  /**
+   * Cursor-paginated user listing for the admin moderation panel. Cursor
+   * is `(createdAt, _id)` of the last item returned — strict-less-than on
+   * the next page (deterministic tiebreak when timestamps collide). Search
+   * is a case-insensitive regex on `username` and `email`. Returns the
+   * `AdminUserDTO` projection (password and tutorial progress excluded).
+   */
+  findForModeration(opts: {
+    q?: string;
+    cursor?: AdminUserCursor | null;
+    limit: number;
+  }): Promise<{
+    items: AdminUserDTO[];
+    nextCursor: AdminUserCursor | null;
+  }>;
   create(user: Omit<User, "_id">): Promise<User>;
   updatePassword(email: string, password: string): Promise<void>;
   /**

@@ -11,6 +11,9 @@ export interface IUserDocument extends Document {
   moderator?: boolean;
   tutorialsCompleted?: string[];
   badges?: string[];
+  /** Set by Mongoose `timestamps: true` on the schema. */
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const UserSchema = new Schema<IUserDocument>(

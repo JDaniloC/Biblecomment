@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   SetModeratorUseCase,
   DeleteUserUseCase,
+  ListUsersForModerationUseCase,
   MarkTutorialCompletedUseCase,
   UpdateUsernameUseCase,
   ANONYMIZED_USERNAME,
@@ -92,6 +93,51 @@ describe("SetModeratorUseCase", () => {
     const useCase = new SetModeratorUseCase(repo);
 
     await expect(useCase.execute("ghost@example.com", true)).rejects.toThrow("User not found");
+  });
+});
+
+describe("ListUsersForModerationUseCase", () => {
+  it("delegates to repo.findForModeration with the provided opts", async () => {
+    const items = [
+      {
+        _id: "u1",
+        username: "alice",
+        email: "alice@example.com",
+        moderator: false,
+        createdAt: new Date("2026-05-20T12:00:00Z"),
+      },
+    ];
+    const cursor = { createdAt: new Date("2026-05-19T00:00:00Z"), id: "u0" };
+    const findForModeration = vi.fn().mockResolvedValue({
+      items,
+      nextCursor: null,
+    });
+    const repo = { findForModeration } as unknown as IUserRepository;
+    const useCase = new ListUsersForModerationUseCase(repo);
+
+    const result = await useCase.execute({ q: "ali", cursor, limit: 20 });
+
+    expect(findForModeration).toHaveBeenCalledWith({
+      q: "ali",
+      cursor,
+      limit: 20,
+    });
+    expect(result.items).toEqual(items);
+    expect(result.nextCursor).toBeNull();
+  });
+
+  it("returns the repo's nextCursor unchanged when more pages remain", async () => {
+    const nextCursor = { createdAt: new Date("2026-05-18T10:00:00Z"), id: "u9" };
+    const findForModeration = vi.fn().mockResolvedValue({
+      items: [],
+      nextCursor,
+    });
+    const repo = { findForModeration } as unknown as IUserRepository;
+    const useCase = new ListUsersForModerationUseCase(repo);
+
+    const result = await useCase.execute({ limit: 5 });
+
+    expect(result.nextCursor).toEqual(nextCursor);
   });
 });
 

@@ -1,4 +1,8 @@
-import { IUserRepository } from "@/domain/repositories/IUserRepository";
+import {
+  IUserRepository,
+  AdminUserCursor,
+} from "@/domain/repositories/IUserRepository";
+import { AdminUserDTO } from "@/domain/dto/AdminUserDTO";
 import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
 import { ICommentReportRepository } from "@/domain/repositories/ICommentReportRepository";
@@ -161,5 +165,17 @@ export class SetModeratorUseCase {
     const updated = await this.userRepo.update(email, { moderator });
     if (!updated) throw new Error("User not found");
     return updated;
+  }
+}
+
+export class ListUsersForModerationUseCase {
+  constructor(private readonly userRepo: IUserRepository) {}
+
+  async execute(opts: {
+    q?: string;
+    cursor?: AdminUserCursor | null;
+    limit: number;
+  }): Promise<{ items: AdminUserDTO[]; nextCursor: AdminUserCursor | null }> {
+    return this.userRepo.findForModeration(opts);
   }
 }

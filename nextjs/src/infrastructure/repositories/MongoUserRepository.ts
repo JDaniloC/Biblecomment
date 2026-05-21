@@ -1,6 +1,11 @@
-import { IUserRepository } from "@/domain/repositories/IUserRepository";
+import mongoose from "mongoose";
+import {
+  IUserRepository,
+  AdminUserCursor,
+} from "@/domain/repositories/IUserRepository";
 import { User } from "@/domain/entities/User";
 import { PublicUserDTO } from "@/domain/dto/PublicUserDTO";
+import { AdminUserDTO } from "@/domain/dto/AdminUserDTO";
 import { UserModel, IUserDocument } from "@/infrastructure/database/models/UserModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 
@@ -112,6 +117,64 @@ export class MongoUserRepository implements IUserRepository {
       .skip((page - 1) * pageSize)
       .limit(pageSize);
     return docs.map(toEntity);
+  }
+
+  async findForModeration(opts: {
+    q?: string;
+    cursor?: AdminUserCursor | null;
+    limit: number;
+  }): Promise<{ items: AdminUserDTO[]; nextCursor: AdminUserCursor | null }> {
+    await connectToDatabase();
+    const limit = Math.max(1, Math.min(opts.limit, 100));
+    const q = opts.q?.trim();
+
+    // Strict-less-than on (createdAt, _id) using { createdAt: -1, _id: -1 }
+    // sort. Split into the two OR branches so each remains sargable on the
+    // compound index.
+    const cursorPred = opts.cursor
+      ? {
+          $or: [
+            { createdAt: { $lt: opts.cursor.createdAt } },
+            mongoose.Types.ObjectId.isValid(opts.cursor.id)
+              ? {
+                  createdAt: opts.cursor.createdAt,
+                  _id: { $lt: new mongoose.Types.ObjectId(opts.cursor.id) },
+                }
+              : { _id: null },
+          ],
+        }
+      : null;
+
+    const filter: Record<string, unknown> = { ...(cursorPred ?? {}) };
+    if (q) {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(escaped, "i");
+      filter.$or = [{ username: re }, { email: re }, { displayName: re }];
+    }
+
+    const docs = await UserModel.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .select(
+        "_id username displayName email state moderator createdAt",
+      );
+
+    const hasMore = docs.length > limit;
+    const slice = hasMore ? docs.slice(0, limit) : docs;
+    const items: AdminUserDTO[] = slice.map((d) => ({
+      _id: d._id!.toString(),
+      username: d.username,
+      displayName: d.displayName,
+      email: d.email,
+      state: d.state,
+      moderator: !!d.moderator,
+      createdAt: d.createdAt!,
+    }));
+    const last = items[items.length - 1];
+    const nextCursor = hasMore && last
+      ? { createdAt: last.createdAt, id: last._id }
+      : null;
+    return { items, nextCursor };
   }
 
   async create(user: Omit<User, "_id">): Promise<User> {

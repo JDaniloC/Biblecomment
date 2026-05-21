@@ -37,6 +37,7 @@ function makeUserRepo(users: Record<string, User>): IUserRepository {
 		findManyByIds: async () => [],
 		findAll: async () => [],
 		findAllPaginated: async () => [],
+		findForModeration: async () => ({ items: [], nextCursor: null }),
 		create: async () => {
 			throw new Error("not implemented");
 		},
@@ -624,6 +625,7 @@ describe("ListCommunityMembersUseCase", () => {
 				),
 			findAll: async () => [],
 			findAllPaginated: async () => [],
+		findForModeration: async () => ({ items: [], nextCursor: null }),
 			create: async () => ({}) as User,
 			updatePassword: async () => {},
 			updatePasswordById: async () => {},
@@ -701,6 +703,7 @@ describe("ListCommunityFollowersUseCase", () => {
 				),
 			findAll: async () => [],
 			findAllPaginated: async () => [],
+		findForModeration: async () => ({ items: [], nextCursor: null }),
 			create: async () => ({}) as User,
 			updatePassword: async () => {},
 			updatePasswordById: async () => {},
@@ -812,6 +815,7 @@ function makeUserRepoWithIds(byId: Record<string, string>): IUserRepository {
 				),
 		findAll: async () => [],
 		findAllPaginated: async () => [],
+		findForModeration: async () => ({ items: [], nextCursor: null }),
 		create: async () => ({}) as User,
 		updatePassword: async () => {},
 		updatePasswordById: async () => {},

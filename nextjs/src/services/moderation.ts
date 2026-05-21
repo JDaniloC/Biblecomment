@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import type { Comment } from "@/domain/entities/Comment";
+import type { AdminUserDTO } from "@/domain/dto/AdminUserDTO";
 import {
   clearReportsAction,
   toggleCommentVerifiedAction,
@@ -23,6 +24,17 @@ export interface ModerationCursor {
 
 export interface AllCommentsPage {
   items: Comment[];
+  nextCursor: ModerationCursor | null;
+  limit: number;
+}
+
+/** Date arrives as ISO string over the wire; consumer converts when needed. */
+export interface AdminUserRow extends Omit<AdminUserDTO, "createdAt"> {
+  createdAt: string;
+}
+
+export interface AllUsersPage {
+  items: AdminUserRow[];
   nextCursor: ModerationCursor | null;
   limit: number;
 }
@@ -65,5 +77,21 @@ export const moderationService = {
     const result = await setModeratorAction(email, moderator);
     if (!result.ok) actionError(result.error);
     return result.data;
+  },
+
+  async listUsers(opts: {
+    q?: string;
+    cursor?: ModerationCursor | null;
+    limit?: number;
+  } = {}): Promise<AllUsersPage> {
+    const params = new URLSearchParams();
+    if (opts.q && opts.q.trim()) params.set("q", opts.q.trim());
+    if (opts.cursor) {
+      params.set("cursorAt", opts.cursor.createdAt);
+      params.set("cursorId", opts.cursor.id);
+    }
+    if (opts.limit) params.set("limit", String(opts.limit));
+    const res = await axios.get<AllUsersPage>(`/api/moderation/users?${params}`);
+    return res.data;
   },
 };
