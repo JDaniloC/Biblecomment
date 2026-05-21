@@ -5,8 +5,8 @@
       "namespace": "android_app",
       "package_name": "br.com.biblecomment.app",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_PLAY_APP_SIGNING_SHA256",
-        "REPLACE_WITH_UPLOAD_KEY_SHA256"
+        "92:4C:0C:88:D0:0B:91:42:D3:DD:35:2B:8F:16:6E:B6:C4:4F:26:61:BC:4C:56:02:ED:C9:74:FE:FD:60:89:68",
+        "5A:60:4D:E5:F9:E9:30:18:EB:92:9A:34:D5:14:48:B5:62:3F:48:FA:F5:0E:BE:F4:8A:0B:74:5B:6C:55:9F:EF"
       ]
     }
   }
