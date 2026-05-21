@@ -46,6 +46,11 @@ export interface ICommentRepository {
 	): Promise<{ items: Comment[]; total: number }>;
 	findByUsername(username: string): Promise<Comment[]>;
 	/**
+	 * Just the `createdAt` timestamps of the user's comments — the minimal
+	 * projection the reading-streak day-set needs.
+	 */
+	findCommentTimestampsByUsername(username: string): Promise<Date[]>;
+	/**
 	 * DB-paginated variant of `findByUsername`. Used by the profile comments
 	 * tab so we don't pull the user's entire history into memory just to slice.
 	 * Page is 1-indexed; pageSize is clamped by the caller.

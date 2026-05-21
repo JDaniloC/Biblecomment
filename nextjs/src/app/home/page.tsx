@@ -4,6 +4,7 @@ import { MongoCommentRepository } from "@/infrastructure/repositories/MongoComme
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
 import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRepository";
 import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/MongoUserChapterReadRepository";
+import { MongoReadingSessionRepository } from "@/infrastructure/repositories/MongoReadingSessionRepository";
 import { GetAllBooksUseCase } from "@/application/use-cases/BookUseCases";
 import { GetRecentFeedUseCase } from "@/application/use-cases/FeedUseCases";
 import { GetReadingStreakUseCase } from "@/application/use-cases/GetReadingStreakUseCase";
@@ -30,7 +31,11 @@ export default async function HomePage() {
     new MongoVerseRepository(),
   );
   const readRepo = new MongoUserChapterReadRepository();
-  const streakUseCase = new GetReadingStreakUseCase(readRepo);
+  const streakUseCase = new GetReadingStreakUseCase({
+    chapterRead: readRepo,
+    comment: new MongoCommentRepository(),
+    readingSession: new MongoReadingSessionRepository(),
+  });
 
   // Books are cached via unstable_cache so the parallel fan-out is cheap on
   // warm renders; the recent feed query is what we actually save a hop on by
@@ -39,7 +44,10 @@ export default async function HomePage() {
     booksUseCase.execute(),
     recentUseCase.execute({ cursor: null, limit: INITIAL_FEED_LIMIT }),
     readRepo.countByUserPerBook(session.user.id),
-    streakUseCase.execute(session.user.id),
+    streakUseCase.execute({
+      userId: session.user.id,
+      username: session.user.username,
+    }),
   ]);
 
   // Today's RPSP chapter — the streak banner's CTA target.

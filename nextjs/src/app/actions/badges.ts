@@ -9,6 +9,7 @@ import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDi
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoReadingSessionRepository } from "@/infrastructure/repositories/MongoReadingSessionRepository";
 import {
   EvaluateBadgesUseCase,
   GetUserBadgesUseCase,
@@ -35,6 +36,7 @@ export async function getMyBadgesAction(): Promise<ActionResult<UserBadgesView>>
       discussionAnswer: new MongoDiscussionAnswerRepository(),
       notification: new MongoNotificationRepository(),
       book: new MongoBookRepository(),
+      readingSession: new MongoReadingSessionRepository(),
     });
     const useCase = new GetUserBadgesUseCase(new MongoUserRepository(), evaluator);
     const view = await useCase.execute(

@@ -68,6 +68,10 @@ function makeRepos(opts: {
 
   const comment = {
     findByUsername: async () => opts.comments ?? [],
+    findCommentTimestampsByUsername: async () =>
+      (opts.comments ?? [])
+        .map((c) => c.createdAt)
+        .filter((d): d is Date => d != null),
   } as unknown as ICommentRepository;
 
   const commentLike: ICommentLikeRepository = {
@@ -122,7 +126,22 @@ function makeRepos(opts: {
     create: async () => ({} as never),
   } as IBookRepository;
 
-  return { user, chapterRead, comment, commentLike, discussion, discussionAnswer, notification, book };
+  const readingSession = {
+    registerDay: async () => {},
+    findDays: async () => [],
+  };
+
+  return {
+    user,
+    chapterRead,
+    comment,
+    commentLike,
+    discussion,
+    discussionAnswer,
+    notification,
+    book,
+    readingSession,
+  };
 }
 
 function makeComment(bookRef: string, partial: Partial<Comment> = {}): Comment {

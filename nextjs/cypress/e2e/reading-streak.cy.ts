@@ -29,9 +29,7 @@ describe("Reading streak banner", () => {
 		);
 	});
 
-	it("counts today's reading as a 1-day streak", () => {
-		// Mark a chapter read through the real UI so the streak is computed
-		// from a genuine UserChapterRead row.
+	it("counts a chapter marked as read as a streak day", () => {
 		cy.visit("/verses/gn/1");
 		cy.get("[data-testid='mark-as-read']").click();
 		cy.get("[data-testid='mark-as-read']").should(
@@ -48,5 +46,24 @@ describe("Reading streak banner", () => {
 			"contain.text",
 			"1 dia de leitura seguidos",
 		);
+	});
+
+	it("counts posting a comment as a streak day (hybrid signal)", () => {
+		// No chapter marked, no reading session — only a comment. The hybrid
+		// streak must still register today.
+		cy.request("GET", "/api/books/gn/verses/1").then((res) => {
+			const verse = (
+				res.body as Array<{ _id: string; verseNumber: number }>
+			).find((v) => v.verseNumber === 1)!;
+			cy.request("POST", `/api/comments/${verse._id}`, {
+				text: "Comentário que deve contar para o streak de hoje.",
+				tags: ["devocional"],
+			});
+		});
+
+		cy.visit("/home");
+		cy.get("[data-testid='reading-streak-card']")
+			.should("have.attr", "data-streak", "1")
+			.and("have.attr", "data-read-today", "true");
 	});
 });

@@ -9,8 +9,8 @@ import type { IBookRepository } from "@/domain/repositories/IBookRepository";
 import { BADGES, getBadge } from "@/lib/badges/catalog";
 import { BADGE_SECTIONS } from "@/lib/badges/sections";
 import type { BadgeAxis, BadgeCounters, BadgeDefinition } from "@/lib/badges/types";
-import { computeStreak } from "@/lib/reading-streak";
-import { DEFAULT_REMINDER_TZ } from "@/domain/entities/ReadingReminderPreference";
+import type { IReadingSessionRepository } from "@/domain/repositories/IReadingSessionRepository";
+import { GetReadingStreakUseCase } from "./GetReadingStreakUseCase";
 
 export interface BadgeRepos {
   user: IUserRepository;
@@ -21,6 +21,7 @@ export interface BadgeRepos {
   discussionAnswer: IDiscussionAnswerRepository;
   notification: INotificationRepository;
   book: IBookRepository;
+  readingSession: IReadingSessionRepository;
 }
 
 export interface EvaluateInput {
@@ -122,14 +123,12 @@ export class EvaluateBadgesUseCase {
     }
 
     if (needs("reader-streak")) {
-      const timestamps = await this.repos.chapterRead.findReadTimestamps(
-        input.userId,
-      );
-      counters.readingStreak = computeStreak(
-        timestamps,
-        new Date(),
-        DEFAULT_REMINDER_TZ,
-      ).current;
+      const streak = await new GetReadingStreakUseCase({
+        chapterRead: this.repos.chapterRead,
+        comment: this.repos.comment,
+        readingSession: this.repos.readingSession,
+      }).execute({ userId: input.userId, username: input.username });
+      counters.readingStreak = streak.current;
     }
 
     if (needs("commenter-volume") || needs("commenter-diversity") || needs("commenter-tags")) {

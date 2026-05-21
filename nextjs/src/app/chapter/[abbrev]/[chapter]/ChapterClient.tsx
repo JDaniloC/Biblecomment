@@ -7,6 +7,7 @@ import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { commentsService } from "@/services/comments";
 import { useActiveCommunity } from "@/lib/hooks/useCommunityFilter";
+import { useReadingTime } from "@/lib/hooks/useReadingTime";
 import { haptic } from "@/lib/haptic";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
@@ -97,6 +98,9 @@ export default function ChapterClient({
 	const router = useRouter();
 	const { handleNotification } = useNotification();
 	const confirm = useConfirm();
+
+	// Accrue reading time toward the daily streak session (logged-in only).
+	useReadingTime(!!user);
 
 	const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
 	const [isTitleMode, setIsTitleMode] = useState(false);

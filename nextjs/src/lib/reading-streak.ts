@@ -2,18 +2,20 @@ import { localDateString } from "./reminder-scheduler";
 
 /**
  * Reading streak — consecutive calendar days (in the reader's timezone)
- * on which they marked at least one chapter as read. "Lenient" by
- * design: any chapter counts, not only the RPSP chapter of the day, so
- * the streak rewards the reading habit itself.
+ * on which they engaged with the Bible. "Hybrid" by design: a day counts
+ * if ANY of three signals fired — a timed reading session, a chapter
+ * marked as read, or a comment posted. This rewards the habit itself,
+ * not just the binary "I finished the whole chapter" button, and keeps
+ * working for readers who have already been through the whole Bible.
  */
 export interface ReadingStreak {
 	/** Consecutive days, inclusive of today when `readToday` is true. */
 	current: number;
-	/** Whether a chapter was already read today. */
+	/** Whether the user engaged today. */
 	readToday: boolean;
 	/**
 	 * The streak is alive but today's reading is still pending — the user
-	 * read yesterday and has until midnight to keep the run going.
+	 * engaged yesterday and has until midnight to keep the run going.
 	 */
 	atRisk: boolean;
 }
@@ -28,21 +30,25 @@ function previousDay(ymd: string): string {
 	return `${dt.getUTCFullYear()}-${mm}-${dd}`;
 }
 
+/** Map raw timestamps to their YYYY-MM-DD day in `tz`. */
+export function daysFromTimestamps(dates: Date[], tz: string): string[] {
+	return dates.map((d) => localDateString(d, tz));
+}
+
 /**
- * Compute the streak from raw `readAt` timestamps. The streak counts
- * back from today (if read today) or yesterday (if not yet read today
- * but read yesterday). A gap of 2+ days resets it to zero.
+ * Compute the streak from a set of engaged day-strings (already in the
+ * reader's tz). The streak counts back from today (if engaged today) or
+ * yesterday (if not yet today but yesterday). A 2+ day gap resets it.
  */
 export function computeStreak(
-	readDates: Date[],
+	engagedDays: Set<string>,
 	now: Date,
 	tz: string,
 ): ReadingStreak {
-	if (readDates.length === 0) {
+	if (engagedDays.size === 0) {
 		return { current: 0, readToday: false, atRisk: false };
 	}
 
-	const days = new Set(readDates.map((d) => localDateString(d, tz)));
 	const today = localDateString(now, tz);
 	const yesterday = localDateString(
 		new Date(now.getTime() - 86_400_000),
@@ -51,20 +57,20 @@ export function computeStreak(
 
 	let anchor: string;
 	let readToday: boolean;
-	if (days.has(today)) {
+	if (engagedDays.has(today)) {
 		anchor = today;
 		readToday = true;
-	} else if (days.has(yesterday)) {
+	} else if (engagedDays.has(yesterday)) {
 		anchor = yesterday;
 		readToday = false;
 	} else {
-		// Last read (if any) was 2+ days ago — streak broken.
+		// Last engagement (if any) was 2+ days ago — streak broken.
 		return { current: 0, readToday: false, atRisk: false };
 	}
 
 	let current = 0;
 	let cursor = anchor;
-	while (days.has(cursor)) {
+	while (engagedDays.has(cursor)) {
 		current++;
 		cursor = previousDay(cursor);
 	}

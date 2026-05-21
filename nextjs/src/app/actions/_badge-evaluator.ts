@@ -13,6 +13,7 @@ import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDi
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoReadingSessionRepository } from "@/infrastructure/repositories/MongoReadingSessionRepository";
 import { EvaluateBadgesUseCase, type EvaluateInput } from "@/application/use-cases/BadgeUseCases";
 import { logger } from "@/lib/logger";
 
@@ -27,6 +28,7 @@ export async function evaluateBadges(input: EvaluateInput): Promise<string[]> {
       discussionAnswer: new MongoDiscussionAnswerRepository(),
       notification: new MongoNotificationRepository(),
       book: new MongoBookRepository(),
+      readingSession: new MongoReadingSessionRepository(),
     });
     return await useCase.evaluate(input);
   } catch (err) {

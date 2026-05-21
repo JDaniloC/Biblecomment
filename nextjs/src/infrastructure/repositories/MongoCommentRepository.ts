@@ -121,6 +121,15 @@ export class MongoCommentRepository implements ICommentRepository {
 		return docs.map(toEntity);
 	}
 
+	async findCommentTimestampsByUsername(username: string): Promise<Date[]> {
+		await connectToDatabase();
+		const docs = await CommentModel.find(
+			{ username },
+			{ createdAt: 1, _id: 0 },
+		);
+		return docs.map((d) => d.createdAt).filter((d): d is Date => d != null);
+	}
+
 	async findByUsernamePaginated(
 		username: string,
 		page: number,
