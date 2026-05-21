@@ -74,6 +74,138 @@ Prereq (done in repo): the prod manifest is valid and now served as
 
 ---
 
+## Bumping for a new release (1.0.0 → 1.0.1 and onward)
+
+Most code changes do NOT require a new AAB — the TWA pulls
+`https://biblecomment.com.br` live, so any web-side update (new pages,
+fixes, polish) reaches existing installs on the next launch.
+
+A new release is only required when:
+
+- You change a manifest field that Bubblewrap **bakes** into the AAB at
+  generation time: theme/background color, splash screen, icons,
+  `start_url`, `scope`, app name, or `package_name`.
+- You change Android-only config (permissions, intent filters, target
+  SDK bump — Google forces this annually).
+- You want to **force re-verification of `/.well-known/assetlinks.json`
+  on existing installs**. Chrome caches the Digital Asset Links result
+  for up to 24h; a release pushed via Play forces immediate re-check on
+  the next launch. (This is what motivated the `1.0.1` bump after the
+  `assetlinks.json` SHA-256 fix.)
+
+### Path A — Bubblewrap CLI (recommended, repeatable, ~30s per release)
+
+**One-time setup** (run once on your dev machine):
+
+```bash
+npm i -g @bubblewrap/cli
+bubblewrap doctor           # confirms JDK + Android SDK are wired up
+```
+
+**One-time project init** (creates a `twa-manifest.json` you re-use):
+
+```bash
+# Pick a directory OUTSIDE the nextjs/ tree, e.g. mobile/twa/
+mkdir -p mobile/twa && cd mobile/twa
+bubblewrap init --manifest https://www.biblecomment.com.br/manifest.webmanifest
+```
+
+Prompts:
+
+- Accept package id `br.com.biblecomment.app` (must match
+  `assetlinks.json`).
+- Accept host `www.biblecomment.com.br`.
+- When asked about the signing key, choose **"I already have a signing
+  key"** and point it at the `signing.keystore` from the first PWABuilder
+  release (kept in the password manager). Provide the password + alias.
+
+Result: a `twa-manifest.json` in the directory. Stash a copy of it in the
+password manager alongside the keystore — it's not secret but losing it
+forces re-init.
+
+**Per-release** (every time you cut a new version):
+
+1. Edit `twa-manifest.json`:
+
+   ```json
+   {
+     "appVersionName": "1.0.1",
+     "appVersionCode": 2,
+     ...
+   }
+   ```
+
+   - `appVersionCode` must increment by ≥1 every release (Play rejects
+     re-used codes).
+   - `appVersionName` is the user-facing string (semver is fine).
+
+2. Build:
+
+   ```bash
+   bubblewrap build
+   # Prompts for the keystore password.
+   # Produces app-release-bundle.aab (for Play) and
+   # app-release-signed.apk (for ad-hoc sideloading).
+   ```
+
+3. Upload in Play Console:
+
+   - **Test and release → Internal testing → Create new release**
+   - Upload `app-release-bundle.aab`
+   - Release name: `1.0.1`
+   - Release notes (PT-BR): the user-facing changelog
+   - Save → Review release → Rollout to Internal Testing
+
+4. Wait for review (minutes to a few hours).
+
+5. Promote: Internal → Closed (optional) → Open (optional) → Production.
+   For minor fixes you can promote straight to Production after a short
+   internal soak. For larger changes, give it 24h in Internal first.
+
+### Path B — PWABuilder cloud (slower but no local install)
+
+Use this if you don't want Bubblewrap installed locally.
+
+1. Go to <https://www.pwabuilder.com> → enter
+   `https://biblecomment.com.br` → **Package For Stores → Android**.
+2. In the config screen:
+   - **App version name**: `1.0.1`
+   - **App version code**: `2`
+   - Everything else identical to the first release (colors, package
+     id, etc.).
+3. **Signing key**: pick **"Use my own signing key"** and upload the
+   existing `signing.keystore` + password + alias. **Do NOT let
+   PWABuilder generate a new key** — Play rejects AABs signed with a
+   different upload key.
+4. Download the zip → upload the `.aab` to Play Console exactly like
+   Path A step 3 onwards.
+
+Trade-off: PWABuilder cloud build takes ~1–2 min vs ~10s local. You also
+depend on the site being up, which is rare but real.
+
+### Common pitfalls
+
+- **`versionCode` collision** — Play refuses uploads with a code already
+  used by ANY past release (including ones you withdrew). When in doubt,
+  bump higher rather than reusing.
+- **Wrong keystore** — signing with anything other than the keystore
+  Play has registered as the upload key returns
+  `Your Android App Bundle was signed with the wrong key`. Always pull
+  from the password manager.
+- **Upload key vs App Signing key** — you sign with the **upload** key;
+  Google re-signs with the **App Signing** key (managed by Play App
+  Signing). That's why `assetlinks.json` lists both SHA-256s.
+- **Don't release straight to Production** for changes you haven't
+  validated on a device. Internal testing track is cheap insurance.
+
+### Release notes lengths
+
+Play caps release notes at **500 characters per locale**. Keep the
+PT-BR copy as the canonical version; only add other locales if/when you
+localize the listing.
+
+---
+
 ## PWA capabilities shipped (PWABuilder follow-up)
 
 The TWA inherits these from the PWA automatically:
