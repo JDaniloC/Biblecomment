@@ -1,6 +1,7 @@
 /**
- * Daily reading-reminder opt-in: toggle in /profile → Configurações
- * persists across reload and round-trips through the API.
+ * Daily reading-reminder opt-in: switch in /profile → Configurações
+ * persists across reload and round-trips through the API. The hour
+ * picker is hidden while the switch is off.
  */
 import users from "../fixtures/users.json";
 
@@ -18,42 +19,72 @@ describe("Reading reminder preference", () => {
 		cy.loginAs(users.alice.email, users.alice.password);
 	});
 
-	it("starts disabled by default with 08:00 selected", () => {
+	it("starts off; the hour picker is hidden", () => {
 		cy.visit("/profile");
 		openConfigTab();
-		cy.get("[data-testid='reading-reminder-enabled']").should("not.be.checked");
+		cy.get("[data-testid='reading-reminder-enabled']").should(
+			"have.attr",
+			"aria-checked",
+			"false",
+		);
+		cy.get("[data-testid='reading-reminder-hour-row']").should("not.exist");
+	});
+
+	it("flipping the switch reveals the hour picker", () => {
+		cy.visit("/profile");
+		openConfigTab();
+		cy.get("[data-testid='reading-reminder-enabled']").click();
+		cy.get("[data-testid='reading-reminder-enabled']").should(
+			"have.attr",
+			"aria-checked",
+			"true",
+		);
+		cy.get("[data-testid='reading-reminder-hour-row']").should("be.visible");
 		cy.get("[data-testid='reading-reminder-hour']").should("have.value", "8");
 	});
 
 	it("saves a new value and reloads it on next visit", () => {
 		cy.visit("/profile");
 		openConfigTab();
-		cy.get("[data-testid='reading-reminder-enabled']").check();
+		cy.get("[data-testid='reading-reminder-enabled']").click();
 		cy.get("[data-testid='reading-reminder-hour']").select("7.5");
 		cy.contains("button", "Salvar lembrete").click();
 		cy.contains("Lembrete diário ativado às 07:30").should("be.visible");
 
 		cy.reload();
 		openConfigTab();
-		cy.get("[data-testid='reading-reminder-enabled']").should("be.checked");
+		cy.get("[data-testid='reading-reminder-enabled']").should(
+			"have.attr",
+			"aria-checked",
+			"true",
+		);
 		cy.get("[data-testid='reading-reminder-hour']").should("have.value", "7.5");
 	});
 
-	it("disabling also persists", () => {
+	it("turning the switch off hides the picker and persists", () => {
 		cy.request("PUT", "/api/me/reading-reminder", {
 			enabled: true,
 			hourLocal: 9,
 		});
 		cy.visit("/profile");
 		openConfigTab();
-		cy.get("[data-testid='reading-reminder-enabled']").should("be.checked");
+		cy.get("[data-testid='reading-reminder-enabled']").should(
+			"have.attr",
+			"aria-checked",
+			"true",
+		);
 
-		cy.get("[data-testid='reading-reminder-enabled']").uncheck();
+		cy.get("[data-testid='reading-reminder-enabled']").click();
+		cy.get("[data-testid='reading-reminder-hour-row']").should("not.exist");
 		cy.contains("button", "Salvar lembrete").click();
 		cy.contains("Lembrete diário desativado.").should("be.visible");
 
 		cy.reload();
 		openConfigTab();
-		cy.get("[data-testid='reading-reminder-enabled']").should("not.be.checked");
+		cy.get("[data-testid='reading-reminder-enabled']").should(
+			"have.attr",
+			"aria-checked",
+			"false",
+		);
 	});
 });

@@ -18,6 +18,7 @@ import { useTutorial } from "@/lib/use-tutorial";
 import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import { BadgesTab } from "./_components/BadgesTab";
 import { ReadingReminderCard } from "./_components/ReadingReminderCard";
+import { Toggle } from "./_components/Toggle";
 
 const { beliefs, states } = collectionsData as {
 	beliefs: string[];
@@ -292,33 +293,6 @@ function FavoriteCard({ comment }: { comment: CommentData }) {
 				</Link>
 			)}
 		</div>
-	);
-}
-
-/* ─────────────────── Privacy toggle switch ─────────────────── */
-function PrivacyToggle({
-	checked,
-	onChange,
-}: {
-	checked: boolean;
-	onChange: (v: boolean) => void;
-}) {
-	return (
-		<button
-			type="button"
-			role="switch"
-			aria-checked={checked}
-			onClick={() => onChange(!checked)}
-			className={`shrink-0 w-9 h-5 rounded-[10px] border-none cursor-pointer relative transition-colors duration-200 p-0 mt-px ${
-				checked ? "bg-brand" : "bg-slate-300 dark:bg-slate-600"
-			}`}
-		>
-			<span
-				className={`absolute top-[3px] w-[14px] h-[14px] rounded-[7px] bg-white shadow transition-[left] duration-200 ${
-					checked ? "left-[17px]" : "left-[3px]"
-				}`}
-			/>
-		</button>
 	);
 }
 
@@ -1391,7 +1365,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 									className="flex items-start gap-3.5 pb-4"
 									data-testid="show-belief-toggle"
 								>
-									<PrivacyToggle
+									<Toggle
 										checked={showReligion}
 										onChange={setShowReligion}
 									/>
@@ -1411,7 +1385,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 
 								{/* Toggle 2 */}
 								<div className="flex items-start gap-3.5">
-									<PrivacyToggle
+									<Toggle
 										checked={showHistory}
 										onChange={setShowHistory}
 									/>

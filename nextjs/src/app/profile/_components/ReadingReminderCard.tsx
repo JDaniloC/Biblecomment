@@ -8,6 +8,7 @@ import {
 	DEFAULT_REMINDER_TZ,
 	type ReadingReminderPreference,
 } from "@/domain/entities/ReadingReminderPreference";
+import { Toggle } from "./Toggle";
 
 /** "07:30" for 7.5, "00:00" for 0, "23:30" for 23.5. */
 function formatHourLocal(h: number): string {
@@ -82,46 +83,49 @@ export function ReadingReminderCard() {
 				estar ativadas no sino.
 			</p>
 
-			<label className="flex items-center gap-2 mb-4 cursor-pointer select-none">
-				<input
-					type="checkbox"
-					data-testid="reading-reminder-enabled"
+			<div className="flex items-start gap-3.5 mb-4">
+				<Toggle
 					checked={enabled}
-					onChange={(e) => setEnabled(e.target.checked)}
+					onChange={setEnabled}
 					disabled={loading}
-					className="w-4 h-4 accent-brand cursor-pointer"
+					ariaLabel="Ativar lembrete diário"
+					dataTestid="reading-reminder-enabled"
 				/>
-				<span className="text-[13px] text-slate-800 dark:text-slate-100">
-					Ativar lembrete
-				</span>
-			</label>
-
-			<div
-				className={`flex flex-col gap-1.5 mb-5 transition-opacity ${
-					enabled ? "opacity-100" : "opacity-50"
-				}`}
-			>
-				<label
-					htmlFor="reminder-hour"
-					className="font-semibold text-[13px] text-slate-800 dark:text-slate-100"
-				>
-					Horário (fuso de São Paulo)
-				</label>
-				<select
-					id="reminder-hour"
-					data-testid="reading-reminder-hour"
-					value={hourLocal}
-					onChange={(e) => setHourLocal(Number(e.target.value))}
-					disabled={loading || !enabled}
-					className="w-full max-w-[160px] h-[38.833px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 text-[13px] text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 outline-none cursor-pointer disabled:cursor-not-allowed"
-				>
-					{SLOTS.map((slot) => (
-						<option key={slot} value={slot}>
-							{formatHourLocal(slot)}
-						</option>
-					))}
-				</select>
+				<div>
+					<div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-[19.5px]">
+						Ativar lembrete
+					</div>
+					<div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mt-0.5">
+						Você escolhe o horário e o aplicativo te chama com o capítulo do
+						dia.
+					</div>
+				</div>
 			</div>
+
+			{enabled && (
+				<div className="flex flex-col gap-1.5 mb-5" data-testid="reading-reminder-hour-row">
+					<label
+						htmlFor="reminder-hour"
+						className="font-semibold text-[13px] text-slate-800 dark:text-slate-100"
+					>
+						Horário (fuso de São Paulo)
+					</label>
+					<select
+						id="reminder-hour"
+						data-testid="reading-reminder-hour"
+						value={hourLocal}
+						onChange={(e) => setHourLocal(Number(e.target.value))}
+						disabled={loading}
+						className="w-full max-w-[160px] h-[38.833px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 text-[13px] text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 outline-none cursor-pointer disabled:cursor-not-allowed"
+					>
+						{SLOTS.map((slot) => (
+							<option key={slot} value={slot}>
+								{formatHourLocal(slot)}
+							</option>
+						))}
+					</select>
+				</div>
+			)}
 
 			<button
 				onClick={save}
