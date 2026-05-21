@@ -7,6 +7,7 @@ import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { commentsService } from "@/services/comments";
 import { useActiveCommunity } from "@/lib/hooks/useCommunityFilter";
+import { haptic } from "@/lib/haptic";
 import { Book } from "@/domain/entities/Book";
 import { Verse } from "@/domain/entities/Verse";
 import type { CommentData } from "@/lib/comment-data";
@@ -423,6 +424,7 @@ export default function ChapterClient({
 				requireLogin();
 				return;
 			}
+			haptic("tap");
 			const result = await toggleLikeAction(id);
 			if (!result.ok) {
 				handleNotification("error", "Erro ao curtir.");

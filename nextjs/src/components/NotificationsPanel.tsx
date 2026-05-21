@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { notificationsService } from "@/services/notifications";
 import { PushToggle } from "@/components/PushToggle";
+import { syncAppBadge } from "@/lib/app-badge";
 import type { Notification } from "@/domain/entities/Notification";
 
 const POLL_INTERVAL_MS = 60_000;
@@ -51,6 +52,14 @@ export function useNotifications() {
 		const id = window.setInterval(load, POLL_INTERVAL_MS);
 		return () => window.clearInterval(id);
 	}, [load]);
+
+	// Paint the launcher app icon badge so users see the unread count
+	// without having to open the app first. No-op on browsers without the
+	// Badging API; idempotent if the bell and the mobile tab-bar mount the
+	// hook simultaneously.
+	useEffect(() => {
+		syncAppBadge(unread);
+	}, [unread]);
 
 	const handleItemClick = useCallback(async (n: Notification) => {
 		if (!n.read && n._id) {

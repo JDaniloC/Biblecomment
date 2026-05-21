@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { chapterProgressService } from "@/services/chapter-progress";
 import { useNotification } from "@/contexts/NotificationContext";
 import { getBadge } from "@/lib/badges/catalog";
+import { haptic } from "@/lib/haptic";
 
 interface Props {
   abbrev: string;
@@ -32,6 +33,9 @@ export function MarkAsReadButton({ abbrev, chapter, initialRead, enabled }: Prop
     if (pending) return;
     const next = !read;
     setRead(next); // optimistic
+    // Confirm-strength tap only when MARKING (the positive action);
+    // unmarking is a correction and shouldn't reward itself.
+    if (next) haptic("confirm");
     startTransition(async () => {
       try {
         if (next) {

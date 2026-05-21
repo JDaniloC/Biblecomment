@@ -9,6 +9,7 @@ import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRe
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import OmniSearch from "./_components/OmniSearch";
+import { ExitConfirmation } from "./_components/ExitConfirmation";
 import type { Book } from "@/domain/entities/Book";
 import type { Verse } from "@/domain/entities/Verse";
 import type { Comment } from "@/domain/entities/Comment";
@@ -130,6 +131,7 @@ export default async function RootPage() {
 
 	return (
 		<div className="min-h-screen bg-stone-50 dark:bg-slate-950 flex flex-col">
+			<ExitConfirmation />
 			<HomeHeader user={sessionUser} />
 
 			{!isLoggedIn && (
