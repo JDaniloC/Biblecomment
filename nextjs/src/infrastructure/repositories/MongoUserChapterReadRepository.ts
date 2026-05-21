@@ -66,4 +66,13 @@ export class MongoUserChapterReadRepository implements IUserChapterReadRepositor
     const docs = await UserChapterReadModel.find({ userId });
     return docs.map(toEntity);
   }
+
+  async findReadTimestamps(userId: string): Promise<Date[]> {
+    await connectToDatabase();
+    const docs = await UserChapterReadModel.find(
+      { userId },
+      { readAt: 1, _id: 0 },
+    ).sort({ readAt: -1 });
+    return docs.map((d) => d.readAt);
+  }
 }

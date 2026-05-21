@@ -6,6 +6,8 @@ import { MongoVerseRepository } from "@/infrastructure/repositories/MongoVerseRe
 import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/MongoUserChapterReadRepository";
 import { GetAllBooksUseCase } from "@/application/use-cases/BookUseCases";
 import { GetRecentFeedUseCase } from "@/application/use-cases/FeedUseCases";
+import { GetReadingStreakUseCase } from "@/application/use-cases/GetReadingStreakUseCase";
+import { getReadingForDate } from "@/lib/reading-plan";
 import HomeClient from "./HomeClient";
 
 const INITIAL_FEED_LIMIT = 10;
@@ -28,15 +30,20 @@ export default async function HomePage() {
     new MongoVerseRepository(),
   );
   const readRepo = new MongoUserChapterReadRepository();
+  const streakUseCase = new GetReadingStreakUseCase(readRepo);
 
   // Books are cached via unstable_cache so the parallel fan-out is cheap on
   // warm renders; the recent feed query is what we actually save a hop on by
   // running it here instead of from a client-side useEffect after hydration.
-  const [books, recent, readCountByBook] = await Promise.all([
+  const [books, recent, readCountByBook, streak] = await Promise.all([
     booksUseCase.execute(),
     recentUseCase.execute({ cursor: null, limit: INITIAL_FEED_LIMIT }),
     readRepo.countByUserPerBook(session.user.id),
+    streakUseCase.execute(session.user.id),
   ]);
+
+  // Today's RPSP chapter — the streak banner's CTA target.
+  const todayReading = getReadingForDate(new Date());
 
   // Use-case returns Date instances; the client component types cursors as
   // ISO strings, so normalize here at the wire boundary.
@@ -53,6 +60,9 @@ export default async function HomePage() {
       user={session.user}
       initialRecent={initialRecent}
       readCountByBook={readCountByBook}
+      streak={streak}
+      todayReadingUrl={`/verses/${todayReading.abbrev}/${todayReading.chapter}`}
+      todayReadingLabel={`${todayReading.bookName} ${todayReading.chapter}`}
     />
   );
 }

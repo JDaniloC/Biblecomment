@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Book } from "@/domain/entities/Book";
 import { AppHeader } from "@/components/AppHeader";
 import ChapterPickerDialog from "./ChapterPickerDialog";
+import { ReadingStreakCard } from "./ReadingStreakCard";
+import type { ReadingStreak } from "@/lib/reading-streak";
 import {
   feedService,
   type FeedComment,
@@ -29,6 +31,11 @@ interface Props {
    * Books absent from the map are treated as 0.
    */
   readCountByBook?: Record<string, number>;
+  /** Reading-streak banner data — present only for logged-in users. */
+  streak?: ReadingStreak;
+  /** Deep link + label for today's RPSP chapter (streak CTA target). */
+  todayReadingUrl?: string;
+  todayReadingLabel?: string;
 }
 
 type ReadTier = "none" | "partial" | "complete";
@@ -420,7 +427,15 @@ function FeedAuthCta() {
   );
 }
 
-export default function HomeClient({ books, user, initialRecent, readCountByBook }: Props) {
+export default function HomeClient({
+  books,
+  user,
+  initialRecent,
+  readCountByBook,
+  streak,
+  todayReadingUrl,
+  todayReadingLabel,
+}: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "VT" | "NT">("all");
   const [pickerBook, setPickerBook] = useState<Book | null>(null);
@@ -445,7 +460,16 @@ export default function HomeClient({ books, user, initialRecent, readCountByBook
 
       <main id="main-content" className="max-w-6xl mx-auto px-4 py-6">
         {user ? (
-          <FeedSection initialRecent={initialRecent} />
+          <>
+            {streak && todayReadingUrl && todayReadingLabel && (
+              <ReadingStreakCard
+                streak={streak}
+                todayReadingUrl={todayReadingUrl}
+                todayReadingLabel={todayReadingLabel}
+              />
+            )}
+            <FeedSection initialRecent={initialRecent} />
+          </>
         ) : (
           <FeedAuthCta />
         )}

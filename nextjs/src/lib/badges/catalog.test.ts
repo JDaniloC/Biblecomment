@@ -6,6 +6,7 @@ import type { BadgeCounters } from "./types";
 const EMPTY: BadgeCounters = {
   chaptersRead: 0,
   chaptersReadByBook: {},
+  readingStreak: 0,
   commentsCount: 0,
   commentBooks: 0,
   commentTagsUsed: new Set(),
@@ -17,8 +18,9 @@ const EMPTY: BadgeCounters = {
 };
 
 describe("badge catalog", () => {
-  it("contains the expected count of 30 badges", () => {
-    expect(BADGES).toHaveLength(30);
+  it("contains the expected count of 34 badges", () => {
+    // 30 original + 4 streak tiers (bronze/silver/gold/diamond).
+    expect(BADGES).toHaveLength(34);
   });
 
   it("commenter-volume axis exposes all 6 tiers with correct targets", () => {
@@ -109,6 +111,34 @@ describe("badge catalog", () => {
   it("commenter-bronze unlocks on the first comment", () => {
     const c: BadgeCounters = { ...EMPTY, commentsCount: 1 };
     expect(getBadge("commenter-bronze")!.meets(c)).toBe(true);
+  });
+
+  it("streak badges unlock at their day thresholds", () => {
+    expect(getBadge("streak-bronze")!.meets({ ...EMPTY, readingStreak: 7 })).toBe(true);
+    expect(getBadge("streak-bronze")!.meets({ ...EMPTY, readingStreak: 6 })).toBe(false);
+    expect(getBadge("streak-silver")!.meets({ ...EMPTY, readingStreak: 30 })).toBe(true);
+    expect(getBadge("streak-gold")!.meets({ ...EMPTY, readingStreak: 100 })).toBe(true);
+    expect(getBadge("streak-diamond")!.meets({ ...EMPTY, readingStreak: 365 })).toBe(true);
+  });
+
+  it("a 30-day streak unlocks bronze + silver but not gold", () => {
+    const c: BadgeCounters = { ...EMPTY, readingStreak: 30 };
+    const streakIds = BADGES.filter(
+      (b) => b.axis === "reader-streak" && b.meets(c),
+    ).map((b) => b.id);
+    expect(streakIds).toEqual(["streak-bronze", "streak-silver"]);
+  });
+
+  it("streak badge progress caps at the target", () => {
+    const def = getBadge("streak-bronze")!;
+    expect(def.progress!({ ...EMPTY, readingStreak: 3 })).toEqual({
+      current: 3,
+      target: 7,
+    });
+    expect(def.progress!({ ...EMPTY, readingStreak: 999 })).toEqual({
+      current: 7,
+      target: 7,
+    });
   });
 
   it("section badge meets() reads from completedSections", () => {

@@ -48,7 +48,7 @@ export async function markChapterReadAction(
       unlockedBadges = await evaluateBadges({
         userId: session.user.id,
         username: session.user.username,
-        axes: ["reader-volume", "reader-section", "interaction"],
+        axes: ["reader-volume", "reader-section", "reader-streak", "interaction"],
         // The reader-* counters will be (re)read from the DB; that's fine —
         // the new mark is already persisted before we evaluate.
       });

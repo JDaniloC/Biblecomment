@@ -21,4 +21,10 @@ export interface IUserChapterReadRepository {
 
   /** Bulk introspection (test/admin). */
   findAllForUser(userId: string): Promise<UserChapterRead[]>;
+
+  /**
+   * Just the `readAt` timestamps for the user, newest first — the
+   * minimal projection the reading-streak computation needs.
+   */
+  findReadTimestamps(userId: string): Promise<Date[]>;
 }

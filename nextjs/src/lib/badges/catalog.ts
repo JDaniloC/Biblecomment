@@ -1,5 +1,5 @@
 /**
- * Badge catalog — 30 entries across 6 axes.
+ * Badge catalog — 34 entries across 7 axes.
  *
  * To add a badge: append to BADGES with a unique `id` and a `meets()` predicate
  * over BadgeCounters. No migration needed; backfill script picks it up too.
@@ -48,6 +48,29 @@ const READER_BADGES: BadgeDefinition[] = READER_TIERS.map((t) => ({
   icon: "BookOpen",
   meets: (c) => c.chaptersRead >= t.target,
   progress: (c) => ({ current: Math.min(c.chaptersRead, t.target), target: t.target }),
+}));
+
+// Streak tiers reward the daily reading HABIT (consecutive days), as
+// opposed to READER_TIERS which reward cumulative volume.
+const STREAK_TIERS: Array<{ id: string; tier: BadgeTier; target: number; name: string }> = [
+  { id: "streak-bronze",  tier: "bronze",  target: 7,   name: "Sequência de 7 dias" },
+  { id: "streak-silver",  tier: "silver",  target: 30,  name: "Sequência de 30 dias" },
+  { id: "streak-gold",    tier: "gold",    target: 100, name: "Sequência de 100 dias" },
+  { id: "streak-diamond", tier: "diamond", target: 365, name: "Sequência de 365 dias" },
+];
+
+const STREAK_BADGES: BadgeDefinition[] = STREAK_TIERS.map((t) => ({
+  id: t.id,
+  axis: "reader-streak",
+  tier: t.tier,
+  name: t.name,
+  description: `Leia ao menos um capítulo por ${t.target} dias seguidos.`,
+  icon: "Flame",
+  meets: (c) => c.readingStreak >= t.target,
+  progress: (c) => ({
+    current: Math.min(c.readingStreak, t.target),
+    target: t.target,
+  }),
 }));
 
 const SECTION_BADGES: BadgeDefinition[] = BADGE_SECTIONS.map((s) => ({
@@ -158,6 +181,7 @@ const FIRST_TIME_BADGES: BadgeDefinition[] = [
 
 export const BADGES: BadgeDefinition[] = [
   ...READER_BADGES,
+  ...STREAK_BADGES,
   ...SECTION_BADGES,
   ...COMMENTER_BADGES,
   ...DIVERSITY_BADGES,

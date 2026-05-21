@@ -9,6 +9,7 @@ import { BadgeCard } from "./BadgeCard";
 
 const AXES: { id: BadgeAxis; label: string }[] = [
   { id: "reader-volume",       label: "Leitura por volume" },
+  { id: "reader-streak",       label: "Sequência de leitura" },
   { id: "reader-section",      label: "Leitura por seção" },
   { id: "commenter-volume",    label: "Comentários (volume)" },
   { id: "commenter-diversity", label: "Comentários (diversidade)" },

@@ -42,6 +42,11 @@ function inMemoryRepo(): IUserChapterReadRepository {
     async findAllForUser(userId) {
       return [...data.values()].filter((v) => v.userId === userId);
     },
+    async findReadTimestamps(userId) {
+      return [...data.values()]
+        .filter((v) => v.userId === userId)
+        .map((v) => v.readAt);
+    },
   };
 }
 

@@ -9,6 +9,7 @@
 export type BadgeAxis =
   | "reader-volume"
   | "reader-section"
+  | "reader-streak"
   | "commenter-volume"
   | "commenter-diversity"
   | "commenter-tags"
@@ -31,6 +32,11 @@ export interface BadgeCounters {
   chaptersRead: number;
   /** Per-book chapter-read count, keyed by abbrev. */
   chaptersReadByBook: Record<string, number>;
+  /**
+   * Current consecutive-days reading streak (lenient: any chapter on a
+   * day keeps it). Drives the `streak-*` badges.
+   */
+  readingStreak: number;
   /** Total comments the user has posted. */
   commentsCount: number;
   /** Distinct book abbrevs in which the user has posted at least one comment. */

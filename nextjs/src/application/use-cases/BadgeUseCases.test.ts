@@ -63,6 +63,7 @@ function makeRepos(opts: {
     findChaptersForBook: async () => [],
     countByUserPerBook: async () => opts.chaptersReadByBook ?? {},
     findAllForUser: async () => [],
+    findReadTimestamps: async () => [],
   };
 
   const comment = {

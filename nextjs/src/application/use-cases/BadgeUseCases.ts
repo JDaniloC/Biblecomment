@@ -9,6 +9,8 @@ import type { IBookRepository } from "@/domain/repositories/IBookRepository";
 import { BADGES, getBadge } from "@/lib/badges/catalog";
 import { BADGE_SECTIONS } from "@/lib/badges/sections";
 import type { BadgeAxis, BadgeCounters, BadgeDefinition } from "@/lib/badges/types";
+import { computeStreak } from "@/lib/reading-streak";
+import { DEFAULT_REMINDER_TZ } from "@/domain/entities/ReadingReminderPreference";
 
 export interface BadgeRepos {
   user: IUserRepository;
@@ -92,6 +94,7 @@ export class EvaluateBadgesUseCase {
     const counters: BadgeCounters = {
       chaptersRead: 0,
       chaptersReadByBook: {},
+      readingStreak: 0,
       commentsCount: 0,
       commentBooks: 0,
       commentTagsUsed: new Set<string>(),
@@ -116,6 +119,17 @@ export class EvaluateBadgesUseCase {
       if (needs("reader-section")) {
         counters.completedSections = await this.computeCompletedSections(chaptersReadByBook);
       }
+    }
+
+    if (needs("reader-streak")) {
+      const timestamps = await this.repos.chapterRead.findReadTimestamps(
+        input.userId,
+      );
+      counters.readingStreak = computeStreak(
+        timestamps,
+        new Date(),
+        DEFAULT_REMINDER_TZ,
+      ).current;
     }
 
     if (needs("commenter-volume") || needs("commenter-diversity") || needs("commenter-tags")) {
@@ -155,6 +169,7 @@ export class EvaluateBadgesUseCase {
     // Hints win for any caller-supplied counter (used both as "you just did X"
     // hot-path optimization AND to override repo values in tests).
     if (typeof hints.chaptersRead === "number") counters.chaptersRead = hints.chaptersRead;
+    if (typeof hints.readingStreak === "number") counters.readingStreak = hints.readingStreak;
     if (typeof hints.commentsCount === "number") counters.commentsCount = hints.commentsCount;
     if (typeof hints.commentBooks === "number") counters.commentBooks = hints.commentBooks;
     if (hints.commentTagsUsed) counters.commentTagsUsed = hints.commentTagsUsed;
