@@ -266,4 +266,227 @@ describe("Moderation endpoints", () => {
 			});
 		});
 	});
+
+	// ── Soft-hide a comment + disable a user ──────────────────────────
+
+	/** Post a comment as the currently-logged-in user; resolves to its id. */
+	function postComment(
+		verseId: string,
+		text: string,
+	): Cypress.Chainable<string> {
+		return cy
+			.request("POST", `/api/comments/${verseId}`, { text, tags: [] })
+			.then((res) => res.body._id as string);
+	}
+
+	/** Ids of every comment visible in the public chapter read of Gn 1:1. */
+	function chapterCommentIds(): Cypress.Chainable<string[]> {
+		return cy.request("/api/comments/chapter/gn/1/1").then((res) => {
+			const all = [
+				...(res.body.titleComments ?? []),
+				...(res.body.prioritized ?? []),
+				...(res.body.others ?? []),
+			];
+			return all.map((c: { _id: string }) => c._id);
+		});
+	}
+
+	/**
+	 * Drive the credentials login flow without asserting success — cy.loginAs
+	 * asserts a session cookie, so it can't express an *expected* failure.
+	 */
+	function attemptLogin(email: string, password: string) {
+		cy.request("/api/auth/csrf").then((csrf) => {
+			cy.request({
+				method: "POST",
+				url: "/api/auth/callback/credentials",
+				form: true,
+				body: {
+					email,
+					password,
+					csrfToken: csrf.body.csrfToken,
+					callbackUrl: "/home",
+					json: "true",
+				},
+				followRedirect: false,
+				failOnStatusCode: false,
+			});
+		});
+	}
+
+	describe("PATCH /api/comments/[id] — hide / unhide", () => {
+		it("a non-moderator cannot hide a comment → 403", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			getVerseId("gn", 1, 1).then((verseId) => {
+				postComment(verseId, "alice's comment").then((id) => {
+					cy.clearCookies();
+					cy.loginAs(users.bob.email, users.bob.password);
+					cy.request({
+						method: "PATCH",
+						url: `/api/comments/${id}`,
+						body: { action: "hide" },
+						failOnStatusCode: false,
+					}).then((res) => expect(res.status).to.eq(403));
+				});
+			});
+		});
+
+		it("a moderator hides a comment: gone from the public read, kept in the moderation list", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			getVerseId("gn", 1, 1).then((verseId) => {
+				postComment(verseId, "comment to hide").then((id) => {
+					cy.clearCookies();
+					cy.loginAs(users.mod.email, users.mod.password);
+					cy.request({
+						method: "PATCH",
+						url: `/api/comments/${id}`,
+						body: { action: "hide" },
+					}).then((res) => {
+						expect(res.status).to.eq(200);
+						expect(res.body.hiddenAt).to.not.be.null;
+						expect(res.body.hiddenReason).to.eq("moderator");
+					});
+
+					chapterCommentIds().should("not.include", id);
+
+					cy.request("/api/moderation/comments").then((res) => {
+						const ids = (res.body.items as Array<{ _id: string }>).map(
+							(c) => c._id,
+						);
+						expect(ids, "moderator still sees the hidden comment").to.include(
+							id,
+						);
+					});
+				});
+			});
+		});
+
+		it("the author still sees their own hidden comment via /api/users/comments", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			getVerseId("gn", 1, 1).then((verseId) => {
+				postComment(verseId, "alice hidden comment").then((id) => {
+					cy.clearCookies();
+					cy.loginAs(users.mod.email, users.mod.password);
+					cy.request("PATCH", `/api/comments/${id}`, { action: "hide" });
+
+					cy.clearCookies();
+					cy.loginAs(users.alice.email, users.alice.password);
+					cy.request("/api/users/comments").then((res) => {
+						const mine = (
+							res.body.comments as Array<{ _id: string; hiddenAt?: string }>
+						).find((c) => c._id === id);
+						expect(mine, "author sees own hidden comment").to.exist;
+						expect(mine!.hiddenAt).to.not.be.undefined;
+					});
+				});
+			});
+		});
+
+		it("a moderator can un-hide a comment, restoring it to the public read", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			getVerseId("gn", 1, 1).then((verseId) => {
+				postComment(verseId, "hide then show").then((id) => {
+					cy.clearCookies();
+					cy.loginAs(users.mod.email, users.mod.password);
+					cy.request("PATCH", `/api/comments/${id}`, { action: "hide" });
+					chapterCommentIds().should("not.include", id);
+
+					cy.request("PATCH", `/api/comments/${id}`, { action: "unhide" });
+					chapterCommentIds().should("include", id);
+				});
+			});
+		});
+	});
+
+	describe("PATCH /api/moderation/users — disable / enable", () => {
+		it("a non-moderator cannot disable an account → 403", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			cy.request({
+				method: "PATCH",
+				url: "/api/moderation/users",
+				body: { email: users.bob.email, disabled: true },
+				failOnStatusCode: false,
+			}).then((res) => expect(res.status).to.eq(403));
+		});
+
+		it("disabling a user hides all their comments and blocks their login", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			getVerseId("gn", 1, 1).then((verseId) => {
+				postComment(verseId, "alice comment one").then((id1) => {
+					postComment(verseId, "alice comment two").then((id2) => {
+						cy.clearCookies();
+						cy.loginAs(users.mod.email, users.mod.password);
+						cy.request({
+							method: "PATCH",
+							url: "/api/moderation/users",
+							body: { email: users.alice.email, disabled: true },
+						}).then((res) => {
+							expect(res.status).to.eq(200);
+							expect(res.body.disabled).to.be.true;
+						});
+
+						cy.task<number>(
+							"db:countHiddenCommentsByUsername",
+							"alice",
+						).should("eq", 2);
+						chapterCommentIds().then((ids) => {
+							expect(ids).to.not.include(id1);
+							expect(ids).to.not.include(id2);
+						});
+
+						// Alice can no longer start a session.
+						cy.clearCookies();
+						attemptLogin(users.alice.email, users.alice.password);
+						cy.getCookies().then((cookies) => {
+							const session = cookies.find((c) =>
+								/authjs\.session-token|next-auth\.session-token/.test(
+									c.name,
+								),
+							);
+							expect(session, "disabled user must not get a session").to.be
+								.undefined;
+						});
+					});
+				});
+			});
+		});
+
+		it("re-enabling restores cascade-hidden comments but keeps moderator-hidden ones hidden", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			getVerseId("gn", 1, 1).then((verseId) => {
+				postComment(verseId, "individually hidden").then((modHidden) => {
+					postComment(verseId, "cascade hidden").then((cascade) => {
+						cy.clearCookies();
+						cy.loginAs(users.mod.email, users.mod.password);
+
+						// Hide one comment individually, then disable the account.
+						cy.request("PATCH", `/api/comments/${modHidden}`, {
+							action: "hide",
+						});
+						cy.request("PATCH", "/api/moderation/users", {
+							email: users.alice.email,
+							disabled: true,
+						});
+
+						// Re-enable the account.
+						cy.request("PATCH", "/api/moderation/users", {
+							email: users.alice.email,
+							disabled: false,
+						});
+
+						chapterCommentIds().then((ids) => {
+							expect(
+								ids,
+								"cascade-hidden comment is restored",
+							).to.include(cascade);
+							expect(
+								ids,
+								"individually-hidden comment stays hidden",
+							).to.not.include(modHidden);
+						});
+					});
+				});
+			});
+		});
+	});
 });

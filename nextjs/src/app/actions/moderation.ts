@@ -7,6 +7,7 @@ import { MongoCommentRepository } from "@/infrastructure/repositories/MongoComme
 import {
   ClearReportsUseCase,
   ToggleCommentVerifiedUseCase,
+  SetCommentHiddenUseCase,
 } from "@/application/use-cases/CommentUseCases";
 import type { Comment } from "@/domain/entities/Comment";
 import { logger } from "@/lib/logger";
@@ -86,5 +87,47 @@ export async function toggleCommentVerifiedAction(
       "toggle verified failed",
     );
     return appError(err, "Erro ao atualizar verificação.");
+  }
+}
+
+/**
+ * Soft-hide / un-hide a comment. Moderator-only. A hidden comment stays
+ * stored but disappears from every public read path; the author still sees
+ * it in their own profile.
+ */
+export async function setCommentHiddenAction(
+  commentId: string,
+  hidden: boolean,
+): Promise<ActionResult<Comment>> {
+  const session = await auth();
+  if (!session?.user) return authError();
+  if (!session.user.moderator) return { ok: false, error: "Forbidden" };
+
+  try {
+    const useCase = new SetCommentHiddenUseCase(new MongoCommentRepository());
+    const updated = await useCase.execute(
+      commentId,
+      hidden,
+      session.user.username,
+    );
+
+    logger.info(
+      {
+        actor: session.user.email,
+        commentId,
+        hidden,
+        action: "set_comment_hidden",
+      },
+      "comment hidden state changed",
+    );
+
+    revalidatePath("/admin/moderation", "page");
+    return { ok: true, data: updated };
+  } catch (err) {
+    logger.error(
+      { err, action: "setCommentHiddenAction", commentId },
+      "set comment hidden failed",
+    );
+    return appError(err, "Erro ao ocultar comentário.");
   }
 }

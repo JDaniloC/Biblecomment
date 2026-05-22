@@ -32,6 +32,11 @@ export const authConfig: NextAuthConfig = {
         const valid = await bcrypt.compare(rawPassword, user.password);
         if (!valid) return null;
 
+        // A moderator-disabled account cannot start a new session. Existing
+        // JWTs are stateless and expire on their own — by design, no
+        // per-request DB revalidation.
+        if (user.disabledAt) return null;
+
         return {
           id: user._id!,
           email: user.email,

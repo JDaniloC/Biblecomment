@@ -35,6 +35,14 @@ export interface User {
    * Append-only via $addToSet — concurrent grants converge.
    */
   badges?: string[];
+  /**
+   * Set when a moderator disables the account. While present, the user is
+   * blocked from logging in (see lib/auth.ts) and all of their comments are
+   * cascade-hidden. Cleared on re-enable. Absent = active account.
+   */
+  disabledAt?: Date;
+  /** Username of the moderator who disabled the account. */
+  disabledBy?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

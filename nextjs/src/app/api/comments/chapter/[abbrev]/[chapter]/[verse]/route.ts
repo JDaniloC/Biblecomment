@@ -58,7 +58,12 @@ export async function GET(
 			});
 		}
 
-		const comments = await CommentModel.find({ verseId: verseDoc._id })
+		// Exclude soft-hidden comments — public per-verse read path.
+		// `{ hiddenAt: null }` also matches legacy docs missing the field.
+		const comments = await CommentModel.find({
+			verseId: verseDoc._id,
+			hiddenAt: null,
+		})
 			.sort({ createdAt: -1 })
 			.lean();
 		const session = await auth();

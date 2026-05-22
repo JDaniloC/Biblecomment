@@ -16,7 +16,14 @@ export async function GET(req: Request) {
     const page = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 
     const repo = new MongoCommentRepository();
-    const comments = await repo.findByUsernamePaginated(user.username, page, PAGE_SIZE);
+    // The owner sees their own soft-hidden comments here (the profile marks
+    // them); public profile views go through a different route that excludes them.
+    const comments = await repo.findByUsernamePaginated(
+      user.username,
+      page,
+      PAGE_SIZE,
+      { includeHidden: true },
+    );
 
     return NextResponse.json({ comments });
   } catch (err) {

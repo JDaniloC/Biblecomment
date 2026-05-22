@@ -74,7 +74,8 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
   const [usersCursor, setUsersCursor] = useState<ModerationCursor | null>(null);
   const [usersQuery, setUsersQuery] = useState("");
   const [usersInput, setUsersInput] = useState("");
-  const [promotingEmail, setPromotingEmail] = useState<string | null>(null);
+  // Gates all three per-row user buttons (promote, disable, delete).
+  const [busyEmail, setBusyEmail] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -232,6 +233,34 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
     }
   }
 
+  async function handleToggleHidden(c: Comment) {
+    const hide = !c.hiddenAt;
+    setBusyId(c._id!);
+    try {
+      const updated = await moderationService.setCommentHidden(c._id!, hide);
+      setAllComments((prev) =>
+        prev.map((x) =>
+          x._id === c._id
+            ? {
+                ...x,
+                hiddenAt: updated.hiddenAt,
+                hiddenBy: updated.hiddenBy,
+                hiddenReason: updated.hiddenReason,
+              }
+            : x,
+        ),
+      );
+      handleNotification(
+        "success",
+        hide ? "Comentário ocultado." : "Comentário reexibido.",
+      );
+    } catch {
+      handleNotification("error", "Erro ao ocultar comentário.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleDeleteFromAll(id: string) {
     const ok = await confirm({
       title: "Deletar este comentário?",
@@ -274,7 +303,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
       confirmLabel: makeMod ? "Promover" : "Rebaixar",
     });
     if (!ok) return;
-    setPromotingEmail(row.email);
+    setBusyEmail(row.email);
     try {
       const updated = await moderationService.setModerator(row.email, makeMod);
       setUsers((prev) =>
@@ -293,7 +322,50 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
       if (status === 404) handleNotification("error", "Usuário não encontrado.");
       else handleNotification("error", "Erro ao atualizar permissão.");
     } finally {
-      setPromotingEmail(null);
+      setBusyEmail(null);
+    }
+  }
+
+  async function handleToggleDisabled(row: AdminUserRow) {
+    const disable = !row.disabled;
+    setBusyEmail(row.email);
+    try {
+      const updated = await moderationService.setUserDisabled(row.email, disable);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email === row.email ? { ...u, disabled: updated.disabled } : u,
+        ),
+      );
+      handleNotification(
+        "success",
+        disable
+          ? `@${updated.username} foi desativado.`
+          : `@${updated.username} foi reativado.`,
+      );
+    } catch {
+      handleNotification("error", "Erro ao atualizar status da conta.");
+    } finally {
+      setBusyEmail(null);
+    }
+  }
+
+  async function handleDeleteUser(row: AdminUserRow) {
+    const ok = await confirm({
+      title: "Excluir esta conta?",
+      description: `A conta de @${row.username} será removida permanentemente. Os comentários e discussões dele ficam anônimos sob "[usuário removido]". Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir conta",
+      variant: "danger",
+    });
+    if (!ok) return;
+    setBusyEmail(row.email);
+    try {
+      await moderationService.deleteUser(row.email);
+      setUsers((prev) => prev.filter((u) => u.email !== row.email));
+      handleNotification("success", `Conta de @${row.username} excluída.`);
+    } catch {
+      handleNotification("error", "Erro ao excluir conta.");
+    } finally {
+      setBusyEmail(null);
     }
   }
 
@@ -529,6 +601,20 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                           Verificado
                         </span>
                       )}
+                      {c.hiddenAt && (
+                        <span
+                          className="inline-flex items-center bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full px-2.5 h-5 text-[11px] font-semibold"
+                          title={
+                            c.hiddenReason === "account-disabled"
+                              ? "Oculto porque a conta do autor foi desativada"
+                              : c.hiddenBy
+                                ? `Oculto por @${c.hiddenBy}`
+                                : "Oculto"
+                          }
+                        >
+                          Oculto
+                        </span>
+                      )}
                       {(c.reportCount ?? 0) > 0 && (
                         <span className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold">
                           {c.reportCount} report{c.reportCount !== 1 ? "s" : ""}
@@ -553,6 +639,28 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                         }
                       >
                         {c.verified ? "Desverificar" : "Verificar"}
+                      </button>
+                      <button
+                        type="button"
+                        data-testid={`hide-toggle-${c._id}`}
+                        onClick={() => handleToggleHidden(c)}
+                        disabled={
+                          busyId === c._id ||
+                          (!!c.hiddenAt &&
+                            c.hiddenReason === "account-disabled")
+                        }
+                        title={
+                          c.hiddenAt && c.hiddenReason === "account-disabled"
+                            ? "Reexiba reativando a conta do autor"
+                            : undefined
+                        }
+                        className={
+                          c.hiddenAt
+                            ? "text-[12px] px-3 py-1.5 rounded-md border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition disabled:opacity-50"
+                            : "text-[12px] px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
+                        }
+                      >
+                        {c.hiddenAt ? "Reexibir" : "Ocultar"}
                       </button>
                       <button
                         type="button"
@@ -668,6 +776,14 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                           Moderador
                         </span>
                       )}
+                      {u.disabled && (
+                        <span
+                          data-testid={`user-disabled-badge-${u.username}`}
+                          className="inline-flex items-center bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full px-2.5 h-5 text-[11px] font-semibold"
+                        >
+                          Desativado
+                        </span>
+                      )}
                       <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
                         Desde {dateFormat(u.createdAt)}
                       </span>
@@ -686,7 +802,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                       <button
                         type="button"
                         onClick={() => handleUserModeratorToggle(u)}
-                        disabled={promotingEmail === u.email}
+                        disabled={busyEmail === u.email}
                         className={
                           u.moderator
                             ? "text-[12px] px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-50"
@@ -695,6 +811,34 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                       >
                         {u.moderator ? "Rebaixar" : "Promover"}
                       </button>
+                      {/* A moderator can't disable or delete their own account
+                          from here — avoids locking yourself out. */}
+                      {u.email !== user.email && (
+                        <>
+                          <button
+                            type="button"
+                            data-testid={`disable-toggle-${u.username}`}
+                            onClick={() => handleToggleDisabled(u)}
+                            disabled={busyEmail === u.email}
+                            className={
+                              u.disabled
+                                ? "text-[12px] px-3 py-1.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition disabled:opacity-50"
+                                : "text-[12px] px-3 py-1.5 rounded-md border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition disabled:opacity-50"
+                            }
+                          >
+                            {u.disabled ? "Reativar" : "Desativar"}
+                          </button>
+                          <button
+                            type="button"
+                            data-testid={`delete-user-${u.username}`}
+                            onClick={() => handleDeleteUser(u)}
+                            disabled={busyEmail === u.email}
+                            className="text-[12px] px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
+                          >
+                            Excluir
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

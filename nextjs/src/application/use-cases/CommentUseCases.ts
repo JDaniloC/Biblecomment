@@ -104,6 +104,7 @@ export class GetUserFavoritesUseCase {
 		for (const id of ids) {
 			const c = byId.get(id);
 			if (!c) continue; // comment was hard-deleted but the like row hasn't been pruned yet
+			if (c.hiddenAt) continue; // soft-hidden — drop from the public favorites list
 			ordered.push({
 				...c,
 				likeCount: counts.get(id) ?? 0,
@@ -334,6 +335,8 @@ export class ListAllCommentsForModerationUseCase {
 			q: opts.q,
 			cursor: opts.cursor,
 			limit: opts.limit,
+			// Moderators must see soft-hidden comments to be able to un-hide them.
+			includeHidden: true,
 		});
 		if (items.length === 0) return { items, nextCursor };
 
@@ -363,6 +366,41 @@ export class ToggleCommentVerifiedUseCase {
 			next ? moderatorUsername : null,
 		);
 		if (!updated) throw new Error("Failed to toggle verified");
+		return updated;
+	}
+}
+
+/** Error thrown when un-hiding a comment cascade-hidden by an account disable. */
+export const UNHIDE_ACCOUNT_DISABLED_ERROR =
+	"Cannot unhide account-disabled comment";
+
+export class SetCommentHiddenUseCase {
+	constructor(private readonly commentRepo: ICommentRepository) {}
+
+	/**
+	 * Soft-hide or un-hide a comment. Moderator-gated by the caller.
+	 *
+	 * Un-hiding a comment that was cascade-hidden by an account disable is
+	 * refused — that comment should only reappear when the account itself is
+	 * re-enabled, not piece by piece.
+	 */
+	async execute(
+		commentId: string,
+		hidden: boolean,
+		moderatorUsername: string,
+	): Promise<Comment> {
+		const comment = await this.commentRepo.findById(commentId);
+		if (!comment) throw new Error("Comment not found");
+		if (!hidden && comment.hiddenReason === "account-disabled") {
+			throw new Error(UNHIDE_ACCOUNT_DISABLED_ERROR);
+		}
+		const updated = await this.commentRepo.setHidden(
+			commentId,
+			hidden,
+			hidden ? moderatorUsername : null,
+			hidden ? "moderator" : null,
+		);
+		if (!updated) throw new Error("Failed to set hidden state");
 		return updated;
 	}
 }

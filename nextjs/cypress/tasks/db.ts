@@ -317,6 +317,18 @@ export async function countCommentReportsByUser(
 		.countDocuments({ userId: user._id.toString() });
 }
 
+/** Number of soft-hidden comments authored by `username`. */
+export async function countHiddenCommentsByUsername(
+	username: string,
+): Promise<number> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	return db
+		.collection("comments")
+		.countDocuments({ username, hiddenAt: { $ne: null } });
+}
+
 /** Total reports filed against a single comment. */
 export async function countReportsForComment(
 	commentId: string,

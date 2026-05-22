@@ -187,6 +187,22 @@ describe("GetUserFavoritesUseCase", () => {
 
     expect(result.map((c) => c._id)).toEqual(["c1"]);
   });
+
+  it("excludes soft-hidden comments from favorites", async () => {
+    const cRepo = commentRepoStub([
+      makeComment("c1", { text: "visible" }),
+      makeComment("c2", { text: "hidden", hiddenAt: new Date() }),
+    ]);
+    const lRepo = inMemoryLikeRepo();
+    const uc = new GetUserFavoritesUseCase(cRepo, lRepo);
+
+    await lRepo.like("user-1", "c1");
+    await lRepo.like("user-1", "c2");
+
+    const result = await uc.execute("user-1", 1, 50);
+
+    expect(result.map((c) => c._id)).toEqual(["c1"]);
+  });
 });
 
 describe("inMemoryLikeRepo (sanity)", () => {

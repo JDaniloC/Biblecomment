@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   SetModeratorUseCase,
+  SetUserDisabledUseCase,
   DeleteUserUseCase,
   ListUsersForModerationUseCase,
   MarkTutorialCompletedUseCase,
@@ -93,6 +94,73 @@ describe("SetModeratorUseCase", () => {
     const useCase = new SetModeratorUseCase(repo);
 
     await expect(useCase.execute("ghost@example.com", true)).rejects.toThrow("User not found");
+  });
+});
+
+describe("SetUserDisabledUseCase", () => {
+  it("disables the account and cascade-hides the user's comments", async () => {
+    const setDisabled = vi
+      .fn()
+      .mockResolvedValue(
+        fakeUser({ username: "alice", disabledAt: new Date(), disabledBy: "mod-jane" }),
+      );
+    const userRepo = { setDisabled } as unknown as IUserRepository;
+    const hideAllByUsername = vi.fn().mockResolvedValue(3);
+    const unhideAllByUsernameCascade = vi.fn().mockResolvedValue(0);
+    const commentRepo = {
+      hideAllByUsername,
+      unhideAllByUsernameCascade,
+    } as unknown as ICommentRepository;
+
+    const result = await new SetUserDisabledUseCase(userRepo, commentRepo).execute(
+      "alice@example.com",
+      true,
+      "mod-jane",
+    );
+
+    expect(setDisabled).toHaveBeenCalledWith("alice@example.com", true, "mod-jane");
+    expect(hideAllByUsername).toHaveBeenCalledWith("alice", "mod-jane");
+    expect(unhideAllByUsernameCascade).not.toHaveBeenCalled();
+    expect(result.disabledAt).toBeInstanceOf(Date);
+  });
+
+  it("re-enables the account and un-hides only the cascade-hidden comments", async () => {
+    const setDisabled = vi.fn().mockResolvedValue(fakeUser({ username: "alice" }));
+    const userRepo = { setDisabled } as unknown as IUserRepository;
+    const hideAllByUsername = vi.fn().mockResolvedValue(0);
+    const unhideAllByUsernameCascade = vi.fn().mockResolvedValue(3);
+    const commentRepo = {
+      hideAllByUsername,
+      unhideAllByUsernameCascade,
+    } as unknown as ICommentRepository;
+
+    await new SetUserDisabledUseCase(userRepo, commentRepo).execute(
+      "alice@example.com",
+      false,
+      "mod-jane",
+    );
+
+    // `by` is null on re-enable — there is no "disabled by" to record.
+    expect(setDisabled).toHaveBeenCalledWith("alice@example.com", false, null);
+    expect(unhideAllByUsernameCascade).toHaveBeenCalledWith("alice");
+    expect(hideAllByUsername).not.toHaveBeenCalled();
+  });
+
+  it("throws 'User not found' when the email does not exist", async () => {
+    const setDisabled = vi.fn().mockResolvedValue(null);
+    const userRepo = { setDisabled } as unknown as IUserRepository;
+    const commentRepo = {
+      hideAllByUsername: vi.fn(),
+      unhideAllByUsernameCascade: vi.fn(),
+    } as unknown as ICommentRepository;
+
+    await expect(
+      new SetUserDisabledUseCase(userRepo, commentRepo).execute(
+        "ghost@example.com",
+        true,
+        "mod",
+      ),
+    ).rejects.toThrow("User not found");
   });
 });
 

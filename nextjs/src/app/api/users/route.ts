@@ -41,7 +41,8 @@ export async function GET(req: Request) {
 
     const usernames = users.map((u) => u.username);
     const counts = await CommentModel.aggregate([
-      { $match: { username: { $in: usernames } } },
+      // Public directory count — exclude soft-hidden comments.
+      { $match: { username: { $in: usernames }, hiddenAt: null } },
       { $group: { _id: "$username", total: { $sum: 1 } } },
     ]);
     const countMap: Record<string, number> = {};

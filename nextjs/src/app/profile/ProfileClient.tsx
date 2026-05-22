@@ -174,6 +174,16 @@ function ProfileCommentCard({
 						</span>
 					</span>
 				)}
+				{comment.hiddenAt && (
+					<span
+						className="inline-flex items-center bg-amber-100 dark:bg-amber-900/30 rounded px-[7px] h-5 shrink-0"
+						title="Este comentário foi ocultado pela moderação — só você o vê."
+					>
+						<span className="font-bold text-[11px] text-amber-700 dark:text-amber-300 leading-[18px] whitespace-nowrap">
+							Oculto pela moderação
+						</span>
+					</span>
+				)}
 				<span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
 					{dateFormat(comment.createdAt)}
 				</span>

@@ -50,6 +50,12 @@ export interface IUserRepository {
   updatePasswordById(userId: string, password: string): Promise<void>;
   update(email: string, data: Partial<Omit<User, "_id" | "email">>): Promise<User | null>;
   /**
+   * Disable / re-enable an account. On disable, stamps `disabledAt` and
+   * `disabledBy`; on re-enable, clears both (a plain `update` only `$set`s, so
+   * it cannot clear fields). `by` is the moderator's username (snapshot).
+   */
+  setDisabled(email: string, disabled: boolean, by: string | null): Promise<User | null>;
+  /**
    * Idempotently mark a tutorial as completed for the user. Uses $addToSet
    * under the hood so concurrent calls converge.
    */

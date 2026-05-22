@@ -39,6 +39,7 @@ function repoReturning(users: User[]): IUserRepository {
     update: async () => null,
     markTutorialCompleted: async () => {},
     addBadges: async () => [],
+    setDisabled: async () => null,
     delete: async () => {},
   };
 }

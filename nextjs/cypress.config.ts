@@ -12,6 +12,7 @@ import {
   countLikesForComment,
   countCommentReportsByUser,
   countReportsForComment,
+  countHiddenCommentsByUsername,
   countAnswersByUser,
   countAnswersForDiscussion,
   getUserBadges,
@@ -86,6 +87,9 @@ export default defineConfig({
         },
         async "db:countReportsForComment"(commentId: string) {
           return await countReportsForComment(commentId);
+        },
+        async "db:countHiddenCommentsByUsername"(username: string) {
+          return await countHiddenCommentsByUsername(username);
         },
         async "db:countAnswersByUser"(email: string) {
           return await countAnswersByUser(email);

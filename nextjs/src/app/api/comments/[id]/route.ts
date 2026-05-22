@@ -13,6 +13,8 @@ import {
   DeleteCommentUseCase,
   ToggleLikeUseCase,
   ReportCommentUseCase,
+  SetCommentHiddenUseCase,
+  UNHIDE_ACCOUNT_DISABLED_ERROR,
 } from "@/application/use-cases/CommentUseCases";
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import { getSessionUser, unauthorized, forbidden, badRequest, notFound, serverError } from "@/lib/get-session";
@@ -106,6 +108,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
       return NextResponse.json(await useCase.execute(id, user.id, user.username));
     }
 
+    if (action === "hide" || action === "unhide") {
+      // Soft-hide is a moderator-only action.
+      if (!user.moderator) return forbidden();
+      const useCase = new SetCommentHiddenUseCase(repo);
+      return NextResponse.json(
+        await useCase.execute(id, action === "hide", user.username),
+      );
+    }
+
     if (!text) return badRequest("text é obrigatório");
     const useCase = new UpdateCommentUseCase(repo);
     return NextResponse.json(await useCase.execute(id, user.username, text, tags ?? []));
@@ -113,6 +124,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     if (err instanceof Error) {
       if (err.message === "Unauthorized") return forbidden();
       if (err.message === "Comment not found") return notFound("Comentário não encontrado");
+      if (err.message === UNHIDE_ACCOUNT_DISABLED_ERROR) return forbidden();
     }
     return serverError(err);
   }

@@ -12,5 +12,11 @@ export interface AdminUserDTO {
 	email: string;
 	state?: string;
 	moderator: boolean;
+	/** True when the account is disabled (derived from `disabledAt`). */
+	disabled: boolean;
+	/** When the account was disabled by a moderator; absent on active accounts. */
+	disabledAt?: Date;
+	/** Username of the moderator who disabled the account. */
+	disabledBy?: string;
 	createdAt: Date;
 }

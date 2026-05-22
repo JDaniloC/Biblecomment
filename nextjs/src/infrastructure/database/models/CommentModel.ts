@@ -12,6 +12,9 @@ export interface ICommentDocument extends Document {
   verified?: boolean;
   verifiedBy?: string;
   verifiedAt?: Date;
+  hiddenAt?: Date;
+  hiddenBy?: string;
+  hiddenReason?: "moderator" | "account-disabled";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +35,9 @@ const CommentSchema = new Schema<ICommentDocument>(
     verified:      { type: Boolean, default: false },
     verifiedBy:    { type: String },
     verifiedAt:    { type: Date },
+    hiddenAt:      { type: Date },
+    hiddenBy:      { type: String },
+    hiddenReason:  { type: String, enum: ["moderator", "account-disabled"] },
   },
   { timestamps: true }
 );
@@ -45,6 +51,9 @@ CommentSchema.index({ bookReference: 1 });
 CommentSchema.index({ communitySlug: 1, createdAt: -1 }, { sparse: true });
 CommentSchema.index({ verseId: 1, communitySlug: 1 }, { sparse: true });
 CommentSchema.index({ verified: 1 });
+// Sparse — only hidden comments carry the field; lets read paths exclude
+// them and the moderation panel filter to them cheaply.
+CommentSchema.index({ hiddenAt: 1 }, { sparse: true });
 // Newest-first sort for the moderation panel and any feed view.
 // Compound on (createdAt, _id) so cursor pagination has a deterministic
 // tiebreaker when timestamps collide.

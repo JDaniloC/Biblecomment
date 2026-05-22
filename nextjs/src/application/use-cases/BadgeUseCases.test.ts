@@ -52,6 +52,7 @@ function makeRepos(opts: {
       userBadges.set(userId, [...cur, ...fresh]);
       return fresh;
     },
+    setDisabled: async () => null,
     delete: async () => {},
     _badges: userBadges,
   } as IUserRepository & { _badges: Map<string, string[]> };

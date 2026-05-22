@@ -46,6 +46,7 @@ function makeUserRepo(users: Record<string, User>): IUserRepository {
 		update: async () => null,
 		markTutorialCompleted: async () => {},
 		addBadges: async () => [],
+		setDisabled: async () => null,
 		delete: async () => {},
 	};
 }
@@ -664,6 +665,7 @@ describe("ListCommunityMembersUseCase", () => {
 			update: async () => null,
 			markTutorialCompleted: async () => {},
 			addBadges: async () => [],
+			setDisabled: async () => null,
 			delete: async () => {},
 		};
 		await membershipRepo.createRequest("u-alice", c._id!);
@@ -742,6 +744,7 @@ describe("ListCommunityFollowersUseCase", () => {
 			update: async () => null,
 			markTutorialCompleted: async () => {},
 			addBadges: async () => [],
+			setDisabled: async () => null,
 			delete: async () => {},
 		};
 		const c = await communityRepo.create({
@@ -854,6 +857,7 @@ function makeUserRepoWithIds(byId: Record<string, string>): IUserRepository {
 		update: async () => null,
 		markTutorialCompleted: async () => {},
 		addBadges: async () => [],
+		setDisabled: async () => null,
 		delete: async () => {},
 	};
 }

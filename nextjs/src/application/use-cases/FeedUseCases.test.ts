@@ -31,8 +31,17 @@ function commentRepoStub(comments: Comment[]): ICommentRepository {
   return {
     findManyByIds: async (ids: string[]) =>
       ids.map((i) => comments.find((c) => c._id === i)).filter((c): c is Comment => Boolean(c)),
-    findForModeration: async ({ limit }: { limit: number }) => {
-      const sorted = [...comments].sort(
+    findForModeration: async ({
+      limit,
+      includeHidden,
+    }: {
+      limit: number;
+      includeHidden?: boolean;
+    }) => {
+      const visible = includeHidden
+        ? comments
+        : comments.filter((c) => !c.hiddenAt);
+      const sorted = [...visible].sort(
         (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
       );
       const slice = sorted.slice(0, limit + 1);
@@ -127,6 +136,22 @@ describe("GetRecentFeedUseCase", () => {
     expect(first.items).toHaveLength(2);
     expect(first.nextCursor).not.toBeNull();
   });
+
+  it("excludes soft-hidden comments from the recent feed", async () => {
+    const comments = [
+      comment("c1", { createdAt: new Date(2026, 0, 1) }),
+      comment("c2", { createdAt: new Date(2026, 0, 2), hiddenAt: new Date() }),
+    ];
+    const uc = new GetRecentFeedUseCase(
+      commentRepoStub(comments),
+      likeRepoStub(),
+      verseRepoStub([]),
+    );
+
+    const result = await uc.execute({ limit: 10 });
+
+    expect(result.items.map((c) => c._id)).toEqual(["c1"]);
+  });
 });
 
 describe("GetPopularFeedUseCase", () => {
@@ -164,6 +189,30 @@ describe("GetPopularFeedUseCase", () => {
 
     const result = await uc.execute({ windowDays: 7, limit: 10 });
     expect(result.items).toEqual([]);
+  });
+
+  it("drops soft-hidden comments even when they are top-liked", async () => {
+    const comments = [
+      comment("c1", { text: "visible" }),
+      comment("c2", { text: "hidden but liked", hiddenAt: new Date() }),
+    ];
+    const verses: Verse[] = [
+      { _id: "v-c1", abbrev: "gn", chapter: 1, verseNumber: 1, text: "" },
+      { _id: "v-c2", abbrev: "gn", chapter: 1, verseNumber: 2, text: "" },
+    ];
+    const topSince = [
+      { commentId: "c2", likeCount: 9 },
+      { commentId: "c1", likeCount: 2 },
+    ];
+    const uc = new GetPopularFeedUseCase(
+      commentRepoStub(comments),
+      likeRepoStub({ topSince, countMap: { c1: 2, c2: 9 } }),
+      verseRepoStub(verses),
+    );
+
+    const result = await uc.execute({ windowDays: 7, limit: 10 });
+
+    expect(result.items.map((c) => c._id)).toEqual(["c1"]);
   });
 });
 

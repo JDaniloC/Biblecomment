@@ -14,6 +14,7 @@ import {
   UpdateUsernameUseCase,
   DeleteUserUseCase,
   SetModeratorUseCase,
+  SetUserDisabledUseCase,
   MarkTutorialCompletedUseCase,
 } from "@/application/use-cases/UserUseCases";
 import { ChangePasswordUseCase } from "@/application/use-cases/AuthUseCases";
@@ -118,6 +119,97 @@ export async function deleteSelfAction(
     }
     logger.error({ err, action: "deleteSelfAction" }, "delete user failed");
     return appError(err, "Erro ao excluir usuário.");
+  }
+}
+
+/**
+ * Delete another user. Moderator-only — distinct from `deleteSelfAction` so
+ * the moderation action is audit-logged and gated on the mod flag.
+ */
+export async function deleteUserAction(
+  email: string,
+): Promise<ActionResult<{ deleted: true }>> {
+  const session = await auth();
+  if (!session?.user) return authError();
+  if (!session.user.moderator) return { ok: false, error: "Forbidden" };
+
+  try {
+    const useCase = new DeleteUserUseCase(
+      new MongoUserRepository(),
+      new MongoCommentRepository(),
+      new MongoCommentLikeRepository(),
+      new MongoCommentReportRepository(),
+      new MongoDiscussionRepository(),
+      new MongoDiscussionAnswerRepository(),
+      new MongoNotificationRepository(),
+    );
+    await useCase.execute(session.user.email, email, true);
+
+    logger.info(
+      { actor: session.user.email, target: email, action: "delete_user" },
+      "user deleted by moderator",
+    );
+
+    revalidatePath("/admin/moderation", "page");
+    return { ok: true, data: { deleted: true } };
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
+      if (err.message === "User not found") return { ok: false, error: "NotFound" };
+    }
+    logger.error({ err, action: "deleteUserAction", target: email }, "delete user failed");
+    return appError(err, "Erro ao excluir usuário.");
+  }
+}
+
+/**
+ * Disable / re-enable an account. Moderator-only. Disabling blocks new
+ * logins and cascade-hides the user's comments; re-enabling reverses both.
+ */
+export async function setUserDisabledAction(
+  email: string,
+  disabled: boolean,
+): Promise<
+  ActionResult<{ email: string; username: string; disabled: boolean }>
+> {
+  const session = await auth();
+  if (!session?.user) return authError();
+  if (!session.user.moderator) return { ok: false, error: "Forbidden" };
+
+  try {
+    const useCase = new SetUserDisabledUseCase(
+      new MongoUserRepository(),
+      new MongoCommentRepository(),
+    );
+    const updated = await useCase.execute(
+      email,
+      disabled,
+      session.user.username,
+    );
+
+    logger.info(
+      { actor: session.user.email, target: email, disabled, action: "set_user_disabled" },
+      "user disabled state changed",
+    );
+
+    revalidatePath("/admin/moderation", "page");
+    return {
+      ok: true,
+      data: {
+        email: updated.email,
+        username: updated.username,
+        disabled: !!updated.disabledAt,
+      },
+    };
+  } catch (err) {
+    if (err instanceof Error && err.message === "User not found") {
+      return { ok: false, error: "NotFound" };
+    }
+    logger.error(
+      { err, action: "setUserDisabledAction", target: email },
+      "set user disabled failed",
+    );
+    return appError(err, "Erro ao atualizar status da conta.");
   }
 }
 

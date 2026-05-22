@@ -49,7 +49,45 @@ describe("Admin moderation — tabs + user listing", () => {
 		cy.get("[data-testid='admin-user-alice']").within(() => {
 			cy.contains("button", "Promover").click();
 		});
-		cy.contains("button", "Promover").click(); // confirmation dialog
+		// Confirm in the dialog — scope to the alertdialog so we don't match
+		// the row's own "Promover" button (the centered modal overlaps it).
+		cy.get('[role="alertdialog"]').contains("button", "Promover").click();
 		cy.get("[data-testid='admin-user-alice']").should("contain.text", "Moderador");
+	});
+
+	it("disables a user inline and surfaces the Desativado badge", () => {
+		cy.get("[data-testid='tab-users']").click();
+		// Disable is a light action — no confirmation dialog.
+		cy.get("[data-testid='disable-toggle-alice']").click();
+		cy.get("[data-testid='user-disabled-badge-alice']").should("be.visible");
+		cy.get("[data-testid='disable-toggle-alice']").should(
+			"contain.text",
+			"Reativar",
+		);
+	});
+
+	it("deleting a user from the Usuários tab opens a confirmation dialog", () => {
+		cy.get("[data-testid='tab-users']").click();
+		cy.get("[data-testid='delete-user-alice']").click();
+		cy.get('[role="alertdialog"]').should("be.visible");
+		cy.contains("Excluir esta conta?").should("be.visible");
+	});
+
+	it("hides a comment from the Comentários tab (light action — no dialog)", () => {
+		cy.task<{ id: string }>("db:seedComment", {
+			username: "alice",
+			abbrev: "gn",
+			chapter: 1,
+			verseNumber: 1,
+			text: "comentário para ocultar pela UI de moderação",
+		}).then(({ id }) => {
+			cy.visit("/admin/moderation?tab=comments");
+			cy.get(`[data-testid="hide-toggle-${id}"]`).should("be.visible").click();
+			// The button flips to "Reexibir" once hidden — no confirm dialog.
+			cy.get(`[data-testid="hide-toggle-${id}"]`).should(
+				"contain.text",
+				"Reexibir",
+			);
+		});
 	});
 });

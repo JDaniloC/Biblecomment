@@ -25,6 +25,8 @@ function toEntity(doc: IUserDocument): User {
     // hidden parent refs) blows up DataCloneError.
     tutorialsCompleted: doc.tutorialsCompleted ? [...doc.tutorialsCompleted] : [],
     badges: doc.badges ? [...doc.badges] : [],
+    disabledAt: doc.disabledAt,
+    disabledBy: doc.disabledBy,
   };
 }
 
@@ -156,7 +158,7 @@ export class MongoUserRepository implements IUserRepository {
       .sort({ createdAt: -1, _id: -1 })
       .limit(limit + 1)
       .select(
-        "_id username displayName email state moderator createdAt",
+        "_id username displayName email state moderator disabledAt disabledBy createdAt",
       );
 
     const hasMore = docs.length > limit;
@@ -168,6 +170,9 @@ export class MongoUserRepository implements IUserRepository {
       email: d.email,
       state: d.state,
       moderator: !!d.moderator,
+      disabled: !!d.disabledAt,
+      disabledAt: d.disabledAt,
+      disabledBy: d.disabledBy,
       createdAt: d.createdAt!,
     }));
     const last = items[items.length - 1];
@@ -224,6 +229,25 @@ export class MongoUserRepository implements IUserRepository {
       { $addToSet: { badges: { $each: fresh } } },
     );
     return fresh;
+  }
+
+  async setDisabled(
+    email: string,
+    disabled: boolean,
+    by: string | null,
+  ): Promise<User | null> {
+    await connectToDatabase();
+    // A plain `update` only $sets — re-enabling must $unset the fields so the
+    // login block (which keys on `disabledAt` being present) actually lifts.
+    const update = disabled
+      ? { $set: { disabledAt: new Date(), disabledBy: by ?? "" } }
+      : { $unset: { disabledAt: "", disabledBy: "" } };
+    const doc = await UserModel.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      update,
+      { returnDocument: "after" },
+    );
+    return doc ? toEntity(doc) : null;
   }
 
   async delete(email: string): Promise<void> {

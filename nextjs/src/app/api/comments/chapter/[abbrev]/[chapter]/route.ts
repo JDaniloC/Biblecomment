@@ -48,7 +48,13 @@ export async function GET(
 			.lean();
 		const verseIds = verses.map((v) => v._id);
 
-		const comments = await CommentModel.find({ verseId: { $in: verseIds } })
+		// Exclude soft-hidden comments — this is the public chapter read path.
+		// `{ hiddenAt: null }` matches both an explicit null and a missing
+		// field, so legacy docs without `hiddenAt` still count as visible.
+		const comments = await CommentModel.find({
+			verseId: { $in: verseIds },
+			hiddenAt: null,
+		})
 			.sort({ createdAt: -1 })
 			.lean();
 

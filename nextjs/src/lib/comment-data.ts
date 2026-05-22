@@ -20,4 +20,12 @@ export interface CommentData {
   verifiedBy?: string;
   /** Slug of the community the comment was posted in. Absent for "general feed" comments. */
   communitySlug?: string;
+  /**
+   * Set when the comment is soft-hidden by moderation. Only the author sees
+   * their own hidden comments (in /profile) — flagged with an indicator.
+   * Comes across as an ISO string. Absent = visible.
+   */
+  hiddenAt?: string;
+  /** Why the comment is hidden — see the Comment entity. */
+  hiddenReason?: "moderator" | "account-disabled";
 }

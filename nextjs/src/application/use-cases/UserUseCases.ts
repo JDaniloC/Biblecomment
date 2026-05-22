@@ -168,6 +168,47 @@ export class SetModeratorUseCase {
   }
 }
 
+/**
+ * Disable or re-enable a user account (moderator action — caller gates).
+ *
+ * Disabling stamps `disabledAt`/`disabledBy` (blocking new logins) and then
+ * cascade-hides every visible comment by the author. Re-enabling clears the
+ * flag and un-hides only the cascade-hidden comments — comments a moderator
+ * hid individually keep their `"moderator"` reason and stay hidden.
+ *
+ * The user flag is written BEFORE the comment cascade so a cascade failure
+ * still leaves the account disabled (login blocked); re-running is idempotent.
+ */
+export class SetUserDisabledUseCase {
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly commentRepo: ICommentRepository,
+  ) {}
+
+  async execute(
+    targetEmail: string,
+    disabled: boolean,
+    moderatorUsername: string,
+  ): Promise<User> {
+    const updated = await this.userRepo.setDisabled(
+      targetEmail,
+      disabled,
+      disabled ? moderatorUsername : null,
+    );
+    if (!updated) throw new Error("User not found");
+
+    if (disabled) {
+      await this.commentRepo.hideAllByUsername(
+        updated.username,
+        moderatorUsername,
+      );
+    } else {
+      await this.commentRepo.unhideAllByUsernameCascade(updated.username);
+    }
+    return updated;
+  }
+}
+
 export class ListUsersForModerationUseCase {
   constructor(private readonly userRepo: IUserRepository) {}
 

@@ -6,8 +6,13 @@ import type { AdminUserDTO } from "@/domain/dto/AdminUserDTO";
 import {
   clearReportsAction,
   toggleCommentVerifiedAction,
+  setCommentHiddenAction,
 } from "@/app/actions/moderation";
-import { setModeratorAction } from "@/app/actions/users";
+import {
+  setModeratorAction,
+  setUserDisabledAction,
+  deleteUserAction,
+} from "@/app/actions/users";
 import { actionError } from "./_action-error";
 
 export interface ReportsPage {
@@ -28,8 +33,9 @@ export interface AllCommentsPage {
   limit: number;
 }
 
-/** Date arrives as ISO string over the wire; consumer converts when needed. */
-export interface AdminUserRow extends Omit<AdminUserDTO, "createdAt"> {
+/** Dates arrive as ISO strings over the wire; consumer converts when needed. */
+export interface AdminUserRow
+  extends Omit<AdminUserDTO, "createdAt" | "disabledAt"> {
   createdAt: string;
 }
 
@@ -73,10 +79,30 @@ export const moderationService = {
     return result.data;
   },
 
+  async setCommentHidden(commentId: string, hidden: boolean): Promise<Comment> {
+    const result = await setCommentHiddenAction(commentId, hidden);
+    if (!result.ok) actionError(result.error);
+    return result.data;
+  },
+
   async setModerator(email: string, moderator: boolean): Promise<{ email: string; username: string; moderator: boolean }> {
     const result = await setModeratorAction(email, moderator);
     if (!result.ok) actionError(result.error);
     return result.data;
+  },
+
+  async setUserDisabled(
+    email: string,
+    disabled: boolean,
+  ): Promise<{ email: string; username: string; disabled: boolean }> {
+    const result = await setUserDisabledAction(email, disabled);
+    if (!result.ok) actionError(result.error);
+    return result.data;
+  },
+
+  async deleteUser(email: string): Promise<void> {
+    const result = await deleteUserAction(email);
+    if (!result.ok) actionError(result.error);
   },
 
   async listUsers(opts: {

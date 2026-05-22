@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
-import { ListUsersForModerationUseCase } from "@/application/use-cases/UserUseCases";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import {
+  ListUsersForModerationUseCase,
+  SetUserDisabledUseCase,
+} from "@/application/use-cases/UserUseCases";
 import {
   getSessionUser,
   forbidden,
   badRequest,
+  notFound,
   serverError,
 } from "@/lib/get-session";
+import { parseBody } from "@/lib/parse-body";
+import { SetUserDisabledSchema } from "@/lib/schemas";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -51,6 +58,35 @@ export async function GET(req: Request) {
       limit,
     });
   } catch (err) {
+    return serverError(err);
+  }
+}
+
+/** Disable / re-enable an account. Moderator-only. */
+export async function PATCH(req: Request) {
+  try {
+    const user = await getSessionUser();
+    if (!user?.moderator) return forbidden();
+
+    const parsed = await parseBody(req, SetUserDisabledSchema);
+    if (!parsed.ok) return parsed.response;
+    const { email, disabled } = parsed.data;
+
+    const useCase = new SetUserDisabledUseCase(
+      new MongoUserRepository(),
+      new MongoCommentRepository(),
+    );
+    const updated = await useCase.execute(email, disabled, user.username);
+
+    return NextResponse.json({
+      email: updated.email,
+      username: updated.username,
+      disabled: !!updated.disabledAt,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === "User not found") {
+      return notFound("Usuário não encontrado");
+    }
     return serverError(err);
   }
 }

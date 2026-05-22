@@ -72,6 +72,11 @@ export const SetModeratorSchema = z.object({
 	moderator: z.boolean(),
 });
 
+export const SetUserDisabledSchema = z.object({
+	email: z.string().email(),
+	disabled: z.boolean(),
+});
+
 export const CreateVerseSchema = z.object({
 	abbrev: z.string().min(1).max(20),
 	chapter: z.number().int().positive().max(200),
@@ -108,7 +113,7 @@ export const CreateCommentSchema = z.object({
 export const UpdateCommentSchema = z.object({
 	text: z.string().min(1).max(5000).optional(),
 	tags: z.array(z.string().max(50)).max(20).optional(),
-	action: z.enum(["like", "report"]).optional(),
+	action: z.enum(["like", "report", "hide", "unhide"]).optional(),
 });
 
 export const CreateDiscussionSchema = z.object({

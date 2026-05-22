@@ -45,6 +45,21 @@ export interface Comment {
   verifiedBy?: string;
   /** Timestamp of the last verified-state change. */
   verifiedAt?: Date;
+  /**
+   * Set when the comment is soft-hidden: it stays stored but is invisible to
+   * other readers (the author still sees it in their own profile). Absent =
+   * visible. Toggled by moderators in /admin/moderation.
+   */
+  hiddenAt?: Date;
+  /** Username of the moderator whose action last hid the comment. */
+  hiddenBy?: string;
+  /**
+   * Why the comment is hidden. `"moderator"` = hidden individually;
+   * `"account-disabled"` = cascade-hidden because the author's account was
+   * disabled. Re-enabling an account only un-hides the `"account-disabled"`
+   * ones, so a separately moderator-hidden comment survives the cycle.
+   */
+  hiddenReason?: "moderator" | "account-disabled";
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -102,10 +102,11 @@ export class GetPopularFeedUseCase {
     const ids = aggregates.map((a) => a.commentId);
     const comments = await this.commentRepo.findManyByIds(ids);
     const byId = new Map(comments.map((c) => [c._id ?? "", c]));
-    // Preserve aggregate order (most-liked first) when re-sorting.
+    // Preserve aggregate order (most-liked first) when re-sorting. Drop
+    // soft-hidden comments — findManyByIds doesn't filter them.
     const ordered = aggregates
       .map((a) => byId.get(a.commentId))
-      .filter((c): c is Comment => Boolean(c));
+      .filter((c): c is Comment => Boolean(c) && !c!.hiddenAt);
     const enriched = await enrich(ordered, this.likeRepo, this.verseRepo);
     return { items: enriched };
   }

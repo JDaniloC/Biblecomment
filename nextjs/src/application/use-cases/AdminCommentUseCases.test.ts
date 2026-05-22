@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   ListAllCommentsForModerationUseCase,
   ToggleCommentVerifiedUseCase,
+  SetCommentHiddenUseCase,
+  UNHIDE_ACCOUNT_DISABLED_ERROR,
 } from "./CommentUseCases";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { ICommentReportRepository } from "@/domain/repositories/ICommentReportRepository";
@@ -43,16 +45,33 @@ function inMemoryCommentRepo(comments: Comment[]): ICommentRepository {
       c.verifiedAt = verified ? new Date() : undefined;
       return { ...c };
     },
+    setHidden: async (
+      id: string,
+      hidden: boolean,
+      by: string | null,
+      reason: "moderator" | "account-disabled" | null,
+    ) => {
+      const c = store.get(id);
+      if (!c) return null;
+      c.hiddenAt = hidden ? new Date() : undefined;
+      c.hiddenBy = hidden ? by ?? undefined : undefined;
+      c.hiddenReason = hidden ? reason ?? "moderator" : undefined;
+      return { ...c };
+    },
     findForModeration: async ({
       q,
       cursor,
       limit,
+      includeHidden,
     }: {
       q?: string;
       cursor?: { createdAt: Date; id: string } | null;
       limit: number;
+      includeHidden?: boolean;
     }) => {
-      const all = [...store.values()];
+      const all = [...store.values()].filter(
+        (c) => includeHidden || !c.hiddenAt,
+      );
       let filtered = q
         ? all.filter((c) =>
             [c.text, c.username, c.bookReference]
@@ -168,6 +187,78 @@ describe("ListAllCommentsForModerationUseCase", () => {
 
     expect(result.items).toEqual([]);
     expect(result.nextCursor).toBeNull();
+  });
+
+  it("includes soft-hidden comments — moderators must still see them", async () => {
+    const cRepo = inMemoryCommentRepo([
+      makeComment("c1", { text: "visible" }),
+      makeComment("c2", {
+        text: "hidden one",
+        hiddenAt: new Date(),
+        hiddenReason: "moderator",
+      }),
+    ]);
+    const result = await new ListAllCommentsForModerationUseCase(
+      cRepo,
+      reportRepoStub(),
+    ).execute({ limit: 50 });
+
+    expect(result.items.map((c) => c._id).sort()).toEqual(["c1", "c2"]);
+  });
+});
+
+describe("SetCommentHiddenUseCase", () => {
+  it("hides a visible comment and stamps hiddenBy + reason", async () => {
+    const cRepo = inMemoryCommentRepo([makeComment("c1")]);
+    const updated = await new SetCommentHiddenUseCase(cRepo).execute(
+      "c1",
+      true,
+      "mod-jane",
+    );
+
+    expect(updated.hiddenAt).toBeInstanceOf(Date);
+    expect(updated.hiddenBy).toBe("mod-jane");
+    expect(updated.hiddenReason).toBe("moderator");
+  });
+
+  it("un-hides a moderator-hidden comment, clearing all hidden fields", async () => {
+    const cRepo = inMemoryCommentRepo([
+      makeComment("c1", {
+        hiddenAt: new Date(),
+        hiddenBy: "mod",
+        hiddenReason: "moderator",
+      }),
+    ]);
+    const updated = await new SetCommentHiddenUseCase(cRepo).execute(
+      "c1",
+      false,
+      "mod-jane",
+    );
+
+    expect(updated.hiddenAt).toBeUndefined();
+    expect(updated.hiddenReason).toBeUndefined();
+  });
+
+  it("refuses to un-hide a comment hidden by an account disable", async () => {
+    const cRepo = inMemoryCommentRepo([
+      makeComment("c1", {
+        hiddenAt: new Date(),
+        hiddenReason: "account-disabled",
+      }),
+    ]);
+    await expect(
+      new SetCommentHiddenUseCase(cRepo).execute("c1", false, "mod"),
+    ).rejects.toThrow(UNHIDE_ACCOUNT_DISABLED_ERROR);
+  });
+
+  it("throws when the comment is missing", async () => {
+    await expect(
+      new SetCommentHiddenUseCase(inMemoryCommentRepo([])).execute(
+        "missing",
+        true,
+        "mod",
+      ),
+    ).rejects.toThrow("Comment not found");
   });
 });
 

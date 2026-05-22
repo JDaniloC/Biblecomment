@@ -23,10 +23,22 @@ function toEntity(doc: ICommentDocument): Comment {
 		verified: doc.verified ?? false,
 		verifiedBy: doc.verifiedBy,
 		verifiedAt: doc.verifiedAt,
+		hiddenAt: doc.hiddenAt,
+		hiddenBy: doc.hiddenBy,
+		hiddenReason: doc.hiddenReason,
 		createdAt: doc.createdAt,
 		updatedAt: doc.updatedAt,
 	};
 }
+
+/**
+ * Query fragment matching only visible (not soft-hidden) comments. MongoDB's
+ * `{ field: null }` matches both an explicit null AND a missing field, so
+ * this also covers legacy docs that predate `hiddenAt`. Spread into a filter
+ * as a sibling key — never inside an existing `$or`, or hidden comments leak
+ * when a filter is active.
+ */
+const NOT_HIDDEN = { hiddenAt: null } as const;
 
 export class MongoCommentRepository implements ICommentRepository {
 	async findByVerseId(verseId: string): Promise<Comment[]> {
@@ -34,6 +46,7 @@ export class MongoCommentRepository implements ICommentRepository {
 		if (!mongoose.Types.ObjectId.isValid(verseId)) return [];
 		const docs = await CommentModel.find({
 			verseId: new mongoose.Types.ObjectId(verseId),
+			...NOT_HIDDEN,
 		}).sort({ createdAt: -1 });
 		return docs.map(toEntity);
 	}
@@ -46,6 +59,8 @@ export class MongoCommentRepository implements ICommentRepository {
 		if (!mongoose.Types.ObjectId.isValid(verseId)) return [];
 		const filter: Record<string, unknown> = {
 			verseId: new mongoose.Types.ObjectId(verseId),
+			// Sibling key — ANDed with the community $or below, never inside it.
+			...NOT_HIDDEN,
 		};
 		if (communities === null) {
 			// Strictly "general feed" — exclude any comment with a community tag.
@@ -94,6 +109,8 @@ export class MongoCommentRepository implements ICommentRepository {
 		const safeSize = Math.max(1, Math.min(pageSize, 200));
 		const filter: Record<string, unknown> = {
 			username: { $in: usernames },
+			// Sibling key — ANDed with the search $or below, never inside it.
+			...NOT_HIDDEN,
 		};
 		const q = opts?.q?.trim();
 		if (q) {
@@ -134,11 +151,16 @@ export class MongoCommentRepository implements ICommentRepository {
 		username: string,
 		page: number,
 		pageSize: number,
+		opts?: { includeHidden?: boolean },
 	): Promise<Comment[]> {
 		await connectToDatabase();
 		const safePage = Math.max(1, page);
 		const safeSize = Math.max(1, Math.min(pageSize, 200));
-		const docs = await CommentModel.find({ username })
+		// Public profile views exclude hidden comments; the author's own
+		// "Meus Comentários" tab passes includeHidden so they still see them.
+		const filter: Record<string, unknown> = { username };
+		if (!opts?.includeHidden) Object.assign(filter, NOT_HIDDEN);
+		const docs = await CommentModel.find(filter)
 			.sort({ createdAt: -1 })
 			.skip((safePage - 1) * safeSize)
 			.limit(safeSize);
@@ -222,7 +244,7 @@ export class MongoCommentRepository implements ICommentRepository {
 		await connectToDatabase();
 		const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		const docs = await CommentModel.find(
-			{ text: { $regex: escaped, $options: "i" } },
+			{ text: { $regex: escaped, $options: "i" }, ...NOT_HIDDEN },
 			{
 				_id: 1,
 				text: 1,
@@ -254,6 +276,7 @@ export class MongoCommentRepository implements ICommentRepository {
 		cursor?: { createdAt: Date; id: string } | null;
 		limit: number;
 		usernamesIn?: string[];
+		includeHidden?: boolean;
 	}): Promise<{
 		items: Comment[];
 		nextCursor: { createdAt: Date; id: string } | null;
@@ -288,10 +311,15 @@ export class MongoCommentRepository implements ICommentRepository {
 				}
 			: null;
 
+		// Public feeds (recent / following) share this method and must not
+		// leak hidden comments; the moderation panel passes includeHidden.
+		const hiddenPred = opts.includeHidden ? null : NOT_HIDDEN;
+
 		let docs: ICommentDocument[];
 		if (!q) {
 			const filter: Record<string, unknown> = { ...(cursorPred ?? {}) };
 			if (usernamesPred) Object.assign(filter, usernamesPred);
+			if (hiddenPred) Object.assign(filter, hiddenPred);
 			docs = await CommentModel.find(filter)
 				.sort({ createdAt: -1, _id: -1 })
 				.limit(limit + 1);
@@ -313,6 +341,11 @@ export class MongoCommentRepository implements ICommentRepository {
 			if (usernamesPred) {
 				Object.assign(textFilter, usernamesPred);
 				Object.assign(metaFilter, usernamesPred);
+			}
+			if (hiddenPred) {
+				// Sibling key — ANDed with metaFilter's $or, never inside it.
+				Object.assign(textFilter, hiddenPred);
+				Object.assign(metaFilter, hiddenPred);
 			}
 
 			const [byText, byMeta] = await Promise.all([
@@ -379,6 +412,57 @@ export class MongoCommentRepository implements ICommentRepository {
 		return doc ? toEntity(doc) : null;
 	}
 
+	async setHidden(
+		id: string,
+		hidden: boolean,
+		by: string | null,
+		reason: "moderator" | "account-disabled" | null,
+	): Promise<Comment | null> {
+		await connectToDatabase();
+		if (!mongoose.Types.ObjectId.isValid(id)) return null;
+		const update = hidden
+			? {
+					$set: {
+						hiddenAt: new Date(),
+						hiddenBy: by ?? "",
+						hiddenReason: reason ?? "moderator",
+					},
+				}
+			: { $unset: { hiddenAt: "", hiddenBy: "", hiddenReason: "" } };
+		const doc = await CommentModel.findByIdAndUpdate(id, update, {
+			returnDocument: "after",
+		});
+		return doc ? toEntity(doc) : null;
+	}
+
+	async hideAllByUsername(username: string, by: string): Promise<number> {
+		await connectToDatabase();
+		// The `hiddenAt` guard skips comments already hidden — an individually
+		// moderator-hidden comment keeps its "moderator" reason and so survives
+		// a later re-enable (unhideAllByUsernameCascade only touches the
+		// "account-disabled" ones).
+		const result = await CommentModel.updateMany(
+			{ username, ...NOT_HIDDEN },
+			{
+				$set: {
+					hiddenAt: new Date(),
+					hiddenBy: by,
+					hiddenReason: "account-disabled",
+				},
+			},
+		);
+		return result.modifiedCount ?? 0;
+	}
+
+	async unhideAllByUsernameCascade(username: string): Promise<number> {
+		await connectToDatabase();
+		const result = await CommentModel.updateMany(
+			{ username, hiddenReason: "account-disabled" },
+			{ $unset: { hiddenAt: "", hiddenBy: "", hiddenReason: "" } },
+		);
+		return result.modifiedCount ?? 0;
+	}
+
 	async countsForChapter(
 		verseIds: string[],
 	): Promise<{ countMap: Record<string, number>; titleCount: number }> {
@@ -393,7 +477,7 @@ export class MongoCommentRepository implements ICommentRepository {
 			_id: { verseId: mongoose.Types.ObjectId; onTitle: boolean };
 			count: number;
 		}>([
-			{ $match: { verseId: { $in: oids } } },
+			{ $match: { verseId: { $in: oids }, ...NOT_HIDDEN } },
 			{
 				$group: {
 					_id: {

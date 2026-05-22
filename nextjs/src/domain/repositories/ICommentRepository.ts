@@ -59,6 +59,7 @@ export interface ICommentRepository {
 		username: string,
 		page: number,
 		pageSize: number,
+		opts?: { includeHidden?: boolean },
 	): Promise<Comment[]>;
 	findById(id: string): Promise<Comment | null>;
 	findAllPaginated(page: number, pageSize: number): Promise<Comment[]>;
@@ -100,6 +101,12 @@ export interface ICommentRepository {
 		 * tab to filter the cursor stream to followed authors only.
 		 */
 		usernamesIn?: string[];
+		/**
+		 * Include soft-hidden comments. Default false — the public feeds that
+		 * share this method must not leak hidden comments. The moderation
+		 * panel passes `true` so moderators still see them.
+		 */
+		includeHidden?: boolean;
 	}): Promise<{
 		items: Comment[];
 		nextCursor: { createdAt: Date; id: string } | null;
@@ -110,6 +117,31 @@ export interface ICommentRepository {
 		verified: boolean,
 		by: string | null,
 	): Promise<Comment | null>;
+	/**
+	 * Soft-hide / un-hide a single comment. On hide, stamps `hiddenAt`,
+	 * `hiddenBy` and `hiddenReason`; on un-hide, clears all three. `by` is the
+	 * moderator's username (snapshot).
+	 */
+	setHidden(
+		id: string,
+		hidden: boolean,
+		by: string | null,
+		reason: "moderator" | "account-disabled" | null,
+	): Promise<Comment | null>;
+	/**
+	 * Cascade-hide every currently-visible comment by `username` (used when a
+	 * moderator disables the account). Comments already hidden are left as-is,
+	 * so an individually moderator-hidden comment keeps its `"moderator"`
+	 * reason. Returns the number of comments newly hidden.
+	 */
+	hideAllByUsername(username: string, by: string): Promise<number>;
+	/**
+	 * Reverse of `hideAllByUsername` — un-hide only the comments hidden by the
+	 * `"account-disabled"` cascade (used when re-enabling an account).
+	 * Comments hidden individually by a moderator stay hidden. Returns the
+	 * number of comments un-hidden.
+	 */
+	unhideAllByUsernameCascade(username: string): Promise<number>;
 	/**
 	 * Aggregate counts for a chapter in a single round-trip. Used by the server
 	 * component that renders ChapterClient so the verse-comment badges and
