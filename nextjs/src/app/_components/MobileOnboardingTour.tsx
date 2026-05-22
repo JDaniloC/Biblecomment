@@ -112,10 +112,10 @@ export function MobileOnboardingTour() {
 					</div>
 				)}
 
-				{/* Slide 3: deep link to set the reminder up. */}
+				{/* Slide 3: deep link straight to the reminder card. */}
 				{index === 2 && (
 					<Link
-						href="/profile"
+						href="/profile?tab=config#reading-reminder"
 						onClick={finish}
 						className="mb-4 inline-flex items-center justify-center h-9 px-4 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-[13px] font-semibold transition-colors"
 					>

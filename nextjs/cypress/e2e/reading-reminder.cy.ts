@@ -19,6 +19,13 @@ describe("Reading reminder preference", () => {
 		cy.loginAs(users.alice.email, users.alice.password);
 	});
 
+	it("?tab=config deep-links straight to the reminder card", () => {
+		// The onboarding "Configurar lembrete" link relies on this — it must
+		// open the Configurações tab without a manual click.
+		cy.visit("/profile?tab=config");
+		cy.get("[data-testid='reading-reminder-card']").should("be.visible");
+	});
+
 	it("starts off; the hour picker is hidden", () => {
 		cy.visit("/profile");
 		openConfigTab();

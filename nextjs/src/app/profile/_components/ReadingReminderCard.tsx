@@ -9,6 +9,7 @@ import {
 	type ReadingReminderPreference,
 } from "@/domain/entities/ReadingReminderPreference";
 import { Toggle } from "./Toggle";
+import { PushToggle } from "@/components/PushToggle";
 
 /** "07:30" for 7.5, "00:00" for 0, "23:30" for 23.5. */
 function formatHourLocal(h: number): string {
@@ -71,16 +72,16 @@ export function ReadingReminderCard() {
 
 	return (
 		<div
+			id="reading-reminder"
 			data-testid="reading-reminder-card"
-			className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5"
+			className="scroll-mt-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5"
 		>
 			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-1">
 				Lembrete diário de leitura
 			</div>
 			<p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
 				Receba uma notificação no horário que escolher com o capítulo de hoje
-				do plano Reavivados Por Sua Palavra. As notificações por push precisam
-				estar ativadas no sino.
+				do plano Reavivados Por Sua Palavra.
 			</p>
 
 			<div className="flex items-start gap-3.5 mb-4">
@@ -124,6 +125,22 @@ export function ReadingReminderCard() {
 							</option>
 						))}
 					</select>
+				</div>
+			)}
+
+			{/* The reminder is delivered by Web Push, so enabling it is
+			    pointless until the browser permission is granted. Surface
+			    the opt-in right here instead of only on the bell / tour. */}
+			{enabled && (
+				<div className="mb-5 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+					<div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 mb-1">
+						Permissão de notificações
+					</div>
+					<p className="text-xs text-slate-500 dark:text-slate-400 mb-2.5">
+						O lembrete chega como notificação. Ative a permissão abaixo —
+						sem ela, nada será enviado.
+					</p>
+					<PushToggle />
 				</div>
 			)}
 

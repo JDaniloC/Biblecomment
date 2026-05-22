@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
@@ -810,10 +810,20 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 /* ──────────────────────── Main component ──────────────────────── */
+const VALID_TABS: Tab[] = ["overview", "comments", "favorites", "badges", "config"];
+
 export default function ProfileClient({ user }: { user: SessionUser }) {
 	const { handleNotification } = useNotification();
 	const confirm = useConfirm();
-	const [tab, setTab] = useState<Tab>("overview");
+	const searchParams = useSearchParams();
+	// Deep link support: /profile?tab=config opens straight to a tab (the
+	// onboarding "Configurar lembrete" link relies on this).
+	const [tab, setTab] = useState<Tab>(() => {
+		const requested = searchParams.get("tab");
+		return requested && (VALID_TABS as string[]).includes(requested)
+			? (requested as Tab)
+			: "overview";
+	});
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [comments, setComments] = useState<CommentData[]>([]);
 	const [favorites, setFavorites] = useState<CommentData[]>([]);
@@ -832,6 +842,20 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 	const [favTypeFilter, setFavTypeFilter] = useState<TypeFilter>("Todos");
 
 	const initials = getInitials(user.name || user.username);
+
+	// Deep link with a hash (e.g. /profile?tab=config#reading-reminder)
+	// scrolls the target card into view once the tab content has mounted.
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		const hash = window.location.hash.slice(1);
+		if (!hash) return;
+		const id = window.setTimeout(() => {
+			document
+				.getElementById(hash)
+				?.scrollIntoView({ behavior: "smooth", block: "center" });
+		}, 150);
+		return () => window.clearTimeout(id);
+	}, []);
 
 	/* ── Data loaders ── */
 	const loadProfile = useCallback(async () => {
