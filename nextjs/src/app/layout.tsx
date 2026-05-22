@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "./providers";
 import PWARegister from "@/components/PWARegister";
 import { AppShellChrome } from "@/components/AppShellChrome";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 // Inter: app default sans (was inlined in 50+ places as a fontFamily
 // string). Loaded once here and applied via the body className so
@@ -119,6 +120,7 @@ export default function RootLayout({
 				>
 					Pular para o conteúdo
 				</a>
+				<OfflineBanner />
 				<SessionProvider>
 					{children}
 					<AppShellChrome />

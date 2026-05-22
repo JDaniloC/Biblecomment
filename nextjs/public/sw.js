@@ -1,15 +1,15 @@
-// Bible Comment service worker — PWA shell + offline fallback + web push.
-// (We do NOT cache /verses/ HTML for offline reading anymore — those
-// pages are session-personalized and a shared cache entry could leak
-// between users on the same device. See navigation branch below.)
+// Bible Comment service worker — PWA shell + offline chapter reading +
+// web push.
+//
+// Offline chapter reading caches the SESSION-FREE `?offline=1` snapshot
+// of a chapter (rendered with no user, no badges, no "marcar como
+// lido"), never the personalized page. So a cached entry can't leak one
+// user's view to the next on a shared device — the leak that made v2/v3
+// avoid /verses/ caching entirely.
+//
 // Bump CACHE_VERSION to force clients to drop old caches on activate.
-// Bumped to v3 to evict the biblecomment-runtime-v2 cache: v2 cached
-// /verses/ HTML which was server-rendered with session-derived props
-// and could leak across users on a shared device (Copilot review on
-// PR #205). Existing clients running v2 will drop that cache on
-// activate as soon as they pick up this SW.
-const CACHE_VERSION = "biblecomment-v3";
-const RUNTIME_CACHE = "biblecomment-runtime-v3";
+const CACHE_VERSION = "biblecomment-v4";
+const RUNTIME_CACHE = "biblecomment-runtime-v4";
 const SHELL_ASSETS = [
 	"/",
 	"/offline",
@@ -51,6 +51,35 @@ self.addEventListener("activate", (event) => {
 	);
 });
 
+// Resolve the generic offline page (or a bare 503 if it isn't cached).
+function offlineFallback() {
+	return caches.match("/offline").then(
+		(offline) =>
+			offline ||
+			new Response("Offline", {
+				status: 503,
+				headers: { "Content-Type": "text/plain; charset=utf-8" },
+			}),
+	);
+}
+
+// Snapshot the session-free `?offline=1` variant of a chapter so it can
+// be read offline. Cached once and left alone — verse text is immutable
+// and slightly-stale offline comments are an acceptable trade for not
+// re-rendering the page on every visit (which would also load the DB).
+async function cacheChapterSnapshot(pathname) {
+	const snapshotUrl = pathname + "?offline=1";
+	const cache = await caches.open(RUNTIME_CACHE);
+	const existing = await cache.match(snapshotUrl);
+	if (existing) return;
+	try {
+		const res = await fetch(snapshotUrl);
+		if (res.ok) await cache.put(snapshotUrl, res);
+	} catch {
+		// Offline or server error — nothing to snapshot; try again next visit.
+	}
+}
+
 self.addEventListener("fetch", (event) => {
 	const { request } = event;
 
@@ -65,26 +94,32 @@ self.addEventListener("fetch", (event) => {
 	// session data would be worse than a network error.
 	if (url.pathname.startsWith("/api/")) return;
 
-	// Navigation requests: network-first → /offline fallback. We deliberately
-	// do NOT cache /verses/ HTML even though it would enable offline reading
-	// of visited chapters: those pages are server-rendered with session-
-	// derived props (user-specific verse badges, "marcar como lido", etc.),
-	// and a single cached entry would leak one user's personalized view to
-	// the next user on a shared device. A future revision could opt into
-	// offline chapter reading by serving an anonymous variant + a
-	// cookie-aware cache key — out of scope here.
+	// Navigation requests: network-first. Chapter pages additionally get
+	// offline support via their session-free `?offline=1` snapshot (see
+	// the header comment). Everything else falls back to /offline.
 	if (request.mode === "navigate") {
+		const isChapter = /^\/verses\/[^/]+\/[^/]+\/?$/.test(url.pathname);
 		event.respondWith(
-			fetch(request).catch(() =>
-				caches.match("/offline").then(
-					(offline) =>
-						offline ||
-						new Response("Offline", {
-							status: 503,
-							headers: { "Content-Type": "text/plain; charset=utf-8" },
-						}),
-				),
-			),
+			fetch(request)
+				.then((response) => {
+					// Online: serve the live (personalized) page, and lazily
+					// snapshot the anonymous variant for future offline use.
+					if (isChapter) {
+						event.waitUntil(cacheChapterSnapshot(url.pathname));
+					}
+					return response;
+				})
+				.catch(() => {
+					if (isChapter) {
+						// Offline: serve the cached anonymous snapshot if we have
+						// one; otherwise the generic offline page.
+						return caches
+							.open(RUNTIME_CACHE)
+							.then((cache) => cache.match(url.pathname + "?offline=1"))
+							.then((snap) => snap || offlineFallback());
+					}
+					return offlineFallback();
+				}),
 		);
 		return;
 	}

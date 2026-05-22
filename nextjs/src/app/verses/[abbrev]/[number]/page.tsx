@@ -42,11 +42,24 @@ export async function generateMetadata({
   }
 }
 
-export default async function VersesPage({ params }: { params: Promise<Params> }) {
+export default async function VersesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<{ offline?: string }>;
+}) {
+  // `?offline=1` renders a session-free snapshot. The service worker
+  // pre-caches this variant so a chapter stays readable offline without
+  // ever persisting one user's personalized view (badges, "marcar como
+  // lido") into a cache another user could hit on a shared device.
+  const { offline } = await searchParams;
+  const offlineSnapshot = offline === "1";
+
   // Reading verses & comments is intentionally public — Bible Comment is
   // an open platform. Auth gates write actions (composer, like, report,
   // delete) inside ChapterClient instead.
-  const session = await auth();
+  const session = offlineSnapshot ? null : await auth();
 
   const { abbrev, number } = await params;
   const chapterNum = parseInt(number, 10);
