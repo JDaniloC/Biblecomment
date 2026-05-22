@@ -9,6 +9,7 @@ import { GetAllBooksUseCase } from "@/application/use-cases/BookUseCases";
 import { GetRecentFeedUseCase } from "@/application/use-cases/FeedUseCases";
 import { GetReadingStreakUseCase } from "@/application/use-cases/GetReadingStreakUseCase";
 import { getReadingForDate } from "@/lib/reading-plan";
+import { HOME_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import HomeClient from "./HomeClient";
 
 const INITIAL_FEED_LIMIT = 10;
@@ -53,6 +54,9 @@ export default async function HomePage() {
   // Today's RPSP chapter — the streak banner's CTA target.
   const todayReading = getReadingForDate(new Date());
 
+  const tutorialAlreadyCompleted =
+    session.user.tutorialsCompleted?.includes(HOME_TUTORIAL_NAME) ?? false;
+
   // Use-case returns Date instances; the client component types cursors as
   // ISO strings, so normalize here at the wire boundary.
   const initialRecent = {
@@ -71,6 +75,7 @@ export default async function HomePage() {
       streak={streak}
       todayReadingUrl={`/verses/${todayReading.abbrev}/${todayReading.chapter}`}
       todayReadingLabel={`${todayReading.bookName} ${todayReading.chapter}`}
+      tutorialAlreadyCompleted={tutorialAlreadyCompleted}
     />
   );
 }

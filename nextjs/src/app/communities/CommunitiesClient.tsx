@@ -5,6 +5,11 @@ import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { communityService } from "@/services/communities";
 import { useNotification } from "@/contexts/NotificationContext";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
+import {
+	COMMUNITIES_TUTORIAL,
+	COMMUNITIES_TUTORIAL_NAME,
+} from "@/lib/tutorial-config";
 import type { Community } from "@/domain/entities/Community";
 
 interface ViewerSession {
@@ -18,12 +23,14 @@ interface Props {
 	initialItems: Community[];
 	initialTotal: number;
 	viewer: ViewerSession | null;
+	tutorialAlreadyCompleted?: boolean;
 }
 
 export default function CommunitiesClient({
 	initialItems,
 	initialTotal,
 	viewer,
+	tutorialAlreadyCompleted = false,
 }: Props) {
 	const { handleNotification } = useNotification();
 	const [items, setItems] = useState<Community[]>(initialItems);
@@ -96,6 +103,7 @@ export default function CommunitiesClient({
 						<Link
 							href="/communities/new"
 							data-testid="community-create-link"
+							data-tour="communities-create"
 							className="bg-brand text-white font-semibold text-sm px-4 py-2 rounded-md hover:bg-brand/90 transition"
 						>
 							Criar comunidade
@@ -109,6 +117,7 @@ export default function CommunitiesClient({
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					data-testid="community-search-input"
+					data-tour="communities-search"
 					className="w-full mb-5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
 				/>
 
@@ -165,6 +174,13 @@ export default function CommunitiesClient({
 					</div>
 				)}
 			</main>
+
+			<PageTutorial
+				name={COMMUNITIES_TUTORIAL_NAME}
+				steps={COMMUNITIES_TUTORIAL}
+				enabled={!!viewer}
+				alreadyCompleted={tutorialAlreadyCompleted}
+			/>
 		</div>
 	);
 }

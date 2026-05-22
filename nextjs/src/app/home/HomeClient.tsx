@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Book } from "@/domain/entities/Book";
 import { AppHeader } from "@/components/AppHeader";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
+import { HOME_TUTORIAL, HOME_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import ChapterPickerDialog from "./ChapterPickerDialog";
 import { ReadingStreakCard } from "./ReadingStreakCard";
 import type { ReadingStreak } from "@/lib/reading-streak";
@@ -36,6 +38,8 @@ interface Props {
   /** Deep link + label for today's RPSP chapter (streak CTA target). */
   todayReadingUrl?: string;
   todayReadingLabel?: string;
+  /** From session.user.tutorialsCompleted — skip the tour on a fresh browser. */
+  tutorialAlreadyCompleted?: boolean;
 }
 
 type ReadTier = "none" | "partial" | "complete";
@@ -261,7 +265,7 @@ function FeedSection({
   }, [tab, recentLoaded, followingLoaded, popularLoaded, discussionsLoaded, loadRecent, loadFollowing, loadPopular, loadDiscussions]);
 
   return (
-    <section className="mb-10">
+    <section className="mb-10" data-tour="home-feed">
       <div className="flex items-baseline gap-3 mb-4">
         <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
           Atividade da comunidade
@@ -435,6 +439,7 @@ export default function HomeClient({
   streak,
   todayReadingUrl,
   todayReadingLabel,
+  tutorialAlreadyCompleted = false,
 }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "VT" | "NT">("all");
@@ -462,11 +467,13 @@ export default function HomeClient({
         {user ? (
           <>
             {streak && todayReadingUrl && todayReadingLabel && (
-              <ReadingStreakCard
-                streak={streak}
-                todayReadingUrl={todayReadingUrl}
-                todayReadingLabel={todayReadingLabel}
-              />
+              <div data-tour="home-streak">
+                <ReadingStreakCard
+                  streak={streak}
+                  todayReadingUrl={todayReadingUrl}
+                  todayReadingLabel={todayReadingLabel}
+                />
+              </div>
             )}
             <FeedSection initialRecent={initialRecent} />
           </>
@@ -474,7 +481,7 @@ export default function HomeClient({
           <FeedAuthCta />
         )}
 
-        <section>
+        <section data-tour="home-books">
           <div className="flex items-baseline gap-3 mb-4">
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Livros</h2>
           </div>
@@ -556,6 +563,13 @@ export default function HomeClient({
       </main>
 
       <ChapterPickerDialog book={pickerBook} onClose={() => setPickerBook(null)} />
+
+      <PageTutorial
+        name={HOME_TUTORIAL_NAME}
+        steps={HOME_TUTORIAL}
+        enabled={!!user}
+        alreadyCompleted={tutorialAlreadyCompleted}
+      />
     </div>
   );
 }

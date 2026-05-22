@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
+import { COMMUNITIES_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import CommunitiesClient from "./CommunitiesClient";
 
 const PAGE_SIZE = 24;
@@ -20,11 +21,16 @@ export default async function CommunitiesPage() {
 			}
 		: null;
 
+	const tutorialAlreadyCompleted =
+		session?.user?.tutorialsCompleted?.includes(COMMUNITIES_TUTORIAL_NAME) ??
+		false;
+
 	return (
 		<CommunitiesClient
 			initialItems={result.items}
 			initialTotal={result.total}
 			viewer={viewer}
+			tutorialAlreadyCompleted={tutorialAlreadyCompleted}
 		/>
 	);
 }

@@ -6,6 +6,8 @@ import { useNotification } from "@/contexts/NotificationContext";
 import { discussionsService } from "@/services/discussions";
 import Loading from "@/components/Loading";
 import { AppHeader } from "@/components/AppHeader";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
+import { DISCUSSIONS_TUTORIAL, DISCUSSIONS_TUTORIAL_NAME } from "@/lib/tutorial-config";
 
 interface SessionUser {
   name: string;
@@ -24,7 +26,13 @@ interface DiscussionSummary {
   createdAt: string;
 }
 
-export default function DiscussionsClient({ user }: { user: SessionUser }) {
+export default function DiscussionsClient({
+  user,
+  tutorialAlreadyCompleted = false,
+}: {
+  user: SessionUser;
+  tutorialAlreadyCompleted?: boolean;
+}) {
   const { handleNotification } = useNotification();
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +61,7 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
 
       <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="font-semibold text-2xl text-gray-800 dark:text-slate-100 mb-6">Discussões</h1>
+        <div data-tour="discussions-list">
         {loading && discussions.length === 0 ? (
           <Loading />
         ) : discussions.length === 0 ? (
@@ -85,7 +94,15 @@ export default function DiscussionsClient({ user }: { user: SessionUser }) {
             {loading && <Loading />}
           </div>
         )}
+        </div>
       </main>
+
+      <PageTutorial
+        name={DISCUSSIONS_TUTORIAL_NAME}
+        steps={DISCUSSIONS_TUTORIAL}
+        enabled={!!user}
+        alreadyCompleted={tutorialAlreadyCompleted}
+      />
     </div>
   );
 }

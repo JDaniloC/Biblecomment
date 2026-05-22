@@ -15,7 +15,13 @@ import Loading from "@/components/Loading";
 import collectionsData from "@/data/collections.json";
 import { dateFormat } from "@/utils/iconFunction";
 import { useTutorial } from "@/lib/use-tutorial";
-import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
+import {
+	PROFILE_TUTORIAL,
+	PROFILE_TUTORIAL_NAME,
+	TUTORIALS,
+	type TutorialDef,
+} from "@/lib/tutorial-config";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
 import { BadgesTab } from "./_components/BadgesTab";
 import { ReadingReminderCard } from "./_components/ReadingReminderCard";
 import { Toggle } from "./_components/Toggle";
@@ -640,28 +646,51 @@ function MyDataCard({
 	);
 }
 
-function TutorialResetCard() {
+/** One row in the "Tutoriais guiados" card — resets a tour and re-opens it. */
+function TutorialRow({ tutorial }: { tutorial: TutorialDef }) {
 	const router = useRouter();
-	const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME);
+	// We only need the reset action; the hook's flag state is unused here.
+	const { reset } = useTutorial(tutorial.name);
+	return (
+		<li className="flex items-center justify-between gap-3 py-2.5 border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+			<div className="min-w-0">
+				<div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+					{tutorial.label}
+				</div>
+				<div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mt-0.5">
+					{tutorial.description}
+				</div>
+			</div>
+			<button
+				type="button"
+				data-testid={`tutorial-replay-${tutorial.name}`}
+				onClick={() => {
+					reset();
+					router.push(tutorial.reviewPath);
+				}}
+				className="shrink-0 h-8 px-4 bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-xs font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition"
+			>
+				Refazer
+			</button>
+		</li>
+	);
+}
+
+function TutorialsCard() {
 	return (
 		<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
 			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
-				Tutorial guiado
+				Tutoriais guiados
 			</div>
-			<p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-4 mt-0">
-				Refaça o tour de boas-vindas para revisar como ler, comentar, abrir
-				discussões e gerenciar sua conta.
+			<p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-3 mt-0">
+				Refaça qualquer tour para revisar como usar o Bible Comment — leitura,
+				comentários, comunidades, discussões e seu perfil.
 			</p>
-			<button
-				type="button"
-				onClick={() => {
-					tutorial.reset();
-					router.push("/chapter/jo/3?tour=1");
-				}}
-				className="h-[35.5px] px-5 bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition"
-			>
-				Refazer tutorial
-			</button>
+			<ul className="flex flex-col" data-testid="tutorials-list">
+				{TUTORIALS.map((t) => (
+					<TutorialRow key={t.name} tutorial={t} />
+				))}
+			</ul>
 		</div>
 	);
 }
@@ -812,7 +841,13 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 /* ──────────────────────── Main component ──────────────────────── */
 const VALID_TABS: Tab[] = ["overview", "comments", "favorites", "badges", "config"];
 
-export default function ProfileClient({ user }: { user: SessionUser }) {
+export default function ProfileClient({
+	user,
+	tutorialAlreadyCompleted = false,
+}: {
+	user: SessionUser;
+	tutorialAlreadyCompleted?: boolean;
+}) {
 	const { handleNotification } = useNotification();
 	const confirm = useConfirm();
 	const searchParams = useSearchParams();
@@ -1010,7 +1045,10 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 				{/* Sidebar */}
 				<aside className="w-full md:w-60 flex-shrink-0 flex flex-col gap-2">
 					{/* User card */}
-					<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pt-6 px-5 pb-5">
+					<div
+						data-tour="profile-user-card"
+						className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pt-6 px-5 pb-5"
+					>
 						<div className="w-[68px] h-[68px] rounded-[34px] bg-brand/15 border-[2.667px] border-[rgba(19,125,219,0.19)] flex items-center justify-center mb-[18px]">
 							<span className="font-extrabold text-[22px] text-brand leading-none">
 								{initials}
@@ -1048,6 +1086,7 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 									key={id}
 									type="button"
 									onClick={() => setTab(id)}
+									data-tour={`profile-tab-${id}`}
 									aria-label={label}
 									title={label}
 									aria-current={active ? "page" : undefined}
@@ -1428,8 +1467,8 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 							{/* ── Card: Trocar senha ── */}
 							<ChangePasswordCard />
 
-							{/* ── Card: Tutorial guiado ── */}
-							<TutorialResetCard />
+							{/* ── Card: Tutoriais guiados ── */}
+							<TutorialsCard />
 
 							{/* ── Card: Meus dados (LGPD Art. 18 - portabilidade) ── */}
 							<MyDataCard onCommentsImported={loadComments} />
@@ -1477,6 +1516,13 @@ export default function ProfileClient({ user }: { user: SessionUser }) {
 					/>
 				</Modal>
 			)}
+
+			<PageTutorial
+				name={PROFILE_TUTORIAL_NAME}
+				steps={PROFILE_TUTORIAL}
+				enabled
+				alreadyCompleted={tutorialAlreadyCompleted}
+			/>
 		</div>
 	);
 }
