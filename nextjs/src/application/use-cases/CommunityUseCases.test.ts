@@ -222,6 +222,12 @@ function makeMembershipRepo(): ICommunityMembershipRepository & {
 			const k = key(userId, communityId);
 			if (!rows.has(k)) rows.set(k, { status: "pending", role: "member" });
 		},
+		async seedCreator(userId, communityId) {
+			rows.set(key(userId, communityId), {
+				status: "approved",
+				role: "moderator",
+			});
+		},
 		async listByStatus(communityId, status) {
 			return [...rows.entries()]
 				.filter(
@@ -301,12 +307,21 @@ const alice: User = {
 describe("CreateCommunityUseCase", () => {
 	let communityRepo: ReturnType<typeof makeCommunityRepo>;
 	let userRepo: IUserRepository;
+	let membershipRepo: ReturnType<typeof makeMembershipRepo>;
+	let followRepo: ReturnType<typeof makeFollowRepo>;
 	let usecase: CreateCommunityUseCase;
 
 	beforeEach(() => {
 		communityRepo = makeCommunityRepo();
 		userRepo = makeUserRepo({ "alice@example.com": alice });
-		usecase = new CreateCommunityUseCase(communityRepo, userRepo);
+		membershipRepo = makeMembershipRepo();
+		followRepo = makeFollowRepo();
+		usecase = new CreateCommunityUseCase(
+			communityRepo,
+			userRepo,
+			membershipRepo,
+			followRepo,
+		);
 	});
 
 	it("creates a community owned by the actor", async () => {
@@ -319,7 +334,24 @@ describe("CreateCommunityUseCase", () => {
 		expect(c._id).toBeDefined();
 		expect(c.slug).toBe("reformados");
 		expect(c.createdBy).toBe("u-alice");
-		expect(c.memberCount).toBe(0);
+	});
+
+	it("seeds the creator as an approved moderator and auto-follows", async () => {
+		const c = await usecase.execute({
+			actorEmail: "alice@example.com",
+			slug: "reformados",
+			name: "Reformados",
+		});
+		// Creator must be an approved member — otherwise their own comments
+		// wouldn't associate with the community (link is derived from
+		// approved membership).
+		expect(await membershipRepo.getStatus("u-alice", c._id!)).toBe("approved");
+		expect(await membershipRepo.isModerator("u-alice", c._id!)).toBe(true);
+		expect(await followRepo.isFollowing("u-alice", c._id!)).toBe(true);
+		// Counters reflect the seeded creator.
+		const stored = await communityRepo.findBySlug("reformados");
+		expect(stored?.memberCount).toBe(1);
+		expect(stored?.followerCount).toBe(1);
 	});
 
 	it("rejects invalid slugs", async () => {

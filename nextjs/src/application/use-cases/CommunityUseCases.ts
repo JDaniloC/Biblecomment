@@ -21,6 +21,8 @@ export class CreateCommunityUseCase {
 	constructor(
 		private readonly communityRepo: ICommunityRepository,
 		private readonly userRepo: IUserRepository,
+		private readonly memberships: ICommunityMembershipRepository,
+		private readonly follows: ICommunityFollowRepository,
 	) {}
 
 	async execute(input: CreateCommunityInput): Promise<Community> {
@@ -44,12 +46,29 @@ export class CreateCommunityUseCase {
 			throw new Error("Community limit reached");
 		}
 
-		return this.communityRepo.create({
+		const community = await this.communityRepo.create({
 			slug,
 			name,
 			description,
 			createdBy: actor._id,
 		});
+		if (!community._id) return community;
+
+		// Seed the creator as an approved moderator. Without this they'd be
+		// the `createdBy` of a community they aren't a *member* of — and
+		// since the comment↔community link is derived from approved
+		// membership (see ListCommunityCommentsUseCase), their own comments
+		// wouldn't associate with their community. Also auto-follow so the
+		// community shows up in their reader selector, mirroring what
+		// ApproveMemberUseCase does on approval.
+		await this.memberships.seedCreator(actor._id, community._id);
+		await this.communityRepo.incrementMemberCount(community._id, 1);
+		const followed = await this.follows.follow(actor._id, community._id);
+		if (followed) {
+			await this.communityRepo.incrementFollowerCount(community._id, 1);
+		}
+
+		return community;
 	}
 }
 

@@ -77,7 +77,8 @@ describe("Communities — Phase 4.2 (CRUD + join/leave)", () => {
 
 		cy.loginAs(users.bob.email, users.bob.password);
 		cy.visit("/communities/exegetas");
-		cy.get('[data-testid="community-member-count"]').should("have.text", "0");
+		// 1 = alice, seeded as an approved member when she created it.
+		cy.get('[data-testid="community-member-count"]').should("have.text", "1");
 		cy.get('[data-testid="community-membership-toggle"]')
 			.should("have.attr", "data-status", "none")
 			.and("contain.text", "Solicitar entrada")
@@ -93,8 +94,8 @@ describe("Communities — Phase 4.2 (CRUD + join/leave)", () => {
 			"contain.text",
 			"Cancelar",
 		);
-		// memberCount stays 0 — only approved memberships bump the counter.
-		cy.get('[data-testid="community-member-count"]').should("have.text", "0");
+		// memberCount stays 1 (alice) — a pending request never bumps it.
+		cy.get('[data-testid="community-member-count"]').should("have.text", "1");
 
 		cy.get('[data-testid="community-membership-toggle"]')
 			.find("button")
@@ -104,7 +105,7 @@ describe("Communities — Phase 4.2 (CRUD + join/leave)", () => {
 			"data-status",
 			"none",
 		);
-		cy.get('[data-testid="community-member-count"]').should("have.text", "0");
+		cy.get('[data-testid="community-member-count"]').should("have.text", "1");
 	});
 
 	it("creator does not see a Join button on their own community", () => {

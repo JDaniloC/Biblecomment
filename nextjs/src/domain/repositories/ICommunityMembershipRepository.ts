@@ -24,6 +24,13 @@ export interface ICommunityMembershipRepository {
 	// ── Moderation / prioritization (plan_community) ──
 	/** Idempotent pending join request (no-op if a row already exists). */
 	createRequest(userId: string, communityId: string): Promise<void>;
+	/**
+	 * Seed the community creator as an approved moderator in one upsert.
+	 * Unlike `createRequest`, this forces `status: "approved"` and
+	 * `role: "moderator"` even on an existing row — the creator is always
+	 * a full member of their own community.
+	 */
+	seedCreator(userId: string, communityId: string): Promise<void>;
 	listByStatus(
 		communityId: string,
 		status: "pending" | "approved",

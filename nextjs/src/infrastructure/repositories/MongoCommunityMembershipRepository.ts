@@ -99,6 +99,18 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		);
 	}
 
+	async seedCreator(userId: string, communityId: string): Promise<void> {
+		await connectToDatabase();
+		await CommunityMembershipModel.updateOne(
+			{ userId, communityId },
+			{
+				$set: { status: "approved", role: "moderator" },
+				$setOnInsert: { userId, communityId },
+			},
+			{ upsert: true },
+		);
+	}
+
 	async listByStatus(
 		communityId: string,
 		status: "pending" | "approved",

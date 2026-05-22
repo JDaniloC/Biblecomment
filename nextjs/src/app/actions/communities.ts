@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
+import { MongoCommunityFollowRepository } from "@/infrastructure/repositories/MongoCommunityFollowRepository";
 import { CreateCommunityUseCase } from "@/application/use-cases/CommunityUseCases";
 import { CreateCommunitySchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
@@ -34,6 +36,8 @@ export async function createCommunityAction(input: {
     const community = await new CreateCommunityUseCase(
       new MongoCommunityRepository(),
       new MongoUserRepository(),
+      new MongoCommunityMembershipRepository(),
+      new MongoCommunityFollowRepository(),
     ).execute({
       actorEmail: session.user.email,
       slug: parsed.data.slug,
