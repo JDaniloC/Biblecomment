@@ -1117,6 +1117,7 @@ export default function ChapterClient({
 										<div className="pt-3 px-4 overflow-hidden">
 											<form onSubmit={handleCompose}>
 												<textarea
+													data-testid="comment-composer-textarea"
 													value={composeText}
 													onChange={(e) => {
 														let v = e.target.value;
@@ -1124,8 +1125,8 @@ export default function ChapterClient({
 														setComposeText(v);
 													}}
 													placeholder="Escreva seu comentário aqui…"
-													rows={4}
-													className="w-full border-none outline-none resize-none text-[14px] text-[rgba(26,26,26,0.85)] dark:text-slate-100 leading-[25.2px] bg-transparent box-border"
+													rows={6}
+													className="w-full border-none outline-none resize-y min-h-[150px] max-h-[60vh] text-[14px] text-[rgba(26,26,26,0.85)] dark:text-slate-100 leading-[25.2px] bg-transparent box-border"
 												/>
 												{/* Footer */}
 												<div className="border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 pt-3 pb-4 mt-1">
@@ -1268,8 +1269,8 @@ export default function ChapterClient({
 														<textarea
 															value={editText}
 															onChange={(e) => setEditText(e.target.value)}
-															rows={4}
-															className="w-full border border-[#e2e8f0] dark:border-slate-700 rounded-lg px-3 py-2 text-[14px] text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#137ddb]/30 focus:border-[#137ddb] transition"
+															rows={5}
+															className="w-full border border-[#e2e8f0] dark:border-slate-700 rounded-lg px-3 py-2 text-[14px] text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 resize-y min-h-[120px] max-h-[60vh] focus:outline-none focus:ring-2 focus:ring-[#137ddb]/30 focus:border-[#137ddb] transition"
 														/>
 														<div className="flex gap-2 mt-2 justify-end">
 															<button

@@ -125,8 +125,8 @@ export default function NewCommentForm(props: Props) {
           value={text}
           onChange={handleTextChange}
           placeholder="Descreva seu comentário"
-          rows={6}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+          rows={7}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-y min-h-[150px] max-h-[60vh] focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
         <button

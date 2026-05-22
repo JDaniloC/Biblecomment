@@ -383,4 +383,24 @@ describe("Comments — full lifecycle", () => {
 			cy.get('[aria-label="Fechar comentários"]').should("not.exist");
 		});
 	});
+
+	// The composer textarea used to be a cramped, fixed rows={4} box with
+	// resize-none — too tight on mobile. It now opens taller and exposes the
+	// native vertical resize grip so the writer can drag it bigger.
+	describe("Composer textarea is resizable", () => {
+		it("opens at a comfortable height and allows vertical drag-resize", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			cy.visit("/verses/gn/1");
+			cy.get("li#1 button").first().click();
+			cy.contains("button", "Comentar").click();
+
+			cy.get('[data-testid="comment-composer-textarea"]')
+				.should("be.visible")
+				.and("have.css", "resize", "vertical")
+				.then(($el) => {
+					// min-h floor keeps it from feeling cramped on a phone.
+					expect($el[0].clientHeight).to.be.greaterThan(140);
+				});
+		});
+	});
 });
