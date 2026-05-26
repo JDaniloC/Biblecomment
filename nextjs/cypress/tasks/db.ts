@@ -69,6 +69,15 @@ export interface SeedUser {
 	/** Unlocked badge IDs (catalog ids from src/lib/badges/catalog.ts). */
 	badges?: string[];
 	tutorialsCompleted?: string[];
+	/**
+	 * Email-verification state. Defaults to `true` so the verification gate
+	 * (CreateComment, CreateDiscussion, AddAnswer, CreateCommunity) doesn't
+	 * block every existing test. Set to `false` for specs that exercise the
+	 * unverified-user flow.
+	 */
+	emailVerified?: boolean;
+	/** Pending email-change address awaiting confirmation. Rarely used in tests. */
+	pendingEmail?: string;
 }
 
 export interface SeedBook {
@@ -390,19 +399,24 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
 
 	if (payload.users?.length) {
 		const docs = await Promise.all(
-			payload.users.map(async (u) => ({
-				email: u.email.toLowerCase().trim(),
-				username: u.username,
-				password: await bcrypt.hash(u.password, 12),
-				state: u.state ?? "",
-				belief: u.belief ?? "",
-				showBelief: u.showBelief ?? false,
-				badges: u.badges ?? [],
-				moderator: u.moderator ?? false,
-				tutorialsCompleted: u.tutorialsCompleted ?? [],
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			})),
+			payload.users.map(async (u) => {
+				const verified = u.emailVerified !== false;
+				return {
+					email: u.email.toLowerCase().trim(),
+					username: u.username,
+					password: await bcrypt.hash(u.password, 12),
+					state: u.state ?? "",
+					belief: u.belief ?? "",
+					showBelief: u.showBelief ?? false,
+					badges: u.badges ?? [],
+					moderator: u.moderator ?? false,
+					tutorialsCompleted: u.tutorialsCompleted ?? [],
+					...(verified ? { emailVerifiedAt: new Date() } : {}),
+					...(u.pendingEmail ? { pendingEmail: u.pendingEmail.toLowerCase().trim() } : {}),
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				};
+			}),
 		);
 		await db.collection("users").insertMany(docs);
 	}
