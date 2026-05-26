@@ -10,6 +10,8 @@ export interface AdminUserCursor {
 export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
+  /** Lookup by primary id. Mirrors `findByEmail` / `findByUsername`. */
+  findById(userId: string): Promise<User | null>;
   /**
    * Public-profile projection — only fields safe to expose anonymously. Belief
    * is gated on the user's `showBelief` opt-in flag. Returns null for unknown users.
@@ -55,6 +57,26 @@ export interface IUserRepository {
    * it cannot clear fields). `by` is the moderator's username (snapshot).
    */
   setDisabled(email: string, disabled: boolean, by: string | null): Promise<User | null>;
+  /** Stamp the verification timestamp on the user. */
+  setEmailVerified(userId: string, when: Date): Promise<void>;
+  /** Store a pending email-change address; idempotent. */
+  setPendingEmail(userId: string, newEmail: string): Promise<void>;
+  /** Drop any pending email change. */
+  clearPendingEmail(userId: string): Promise<void>;
+  /**
+   * Atomically move `pendingEmail` into `email`, stamp `emailVerifiedAt`, and
+   * clear `pendingEmail`. Used by the verification flow on confirmation of an
+   * email change. The new email must not be in use by another account
+   * (callers MUST check via `findByEmailOrPendingEmail` first — this method
+   * does not enforce uniqueness on its own to keep the contract narrow).
+   */
+  promotePendingEmail(userId: string, when: Date): Promise<void>;
+  /**
+   * Find a user whose `email` OR `pendingEmail` equals the given address.
+   * Used to reject duplicate addresses during email-change requests without
+   * leaking existence to the caller of the action.
+   */
+  findByEmailOrPendingEmail(email: string): Promise<User | null>;
   /**
    * Idempotently mark a tutorial as completed for the user. Uses $addToSet
    * under the hood so concurrent calls converge.

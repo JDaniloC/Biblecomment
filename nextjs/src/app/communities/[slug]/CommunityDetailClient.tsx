@@ -8,6 +8,7 @@ import { communityService } from "@/services/communities";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import type { Community } from "@/domain/entities/Community";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 type CommunityTab =
 	| "comentarios"
@@ -87,6 +88,7 @@ export interface CommunityCommentItem {
 	bookReference: string;
 	tags: string[];
 	createdAt: string | null;
+	authorEmailVerified?: boolean;
 }
 
 interface Props {
@@ -208,6 +210,7 @@ export default function CommunityDetailClient({
 			role: "member" | "moderator";
 			isCreator: boolean;
 			joinedAt: string | null;
+			emailVerified: boolean;
 		}[]
 	>([]);
 	// Distinguish "still loading" from "loaded and empty" so the tab
@@ -730,12 +733,15 @@ export default function CommunityDetailClient({
 										className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
 									>
 										<div className="flex items-center justify-between gap-2 mb-1">
-											<Link
-												href={`/u/${c.username}`}
-												className="text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-brand truncate"
-											>
-												@{c.username}
-											</Link>
+											<span className="inline-flex items-center gap-1 min-w-0">
+												<Link
+													href={`/u/${c.username}`}
+													className="text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-brand truncate"
+												>
+													@{c.username}
+												</Link>
+												<VerifiedBadge verified={c.authorEmailVerified} size="xs" />
+											</span>
 											<span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">
 												{formatDate(c.createdAt)}
 											</span>
@@ -828,6 +834,7 @@ export default function CommunityDetailClient({
 														(usuário removido)
 													</span>
 												)}
+												<VerifiedBadge verified={m.emailVerified} size="xs" />
 												{m.isCreator && (
 													<span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-tint text-brand">
 														Criadora

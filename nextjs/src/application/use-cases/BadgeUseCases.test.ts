@@ -34,6 +34,7 @@ function makeRepos(opts: {
   const user = {
     findByEmail: async () => null,
     findByUsername: async () => null,
+    findById: async () => null,
     findByUsernamePublic: async () => null,
     searchByUsernamePrefix: async () => [],
     findByUsernames: async () => [],
@@ -53,6 +54,11 @@ function makeRepos(opts: {
       return fresh;
     },
     setDisabled: async () => null,
+    setEmailVerified: async () => {},
+    setPendingEmail: async () => {},
+    clearPendingEmail: async () => {},
+    promotePendingEmail: async () => {},
+    findByEmailOrPendingEmail: async () => null,
     delete: async () => {},
     _badges: userBadges,
   } as IUserRepository & { _badges: Map<string, string[]> };

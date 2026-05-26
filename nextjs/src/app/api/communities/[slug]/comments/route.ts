@@ -38,6 +38,7 @@ export async function GET(
 		createdAt: c.createdAt?.toISOString() ?? null,
 		verseId: c.verseId,
 		communitySlug: c.communitySlug,
+		authorEmailVerified: c.authorEmailVerified,
 	}));
 	return NextResponse.json({
 		items,

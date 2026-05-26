@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
   GetDiscussionsUseCase,
   GetDiscussionByIdUseCase,
@@ -39,7 +40,7 @@ export default async function DiscussionDetailPage({ params }: { params: Promise
     );
   }
 
-  const detailUC = new GetDiscussionByIdUseCase(discussionRepo, answerRepo);
+  const detailUC = new GetDiscussionByIdUseCase(discussionRepo, answerRepo, new MongoUserRepository());
   const [discussion, discussions] = await Promise.all([
     detailUC.execute(id),
     listUC.execute(abbrev),

@@ -42,6 +42,8 @@ export interface UserProfile {
   commentsCount: number;
   followersCount?: number;
   followingCount?: number;
+  emailVerified?: boolean;
+  pendingEmail?: string | null;
 }
 
 export interface UserListItem {

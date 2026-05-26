@@ -27,6 +27,8 @@ function toEntity(doc: IUserDocument): User {
     badges: doc.badges ? [...doc.badges] : [],
     disabledAt: doc.disabledAt,
     disabledBy: doc.disabledBy,
+    emailVerifiedAt: doc.emailVerifiedAt,
+    pendingEmail: doc.pendingEmail,
   };
 }
 
@@ -46,6 +48,12 @@ export class MongoUserRepository implements IUserRepository {
     const doc = await UserModel.findOne({
       username: { $regex: `^${escaped}$`, $options: "i" },
     });
+    return doc ? toEntity(doc) : null;
+  }
+
+  async findById(userId: string): Promise<User | null> {
+    await connectToDatabase();
+    const doc = await UserModel.findById(userId);
     return doc ? toEntity(doc) : null;
   }
 
@@ -80,7 +88,7 @@ export class MongoUserRepository implements IUserRepository {
     const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const doc = await UserModel.findOne(
       { username: { $regex: `^${escaped}$`, $options: "i" } },
-      { username: 1, displayName: 1, badges: 1, belief: 1, showBelief: 1, createdAt: 1 },
+      { username: 1, displayName: 1, badges: 1, belief: 1, showBelief: 1, emailVerifiedAt: 1, createdAt: 1 },
     ).lean();
     if (!doc) return null;
     return {
@@ -88,6 +96,7 @@ export class MongoUserRepository implements IUserRepository {
       displayName: doc.displayName,
       badges: doc.badges ? [...doc.badges] : [],
       belief: doc.showBelief ? doc.belief : undefined,
+      emailVerified: !!(doc as { emailVerifiedAt?: Date }).emailVerifiedAt,
       createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(0),
     };
   }
@@ -158,7 +167,7 @@ export class MongoUserRepository implements IUserRepository {
       .sort({ createdAt: -1, _id: -1 })
       .limit(limit + 1)
       .select(
-        "_id username displayName email state moderator disabledAt disabledBy createdAt",
+        "_id username displayName email state moderator disabledAt disabledBy emailVerifiedAt createdAt",
       );
 
     const hasMore = docs.length > limit;
@@ -171,6 +180,7 @@ export class MongoUserRepository implements IUserRepository {
       state: d.state,
       moderator: !!d.moderator,
       disabled: !!d.disabledAt,
+      emailVerified: !!(d as { emailVerifiedAt?: Date }).emailVerifiedAt,
       disabledAt: d.disabledAt,
       disabledBy: d.disabledBy,
       createdAt: d.createdAt!,
@@ -253,5 +263,40 @@ export class MongoUserRepository implements IUserRepository {
   async delete(email: string): Promise<void> {
     await connectToDatabase();
     await UserModel.deleteOne({ email: email.toLowerCase() });
+  }
+
+  async setEmailVerified(userId: string, when: Date): Promise<void> {
+    await connectToDatabase();
+    await UserModel.updateOne({ _id: userId }, { $set: { emailVerifiedAt: when } });
+  }
+
+  async setPendingEmail(userId: string, newEmail: string): Promise<void> {
+    await connectToDatabase();
+    await UserModel.updateOne(
+      { _id: userId },
+      { $set: { pendingEmail: newEmail.toLowerCase().trim() } },
+    );
+  }
+
+  async clearPendingEmail(userId: string): Promise<void> {
+    await connectToDatabase();
+    await UserModel.updateOne({ _id: userId }, { $unset: { pendingEmail: "" } });
+  }
+
+  async promotePendingEmail(userId: string, when: Date): Promise<void> {
+    await connectToDatabase();
+    const doc = await UserModel.findById(userId);
+    if (!doc?.pendingEmail) return;
+    doc.email = doc.pendingEmail;
+    doc.emailVerifiedAt = when;
+    doc.pendingEmail = undefined;
+    await doc.save();
+  }
+
+  async findByEmailOrPendingEmail(email: string): Promise<User | null> {
+    await connectToDatabase();
+    const e = email.toLowerCase().trim();
+    const doc = await UserModel.findOne({ $or: [{ email: e }, { pendingEmail: e }] });
+    return doc ? toEntity(doc) : null;
   }
 }

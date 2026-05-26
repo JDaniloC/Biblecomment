@@ -13,6 +13,8 @@ export interface IUserDocument extends Document {
   badges?: string[];
   disabledAt?: Date;
   disabledBy?: string;
+  emailVerifiedAt?: Date;
+  pendingEmail?: string;
   /** Set by Mongoose `timestamps: true` on the schema. */
   createdAt?: Date;
   updatedAt?: Date;
@@ -32,6 +34,8 @@ const UserSchema = new Schema<IUserDocument>(
     badges:             { type: [String], default: [] },
     disabledAt:         { type: Date },
     disabledBy:         { type: String },
+    emailVerifiedAt:    { type: Date, required: false },
+    pendingEmail:       { type: String, required: false, lowercase: true, trim: true },
   },
   { timestamps: true }
 );

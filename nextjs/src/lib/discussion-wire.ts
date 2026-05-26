@@ -11,7 +11,7 @@ import type { Discussion } from "@/domain/entities/Discussion";
  * (no inline answers), detail views derive it from `answers.length`.
  */
 export interface DiscussionWire extends Omit<Discussion, "answers"> {
-  answers: Array<{ _id?: string; name: string; text: string }>;
+  answers: Array<{ _id?: string; name: string; text: string; authorEmailVerified?: boolean }>;
   answersCount: number;
 }
 
@@ -20,6 +20,7 @@ export function toDiscussionWire(discussion: Discussion): DiscussionWire {
     _id: a._id,
     name: a.username,
     text: a.text,
+    authorEmailVerified: a.authorEmailVerified,
   }));
   return {
     ...discussion,

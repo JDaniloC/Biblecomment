@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
   GetDiscussionsUseCase,
   CreateDiscussionUseCase,
@@ -45,7 +46,7 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     const { verseReference, verseText, commentText, question, commentId } = parsed.data;
 
     const repo = new MongoDiscussionRepository();
-    const useCase = new CreateDiscussionUseCase(repo);
+    const useCase = new CreateDiscussionUseCase(repo, new MongoUserRepository());
     const discussion = await useCase.execute(
       abbrev.toLowerCase(),
       user.username,

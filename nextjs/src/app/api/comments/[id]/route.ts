@@ -18,6 +18,7 @@ import {
 } from "@/application/use-cases/CommentUseCases";
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import { getSessionUser, unauthorized, forbidden, badRequest, notFound, serverError } from "@/lib/get-session";
+import { EmailNotVerifiedError } from "@/lib/auth-guards";
 import { parseBody } from "@/lib/parse-body";
 import { CreateCommentSchema, UpdateCommentSchema } from "@/lib/schemas";
 
@@ -41,9 +42,9 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     const useCase = new CreateCommentUseCase(
       commentRepo,
       verseRepo,
+      new MongoUserRepository(),
       new MongoCommunityRepository(),
       new MongoCommunityMembershipRepository(),
-      new MongoUserRepository(),
     );
 
     const comment = await useCase.execute({
@@ -73,6 +74,9 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
 
     return NextResponse.json(comment, { status: 201 });
   } catch (err) {
+    if (err instanceof EmailNotVerifiedError) {
+      return NextResponse.json({ error: err.message }, { status: 403 });
+    }
     if (err instanceof Error) {
       if (err.message === "Verse not found") return badRequest("Versículo não encontrado");
       if (err.message === "Community not found") return badRequest("Comunidade não encontrada");

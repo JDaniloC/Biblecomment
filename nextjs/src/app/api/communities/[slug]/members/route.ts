@@ -31,6 +31,7 @@ export async function GET(
 			role: m.role,
 			isCreator: m.isCreator,
 			joinedAt: m.joinedAt?.toISOString() ?? null,
+			emailVerified: m.emailVerified,
 		})),
 	});
 }

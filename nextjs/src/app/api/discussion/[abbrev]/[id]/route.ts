@@ -45,14 +45,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     const parsed = await parseBody(req, AddAnswerSchema);
     if (!parsed.ok) return parsed.response;
 
+    const userRepo = new MongoUserRepository();
     const useCase = new AddAnswerUseCase(
       new MongoDiscussionRepository(),
       new MongoDiscussionAnswerRepository(),
+      userRepo,
     );
     const discussion = await useCase.execute(id, user.id, user.username, parsed.data.text);
 
     const notifRepo = new MongoNotificationRepository();
-    const userRepo = new MongoUserRepository();
     const url = `/discussion/${discussion.bookAbbrev}/${id}`;
 
     const notifyOwner = new CreateNotificationUseCase(notifRepo);

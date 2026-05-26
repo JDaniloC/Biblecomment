@@ -26,6 +26,7 @@ function repoReturning(users: User[]): IUserRepository {
   return {
     findByEmail: async () => null,
     findByUsername: async () => null,
+    findById: async () => null,
     findByUsernamePublic: async () => null,
     searchByUsernamePrefix: async () => [],
     findByUsernames: async () => [],
@@ -40,6 +41,11 @@ function repoReturning(users: User[]): IUserRepository {
     markTutorialCompleted: async () => {},
     addBadges: async () => [],
     setDisabled: async () => null,
+    setEmailVerified: async () => {},
+    setPendingEmail: async () => {},
+    clearPendingEmail: async () => {},
+    promotePendingEmail: async () => {},
+    findByEmailOrPendingEmail: async () => null,
     delete: async () => {},
   };
 }

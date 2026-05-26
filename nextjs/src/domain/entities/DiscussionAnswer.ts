@@ -11,4 +11,6 @@ export interface DiscussionAnswer {
   text: string;
   createdAt: Date;
   updatedAt: Date;
+  /** Snapshot of the answerer's email-verification state. Optional for back-compat. */
+  authorEmailVerified?: boolean;
 }

@@ -31,6 +31,7 @@ import {
 	updateCommentAction,
 } from "@/app/actions/comments";
 import { toggleCommentVerifiedAction } from "@/app/actions/moderation";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface SessionUser {
 	name: string;
@@ -1321,6 +1322,7 @@ export default function ChapterClient({
 														>
 															{comment.username}
 														</Link>
+														<VerifiedBadge verified={comment.authorEmailVerified} size="xs" />
 														{comment.verified && (
 															<span
 																className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"

@@ -4,6 +4,7 @@ import type { ICommunityFollowRepository } from "@/domain/repositories/ICommunit
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { Community } from "@/domain/entities/Community";
+import { isEmailVerified, EmailNotVerifiedError } from "@/lib/auth-guards";
 
 /** Hard cap on communities a single user can create. Surfaced as friendly UI error in Phase 4.2. */
 export const MAX_COMMUNITIES_PER_USER = 3;
@@ -28,6 +29,11 @@ export class CreateCommunityUseCase {
 	async execute(input: CreateCommunityInput): Promise<Community> {
 		const actor = await this.userRepo.findByEmail(input.actorEmail);
 		if (!actor || !actor._id) throw new Error("Actor not found");
+
+		// Gate: only verified users may create communities.
+		if (!isEmailVerified(actor)) {
+			throw new EmailNotVerifiedError();
+		}
 
 		const slug = input.slug.trim().toLowerCase();
 		if (!COMMUNITY_SLUG_PATTERN.test(slug)) {
@@ -245,6 +251,7 @@ export interface CommunityMemberView {
 	role: "member" | "moderator";
 	isCreator: boolean;
 	joinedAt?: Date;
+	emailVerified: boolean;
 }
 
 export class ListCommunityMembersUseCase {
@@ -259,19 +266,23 @@ export class ListCommunityMembersUseCase {
 		const rows = await this.memberships.listByStatus(c._id, "approved");
 		if (rows.length === 0) return [];
 		const users = await this.userRepo.findManyByIds(rows.map((m) => m.userId));
-		const usernameById = new Map(users.map((u) => [u._id ?? "", u.username]));
+		const userById = new Map(users.map((u) => [u._id ?? "", u]));
 		// Creator first, then moderators (alphabetical), then plain members
 		// (alphabetical). Tie-breaking on username keeps the order stable
 		// between refreshes so the UI doesn't visually shuffle on re-fetch.
 		return rows
 			.map(
-				(m): CommunityMemberView => ({
-					userId: m.userId,
-					username: usernameById.get(m.userId) ?? null,
-					role: m.role ?? "member",
-					isCreator: m.userId === c.createdBy,
-					joinedAt: m.joinedAt,
-				}),
+				(m): CommunityMemberView => {
+					const user = userById.get(m.userId);
+					return {
+						userId: m.userId,
+						username: user?.username ?? null,
+						role: m.role ?? "member",
+						isCreator: m.userId === c.createdBy,
+						joinedAt: m.joinedAt,
+						emailVerified: !!user?.emailVerifiedAt,
+					};
+				},
 			)
 			.sort((a, b) => {
 				if (a.isCreator !== b.isCreator) return a.isCreator ? -1 : 1;

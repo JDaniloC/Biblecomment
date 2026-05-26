@@ -51,12 +51,15 @@ interface UserProfile {
 	commentsCount: number;
 	followersCount?: number;
 	followingCount?: number;
+	emailVerified?: boolean;
+	pendingEmail?: string | null;
 }
 
 import { getTagMetaOrNeutral, getTagMetas } from "@/lib/tag-meta";
 import { TagBadges } from "@/components/TagBadges";
 import { parseBookRef } from "@/lib/parse-book-ref";
 import { AppHeader } from "@/components/AppHeader";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 type Tab = "overview" | "comments" | "favorites" | "badges" | "config";
 type TypeFilter = "Todos" | "Exegese" | "Devocional" | "Pessoal" | "Inspirado";
@@ -263,8 +266,9 @@ function FavoriteCard({ comment }: { comment: CommentData }) {
 					</span>
 				</div>
 				{/* Username */}
-				<span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 whitespace-nowrap shrink-0">
+				<span className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 whitespace-nowrap shrink-0 inline-flex items-center gap-1">
 					{comment.username}
+					<VerifiedBadge verified={comment.authorEmailVerified} size="xs" />
 				</span>
 				{/* Type badge */}
 				<TagBadges tags={comment.tags} className="shrink-0" />
@@ -308,6 +312,168 @@ function FavoriteCard({ comment }: { comment: CommentData }) {
 					Ver no contexto ({comment.bookReference})
 				</Link>
 			)}
+		</div>
+	);
+}
+
+/* ─────────────────── Email verification card ─────────────────── */
+function EmailVerificationCard({
+	currentEmail,
+	emailVerified,
+	pendingEmail,
+	onChanged,
+}: {
+	currentEmail: string;
+	emailVerified: boolean;
+	pendingEmail: string | null;
+	onChanged: () => void;
+}) {
+	const { handleNotification } = useNotification();
+	const { update: updateSession } = useSession();
+	const [newEmail, setNewEmail] = useState("");
+	const [sending, setSending] = useState(false);
+
+	async function sendVerify() {
+		setSending(true);
+		try {
+			const mod = await import("@/app/actions/email-verification");
+			await mod.requestEmailVerificationAction();
+			handleNotification("success", `Enviamos um link para ${pendingEmail ?? currentEmail}.`);
+		} catch {
+			handleNotification("error", "Erro ao enviar verificação.");
+		} finally {
+			setSending(false);
+		}
+	}
+
+	async function requestChange() {
+		if (!newEmail.trim()) return;
+		setSending(true);
+		try {
+			const mod = await import("@/app/actions/email-verification");
+			const res = await mod.requestEmailChangeAction(newEmail.trim());
+			if (res.ok) {
+				handleNotification("success", `Enviamos um link de confirmação para ${newEmail.trim()}.`);
+				setNewEmail("");
+				onChanged();
+				await updateSession({ pendingEmail: newEmail.trim() });
+			} else {
+				handleNotification("error", res.error);
+			}
+		} finally {
+			setSending(false);
+		}
+	}
+
+	async function cancelChange() {
+		setSending(true);
+		try {
+			const mod = await import("@/app/actions/email-verification");
+			const res = await mod.cancelEmailChangeAction();
+			if (res.ok) {
+				handleNotification("success", "Troca de e-mail cancelada.");
+				onChanged();
+				await updateSession({ pendingEmail: null });
+			}
+		} finally {
+			setSending(false);
+		}
+	}
+
+	return (
+		<div
+			data-testid="email-verification-card"
+			className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6"
+		>
+			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
+				E-mail
+			</div>
+
+			<div className="flex flex-wrap items-center gap-2 text-[13px] mb-4">
+				<span className="text-slate-800 dark:text-slate-100">{currentEmail}</span>
+				{emailVerified ? (
+					<span
+						data-testid="email-verification-state-verified"
+						className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs font-semibold rounded-full px-2.5 py-0.5"
+					>
+						✓ Verificado
+					</span>
+				) : (
+					<span
+						data-testid="email-verification-state-unverified"
+						className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-full px-2.5 py-0.5"
+					>
+						Não verificado
+					</span>
+				)}
+			</div>
+
+			{pendingEmail ? (
+				<div
+					data-testid="email-verification-pending"
+					className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg px-3 py-2 mb-4"
+				>
+					<p className="text-[13px] text-amber-800 dark:text-amber-200 mb-2">
+						Confirmação pendente para <strong>{pendingEmail}</strong>.
+					</p>
+					<div className="flex gap-2">
+						<button
+							type="button"
+							onClick={sendVerify}
+							disabled={sending}
+							data-testid="email-verification-resend"
+							className="h-8 px-3 bg-brand text-white rounded-md text-xs font-semibold disabled:opacity-50"
+						>
+							Reenviar link
+						</button>
+						<button
+							type="button"
+							onClick={cancelChange}
+							disabled={sending}
+							data-testid="email-verification-cancel"
+							className="h-8 px-3 bg-transparent border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-md text-xs font-semibold disabled:opacity-50"
+						>
+							Cancelar troca
+						</button>
+					</div>
+				</div>
+			) : !emailVerified ? (
+				<button
+					type="button"
+					onClick={sendVerify}
+					disabled={sending}
+					data-testid="email-verification-send"
+					className="h-9 px-4 bg-brand text-white rounded-md text-[13px] font-semibold disabled:opacity-50 mb-4"
+				>
+					{sending ? "Enviando…" : "Verificar agora"}
+				</button>
+			) : null}
+
+			<div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+				<label htmlFor="profile-new-email" className="block text-[13px] font-semibold mb-1.5 text-slate-800 dark:text-slate-100">
+					Trocar e-mail
+				</label>
+				<div className="flex gap-2">
+					<input
+						id="profile-new-email"
+						type="email"
+						placeholder="novo@exemplo.com"
+						value={newEmail}
+						onChange={(e) => setNewEmail(e.target.value)}
+						data-testid="email-verification-new-email"
+						className="flex-1 h-[38px] border border-slate-200 dark:border-slate-700 rounded-lg px-3 text-[13px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+					/>
+					<button
+						type="button"
+						onClick={requestChange}
+						disabled={sending || !newEmail.trim()}
+						data-testid="email-verification-change-submit"
+						className="h-[38px] px-4 bg-brand text-white rounded-lg text-[13px] font-semibold disabled:opacity-40"
+					>
+						Enviar
+					</button>
+				</div>
+			</div>
 		</div>
 	);
 }
@@ -902,6 +1068,14 @@ export default function ProfileClient({
 		return () => window.clearTimeout(id);
 	}, []);
 
+	// Auto-trigger verification email when arriving from the banner CTA (?verify=1).
+	useEffect(() => {
+		if (!profile) return;
+		if (searchParams.get("verify") !== "1") return;
+		if (profile.emailVerified && !profile.pendingEmail) return;
+		import("@/app/actions/email-verification").then((mod) => mod.requestEmailVerificationAction());
+	}, [profile, searchParams]);
+
 	/* ── Data loaders ── */
 	const loadProfile = useCallback(async () => {
 		try {
@@ -1392,6 +1566,16 @@ export default function ProfileClient({
 									onUpdated={(next) => {
 										setProfile((p) => (p ? { ...p, ...next } : p));
 									}}
+								/>
+							)}
+
+							{/* ── Card: E-mail (verification + change) ── */}
+							{profile && (
+								<EmailVerificationCard
+									currentEmail={profile.email}
+									emailVerified={profile.emailVerified ?? false}
+									pendingEmail={profile.pendingEmail ?? null}
+									onChanged={loadProfile}
 								/>
 							)}
 

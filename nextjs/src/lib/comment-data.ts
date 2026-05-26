@@ -28,4 +28,10 @@ export interface CommentData {
   hiddenAt?: string;
   /** Why the comment is hidden — see the Comment entity. */
   hiddenReason?: "moderator" | "account-disabled";
+  /**
+   * Snapshot of the author's email-verification state. Optional for
+   * back-compat with stale clients and cached payloads. Drives the inline
+   * verified badge on comment cards.
+   */
+  authorEmailVerified?: boolean;
 }

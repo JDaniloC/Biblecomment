@@ -10,6 +10,8 @@ declare module "next-auth" {
       username: string;
       moderator: boolean;
       tutorialsCompleted: string[];
+      emailVerified?: boolean;
+      pendingEmail?: string | null;
     };
   }
 
@@ -17,6 +19,8 @@ declare module "next-auth" {
     username: string;
     moderator: boolean;
     tutorialsCompleted: string[];
+    emailVerified?: boolean;
+    pendingEmail?: string | null;
   }
 }
 
@@ -26,5 +30,7 @@ declare module "next-auth/jwt" {
     username: string;
     moderator: boolean;
     tutorialsCompleted: string[];
+    emailVerified?: boolean;
+    pendingEmail?: string | null;
   }
 }

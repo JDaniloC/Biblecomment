@@ -9,6 +9,7 @@ import { ICommunityMembershipRepository } from "@/domain/repositories/ICommunity
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import { Comment } from "@/domain/entities/Comment";
+import { isEmailVerified, EmailNotVerifiedError } from "@/lib/auth-guards";
 
 export class GetVerseCommentsUseCase {
 	constructor(private readonly commentRepo: ICommentRepository) {}
@@ -129,12 +130,18 @@ export class CreateCommentUseCase {
 	constructor(
 		private readonly commentRepo: ICommentRepository,
 		private readonly verseRepo: IVerseRepository,
+		private readonly userRepo: IUserRepository,
 		private readonly communityRepo?: ICommunityRepository,
 		private readonly membershipRepo?: ICommunityMembershipRepository,
-		private readonly userRepo?: IUserRepository,
 	) {}
 
 	async execute(input: CreateCommentInput): Promise<Comment> {
+		// Gate: only verified users may post comments.
+		const user = await this.userRepo.findByUsername(input.username);
+		if (!isEmailVerified(user)) {
+			throw new EmailNotVerifiedError();
+		}
+
 		const verse = await this.verseRepo.findById(input.verseId);
 		if (!verse) throw new Error("Verse not found");
 

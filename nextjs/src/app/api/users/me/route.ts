@@ -54,6 +54,8 @@ export async function GET() {
       commentsCount: userComments.length,
       followersCount,
       followingCount,
+      emailVerified: !!userData.emailVerifiedAt,
+      pendingEmail: userData.pendingEmail ?? null,
     };
 
     return NextResponse.json(safeUser);

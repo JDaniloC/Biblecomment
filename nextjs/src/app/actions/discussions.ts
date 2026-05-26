@@ -54,7 +54,7 @@ export async function createDiscussionAction(
 
   try {
     const repo = new MongoDiscussionRepository();
-    const useCase = new CreateDiscussionUseCase(repo);
+    const useCase = new CreateDiscussionUseCase(repo, new MongoUserRepository());
     const discussion = await useCase.execute(
       bookAbbrev.toLowerCase(),
       session.user.username,
@@ -100,6 +100,7 @@ export async function addAnswerAction(
     const useCase = new AddAnswerUseCase(
       new MongoDiscussionRepository(),
       new MongoDiscussionAnswerRepository(),
+      new MongoUserRepository(),
     );
     const discussion = await useCase.execute(
       discussionId,

@@ -9,5 +9,7 @@ export interface PublicUserDTO {
   displayName?: string;
   badges: string[];
   belief?: string;
+  /** Derived from `emailVerifiedAt` on the User. Never expose the date itself publicly. */
+  emailVerified: boolean;
   createdAt: Date;
 }

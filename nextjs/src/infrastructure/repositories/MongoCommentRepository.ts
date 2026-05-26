@@ -7,6 +7,7 @@ import {
 	CommentModel,
 	ICommentDocument,
 } from "@/infrastructure/database/models/CommentModel";
+import { UserModel } from "@/infrastructure/database/models/UserModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import mongoose from "mongoose";
 
@@ -40,6 +41,31 @@ function toEntity(doc: ICommentDocument): Comment {
  */
 const NOT_HIDDEN = { hiddenAt: null } as const;
 
+/**
+ * Batch-enriches a list of Comment entities with each author's email-
+ * verification state. Issues a SINGLE UserModel query for all distinct
+ * usernames — never N+1. Assigns `authorEmailVerified` on each comment.
+ * Not exported; internal to this module.
+ */
+async function attachAuthorVerification(comments: Comment[]): Promise<Comment[]> {
+	if (comments.length === 0) return comments;
+	const usernames = Array.from(
+		new Set(comments.map((c) => c.username).filter(Boolean)),
+	);
+	if (usernames.length === 0) return comments;
+	const docs = await UserModel.find(
+		{ username: { $in: usernames } },
+		{ username: 1, emailVerifiedAt: 1 },
+	);
+	const verifiedMap = new Map<string, boolean>(
+		docs.map((d) => [d.username as string, !!d.emailVerifiedAt]),
+	);
+	return comments.map((c) => ({
+		...c,
+		authorEmailVerified: verifiedMap.get(c.username) ?? false,
+	}));
+}
+
 export class MongoCommentRepository implements ICommentRepository {
 	async findByVerseId(verseId: string): Promise<Comment[]> {
 		await connectToDatabase();
@@ -48,7 +74,7 @@ export class MongoCommentRepository implements ICommentRepository {
 			verseId: new mongoose.Types.ObjectId(verseId),
 			...NOT_HIDDEN,
 		}).sort({ createdAt: -1 });
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async findByVerseIdFiltered(
@@ -75,7 +101,7 @@ export class MongoCommentRepository implements ICommentRepository {
 		}
 		// `undefined` falls through with no filter — equivalent to findByVerseId.
 		const docs = await CommentModel.find(filter).sort({ createdAt: -1 });
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async findByCommunity(
@@ -94,7 +120,7 @@ export class MongoCommentRepository implements ICommentRepository {
 				.limit(safeSize),
 			CommentModel.countDocuments(filter),
 		]);
-		return { items: docs.map(toEntity), total };
+		return { items: await attachAuthorVerification(docs.map(toEntity)), total };
 	}
 
 	async findByUsernamesPaginated(
@@ -129,13 +155,13 @@ export class MongoCommentRepository implements ICommentRepository {
 				.limit(safeSize),
 			CommentModel.countDocuments(filter),
 		]);
-		return { items: docs.map(toEntity), total };
+		return { items: await attachAuthorVerification(docs.map(toEntity)), total };
 	}
 
 	async findByUsername(username: string): Promise<Comment[]> {
 		await connectToDatabase();
 		const docs = await CommentModel.find({ username }).sort({ createdAt: -1 });
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async findCommentTimestampsByUsername(username: string): Promise<Date[]> {
@@ -164,14 +190,16 @@ export class MongoCommentRepository implements ICommentRepository {
 			.sort({ createdAt: -1 })
 			.skip((safePage - 1) * safeSize)
 			.limit(safeSize);
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async findById(id: string): Promise<Comment | null> {
 		await connectToDatabase();
 		if (!mongoose.Types.ObjectId.isValid(id)) return null;
 		const doc = await CommentModel.findById(id);
-		return doc ? toEntity(doc) : null;
+		if (!doc) return null;
+		const [enriched] = await attachAuthorVerification([toEntity(doc)]);
+		return enriched ?? null;
 	}
 
 	async findAllPaginated(page: number, pageSize: number): Promise<Comment[]> {
@@ -180,7 +208,7 @@ export class MongoCommentRepository implements ICommentRepository {
 			.sort({ createdAt: -1 })
 			.skip((page - 1) * pageSize)
 			.limit(pageSize);
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async findManyByIds(ids: string[]): Promise<Comment[]> {
@@ -191,7 +219,7 @@ export class MongoCommentRepository implements ICommentRepository {
 			.map((id) => new mongoose.Types.ObjectId(id));
 		if (oids.length === 0) return [];
 		const docs = await CommentModel.find({ _id: { $in: oids } });
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async create(
@@ -237,7 +265,7 @@ export class MongoCommentRepository implements ICommentRepository {
 	async findAll(): Promise<Comment[]> {
 		await connectToDatabase();
 		const docs = await CommentModel.find({});
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async searchByText(query: string): Promise<Comment[]> {
@@ -256,7 +284,7 @@ export class MongoCommentRepository implements ICommentRepository {
 		)
 			.sort({ createdAt: -1 })
 			.limit(100);
-		return docs.map(toEntity);
+		return attachAuthorVerification(docs.map(toEntity));
 	}
 
 	async anonymizeByUsername(
@@ -377,7 +405,9 @@ export class MongoCommentRepository implements ICommentRepository {
 		}
 
 		const hasMore = docs.length > limit;
-		const items = (hasMore ? docs.slice(0, limit) : docs).map(toEntity);
+		const items = await attachAuthorVerification(
+			(hasMore ? docs.slice(0, limit) : docs).map(toEntity),
+		);
 		const last = items[items.length - 1];
 		const nextCursor =
 			hasMore && last?.createdAt && last._id
@@ -510,6 +540,8 @@ export class MongoCommentRepository implements ICommentRepository {
 		if (total === 0) return null;
 		const skip = dayIndex % total;
 		const doc = await CommentModel.findOne(filter).sort({ _id: 1 }).skip(skip);
-		return doc ? toEntity(doc) : null;
+		if (!doc) return null;
+		const [enriched] = await attachAuthorVerification([toEntity(doc)]);
+		return enriched ?? null;
 	}
 }

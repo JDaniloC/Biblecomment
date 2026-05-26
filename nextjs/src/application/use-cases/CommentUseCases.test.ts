@@ -9,6 +9,7 @@ import type { IVerseRepository } from "@/domain/repositories/IVerseRepository";
 import type { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
 import type { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import type { User } from "@/domain/entities/User";
 import type { Comment } from "@/domain/entities/Comment";
 
 function fakeComment(overrides: Partial<Comment> = {}): Comment {
@@ -200,23 +201,45 @@ describe("ListCommunityCommentsUseCase (plan_community: by approved members)", (
 	});
 });
 
+function fakeUser(overrides: Partial<User> = {}): User {
+	return {
+		_id: "u1",
+		email: "stranger@example.com",
+		username: "stranger",
+		password: "hashed",
+		emailVerifiedAt: new Date(),
+		...overrides,
+	};
+}
+
+function makeVerseRepo() {
+	return {
+		findById: vi.fn().mockResolvedValue({
+			_id: "v1",
+			abbrev: "gn",
+			chapter: 1,
+			verseNumber: 1,
+			reference: "Gn 1:1",
+		}),
+	} as unknown as IVerseRepository;
+}
+
 describe("CreateCommentUseCase (plan_community: no community gate)", () => {
 	it("a non-member can comment and no communitySlug is written", async () => {
 		const create = vi.fn(async (input: Partial<Comment>) =>
 			fakeComment({ ...input, _id: "new" }),
 		);
 		const commentRepo = { create } as unknown as ICommentRepository;
-		const verseRepo = {
-			findById: vi.fn().mockResolvedValue({
-				_id: "v1",
-				abbrev: "gn",
-				chapter: 1,
-				verseNumber: 1,
-				reference: "Gn 1:1",
-			}),
-		} as unknown as IVerseRepository;
+		const verseRepo = makeVerseRepo();
+		const userRepo = {
+			findByUsername: vi.fn().mockResolvedValue(fakeUser()),
+		} as unknown as IUserRepository;
 
-		const uc = new CreateCommentUseCase(commentRepo, verseRepo);
+		const uc = new CreateCommentUseCase(
+			commentRepo,
+			verseRepo,
+			userRepo,
+		);
 		const c = await uc.execute({
 			verseId: "v1",
 			username: "stranger",
@@ -228,5 +251,33 @@ describe("CreateCommentUseCase (plan_community: no community gate)", () => {
 		expect(arg.communitySlug).toBeUndefined();
 		expect(c.communitySlug).toBeUndefined();
 		expect(arg.username).toBe("stranger");
+	});
+
+	it("rejects when user is unverified and does not call commentRepo.create", async () => {
+		const create = vi.fn();
+		const commentRepo = { create } as unknown as ICommentRepository;
+		const verseRepo = makeVerseRepo();
+		const userRepo = {
+			findByUsername: vi
+				.fn()
+				.mockResolvedValue(fakeUser({ emailVerifiedAt: undefined })),
+		} as unknown as IUserRepository;
+
+		const uc = new CreateCommentUseCase(
+			commentRepo,
+			verseRepo,
+			userRepo,
+		);
+
+		await expect(
+			uc.execute({
+				verseId: "v1",
+				username: "stranger",
+				text: "olá",
+				tags: [],
+			}),
+		).rejects.toThrow(/verifique|email_not_verified/i);
+
+		expect(create).not.toHaveBeenCalled();
 	});
 });

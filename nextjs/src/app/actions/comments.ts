@@ -174,9 +174,9 @@ export async function createCommentAction(
 		const useCase = new CreateCommentUseCase(
 			commentRepo,
 			verseRepo,
+			new MongoUserRepository(),
 			new MongoCommunityRepository(),
 			new MongoCommunityMembershipRepository(),
-			new MongoUserRepository(),
 		);
 		const comment = await useCase.execute({
 			verseId: verse._id,

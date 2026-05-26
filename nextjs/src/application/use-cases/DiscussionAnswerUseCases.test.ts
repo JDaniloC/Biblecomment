@@ -1,14 +1,56 @@
 import { describe, it, expect } from "vitest";
 import {
   AddAnswerUseCase,
+  CreateDiscussionUseCase,
   GetDiscussionByIdUseCase,
   GetAllDiscussionsPaginatedUseCase,
   DeleteDiscussionUseCase,
 } from "./DiscussionUseCases";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import type { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
+import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { Discussion } from "@/domain/entities/Discussion";
 import type { DiscussionAnswer } from "@/domain/entities/DiscussionAnswer";
+import type { User } from "@/domain/entities/User";
+
+function fakeUser(partial: Partial<User> = {}): User {
+  return {
+    _id: "u1",
+    email: "alice@example.com",
+    username: "alice",
+    password: "hashed",
+    emailVerifiedAt: new Date(),
+    ...partial,
+  };
+}
+
+function makeUserRepo(user: User | null): IUserRepository {
+  return {
+    findByUsername: async () => user,
+    findByEmail: async () => user,
+    findById: async () => null,
+    findByUsernamePublic: async () => null,
+    searchByUsernamePrefix: async () => [],
+    findByUsernames: async () => [],
+    findManyByIds: async () => [],
+    findAll: async () => [],
+    findAllPaginated: async () => [],
+    findForModeration: async () => ({ items: [], nextCursor: null }),
+    create: async () => { throw new Error("not implemented"); },
+    updatePassword: async () => {},
+    updatePasswordById: async () => {},
+    update: async () => null,
+    markTutorialCompleted: async () => {},
+    addBadges: async () => [],
+    setDisabled: async () => null,
+    setEmailVerified: async () => {},
+    setPendingEmail: async () => {},
+    clearPendingEmail: async () => {},
+    promotePendingEmail: async () => {},
+    findByEmailOrPendingEmail: async () => null,
+    delete: async () => {},
+  };
+}
 
 function fakeDiscussion(id: string, partial: Partial<Discussion> = {}): Discussion {
   return {
@@ -104,11 +146,34 @@ function inMemoryAnswerRepo(): IDiscussionAnswerRepository {
   };
 }
 
+describe("CreateDiscussionUseCase", () => {
+  it("creates a discussion for a verified user", async () => {
+    const repo = discussionRepoStub([]);
+    const userRepo = makeUserRepo(fakeUser());
+    const uc = new CreateDiscussionUseCase(repo, userRepo);
+
+    const result = await uc.execute("gn", "alice", "Gn 1:1", "Em princípio", "comentário", "Pergunta?");
+
+    expect(result._id).toBe("new");
+  });
+
+  it("rejects when author email is not verified and does not call repo.create", async () => {
+    const repo = discussionRepoStub([]);
+    const userRepo = makeUserRepo(fakeUser({ emailVerifiedAt: undefined }));
+    const uc = new CreateDiscussionUseCase(repo, userRepo);
+
+    await expect(
+      uc.execute("gn", "alice", "Gn 1:1", "Em princípio", "comentário", "Pergunta?"),
+    ).rejects.toThrow(/verifique|email_not_verified/i);
+  });
+});
+
 describe("AddAnswerUseCase", () => {
   it("appends an answer and returns the discussion with the full answers list + count", async () => {
     const repo = discussionRepoStub([fakeDiscussion("d1")]);
     const answers = inMemoryAnswerRepo();
-    const uc = new AddAnswerUseCase(repo, answers);
+    const userRepo = makeUserRepo(fakeUser());
+    const uc = new AddAnswerUseCase(repo, answers, userRepo);
 
     const result = await uc.execute("d1", "u-bob", "bob", "first answer");
 
@@ -118,9 +183,23 @@ describe("AddAnswerUseCase", () => {
 
   it("rejects when the discussion is missing", async () => {
     const repo = discussionRepoStub([]);
-    const uc = new AddAnswerUseCase(repo, inMemoryAnswerRepo());
+    const userRepo = makeUserRepo(fakeUser());
+    const uc = new AddAnswerUseCase(repo, inMemoryAnswerRepo(), userRepo);
 
     await expect(uc.execute("missing", "u-bob", "bob", "x")).rejects.toThrow("Discussion not found");
+  });
+
+  it("rejects when answerer email is not verified and does not write an answer", async () => {
+    const repo = discussionRepoStub([fakeDiscussion("d1")]);
+    const answers = inMemoryAnswerRepo();
+    const userRepo = makeUserRepo(fakeUser({ emailVerifiedAt: undefined }));
+    const uc = new AddAnswerUseCase(repo, answers, userRepo);
+
+    await expect(
+      uc.execute("d1", "u-bob", "bob", "first answer"),
+    ).rejects.toThrow(/verifique|email_not_verified/i);
+
+    expect(await answers.findByDiscussion("d1")).toHaveLength(0);
   });
 });
 

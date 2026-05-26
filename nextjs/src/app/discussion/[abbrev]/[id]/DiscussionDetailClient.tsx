@@ -8,6 +8,7 @@ import { discussionsService } from "@/services/discussions";
 import type { DiscussionWire } from "@/lib/discussion-wire";
 import { useNotification } from "@/contexts/NotificationContext";
 import { AppHeader } from "@/components/AppHeader";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface SessionUser {
   name: string;
@@ -296,7 +297,10 @@ export default function DiscussionDetailClient({
                 className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-semibold text-purple-600 dark:text-purple-400">{a.name}</p>
+                  <span className="inline-flex items-center gap-1">
+                    <p className="text-xs font-semibold text-purple-600 dark:text-purple-400">{a.name}</p>
+                    <VerifiedBadge verified={a.authorEmailVerified} size="xs" />
+                  </span>
                   {canEdit && !isEditing && (
                     <button
                       type="button"

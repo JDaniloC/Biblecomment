@@ -9,6 +9,7 @@ import { BadgeCard } from "@/app/profile/_components/BadgeCard";
 import { getBadge } from "@/lib/badges/catalog";
 import { followService } from "@/services/follow";
 import { useNotification } from "@/contexts/NotificationContext";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface ViewerSession {
 	name: string;
@@ -22,6 +23,7 @@ export interface PublicProfileUser {
 	displayName?: string;
 	badges: string[];
 	belief?: string;
+	emailVerified: boolean;
 	createdAt: string;
 }
 
@@ -219,12 +221,15 @@ export default function PublicProfileClient({
 						{initials}
 					</div>
 					<div className="min-w-0 flex-1">
-						<h1
-							data-testid="public-profile-displayname"
-							className="font-bold text-xl text-slate-800 dark:text-slate-100 truncate"
-						>
-							{display}
-						</h1>
+						<div className="flex items-center gap-2 min-w-0">
+							<h1
+								data-testid="public-profile-displayname"
+								className="font-bold text-xl text-slate-800 dark:text-slate-100 truncate"
+							>
+								{display}
+							</h1>
+							<VerifiedBadge verified={user.emailVerified} size="md" />
+						</div>
 						<p
 							data-testid="public-profile-username"
 							className="text-sm text-slate-500 dark:text-slate-400"

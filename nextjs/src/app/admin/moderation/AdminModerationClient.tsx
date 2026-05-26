@@ -14,6 +14,7 @@ import { commentsService } from "@/services/comments";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import type { Comment } from "@/domain/entities/Comment";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface SessionUser {
   name: string;
@@ -766,6 +767,7 @@ export default function AdminModerationClient({ user }: { user: SessionUser }) {
                       >
                         @{u.username}
                       </Link>
+                      <VerifiedBadge verified={u.emailVerified} size="sm" />
                       {u.displayName && u.displayName !== u.username && (
                         <span className="text-[12px] text-slate-500 dark:text-slate-400">
                           ({u.displayName})

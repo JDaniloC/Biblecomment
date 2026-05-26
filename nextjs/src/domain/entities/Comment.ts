@@ -60,6 +60,12 @@ export interface Comment {
    * ones, so a separately moderator-hidden comment survives the cycle.
    */
   hiddenReason?: "moderator" | "account-disabled";
+  /**
+   * Snapshot of the author's email-verification state at read time. Optional
+   * for back-compat — populated by the repository list methods via a batched
+   * UserModel lookup. Drives the inline verified badge on comment cards.
+   */
+  authorEmailVerified?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

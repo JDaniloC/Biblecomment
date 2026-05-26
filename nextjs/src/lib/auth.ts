@@ -44,6 +44,8 @@ export const authConfig: NextAuthConfig = {
           username: user.username,
           moderator: user.moderator ?? false,
           tutorialsCompleted: user.tutorialsCompleted ?? [],
+          emailVerified: !!user.emailVerifiedAt,
+          pendingEmail: user.pendingEmail ?? null,
         };
       },
     }),
@@ -59,6 +61,8 @@ export const authConfig: NextAuthConfig = {
         token.moderator = (user as { moderator: boolean }).moderator;
         token.tutorialsCompleted =
           (user as { tutorialsCompleted?: string[] }).tutorialsCompleted ?? [];
+        token.emailVerified = (user as { emailVerified: boolean }).emailVerified;
+        token.pendingEmail = (user as { pendingEmail: string | null }).pendingEmail;
       }
       // Client-triggered session refresh (useSession().update(...)) lands
       // here with `trigger="update"` and `session` carrying the new fields.
@@ -66,10 +70,17 @@ export const authConfig: NextAuthConfig = {
       // writes (createCommentAction etc.) author records under the old
       // username — orphaning them since the user table no longer has it.
       if (trigger === "update" && session && typeof session === "object") {
-        const next = session as { username?: string; displayName?: string; name?: string };
+        const next = session as { username?: string; displayName?: string; name?: string; email?: string; emailVerified?: boolean; pendingEmail?: string | null };
         if (typeof next.username === "string") token.username = next.username;
         if (typeof next.displayName === "string") token.name = next.displayName;
         else if (typeof next.name === "string") token.name = next.name;
+        if (typeof next.email === "string") token.email = next.email;
+        if (typeof (next as { emailVerified?: boolean }).emailVerified === "boolean") {
+          token.emailVerified = (next as { emailVerified: boolean }).emailVerified;
+        }
+        if ("pendingEmail" in (next as object)) {
+          token.pendingEmail = (next as { pendingEmail: string | null }).pendingEmail;
+        }
       }
       return token;
     },
@@ -82,6 +93,13 @@ export const authConfig: NextAuthConfig = {
         session.user.moderator = token.moderator as boolean;
         session.user.tutorialsCompleted =
           (token.tutorialsCompleted as string[] | undefined) ?? [];
+        // Cast needed: the session callback types session.user as AdapterUser (for
+        // database strategy) which has emailVerified: Date | null.  We use JWT
+        // strategy only — the AdapterUser shape is never realised at runtime.
+        (session.user as { emailVerified: boolean }).emailVerified =
+          (token.emailVerified as boolean | undefined) ?? false;
+        (session.user as { pendingEmail: string | null }).pendingEmail =
+          (token.pendingEmail as string | null | undefined) ?? null;
       }
       return session;
     },

@@ -104,6 +104,7 @@ export const communityService = {
 			role: "member" | "moderator";
 			isCreator: boolean;
 			joinedAt: string | null;
+			emailVerified: boolean;
 		}[]
 	> {
 		const res = await fetch(`/api/communities/${slug}/members`);
@@ -115,6 +116,7 @@ export const communityService = {
 				role: "member" | "moderator";
 				isCreator: boolean;
 				joinedAt: string | null;
+				emailVerified: boolean;
 			}[];
 		};
 		return body.members ?? [];

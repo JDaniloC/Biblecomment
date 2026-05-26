@@ -1,7 +1,9 @@
 import { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
+import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { Discussion } from "@/domain/entities/Discussion";
 import { DiscussionAnswer } from "@/domain/entities/DiscussionAnswer";
+import { isEmailVerified, EmailNotVerifiedError } from "@/lib/auth-guards";
 
 export class GetDiscussionsUseCase {
 	constructor(
@@ -42,18 +44,35 @@ export class GetDiscussionByIdUseCase {
 	constructor(
 		private readonly discussionRepo: IDiscussionRepository,
 		private readonly answerRepo?: IDiscussionAnswerRepository,
+		private readonly userRepo?: IUserRepository,
 	) {}
 
 	/**
 	 * Returns the discussion with `answers` populated when the answer repo
 	 * is wired. Without it, callers get the bare discussion (used by the
 	 * delete-discussion flow that doesn't need answers).
+	 *
+	 * When `userRepo` is also wired, each answer gets `authorEmailVerified`
+	 * derived from the author's `emailVerifiedAt` — a single batch lookup,
+	 * never N+1.
 	 */
 	async execute(id: string): Promise<Discussion | null> {
 		const discussion = await this.discussionRepo.findById(id);
 		if (!discussion) return null;
 		if (!this.answerRepo) return discussion;
-		const answers = await this.answerRepo.findByDiscussion(id);
+		const rawAnswers = await this.answerRepo.findByDiscussion(id);
+		let answers: DiscussionAnswer[] = rawAnswers;
+		if (this.userRepo && rawAnswers.length > 0) {
+			const usernames = [...new Set(rawAnswers.map((a) => a.username))];
+			const users = await this.userRepo.findByUsernames(usernames);
+			const verifiedMap = new Map(
+				users.map((u) => [u.username, !!u.emailVerifiedAt]),
+			);
+			answers = rawAnswers.map((a) => ({
+				...a,
+				authorEmailVerified: verifiedMap.get(a.username) ?? false,
+			}));
+		}
 		return { ...discussion, answers, answersCount: answers.length };
 	}
 }
@@ -85,7 +104,10 @@ export class GetAllDiscussionsPaginatedUseCase {
 }
 
 export class CreateDiscussionUseCase {
-	constructor(private readonly discussionRepo: IDiscussionRepository) {}
+	constructor(
+		private readonly discussionRepo: IDiscussionRepository,
+		private readonly userRepo: IUserRepository,
+	) {}
 
 	async execute(
 		bookAbbrev: string,
@@ -96,6 +118,12 @@ export class CreateDiscussionUseCase {
 		question: string,
 		commentId?: string,
 	): Promise<Discussion> {
+		// Gate: only verified users may open discussions.
+		const user = await this.userRepo.findByUsername(username);
+		if (!isEmailVerified(user)) {
+			throw new EmailNotVerifiedError();
+		}
+
 		return this.discussionRepo.create({
 			bookAbbrev,
 			commentId,
@@ -112,6 +140,7 @@ export class AddAnswerUseCase {
 	constructor(
 		private readonly discussionRepo: IDiscussionRepository,
 		private readonly answerRepo: IDiscussionAnswerRepository,
+		private readonly userRepo: IUserRepository,
 	) {}
 
 	/**
@@ -124,6 +153,12 @@ export class AddAnswerUseCase {
 		username: string,
 		text: string,
 	): Promise<Discussion> {
+		// Gate: only verified users may answer discussions.
+		const user = await this.userRepo.findByUsername(username);
+		if (!isEmailVerified(user)) {
+			throw new EmailNotVerifiedError();
+		}
+
 		const discussion = await this.discussionRepo.findById(discussionId);
 		if (!discussion) throw new Error("Discussion not found");
 

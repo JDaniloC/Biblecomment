@@ -31,6 +31,7 @@ function makeUserRepo(users: Record<string, User>): IUserRepository {
 		findByEmail: async (email) => users[email] ?? null,
 		findByUsername: async (u) =>
 			Object.values(users).find((x) => x.username === u) ?? null,
+		findById: async () => null,
 		findByUsernamePublic: async () => null,
 		searchByUsernamePrefix: async () => [],
 		findByUsernames: async () => [],
@@ -47,6 +48,11 @@ function makeUserRepo(users: Record<string, User>): IUserRepository {
 		markTutorialCompleted: async () => {},
 		addBadges: async () => [],
 		setDisabled: async () => null,
+		setEmailVerified: async () => {},
+		setPendingEmail: async () => {},
+		clearPendingEmail: async () => {},
+		promotePendingEmail: async () => {},
+		findByEmailOrPendingEmail: async () => null,
 		delete: async () => {},
 	};
 }
@@ -303,6 +309,7 @@ const alice: User = {
 	moderator: false,
 	tutorialsCompleted: [],
 	badges: [],
+	emailVerifiedAt: new Date(),
 };
 
 describe("CreateCommunityUseCase", () => {
@@ -405,6 +412,28 @@ describe("CreateCommunityUseCase", () => {
 				name: "Ghosts",
 			}),
 		).rejects.toThrow(/actor/i);
+	});
+
+	it("rejects when actor email is not verified", async () => {
+		const unverifiedAlice: User = { ...alice, emailVerifiedAt: undefined };
+		const localUserRepo = makeUserRepo({ "alice@example.com": unverifiedAlice });
+		const uc = new CreateCommunityUseCase(
+			communityRepo,
+			localUserRepo,
+			membershipRepo,
+			followRepo,
+		);
+
+		await expect(
+			uc.execute({
+				actorEmail: "alice@example.com",
+				slug: "reformados",
+				name: "Reformados",
+			}),
+		).rejects.toThrow(/verifique|email_not_verified/i);
+
+		// No community must have been created.
+		expect(await communityRepo.findBySlug("reformados")).toBeNull();
 	});
 });
 
@@ -666,6 +695,12 @@ describe("ListCommunityMembersUseCase", () => {
 			markTutorialCompleted: async () => {},
 			addBadges: async () => [],
 			setDisabled: async () => null,
+			setEmailVerified: async () => {},
+			setPendingEmail: async () => {},
+			clearPendingEmail: async () => {},
+			promotePendingEmail: async () => {},
+			findByEmailOrPendingEmail: async () => null,
+			findById: async () => null,
 			delete: async () => {},
 		};
 		await membershipRepo.createRequest("u-alice", c._id!);
@@ -745,6 +780,12 @@ describe("ListCommunityFollowersUseCase", () => {
 			markTutorialCompleted: async () => {},
 			addBadges: async () => [],
 			setDisabled: async () => null,
+			setEmailVerified: async () => {},
+			setPendingEmail: async () => {},
+			clearPendingEmail: async () => {},
+			promotePendingEmail: async () => {},
+			findByEmailOrPendingEmail: async () => null,
+			findById: async () => null,
 			delete: async () => {},
 		};
 		const c = await communityRepo.create({
@@ -858,6 +899,12 @@ function makeUserRepoWithIds(byId: Record<string, string>): IUserRepository {
 		markTutorialCompleted: async () => {},
 		addBadges: async () => [],
 		setDisabled: async () => null,
+		setEmailVerified: async () => {},
+		setPendingEmail: async () => {},
+		clearPendingEmail: async () => {},
+		promotePendingEmail: async () => {},
+		findByEmailOrPendingEmail: async () => null,
+		findById: async () => null,
 		delete: async () => {},
 	};
 }

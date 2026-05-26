@@ -43,6 +43,22 @@ export interface User {
   disabledAt?: Date;
   /** Username of the moderator who disabled the account. */
   disabledBy?: string;
+  /**
+   * Timestamp of the most recent successful email confirmation. Absent =
+   * email not verified. Set by the email-verification flow on first
+   * confirmation; reset to a new `Date` when the user confirms a
+   * `pendingEmail` change. Preserved unchanged across disable / re-enable.
+   * Never written by any other flow.
+   */
+  emailVerifiedAt?: Date;
+  /**
+   * Pending email-address change awaiting confirmation. While present, the
+   * current `email` field is still the canonical address for login and
+   * displays the existing verified indicator (if `emailVerifiedAt` is set). On
+   * confirmation, `pendingEmail` is promoted to `email` and `emailVerifiedAt`
+   * is set to the confirmation time.
+   */
+  pendingEmail?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

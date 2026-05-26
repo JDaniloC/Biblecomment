@@ -48,6 +48,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const serializableUser = {
     ...user,
     createdAt: user.createdAt.toISOString(),
+    emailVerified: user.emailVerified,
   };
   const serializableComments = comments.map((c) => ({
     _id: c._id,

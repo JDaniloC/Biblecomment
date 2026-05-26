@@ -55,6 +55,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
 		bookReference: c.bookReference,
 		tags: c.tags,
 		createdAt: c.createdAt?.toISOString() ?? null,
+		authorEmailVerified: c.authorEmailVerified,
 	}));
 
 	const viewer = session?.user
