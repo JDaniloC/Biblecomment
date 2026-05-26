@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const DPO_EMAIL = "jdsc@cin.ufpe.br";
+const DPO_EMAIL = "contato@biblecomment.com.br";
 const EFFECTIVE_DATE = "28 de abril de 2026";
 
 export default function PrivacyPage() {

@@ -399,7 +399,7 @@ export default async function RootPage() {
 							Termos
 						</Link>
 						<a
-							href="mailto:jdsc@cin.ufpe.br"
+							href="mailto:contato@biblecomment.com.br"
 							className="hover:text-stone-600 dark:hover:text-stone-300 transition"
 						>
 							Contato LGPD
