@@ -413,7 +413,9 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
 					moderator: u.moderator ?? false,
 					tutorialsCompleted: u.tutorialsCompleted ?? [],
 					...(verified ? { emailVerifiedAt: new Date() } : {}),
-					...(u.pendingEmail ? { pendingEmail: u.pendingEmail.toLowerCase().trim() } : {}),
+					...(u.pendingEmail
+						? { pendingEmail: u.pendingEmail.toLowerCase().trim() }
+						: {}),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				};

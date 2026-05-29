@@ -68,7 +68,8 @@ export class GetDiscussionByIdUseCase {
 		let likeCount = discussion.likeCount;
 		let likedByMe = discussion.likedByMe;
 		if (this.likeRepo) {
-			likeCount = (await this.likeRepo.countByTargets("discussion", [id])).get(id) ?? 0;
+			likeCount =
+				(await this.likeRepo.countByTargets("discussion", [id])).get(id) ?? 0;
 			likedByMe = viewerId
 				? (await this.likeRepo.whichLiked(viewerId, "discussion", [id])).has(id)
 				: false;
@@ -77,7 +78,8 @@ export class GetDiscussionByIdUseCase {
 		if (!this.answerRepo) {
 			return { ...discussion, likeCount, likedByMe };
 		}
-		let answers: DiscussionAnswer[] = await this.answerRepo.findByDiscussion(id);
+		let answers: DiscussionAnswer[] =
+			await this.answerRepo.findByDiscussion(id);
 
 		// Author email-verification snapshot (batched).
 		if (this.userRepo && answers.length > 0) {
@@ -101,12 +103,18 @@ export class GetDiscussionByIdUseCase {
 				: new Set<string>();
 			answers = answers.map((a) => ({
 				...a,
-				likeCount: a._id ? counts.get(a._id) ?? 0 : 0,
+				likeCount: a._id ? (counts.get(a._id) ?? 0) : 0,
 				likedByMe: a._id ? liked.has(a._id) : false,
 			}));
 		}
 
-		return { ...discussion, answers, answersCount: answers.length, likeCount, likedByMe };
+		return {
+			...discussion,
+			answers,
+			answersCount: answers.length,
+			likeCount,
+			likedByMe,
+		};
 	}
 }
 

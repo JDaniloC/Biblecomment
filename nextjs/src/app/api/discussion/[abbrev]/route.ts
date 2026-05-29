@@ -4,8 +4,8 @@ import { MongoCommentRepository } from "@/infrastructure/repositories/MongoComme
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
-  GetDiscussionsUseCase,
-  CreateDiscussionUseCase,
+	GetDiscussionsUseCase,
+	CreateDiscussionUseCase,
 } from "@/application/use-cases/DiscussionUseCases";
 import { getSessionUser, unauthorized, serverError } from "@/lib/get-session";
 import { parseBody } from "@/lib/parse-body";
@@ -15,54 +15,63 @@ type Params = { abbrev: string };
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request, { params }: { params: Promise<Params> }) {
-  try {
-    const { abbrev } = await params;
-    const { searchParams } = new URL(req.url);
-    const parsed = parseInt(searchParams.get("pages") ?? "1", 10);
-    const page = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-    const pageSize = 5;
+export async function GET(
+	req: Request,
+	{ params }: { params: Promise<Params> },
+) {
+	try {
+		const { abbrev } = await params;
+		const { searchParams } = new URL(req.url);
+		const parsed = parseInt(searchParams.get("pages") ?? "1", 10);
+		const page = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+		const pageSize = 5;
 
-    const bookRepo = new MongoBookRepository();
-    const book = await bookRepo.findByAbbrev(abbrev.toLowerCase());
-    if (!book) return NextResponse.json([]);
+		const bookRepo = new MongoBookRepository();
+		const book = await bookRepo.findByAbbrev(abbrev.toLowerCase());
+		if (!book) return NextResponse.json([]);
 
-    const repo = new MongoDiscussionRepository();
-    const useCase = new GetDiscussionsUseCase(repo);
-    const items = await useCase.execute(abbrev.toLowerCase(), { page, pageSize });
-    return NextResponse.json(items);
-  } catch (err) {
-    return serverError(err);
-  }
+		const repo = new MongoDiscussionRepository();
+		const useCase = new GetDiscussionsUseCase(repo);
+		const items = await useCase.execute(abbrev.toLowerCase(), {
+			page,
+			pageSize,
+		});
+		return NextResponse.json(items);
+	} catch (err) {
+		return serverError(err);
+	}
 }
 
-export async function POST(req: Request, { params }: { params: Promise<Params> }) {
-  try {
-    const user = await getSessionUser();
-    if (!user) return unauthorized();
+export async function POST(
+	req: Request,
+	{ params }: { params: Promise<Params> },
+) {
+	try {
+		const user = await getSessionUser();
+		if (!user) return unauthorized();
 
-    const { abbrev } = await params;
-    const parsed = await parseBody(req, CreateDiscussionSchema);
-    if (!parsed.ok) return parsed.response;
-    const { commentId, title, body, quoteStart, quoteEnd } = parsed.data;
+		const { abbrev } = await params;
+		const parsed = await parseBody(req, CreateDiscussionSchema);
+		if (!parsed.ok) return parsed.response;
+		const { commentId, title, body, quoteStart, quoteEnd } = parsed.data;
 
-    const useCase = new CreateDiscussionUseCase(
-      new MongoDiscussionRepository(),
-      new MongoCommentRepository(),
-      new MongoUserRepository(),
-    );
-    const discussion = await useCase.execute({
-      bookAbbrev: abbrev.toLowerCase(),
-      username: user.username,
-      commentId,
-      title,
-      body,
-      quoteStart,
-      quoteEnd,
-    });
+		const useCase = new CreateDiscussionUseCase(
+			new MongoDiscussionRepository(),
+			new MongoCommentRepository(),
+			new MongoUserRepository(),
+		);
+		const discussion = await useCase.execute({
+			bookAbbrev: abbrev.toLowerCase(),
+			username: user.username,
+			commentId,
+			title,
+			body,
+			quoteStart,
+			quoteEnd,
+		});
 
-    return NextResponse.json(discussion, { status: 201 });
-  } catch (err) {
-    return serverError(err);
-  }
+		return NextResponse.json(discussion, { status: 201 });
+	} catch (err) {
+		return serverError(err);
+	}
 }

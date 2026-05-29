@@ -1322,7 +1322,10 @@ export default function ChapterClient({
 														>
 															{comment.username}
 														</Link>
-														<VerifiedBadge verified={comment.authorEmailVerified} size="xs" />
+														<VerifiedBadge
+															verified={comment.authorEmailVerified}
+															size="xs"
+														/>
 														{comment.verified && (
 															<span
 																className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
@@ -1399,7 +1402,7 @@ export default function ChapterClient({
 													<button
 														type="button"
 														onClick={() => handleLike(comment._id)}
-															title="Útil"
+														title="Útil"
 														className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap"
 													>
 														<svg
@@ -1414,16 +1417,19 @@ export default function ChapterClient({
 														>
 															<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
 														</svg>
-														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Útil · </span>{comment.likeCount}
+														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+															Útil ·{" "}
+														</span>
+														{comment.likeCount}
 													</button>
 
 													{/* Contribuir button */}
 													<button
 														type="button"
 														onClick={() => handleDiscussion(comment._id)}
-                      data-testid="comment-discuss"
+														data-testid="comment-discuss"
 														className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap ml-0.5"
-															title="Contribuir"
+														title="Contribuir"
 													>
 														<svg
 															width="13"
@@ -1437,7 +1443,9 @@ export default function ChapterClient({
 														>
 															<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
 														</svg>
-														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Contribuir</span>
+														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+															Contribuir
+														</span>
 													</button>
 
 													{/* Share as image card (Pinterest-like) */}

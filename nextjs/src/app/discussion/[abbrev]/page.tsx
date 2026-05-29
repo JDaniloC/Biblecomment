@@ -10,32 +10,32 @@ import DiscussionDetailClient from "./[id]/DiscussionDetailClient";
 type Params = { abbrev: string };
 
 export default async function DiscussionListPage({
-  params,
+	params,
 }: {
-  params: Promise<Params>;
+	params: Promise<Params>;
 }) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+	const session = await auth();
+	if (!session?.user) redirect("/login");
 
-  const { abbrev } = await params;
+	const { abbrev } = await params;
 
-  const bookRepo = new MongoBookRepository();
-  const book = await bookRepo.findByAbbrev(abbrev);
-  if (!book) redirect("/home");
+	const bookRepo = new MongoBookRepository();
+	const book = await bookRepo.findByAbbrev(abbrev);
+	if (!book) redirect("/home");
 
-  const useCase = new GetDiscussionsUseCase(
-    new MongoDiscussionRepository(),
-    new MongoDiscussionAnswerRepository(),
-  );
-  const discussions = (await useCase.execute(abbrev)).map(toDiscussionWire);
+	const useCase = new GetDiscussionsUseCase(
+		new MongoDiscussionRepository(),
+		new MongoDiscussionAnswerRepository(),
+	);
+	const discussions = (await useCase.execute(abbrev)).map(toDiscussionWire);
 
-  return (
-    <DiscussionDetailClient
-      discussion={null}
-      discussions={discussions}
-      book={book}
-      user={session.user}
-      mode="list"
-    />
-  );
+	return (
+		<DiscussionDetailClient
+			discussion={null}
+			discussions={discussions}
+			book={book}
+			user={session.user}
+			mode="list"
+		/>
+	);
 }

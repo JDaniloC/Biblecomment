@@ -1,13 +1,13 @@
 import {
-  IDiscussionLikeRepository,
-  DiscussionLikeTarget,
+	IDiscussionLikeRepository,
+	DiscussionLikeTarget,
 } from "@/domain/repositories/IDiscussionLikeRepository";
 
 export interface ToggleDiscussionLikeResult {
-  targetType: DiscussionLikeTarget;
-  targetId: string;
-  likeCount: number;
-  likedByMe: boolean;
+	targetType: DiscussionLikeTarget;
+	targetId: string;
+	likeCount: number;
+	likedByMe: boolean;
 }
 
 /**
@@ -16,25 +16,25 @@ export interface ToggleDiscussionLikeResult {
  * mirrors ToggleLikeUseCase for comments.
  */
 export class ToggleDiscussionLikeUseCase {
-  constructor(private readonly likeRepo: IDiscussionLikeRepository) {}
+	constructor(private readonly likeRepo: IDiscussionLikeRepository) {}
 
-  async execute(
-    targetType: DiscussionLikeTarget,
-    targetId: string,
-    userId: string,
-  ): Promise<ToggleDiscussionLikeResult> {
-    const already = await this.likeRepo.hasLiked(userId, targetType, targetId);
-    if (already) {
-      await this.likeRepo.unlike(userId, targetType, targetId);
-    } else {
-      await this.likeRepo.like(userId, targetType, targetId);
-    }
-    const counts = await this.likeRepo.countByTargets(targetType, [targetId]);
-    return {
-      targetType,
-      targetId,
-      likeCount: counts.get(targetId) ?? 0,
-      likedByMe: !already,
-    };
-  }
+	async execute(
+		targetType: DiscussionLikeTarget,
+		targetId: string,
+		userId: string,
+	): Promise<ToggleDiscussionLikeResult> {
+		const already = await this.likeRepo.hasLiked(userId, targetType, targetId);
+		if (already) {
+			await this.likeRepo.unlike(userId, targetType, targetId);
+		} else {
+			await this.likeRepo.like(userId, targetType, targetId);
+		}
+		const counts = await this.likeRepo.countByTargets(targetType, [targetId]);
+		return {
+			targetType,
+			targetId,
+			likeCount: counts.get(targetId) ?? 0,
+			likedByMe: !already,
+		};
+	}
 }

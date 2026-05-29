@@ -11,37 +11,37 @@ import type { Discussion } from "@/domain/entities/Discussion";
  * (no inline answers), detail views derive it from `answers.length`.
  */
 export interface DiscussionWire extends Omit<Discussion, "answers"> {
-  /** Always a string on the wire — defaulted to "" for legacy threads. */
-  title: string;
-  answers: Array<{
-    _id?: string;
-    name: string;
-    text: string;
-    authorEmailVerified?: boolean;
-    likeCount: number;
-    likedByMe: boolean;
-  }>;
-  answersCount: number;
-  /** Always numeric/boolean on the wire — defaulted when not enriched. */
-  likeCount: number;
-  likedByMe: boolean;
+	/** Always a string on the wire — defaulted to "" for legacy threads. */
+	title: string;
+	answers: Array<{
+		_id?: string;
+		name: string;
+		text: string;
+		authorEmailVerified?: boolean;
+		likeCount: number;
+		likedByMe: boolean;
+	}>;
+	answersCount: number;
+	/** Always numeric/boolean on the wire — defaulted when not enriched. */
+	likeCount: number;
+	likedByMe: boolean;
 }
 
 export function toDiscussionWire(discussion: Discussion): DiscussionWire {
-  const answers = (discussion.answers ?? []).map((a) => ({
-    _id: a._id,
-    name: a.username,
-    text: a.text,
-    authorEmailVerified: a.authorEmailVerified,
-    likeCount: a.likeCount ?? 0,
-    likedByMe: a.likedByMe ?? false,
-  }));
-  return {
-    ...discussion,
-    title: discussion.title ?? "",
-    answers,
-    answersCount: discussion.answersCount ?? answers.length,
-    likeCount: discussion.likeCount ?? 0,
-    likedByMe: discussion.likedByMe ?? false,
-  };
+	const answers = (discussion.answers ?? []).map((a) => ({
+		_id: a._id,
+		name: a.username,
+		text: a.text,
+		authorEmailVerified: a.authorEmailVerified,
+		likeCount: a.likeCount ?? 0,
+		likedByMe: a.likedByMe ?? false,
+	}));
+	return {
+		...discussion,
+		title: discussion.title ?? "",
+		answers,
+		answersCount: discussion.answersCount ?? answers.length,
+		likeCount: discussion.likeCount ?? 0,
+		likedByMe: discussion.likedByMe ?? false,
+	};
 }
