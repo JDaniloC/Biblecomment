@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Book } from "@/domain/entities/Book";
 import { discussionsService } from "@/services/discussions";
@@ -9,6 +8,7 @@ import type { DiscussionWire } from "@/lib/discussion-wire";
 import { useNotification } from "@/contexts/NotificationContext";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { LikeButton } from "@/components/LikeButton";
 
 interface SessionUser {
   name: string;
@@ -17,23 +17,77 @@ interface SessionUser {
   moderator: boolean;
 }
 
-const COMMENT_EXCERPT_LIMIT = 280;
-
-function excerpt(text: string, limit = COMMENT_EXCERPT_LIMIT): string {
-  if (text.length <= limit) return text;
-  const slice = text.slice(0, limit).trimEnd();
-  return `${slice}…`;
-}
-
 interface Props {
   discussion: DiscussionWire | null;
   discussions: DiscussionWire[];
   book: Book;
   user: SessionUser;
   mode: "list" | "detail";
-  initialCommentId?: string;
-  initialRef?: string;
-  initialText?: string;
+}
+
+/** Heading text for a discussion — falls back to the body for legacy threads. */
+function headingFor(d: { title?: string; question: string }): string {
+  return d.title?.trim() ? d.title : d.question;
+}
+
+/** Render text with an optional highlighted excerpt (offsets into the text). */
+function renderWithHighlight(text: string, start?: number, end?: number): ReactNode {
+  if (
+    typeof start !== "number" ||
+    typeof end !== "number" ||
+    start >= end ||
+    start < 0 ||
+    end > text.length
+  ) {
+    return text;
+  }
+  return (
+    <>
+      {text.slice(0, start)}
+      <mark className="bg-brand-soft text-inherit rounded px-0.5">
+        {text.slice(start, end)}
+      </mark>
+      {text.slice(end)}
+    </>
+  );
+}
+
+/**
+ * Text block that collapses to `collapsedClass` lines with a "Ver mais"
+ * toggle when it's long. Used for the quoted comment and for long answers so
+ * readers can expand/retract parts of a discussion.
+ */
+function CollapsibleText({
+  children,
+  collapsedClass,
+  canCollapse,
+  testId,
+}: {
+  children: ReactNode;
+  collapsedClass: string;
+  canCollapse: boolean;
+  testId?: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div>
+      <div
+        data-testid={testId}
+        className={`whitespace-pre-wrap ${canCollapse && !expanded ? collapsedClass : ""}`}
+      >
+        {children}
+      </div>
+      {canCollapse && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-brand transition"
+        >
+          {expanded ? "Ver menos" : "Ver mais"}
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function DiscussionDetailClient({
@@ -42,21 +96,11 @@ export default function DiscussionDetailClient({
   book,
   user,
   mode,
-  initialCommentId: _initialCommentId,
-  initialRef,
-  initialText,
 }: Props) {
-  const router = useRouter();
   const { handleNotification } = useNotification();
   const [discussion, setDiscussion] = useState(initialDiscussion);
   const [answerText, setAnswerText] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [newVerseRef, setNewVerseRef] = useState(initialRef ?? "");
-  const [newVerseText, setNewVerseText] = useState(initialText ?? "");
-  const [newCommentText, setNewCommentText] = useState("");
-  const [newQuestion, setNewQuestion] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [showForm, setShowForm] = useState(!!(initialRef || initialText));
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [editAnswerText, setEditAnswerText] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
@@ -98,24 +142,6 @@ export default function DiscussionDetailClient({
     }
   }
 
-  async function handleCreateDiscussion() {
-    if (!newVerseRef.trim() || !newQuestion.trim()) return;
-    setCreating(true);
-    try {
-      const created = await discussionsService.createForBook(book.abbrev, {
-        verseReference: newVerseRef,
-        verseText: newVerseText,
-        commentText: newCommentText,
-        question: newQuestion,
-      });
-      router.push(`/discussion/${book.abbrev}/${created._id}`);
-    } catch {
-      alert("Erro ao criar discussão.");
-    } finally {
-      setCreating(false);
-    }
-  }
-
   async function handleAddAnswer() {
     if (!discussion?._id || !answerText.trim()) return;
     setSubmitting(true);
@@ -124,9 +150,37 @@ export default function DiscussionDetailClient({
       setDiscussion(updated);
       setAnswerText("");
     } catch {
-      alert("Erro ao enviar resposta.");
+      handleNotification("error", "Erro ao enviar resposta.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleToggleDiscussionLike() {
+    if (!discussion?._id) return;
+    try {
+      const r = await discussionsService.toggleLike("discussion", discussion._id);
+      setDiscussion((d) => (d ? { ...d, likeCount: r.likeCount, likedByMe: r.likedByMe } : d));
+    } catch {
+      handleNotification("error", "Erro ao curtir.");
+    }
+  }
+
+  async function handleToggleAnswerLike(answerId: string) {
+    try {
+      const r = await discussionsService.toggleLike("answer", answerId);
+      setDiscussion((d) =>
+        d
+          ? {
+              ...d,
+              answers: d.answers.map((a) =>
+                a._id === answerId ? { ...a, likeCount: r.likeCount, likedByMe: r.likedByMe } : a,
+              ),
+            }
+          : d,
+      );
+    } catch {
+      handleNotification("error", "Erro ao curtir.");
     }
   }
 
@@ -136,110 +190,37 @@ export default function DiscussionDetailClient({
         <AppHeader user={user} />
 
         <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
-          <h1 className="font-semibold text-xl text-gray-800 dark:text-slate-100 mb-4">
+          <h1 className="font-semibold text-xl text-slate-800 dark:text-slate-100 mb-1">
             Discussões — {book.name}
           </h1>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-slate-200">Discussões</h2>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
-            >
-              Nova Discussão
-            </button>
-          </div>
-
-          {showForm && (
-            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4 mb-6 space-y-3">
-              <label htmlFor="new-disc-verseref" className="sr-only">Referência do versículo</label>
-              <input
-                id="new-disc-verseref"
-                type="text"
-                placeholder="Referência do versículo (ex: Gn 1:1)"
-                value={newVerseRef}
-                onChange={(e) => setNewVerseRef(e.target.value)}
-                className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
-              />
-              <label htmlFor="new-disc-versetext" className="sr-only">Texto do versículo</label>
-              <input
-                id="new-disc-versetext"
-                type="text"
-                placeholder="Texto do versículo"
-                value={newVerseText}
-                onChange={(e) => setNewVerseText(e.target.value)}
-                className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
-              />
-              <label htmlFor="new-disc-commenttext" className="sr-only">Texto do comentário relacionado (opcional)</label>
-              <input
-                id="new-disc-commenttext"
-                type="text"
-                placeholder="Texto do comentário relacionado (opcional)"
-                value={newCommentText}
-                onChange={(e) => setNewCommentText(e.target.value)}
-                className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm"
-              />
-              <label htmlFor="new-disc-question" className="sr-only">Pergunta ou tema da discussão</label>
-              <textarea
-                id="new-disc-question"
-                placeholder="Sua pergunta ou tema de discussão..."
-                value={newQuestion}
-                onChange={(e) => setNewQuestion(e.target.value)}
-                rows={4}
-                className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm resize-none"
-              />
-
-              {(newQuestion || newVerseRef || newVerseText || newCommentText) && (
-                <div className="border border-dashed border-gray-300 dark:border-slate-700 rounded-xl p-4 bg-gray-50 dark:bg-slate-950/40">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-2">
-                    Pré-visualização
-                  </p>
-                  {newVerseRef && (
-                    <p className="text-xs text-gray-400 dark:text-slate-500 mb-1">{newVerseRef}</p>
-                  )}
-                  {newVerseText && (
-                    <blockquote className="italic text-gray-600 dark:text-slate-300 border-l-4 border-gray-200 dark:border-slate-700 pl-3 mb-3">
-                      {excerpt(newVerseText)}
-                    </blockquote>
-                  )}
-                  {newCommentText && (
-                    <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
-                      Comentário: <span className="italic">{excerpt(newCommentText)}</span>
-                    </p>
-                  )}
-                  <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100">
-                    {newQuestion || <span className="text-gray-400 dark:text-slate-500 font-normal italic">sua pergunta aparecerá aqui em destaque</span>}
-                  </h3>
-                </div>
-              )}
-
-              <button
-                onClick={handleCreateDiscussion}
-                disabled={creating}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50"
-              >
-                {creating ? "Criando..." : "Criar Discussão"}
-              </button>
-            </div>
-          )}
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+            As discussões começam a partir de um comentário — toque em{" "}
+            <strong>Discutir</strong> em qualquer comentário do livro.
+          </p>
 
           {discussions.length === 0 ? (
-            <p className="text-gray-400 dark:text-slate-500 text-center py-10">
+            <p className="text-slate-400 dark:text-slate-500 text-center py-10">
               Nenhuma discussão ainda.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3" data-testid="discussion-list">
               {discussions.map((d) => (
                 <Link
                   key={d._id}
                   href={`/discussion/${book.abbrev}/${d._id}`}
-                  className="block bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-purple-300 dark:hover:border-purple-600 transition"
+                  data-testid="discussion-card"
+                  className="block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand transition"
                 >
-                  <h3 className="font-semibold text-gray-800 dark:text-slate-100">{d.question}</h3>
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{d.verseReference}</p>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-slate-500">
-                    <span>{d.username}</span>
+                  <p className="text-xs font-medium text-brand mb-1">{d.verseReference}</p>
+                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                    {headingFor(d)}
+                  </h2>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                    <span>por {d.username}</span>
                     <span>·</span>
-                    <span>{d.answersCount} resposta(s)</span>
+                    <span>
+                      {d.answersCount} resposta{d.answersCount !== 1 ? "s" : ""}
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -250,40 +231,83 @@ export default function DiscussionDetailClient({
     );
   }
 
+  const quoteText = discussion.commentText || discussion.verseText;
+  const hasTitle = !!discussion.title?.trim();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <AppHeader user={user} />
       <div className="max-w-3xl mx-auto px-4 pt-4">
-        <Link
-          href={`/discussion/${book.abbrev}`}
-          className="text-blue-600 dark:text-brand hover:underline text-sm"
-        >
+        <Link href={`/discussion/${book.abbrev}`} className="text-brand hover:underline text-sm">
           ← Discussões
         </Link>
-        <span className="text-gray-400 dark:text-slate-600 mx-2">|</span>
-        <span className="text-sm text-gray-600 dark:text-slate-300">
-          {discussion.verseReference}
-        </span>
+        <span className="text-slate-300 dark:text-slate-600 mx-2">|</span>
+        <span className="text-sm text-slate-600 dark:text-slate-300">{discussion.verseReference}</span>
       </div>
 
       <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-5 mb-6">
-          <p className="text-xs text-gray-400 dark:text-slate-500 mb-1">{discussion.verseReference}</p>
-          <blockquote className="italic text-gray-600 dark:text-slate-300 border-l-4 border-gray-200 dark:border-slate-700 pl-3 mb-3">
-            {discussion.verseText}
-          </blockquote>
-          {discussion.commentText && (
-            <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
-              Comentário: <span className="italic">{excerpt(discussion.commentText)}</span>
-            </p>
-          )}
-          <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">{discussion.question}</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
+        <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-6">
+          {/* 1. Title */}
+          <h1
+            data-testid="discussion-title"
+            className="text-xl font-bold text-slate-800 dark:text-slate-100"
+          >
+            {headingFor(discussion)}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">
             por <strong>{discussion.username}</strong>
           </p>
-        </div>
 
-        <h2 className="text-md font-semibold text-gray-700 dark:text-slate-200 mb-3">
+          {/* 2. The comment being discussed (smaller, read-only). */}
+          {quoteText && (
+            <div className="border-l-4 border-brand/30 bg-brand-wash dark:bg-slate-800/40 rounded-r-md pl-3 pr-2 py-2 mb-4">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  Comentário
+                </span>
+                {discussion.commentId && (
+                  <Link
+                    href={`/c/${discussion.commentId}`}
+                    className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-brand transition"
+                  >
+                    ver comentário →
+                  </Link>
+                )}
+              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-300">
+                <CollapsibleText
+                  testId="discussion-quote"
+                  canCollapse={quoteText.length > 240}
+                  collapsedClass="line-clamp-4"
+                >
+                  {renderWithHighlight(quoteText, discussion.quoteStart, discussion.quoteEnd)}
+                </CollapsibleText>
+              </div>
+            </div>
+          )}
+
+          {/* 3. The discussion body (larger), shown in full. */}
+          {hasTitle && (
+            <p
+              data-testid="discussion-body"
+              className="text-[15px] leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap"
+            >
+              {discussion.question}
+            </p>
+          )}
+
+          {/* 4. Reaction. */}
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <LikeButton
+              liked={discussion.likedByMe}
+              count={discussion.likeCount}
+              onToggle={handleToggleDiscussionLike}
+              testId="discussion-like"
+            />
+          </div>
+        </article>
+
+        <h2 className="text-md font-semibold text-slate-700 dark:text-slate-200 mb-3">
           Respostas ({(discussion.answers ?? []).length})
         </h2>
 
@@ -294,11 +318,12 @@ export default function DiscussionDetailClient({
             return (
               <div
                 key={a._id ?? i}
-                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4"
+                data-testid="discussion-answer"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="inline-flex items-center gap-1">
-                    <p className="text-xs font-semibold text-purple-600 dark:text-purple-400">{a.name}</p>
+                    <p className="text-xs font-semibold text-brand">{a.name}</p>
                     <VerifiedBadge verified={a.authorEmailVerified} size="xs" />
                   </span>
                   {canEdit && !isEditing && (
@@ -317,7 +342,7 @@ export default function DiscussionDetailClient({
                       value={editAnswerText}
                       onChange={(e) => setEditAnswerText(e.target.value)}
                       rows={3}
-                      className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm resize-none"
+                      className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
                       autoFocus
                     />
                     <div className="flex gap-2 justify-end">
@@ -333,32 +358,49 @@ export default function DiscussionDetailClient({
                         type="button"
                         onClick={saveEdit}
                         disabled={savingEdit || !editAnswerText.trim()}
-                        className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 transition"
+                        className="px-3 py-1.5 text-xs bg-brand text-white font-semibold rounded-md hover:bg-brand/90 disabled:opacity-50 transition"
                       >
                         {savingEdit ? "Salvando…" : "Salvar"}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-700 dark:text-slate-200 whitespace-pre-wrap">{a.text}</p>
+                  <>
+                    <div className="text-sm text-slate-700 dark:text-slate-200">
+                      <CollapsibleText canCollapse={a.text.length > 360} collapsedClass="line-clamp-6">
+                        {a.text}
+                      </CollapsibleText>
+                    </div>
+                    <div className="mt-2">
+                      <LikeButton
+                        liked={a.likedByMe}
+                        count={a.likeCount}
+                        onToggle={() => a._id && handleToggleAnswerLike(a._id)}
+                        disabled={!a._id}
+                        testId="answer-like"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             );
           })}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
           <textarea
             value={answerText}
             onChange={(e) => setAnswerText(e.target.value)}
             placeholder="Sua resposta..."
             rows={3}
-            className="w-full border border-gray-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 rounded-lg px-3 py-2 text-sm resize-none mb-3"
+            data-testid="answer-input"
+            className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none mb-3"
           />
           <button
             onClick={handleAddAnswer}
             disabled={submitting || !answerText.trim()}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50"
+            data-testid="submit-answer"
+            className="bg-brand text-white font-semibold text-sm px-4 py-2 rounded-md hover:bg-brand/90 transition disabled:opacity-50"
           >
             {submitting ? "Enviando..." : "Responder"}
           </button>

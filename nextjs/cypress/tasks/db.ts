@@ -35,6 +35,7 @@ const COLLECTIONS = [
 	"commentreports",
 	"discussions",
 	"discussionanswers",
+	"discussionlikes",
 	"notifications",
 	"passwordresettokens",
 	"userchapterreads",

@@ -13,4 +13,8 @@ export interface DiscussionAnswer {
   updatedAt: Date;
   /** Snapshot of the answerer's email-verification state. Optional for back-compat. */
   authorEmailVerified?: boolean;
+  /** Aggregated like count — populated at read time, not stored. */
+  likeCount?: number;
+  /** Whether the viewing user liked this answer — populated at read time. */
+  likedByMe?: boolean;
 }

@@ -3,6 +3,7 @@ import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDi
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
 import {
   GetDiscussionByIdUseCase,
   AddAnswerUseCase,
@@ -22,13 +23,17 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: Request, { params }: { params: Promise<Params> }) {
   try {
     const { id } = await params;
+    const viewer = await getSessionUser();
     // Hydrate answers from the new collection so the client gets the
-    // historical { _id, name, text } shape on `discussion.answers`.
+    // historical { _id, name, text } shape on `discussion.answers`, plus
+    // author verification and like stats (discussion + each answer).
     const useCase = new GetDiscussionByIdUseCase(
       new MongoDiscussionRepository(),
       new MongoDiscussionAnswerRepository(),
+      new MongoUserRepository(),
+      new MongoDiscussionLikeRepository(),
     );
-    const discussion = await useCase.execute(id);
+    const discussion = await useCase.execute(id, viewer?.id);
     if (!discussion) return notFound("Discussão não encontrada");
     return NextResponse.json(toDiscussionWire(discussion));
   } catch (err) {

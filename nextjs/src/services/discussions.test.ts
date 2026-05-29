@@ -38,9 +38,19 @@ const sampleDiscussion = {
   verseReference: "Gn 1:1",
   verseText: "",
   commentText: "",
+  title: "Why?",
   question: "Why?",
-  answers: [] as Array<{ _id?: string; name: string; text: string }>,
+  answers: [] as Array<{
+    _id?: string;
+    name: string;
+    text: string;
+    authorEmailVerified?: boolean;
+    likeCount: number;
+    likedByMe: boolean;
+  }>,
   answersCount: 0,
+  likeCount: 0,
+  likedByMe: false,
 };
 
 describe("discussionsService", () => {
@@ -51,12 +61,14 @@ describe("discussionsService", () => {
   it("createForBook delegates to createDiscussionAction", async () => {
     mockedCreate.mockResolvedValueOnce({ ok: true, data: sampleDiscussion });
     const result = await discussionsService.createForBook("gn", {
-      verseReference: "Gn 1:1",
-      question: "Why?",
+      commentId: "c1",
+      title: "Why?",
+      body: "Because.",
     });
     expect(mockedCreate).toHaveBeenCalledWith("gn", {
-      verseReference: "Gn 1:1",
-      question: "Why?",
+      commentId: "c1",
+      title: "Why?",
+      body: "Because.",
     });
     expect(result._id).toBe("d1");
   });
@@ -82,7 +94,7 @@ describe("discussionsService", () => {
   it("addAnswer delegates to addAnswerAction", async () => {
     mockedAddAnswer.mockResolvedValueOnce({
       ok: true,
-      data: { ...sampleDiscussion, answers: [{ name: "bob", text: "ok" }], answersCount: 1 },
+      data: { ...sampleDiscussion, answers: [{ name: "bob", text: "ok", likeCount: 0, likedByMe: false }], answersCount: 1 },
     });
     const result = await discussionsService.addAnswer("gn", "d1", "ok");
     expect(mockedAddAnswer).toHaveBeenCalledWith("gn", "d1", "ok");
@@ -92,7 +104,7 @@ describe("discussionsService", () => {
   it("updateAnswer delegates to updateAnswerAction", async () => {
     mockedUpdateAnswer.mockResolvedValueOnce({
       ok: true,
-      data: { ...sampleDiscussion, answers: [{ _id: "a1", name: "bob", text: "edited" }], answersCount: 1 },
+      data: { ...sampleDiscussion, answers: [{ _id: "a1", name: "bob", text: "edited", likeCount: 0, likedByMe: false }], answersCount: 1 },
     });
     const result = await discussionsService.updateAnswer("gn", "d1", "a1", "edited");
     expect(mockedUpdateAnswer).toHaveBeenCalledWith("gn", "d1", "a1", "edited");

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
@@ -12,6 +14,11 @@ import {
   UpdateAnswerUseCase,
   DeleteDiscussionUseCase,
 } from "@/application/use-cases/DiscussionUseCases";
+import {
+  ToggleDiscussionLikeUseCase,
+  type ToggleDiscussionLikeResult,
+} from "@/application/use-cases/DiscussionLikeUseCases";
+import type { DiscussionLikeTarget } from "@/domain/repositories/IDiscussionLikeRepository";
 import { CreateNotificationUseCase } from "@/application/use-cases/NotificationUseCases";
 import { NotifyMentionsUseCase } from "@/application/use-cases/NotifyMentionsUseCase";
 import type { Discussion } from "@/domain/entities/Discussion";
@@ -48,22 +55,25 @@ export async function createDiscussionAction(
   const session = await auth();
   if (!session?.user) return authError();
 
-  if (!draft.verseReference || !draft.question) {
-    return { ok: false, error: "verseReference e question são obrigatórios" };
+  if (!draft.commentId || !draft.title?.trim() || !draft.body?.trim()) {
+    return { ok: false, error: "commentId, title e body são obrigatórios" };
   }
 
   try {
-    const repo = new MongoDiscussionRepository();
-    const useCase = new CreateDiscussionUseCase(repo, new MongoUserRepository());
-    const discussion = await useCase.execute(
-      bookAbbrev.toLowerCase(),
-      session.user.username,
-      draft.verseReference,
-      draft.verseText ?? "",
-      draft.commentText ?? "",
-      draft.question,
-      draft.commentId,
+    const useCase = new CreateDiscussionUseCase(
+      new MongoDiscussionRepository(),
+      new MongoCommentRepository(),
+      new MongoUserRepository(),
     );
+    const discussion = await useCase.execute({
+      bookAbbrev: bookAbbrev.toLowerCase(),
+      username: session.user.username,
+      commentId: draft.commentId,
+      title: draft.title,
+      body: draft.body,
+      quoteStart: draft.quoteStart,
+      quoteEnd: draft.quoteEnd,
+    });
 
     await evaluateBadges({
       userId: session.user.id,
@@ -77,6 +87,34 @@ export async function createDiscussionAction(
   } catch (err) {
     logger.error({ err, action: "createDiscussionAction", bookAbbrev }, "create discussion failed");
     return appError(err, "Erro ao criar discussão.");
+  }
+}
+
+/**
+ * Toggle the current user's like on a discussion or one of its answers.
+ * Returns the post-toggle stats so the client can update without a re-fetch.
+ */
+export async function toggleDiscussionLikeAction(
+  targetType: DiscussionLikeTarget,
+  targetId: string,
+): Promise<ActionResult<ToggleDiscussionLikeResult>> {
+  const session = await auth();
+  if (!session?.user) return authError();
+  if (targetType !== "discussion" && targetType !== "answer") {
+    return { ok: false, error: "targetType inválido" };
+  }
+
+  try {
+    const useCase = new ToggleDiscussionLikeUseCase(new MongoDiscussionLikeRepository());
+    const result = await useCase.execute(targetType, targetId, session.user.id);
+    revalidateDiscussionPaths();
+    return { ok: true, data: result };
+  } catch (err) {
+    logger.error(
+      { err, action: "toggleDiscussionLikeAction", targetType, targetId },
+      "toggle discussion like failed",
+    );
+    return appError(err, "Erro ao curtir.");
   }
 }
 

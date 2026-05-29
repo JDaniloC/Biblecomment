@@ -8,6 +8,9 @@ export interface IDiscussionDocument extends Document {
   verseReference: string;
   verseText: string;
   commentText: string;
+  quoteStart?: number;
+  quoteEnd?: number;
+  title: string;
   question: string;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +32,11 @@ const DiscussionSchema = new Schema<IDiscussionDocument>(
     // required check rejects the empty string and throws a 500.
     verseText:      { type: String, default: "" },
     commentText:    { type: String, default: "" },
+    // Optional highlighted excerpt offsets into commentText.
+    quoteStart:     { type: Number },
+    quoteEnd:       { type: Number },
+    // One-line headline. Defaults to "" so legacy docs upgrade lazily.
+    title:          { type: String, default: "" },
     question:       { type: String, required: true },
   },
   { timestamps: true }

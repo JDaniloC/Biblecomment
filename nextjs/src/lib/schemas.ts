@@ -116,12 +116,16 @@ export const UpdateCommentSchema = z.object({
 	action: z.enum(["like", "report", "hide", "unhide"]).optional(),
 });
 
+// A discussion is always anchored to a comment. The client sends only the
+// commentId, a one-line title, the body, and optional excerpt offsets — the
+// comment text snapshot and verse reference are derived server-side from the
+// comment (so the original comment can't be rewritten/deturpated).
 export const CreateDiscussionSchema = z.object({
-	verseReference: z.string().min(1).max(200),
-	verseText: z.string().max(5000).optional().default(""),
-	commentText: z.string().max(5000).optional().default(""),
-	question: z.string().min(1).max(2000),
-	commentId: z.string().optional(),
+	commentId: z.string().min(1),
+	title: z.string().min(1).max(140),
+	body: z.string().min(1).max(1000),
+	quoteStart: z.number().int().min(0).optional(),
+	quoteEnd: z.number().int().min(0).optional(),
 });
 
 export const AddAnswerSchema = z.object({

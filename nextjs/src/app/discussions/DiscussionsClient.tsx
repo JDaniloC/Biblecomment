@@ -18,6 +18,7 @@ interface SessionUser {
 
 interface DiscussionSummary {
   _id: string;
+  title?: string;
   question: string;
   username: string;
   bookAbbrev: string;
@@ -72,10 +73,11 @@ export default function DiscussionsClient({
               <Link
                 key={d._id}
                 href={`/discussion/${d.bookAbbrev}/${d._id}`}
-                className="block bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-purple-400 dark:hover:border-purple-600 transition"
+                data-testid="discussion-card"
+                className="block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand transition"
               >
-                <div className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">{d.verseReference}</div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-slate-100 mb-2">{d.question}</p>
+                <div className="text-xs text-brand font-medium mb-1">{d.verseReference}</div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-slate-100 mb-2">{d.title || d.question}</p>
                 <div className="flex items-center justify-between text-xs text-gray-400 dark:text-slate-500">
                   <span>por {d.username}</span>
                   <span>{d.answersCount} resposta{d.answersCount !== 1 ? "s" : ""}</span>
@@ -86,7 +88,7 @@ export default function DiscussionsClient({
             {hasMore && !loading && (
               <button
                 onClick={() => { const next = page + 1; setPage(next); load(next); }}
-                className="w-full mt-2 text-sm text-purple-600 dark:text-purple-400 hover:underline py-2"
+                className="w-full mt-2 text-sm text-brand hover:underline py-2"
               >
                 Carregar mais
               </button>

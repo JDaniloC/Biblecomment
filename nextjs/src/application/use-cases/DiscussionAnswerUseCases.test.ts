@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   AddAnswerUseCase,
-  CreateDiscussionUseCase,
   GetDiscussionByIdUseCase,
   GetAllDiscussionsPaginatedUseCase,
   DeleteDiscussionUseCase,
@@ -12,6 +11,10 @@ import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { Discussion } from "@/domain/entities/Discussion";
 import type { DiscussionAnswer } from "@/domain/entities/DiscussionAnswer";
 import type { User } from "@/domain/entities/User";
+import type {
+  IDiscussionLikeRepository,
+  DiscussionLikeTarget,
+} from "@/domain/repositories/IDiscussionLikeRepository";
 
 function fakeUser(partial: Partial<User> = {}): User {
   return {
@@ -146,27 +149,53 @@ function inMemoryAnswerRepo(): IDiscussionAnswerRepository {
   };
 }
 
-describe("CreateDiscussionUseCase", () => {
-  it("creates a discussion for a verified user", async () => {
-    const repo = discussionRepoStub([]);
-    const userRepo = makeUserRepo(fakeUser());
-    const uc = new CreateDiscussionUseCase(repo, userRepo);
+function inMemoryDiscussionLikeRepo(): IDiscussionLikeRepository {
+  const data = new Map<string, Set<string>>();
+  const key = (t: DiscussionLikeTarget, id: string) => `${t}:${id}`;
+  return {
+    async like(userId, t, id) {
+      const k = key(t, id);
+      if (!data.has(k)) data.set(k, new Set());
+      const s = data.get(k)!;
+      if (s.has(userId)) return false;
+      s.add(userId);
+      return true;
+    },
+    async unlike(userId, t, id) {
+      data.get(key(t, id))?.delete(userId);
+    },
+    async hasLiked(userId, t, id) {
+      return data.get(key(t, id))?.has(userId) ?? false;
+    },
+    async countByTargets(t, ids) {
+      const out = new Map<string, number>();
+      for (const id of ids) {
+        const n = data.get(key(t, id))?.size ?? 0;
+        if (n > 0) out.set(id, n);
+      }
+      return out;
+    },
+    async whichLiked(userId, t, ids) {
+      const out = new Set<string>();
+      for (const id of ids) if (data.get(key(t, id))?.has(userId)) out.add(id);
+      return out;
+    },
+    async deleteAllByUser(userId) {
+      let n = 0;
+      for (const s of data.values()) if (s.delete(userId)) n++;
+      return n;
+    },
+    async deleteByTarget(t, id) {
+      const k = key(t, id);
+      const n = data.get(k)?.size ?? 0;
+      data.delete(k);
+      return n;
+    },
+  };
+}
 
-    const result = await uc.execute("gn", "alice", "Gn 1:1", "Em princípio", "comentário", "Pergunta?");
-
-    expect(result._id).toBe("new");
-  });
-
-  it("rejects when author email is not verified and does not call repo.create", async () => {
-    const repo = discussionRepoStub([]);
-    const userRepo = makeUserRepo(fakeUser({ emailVerifiedAt: undefined }));
-    const uc = new CreateDiscussionUseCase(repo, userRepo);
-
-    await expect(
-      uc.execute("gn", "alice", "Gn 1:1", "Em princípio", "comentário", "Pergunta?"),
-    ).rejects.toThrow(/verifique|email_not_verified/i);
-  });
-});
+// CreateDiscussionUseCase has its own dedicated suite in DiscussionUseCases.test.ts
+// (authoritative comment snapshot, quote-range validation, title sanitization).
 
 describe("AddAnswerUseCase", () => {
   it("appends an answer and returns the discussion with the full answers list + count", async () => {
@@ -232,6 +261,38 @@ describe("GetDiscussionByIdUseCase", () => {
     const result = await new GetDiscussionByIdUseCase(repo, answers).execute("missing");
 
     expect(result).toBeNull();
+  });
+
+  it("enriches discussion and answers with like stats for the viewer", async () => {
+    const repo = discussionRepoStub([fakeDiscussion("d1")]);
+    const answers = inMemoryAnswerRepo();
+    const a1 = await answers.add({ discussionId: "d1", userId: "u1", username: "x", text: "one" });
+    const likes = inMemoryDiscussionLikeRepo();
+    await likes.like("viewer", "discussion", "d1");
+    await likes.like("other", "discussion", "d1");
+    await likes.like("viewer", "answer", a1._id!);
+
+    const result = await new GetDiscussionByIdUseCase(repo, answers, undefined, likes).execute(
+      "d1",
+      "viewer",
+    );
+
+    expect(result?.likeCount).toBe(2);
+    expect(result?.likedByMe).toBe(true);
+    expect(result?.answers?.[0].likeCount).toBe(1);
+    expect(result?.answers?.[0].likedByMe).toBe(true);
+  });
+
+  it("leaves likedByMe false for an anonymous viewer but still counts likes", async () => {
+    const repo = discussionRepoStub([fakeDiscussion("d1")]);
+    const answers = inMemoryAnswerRepo();
+    const likes = inMemoryDiscussionLikeRepo();
+    await likes.like("someone", "discussion", "d1");
+
+    const result = await new GetDiscussionByIdUseCase(repo, answers, undefined, likes).execute("d1");
+
+    expect(result?.likeCount).toBe(1);
+    expect(result?.likedByMe).toBe(false);
   });
 });
 

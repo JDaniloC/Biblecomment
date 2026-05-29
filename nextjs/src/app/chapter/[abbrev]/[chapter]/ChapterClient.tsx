@@ -584,14 +584,14 @@ export default function ChapterClient({
 	);
 
 	const handleDiscussion = useCallback(
-		(id: string, text: string, reference: string) => {
+		(commentId: string) => {
 			if (!user) {
 				requireLogin();
 				return;
 			}
-			router.push(
-				`/discussion/${book.abbrev}?commentId=${id}&ref=${encodeURIComponent(reference)}&text=${encodeURIComponent(text)}`,
-			);
+			// A discussion is always anchored to a comment — the create page
+			// fetches the comment's authoritative text from this id.
+			router.push(`/discussion/${book.abbrev}/new?commentId=${commentId}`);
 		},
 		[user, requireLogin, book.abbrev, router],
 	);
@@ -1420,13 +1420,8 @@ export default function ChapterClient({
 													{/* Contribuir button */}
 													<button
 														type="button"
-														onClick={() =>
-															handleDiscussion(
-																comment._id,
-																comment.text,
-																`${comment.username} ${comment.bookReference}`,
-															)
-														}
+														onClick={() => handleDiscussion(comment._id)}
+                      data-testid="comment-discuss"
 														className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap ml-0.5"
 															title="Contribuir"
 													>

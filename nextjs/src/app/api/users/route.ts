@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
+import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
 import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
@@ -123,6 +124,7 @@ export async function DELETE(req: Request) {
       new MongoUserRepository(),
       new MongoCommentRepository(),
       new MongoCommentLikeRepository(),
+      new MongoDiscussionLikeRepository(),
       new MongoCommentReportRepository(),
       new MongoDiscussionRepository(),
       new MongoDiscussionAnswerRepository(),

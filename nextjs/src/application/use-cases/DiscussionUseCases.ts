@@ -1,5 +1,7 @@
 import { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
+import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
+import { IDiscussionLikeRepository } from "@/domain/repositories/IDiscussionLikeRepository";
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { Discussion } from "@/domain/entities/Discussion";
 import { DiscussionAnswer } from "@/domain/entities/DiscussionAnswer";
@@ -45,6 +47,7 @@ export class GetDiscussionByIdUseCase {
 		private readonly discussionRepo: IDiscussionRepository,
 		private readonly answerRepo?: IDiscussionAnswerRepository,
 		private readonly userRepo?: IUserRepository,
+		private readonly likeRepo?: IDiscussionLikeRepository,
 	) {}
 
 	/**
@@ -52,28 +55,58 @@ export class GetDiscussionByIdUseCase {
 	 * is wired. Without it, callers get the bare discussion (used by the
 	 * delete-discussion flow that doesn't need answers).
 	 *
-	 * When `userRepo` is also wired, each answer gets `authorEmailVerified`
-	 * derived from the author's `emailVerifiedAt` — a single batch lookup,
-	 * never N+1.
+	 * When `userRepo` is wired, each answer gets `authorEmailVerified` from a
+	 * batched lookup. When `likeRepo` is wired, the discussion and each answer
+	 * get `likeCount`/`likedByMe` (batched, never N+1); `viewerId` drives
+	 * `likedByMe` (anonymous viewers always get false).
 	 */
-	async execute(id: string): Promise<Discussion | null> {
+	async execute(id: string, viewerId?: string): Promise<Discussion | null> {
 		const discussion = await this.discussionRepo.findById(id);
 		if (!discussion) return null;
-		if (!this.answerRepo) return discussion;
-		const rawAnswers = await this.answerRepo.findByDiscussion(id);
-		let answers: DiscussionAnswer[] = rawAnswers;
-		if (this.userRepo && rawAnswers.length > 0) {
-			const usernames = [...new Set(rawAnswers.map((a) => a.username))];
+
+		// Discussion-level like stats.
+		let likeCount = discussion.likeCount;
+		let likedByMe = discussion.likedByMe;
+		if (this.likeRepo) {
+			likeCount = (await this.likeRepo.countByTargets("discussion", [id])).get(id) ?? 0;
+			likedByMe = viewerId
+				? (await this.likeRepo.whichLiked(viewerId, "discussion", [id])).has(id)
+				: false;
+		}
+
+		if (!this.answerRepo) {
+			return { ...discussion, likeCount, likedByMe };
+		}
+		let answers: DiscussionAnswer[] = await this.answerRepo.findByDiscussion(id);
+
+		// Author email-verification snapshot (batched).
+		if (this.userRepo && answers.length > 0) {
+			const usernames = [...new Set(answers.map((a) => a.username))];
 			const users = await this.userRepo.findByUsernames(usernames);
 			const verifiedMap = new Map(
 				users.map((u) => [u.username, !!u.emailVerifiedAt]),
 			);
-			answers = rawAnswers.map((a) => ({
+			answers = answers.map((a) => ({
 				...a,
 				authorEmailVerified: verifiedMap.get(a.username) ?? false,
 			}));
 		}
-		return { ...discussion, answers, answersCount: answers.length };
+
+		// Answer-level like stats (batched).
+		if (this.likeRepo && answers.length > 0) {
+			const answerIds = answers.map((a) => a._id ?? "").filter(Boolean);
+			const counts = await this.likeRepo.countByTargets("answer", answerIds);
+			const liked = viewerId
+				? await this.likeRepo.whichLiked(viewerId, "answer", answerIds)
+				: new Set<string>();
+			answers = answers.map((a) => ({
+				...a,
+				likeCount: a._id ? counts.get(a._id) ?? 0 : 0,
+				likedByMe: a._id ? liked.has(a._id) : false,
+			}));
+		}
+
+		return { ...discussion, answers, answersCount: answers.length, likeCount, likedByMe };
 	}
 }
 
@@ -103,35 +136,83 @@ export class GetAllDiscussionsPaginatedUseCase {
 	}
 }
 
+export interface CreateDiscussionInput {
+	bookAbbrev: string;
+	username: string;
+	/** The comment the discussion is anchored to. */
+	commentId: string;
+	/** One-line headline; line breaks are stripped. */
+	title: string;
+	/** The discussion's opening message ("comentário da discussão"). */
+	body: string;
+	/** Optional highlighted excerpt offsets into the comment text. */
+	quoteStart?: number;
+	quoteEnd?: number;
+}
+
+/**
+ * Reject an excerpt range unless it is a valid half-open integer interval
+ * [start, end) inside [0, len]. Anything else (missing, inverted, out of
+ * bounds, non-integer) collapses to "no highlight" rather than throwing —
+ * the discussion is still valid without a featured excerpt.
+ */
+export function normalizeQuoteRange(
+	start: number | undefined,
+	end: number | undefined,
+	len: number,
+): { quoteStart?: number; quoteEnd?: number } {
+	if (
+		typeof start !== "number" ||
+		typeof end !== "number" ||
+		!Number.isInteger(start) ||
+		!Number.isInteger(end) ||
+		start < 0 ||
+		end > len ||
+		start >= end
+	) {
+		return { quoteStart: undefined, quoteEnd: undefined };
+	}
+	return { quoteStart: start, quoteEnd: end };
+}
+
 export class CreateDiscussionUseCase {
 	constructor(
 		private readonly discussionRepo: IDiscussionRepository,
+		private readonly commentRepo: ICommentRepository,
 		private readonly userRepo: IUserRepository,
 	) {}
 
-	async execute(
-		bookAbbrev: string,
-		username: string,
-		verseReference: string,
-		verseText: string,
-		commentText: string,
-		question: string,
-		commentId?: string,
-	): Promise<Discussion> {
+	async execute(input: CreateDiscussionInput): Promise<Discussion> {
 		// Gate: only verified users may open discussions.
-		const user = await this.userRepo.findByUsername(username);
+		const user = await this.userRepo.findByUsername(input.username);
 		if (!isEmailVerified(user)) {
 			throw new EmailNotVerifiedError();
 		}
 
+		// Authoritative snapshot: the comment text is read from the linked
+		// comment, never from client input, so the original can't be deturpated.
+		const comment = await this.commentRepo.findById(input.commentId);
+		if (!comment) throw new Error("Comment not found");
+
+		const commentText = comment.text;
+		const title = input.title.replace(/[\r\n]+/g, " ").trim();
+		const { quoteStart, quoteEnd } = normalizeQuoteRange(
+			input.quoteStart,
+			input.quoteEnd,
+			commentText.length,
+		);
+
 		return this.discussionRepo.create({
-			bookAbbrev,
-			commentId,
-			username,
-			verseReference,
-			verseText,
+			bookAbbrev: input.bookAbbrev,
+			commentId: input.commentId,
+			username: input.username,
+			verseReference: comment.bookReference,
+			verseText: "",
 			commentText,
-			question,
+			quoteStart,
+			quoteEnd,
+			title,
+			question: input.body,
 		});
 	}
 }

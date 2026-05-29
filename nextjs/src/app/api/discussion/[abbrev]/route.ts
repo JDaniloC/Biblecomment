@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
+import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import {
@@ -43,19 +44,22 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
     const { abbrev } = await params;
     const parsed = await parseBody(req, CreateDiscussionSchema);
     if (!parsed.ok) return parsed.response;
-    const { verseReference, verseText, commentText, question, commentId } = parsed.data;
+    const { commentId, title, body, quoteStart, quoteEnd } = parsed.data;
 
-    const repo = new MongoDiscussionRepository();
-    const useCase = new CreateDiscussionUseCase(repo, new MongoUserRepository());
-    const discussion = await useCase.execute(
-      abbrev.toLowerCase(),
-      user.username,
-      verseReference,
-      verseText,
-      commentText,
-      question,
-      commentId,
+    const useCase = new CreateDiscussionUseCase(
+      new MongoDiscussionRepository(),
+      new MongoCommentRepository(),
+      new MongoUserRepository(),
     );
+    const discussion = await useCase.execute({
+      bookAbbrev: abbrev.toLowerCase(),
+      username: user.username,
+      commentId,
+      title,
+      body,
+      quoteStart,
+      quoteEnd,
+    });
 
     return NextResponse.json(discussion, { status: 201 });
   } catch (err) {

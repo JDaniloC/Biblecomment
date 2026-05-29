@@ -5,6 +5,7 @@ import {
 import { AdminUserDTO } from "@/domain/dto/AdminUserDTO";
 import { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import { ICommentLikeRepository } from "@/domain/repositories/ICommentLikeRepository";
+import { IDiscussionLikeRepository } from "@/domain/repositories/IDiscussionLikeRepository";
 import { ICommentReportRepository } from "@/domain/repositories/ICommentReportRepository";
 import { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
@@ -112,6 +113,7 @@ export class DeleteUserUseCase {
     private readonly userRepo: IUserRepository,
     private readonly commentRepo: ICommentRepository,
     private readonly commentLikeRepo: ICommentLikeRepository,
+    private readonly discussionLikeRepo: IDiscussionLikeRepository,
     private readonly commentReportRepo: ICommentReportRepository,
     private readonly discussionRepo: IDiscussionRepository,
     private readonly discussionAnswerRepo: IDiscussionAnswerRepository,
@@ -134,6 +136,9 @@ export class DeleteUserUseCase {
       this.commentRepo.anonymizeByUsername(user.username, ANONYMIZED_USERNAME),
       user._id
         ? this.commentLikeRepo.deleteAllByUser(user._id)
+        : Promise.resolve(0),
+      user._id
+        ? this.discussionLikeRepo.deleteAllByUser(user._id)
         : Promise.resolve(0),
       user._id
         ? this.commentReportRepo.deleteAllByUser(user._id)
