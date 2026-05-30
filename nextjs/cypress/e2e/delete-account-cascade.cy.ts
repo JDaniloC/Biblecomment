@@ -94,205 +94,214 @@ describe("LGPD — delete account cascade", () => {
 						expect(aliceDiscRes.status).to.eq(201);
 						const aliceDiscussionId = aliceDiscRes.body._id as string;
 
-					// ── Switch to bob: post a comment + answer alice's discussion ──
-					cy.clearCookies();
-					cy.loginAs(users.bob.email, users.bob.password);
-
-					cy.request({
-						method: "POST",
-						url: `/api/comments/${verseId}`,
-						body: { text: "Comentário do bob em Gn 1:1.", tags: ["exegese"] },
-					}).then((bobCommentRes) => {
-						expect(bobCommentRes.status).to.eq(201);
-						const bobCommentId = bobCommentRes.body._id as string;
-
-						cy.request({
-							method: "PATCH",
-							url: `/api/discussion/gn/${aliceDiscussionId}`,
-							body: { text: "Resposta do bob para a alice." },
-						})
-							.its("status")
-							.should("eq", 200);
-
-						// ── Switch back to alice: like + report bob's comment ──
+						// ── Switch to bob: post a comment + answer alice's discussion ──
 						cy.clearCookies();
-						cy.loginAs(users.alice.email, users.alice.password);
+						cy.loginAs(users.bob.email, users.bob.password);
 
 						cy.request({
-							method: "PATCH",
-							url: `/api/comments/${bobCommentId}`,
-							body: { action: "like" },
-						})
-							.its("status")
-							.should("eq", 200);
-						cy.request({
-							method: "PATCH",
-							url: `/api/comments/${bobCommentId}`,
-							body: { action: "report" },
-						})
-							.its("status")
-							.should("eq", 200);
+							method: "POST",
+							url: `/api/comments/${verseId}`,
+							body: { text: "Comentário do bob em Gn 1:1.", tags: ["exegese"] },
+						}).then((bobCommentRes) => {
+							expect(bobCommentRes.status).to.eq(201);
+							const bobCommentId = bobCommentRes.body._id as string;
 
-						// Sanity: pre-delete state has alice's like on bob's comment.
-						// (Public chapter API strips reports[]; we'll verify the report
-						// cascade via the mod-only endpoint after the delete.)
-						cy.request("GET", "/api/comments/chapter/gn/1/1").then((preRes) => {
-							const all = [
-								...(preRes.body.titleComments ?? []),
-								...(preRes.body.prioritized ?? []),
-								...(preRes.body.others ?? []),
-							];
-							const bobPre = all.find(
-								(c: { _id: string }) => c._id === bobCommentId,
+							cy.request({
+								method: "PATCH",
+								url: `/api/discussion/gn/${aliceDiscussionId}`,
+								body: { text: "Resposta do bob para a alice." },
+							})
+								.its("status")
+								.should("eq", 200);
+
+							// ── Switch back to alice: like + report bob's comment ──
+							cy.clearCookies();
+							cy.loginAs(users.alice.email, users.alice.password);
+
+							cy.request({
+								method: "PATCH",
+								url: `/api/comments/${bobCommentId}`,
+								body: { action: "like" },
+							})
+								.its("status")
+								.should("eq", 200);
+							cy.request({
+								method: "PATCH",
+								url: `/api/comments/${bobCommentId}`,
+								body: { action: "report" },
+							})
+								.its("status")
+								.should("eq", 200);
+
+							// Sanity: pre-delete state has alice's like on bob's comment.
+							// (Public chapter API strips reports[]; we'll verify the report
+							// cascade via the mod-only endpoint after the delete.)
+							cy.request("GET", "/api/comments/chapter/gn/1/1").then(
+								(preRes) => {
+									const all = [
+										...(preRes.body.titleComments ?? []),
+										...(preRes.body.prioritized ?? []),
+										...(preRes.body.others ?? []),
+									];
+									const bobPre = all.find(
+										(c: { _id: string }) => c._id === bobCommentId,
+									);
+									expect(
+										bobPre.likeCount,
+										"bob's comment shows 1 like pre-delete",
+									).to.eq(1);
+								},
 							);
-							expect(
-								bobPre.likeCount,
-								"bob's comment shows 1 like pre-delete",
-							).to.eq(1);
-						});
-						cy.task<number>("db:countLikesForComment", bobCommentId).should(
-							"eq",
-							1,
-						);
+							cy.task<number>("db:countLikesForComment", bobCommentId).should(
+								"eq",
+								1,
+							);
 
-						// Pre-delete: mod sees bob's comment in the reports queue (alice reported it).
-						cy.clearCookies();
-						cy.loginAs(users.mod.email, users.mod.password);
-						cy.request("GET", "/api/moderation/reports?pages=1").then(
-							(modRes) => {
-								const reported = modRes.body.items as Array<{
-									_id: string;
-									reportCount: number;
-									reporters: string[];
-								}>;
-								const target = reported.find((c) => c._id === bobCommentId);
+							// Pre-delete: mod sees bob's comment in the reports queue (alice reported it).
+							cy.clearCookies();
+							cy.loginAs(users.mod.email, users.mod.password);
+							cy.request("GET", "/api/moderation/reports?pages=1").then(
+								(modRes) => {
+									const reported = modRes.body.items as Array<{
+										_id: string;
+										reportCount: number;
+										reporters: string[];
+									}>;
+									const target = reported.find((c) => c._id === bobCommentId);
+									expect(
+										target,
+										"bob's comment should be in the reports queue pre-delete",
+									).to.exist;
+									expect(target!.reportCount).to.eq(1);
+									expect(
+										target!.reporters,
+										"alice should be the reporter",
+									).to.include("alice");
+								},
+							);
+							cy.task<number>("db:countReportsForComment", bobCommentId).should(
+								"eq",
+								1,
+							);
+
+							cy.clearCookies();
+							cy.loginAs(users.alice.email, users.alice.password);
+
+							// Alice should have at least one notification (bob answered her discussion).
+							cy.request("GET", "/api/notifications").then((notifRes) => {
 								expect(
-									target,
-									"bob's comment should be in the reports queue pre-delete",
-								).to.exist;
-								expect(target!.reportCount).to.eq(1);
-								expect(
-									target!.reporters,
-									"alice should be the reporter",
-								).to.include("alice");
-							},
-						);
-						cy.task<number>("db:countReportsForComment", bobCommentId).should(
-							"eq",
-							1,
-						);
+									notifRes.body.items.length,
+									"alice has notifications pre-delete",
+								).to.be.greaterThan(0);
+							});
 
-						cy.clearCookies();
-						cy.loginAs(users.alice.email, users.alice.password);
+							// ── Alice deletes her account ──
+							cy.request({
+								method: "DELETE",
+								url: "/api/users",
+								body: { email: users.alice.email },
+							})
+								.its("status")
+								.should("eq", 200);
 
-						// Alice should have at least one notification (bob answered her discussion).
-						cy.request("GET", "/api/notifications").then((notifRes) => {
-							expect(
-								notifRes.body.items.length,
-								"alice has notifications pre-delete",
-							).to.be.greaterThan(0);
-						});
+							// ── Post-delete assertions ──
 
-						// ── Alice deletes her account ──
-						cy.request({
-							method: "DELETE",
-							url: "/api/users",
-							body: { email: users.alice.email },
-						})
-							.its("status")
-							.should("eq", 200);
+							// The session can no longer authenticate (User row is gone).
+							cy.request({
+								method: "GET",
+								url: "/api/users/me",
+								failOnStatusCode: false,
+							})
+								.its("status")
+								.should("eq", 401);
 
-						// ── Post-delete assertions ──
+							// alice's comment is anonymized but text intact.
+							cy.request("GET", "/api/comments/chapter/gn/1/1").then(
+								(postRes) => {
+									const all = [
+										...(postRes.body.titleComments ?? []),
+										...(postRes.body.prioritized ?? []),
+										...(postRes.body.others ?? []),
+									];
 
-						// The session can no longer authenticate (User row is gone).
-						cy.request({
-							method: "GET",
-							url: "/api/users/me",
-							failOnStatusCode: false,
-						})
-							.its("status")
-							.should("eq", 401);
+									const aliceCmt = all.find(
+										(c: { _id: string }) => c._id === aliceCommentId,
+									);
+									expect(aliceCmt, "alice's comment should still exist").to
+										.exist;
+									expect(aliceCmt.username).to.eq(ANON);
+									expect(aliceCmt.text).to.eq("Comentário da alice em Gn 1:1.");
 
-						// alice's comment is anonymized but text intact.
-						cy.request("GET", "/api/comments/chapter/gn/1/1").then(
-							(postRes) => {
-								const all = [
-									...(postRes.body.titleComments ?? []),
-									...(postRes.body.prioritized ?? []),
-									...(postRes.body.others ?? []),
-								];
+									const bobCmt = all.find(
+										(c: { _id: string }) => c._id === bobCommentId,
+									);
+									expect(bobCmt, "bob's comment should still exist").to.exist;
+									expect(bobCmt.username).to.eq("bob");
+									expect(bobCmt.likeCount, "alice's like cascaded out").to.eq(
+										0,
+									);
+								},
+							);
+							// Confirm at the storage layer too — no orphan commentlikes rows.
+							cy.task<number>("db:countLikesForComment", bobCommentId).should(
+								"eq",
+								0,
+							);
+							cy.task<number>(
+								"db:countCommentLikesByUser",
+								users.alice.email,
+							).should("eq", 0);
 
-								const aliceCmt = all.find(
-									(c: { _id: string }) => c._id === aliceCommentId,
-								);
-								expect(aliceCmt, "alice's comment should still exist").to.exist;
-								expect(aliceCmt.username).to.eq(ANON);
-								expect(aliceCmt.text).to.eq("Comentário da alice em Gn 1:1.");
+							// The mod-only reports queue confirms alice's report was pulled —
+							// bob's comment loses its only report row and falls out of the queue.
+							cy.clearCookies();
+							cy.loginAs(users.mod.email, users.mod.password);
+							cy.request("GET", "/api/moderation/reports?pages=1").then(
+								(modRes) => {
+									const reported = modRes.body.items as Array<{ _id: string }>;
+									const stillThere = reported.find(
+										(c) => c._id === bobCommentId,
+									);
+									expect(
+										stillThere,
+										"bob's comment should leave the reports queue post-delete",
+									).to.be.undefined;
+								},
+							);
+							cy.task<number>("db:countReportsForComment", bobCommentId).should(
+								"eq",
+								0,
+							);
+							cy.task<number>(
+								"db:countCommentReportsByUser",
+								users.alice.email,
+							).should("eq", 0);
 
-								const bobCmt = all.find(
-									(c: { _id: string }) => c._id === bobCommentId,
-								);
-								expect(bobCmt, "bob's comment should still exist").to.exist;
-								expect(bobCmt.username).to.eq("bob");
-								expect(bobCmt.likeCount, "alice's like cascaded out").to.eq(0);
-							},
-						);
-						// Confirm at the storage layer too — no orphan commentlikes rows.
-						cy.task<number>("db:countLikesForComment", bobCommentId).should(
-							"eq",
-							0,
-						);
-						cy.task<number>(
-							"db:countCommentLikesByUser",
-							users.alice.email,
-						).should("eq", 0);
+							// alice's discussion username is anonymized; bob's answer intact.
+							cy.request("GET", `/api/discussion/gn/${aliceDiscussionId}`).then(
+								(discRes) => {
+									const d = discRes.body;
+									expect(d.username).to.eq(ANON);
+									expect(d.question).to.eq("O que significa 'no princípio'?");
+									const bobAnswer = d.answers.find(
+										(a: { name: string }) => a.name === "bob",
+									);
+									expect(bobAnswer, "bob's answer survives the cascade").to
+										.exist;
+									expect(bobAnswer.text).to.eq("Resposta do bob para a alice.");
+								},
+							);
 
-						// The mod-only reports queue confirms alice's report was pulled —
-						// bob's comment loses its only report row and falls out of the queue.
-						cy.clearCookies();
-						cy.loginAs(users.mod.email, users.mod.password);
-						cy.request("GET", "/api/moderation/reports?pages=1").then(
-							(modRes) => {
-								const reported = modRes.body.items as Array<{ _id: string }>;
-								const stillThere = reported.find((c) => c._id === bobCommentId);
-								expect(
-									stillThere,
-									"bob's comment should leave the reports queue post-delete",
-								).to.be.undefined;
-							},
-						);
-						cy.task<number>("db:countReportsForComment", bobCommentId).should(
-							"eq",
-							0,
-						);
-						cy.task<number>(
-							"db:countCommentReportsByUser",
-							users.alice.email,
-						).should("eq", 0);
-
-						// alice's discussion username is anonymized; bob's answer intact.
-						cy.request("GET", `/api/discussion/gn/${aliceDiscussionId}`).then(
-							(discRes) => {
-								const d = discRes.body;
-								expect(d.username).to.eq(ANON);
-								expect(d.question).to.eq("O que significa 'no princípio'?");
-								const bobAnswer = d.answers.find(
-									(a: { name: string }) => a.name === "bob",
-								);
-								expect(bobAnswer, "bob's answer survives the cascade").to.exist;
-								expect(bobAnswer.text).to.eq("Resposta do bob para a alice.");
-							},
-						);
-
-						// alice's email no longer exists in the User collection.
-						cy.task<{ exists: boolean }>("db:findUser", users.alice.email).then(
-							(u) => {
+							// alice's email no longer exists in the User collection.
+							cy.task<{ exists: boolean }>(
+								"db:findUser",
+								users.alice.email,
+							).then((u) => {
 								expect(u.exists, "alice's user document is hard-deleted").to.be
 									.false;
-							},
-						);
+							});
+						});
 					});
-				});
 			});
 		});
 	});
@@ -323,42 +332,42 @@ describe("LGPD — delete account cascade", () => {
 				expect(res.status).to.eq(201);
 				const bobDiscussionId = res.body._id as string;
 
-			cy.clearCookies();
-			cy.loginAs(users.alice.email, users.alice.password);
+				cy.clearCookies();
+				cy.loginAs(users.alice.email, users.alice.password);
 
-			cy.request({
-				method: "PATCH",
-				url: `/api/discussion/gn/${bobDiscussionId}`,
-				body: { text: "Reflexão da alice sobre o tohu va-bohu." },
-			})
-				.its("status")
-				.should("eq", 200);
+				cy.request({
+					method: "PATCH",
+					url: `/api/discussion/gn/${bobDiscussionId}`,
+					body: { text: "Reflexão da alice sobre o tohu va-bohu." },
+				})
+					.its("status")
+					.should("eq", 200);
 
-			cy.request({
-				method: "DELETE",
-				url: "/api/users",
-				body: { email: users.alice.email },
-			})
-				.its("status")
-				.should("eq", 200);
+				cy.request({
+					method: "DELETE",
+					url: "/api/users",
+					body: { email: users.alice.email },
+				})
+					.its("status")
+					.should("eq", 200);
 
-			cy.request("GET", `/api/discussion/gn/${bobDiscussionId}`).then(
-				(postRes) => {
-					const d = postRes.body;
-					expect(d.username, "bob's discussion ownership untouched").to.eq(
-						"bob",
-					);
-					const aliceAnswer = d.answers.find(
-						(a: { text: string }) =>
-							a.text === "Reflexão da alice sobre o tohu va-bohu.",
-					);
-					expect(aliceAnswer, "alice's answer text preserved").to.exist;
-					expect(
-						aliceAnswer.name,
-						"alice's name in answer is anonymized",
-					).to.eq(ANON);
-				},
-			);
-		});
+				cy.request("GET", `/api/discussion/gn/${bobDiscussionId}`).then(
+					(postRes) => {
+						const d = postRes.body;
+						expect(d.username, "bob's discussion ownership untouched").to.eq(
+							"bob",
+						);
+						const aliceAnswer = d.answers.find(
+							(a: { text: string }) =>
+								a.text === "Reflexão da alice sobre o tohu va-bohu.",
+						);
+						expect(aliceAnswer, "alice's answer text preserved").to.exist;
+						expect(
+							aliceAnswer.name,
+							"alice's name in answer is anonymized",
+						).to.eq(ANON);
+					},
+				);
+			});
 	});
 });

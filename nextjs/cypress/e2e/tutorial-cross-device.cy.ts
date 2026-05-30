@@ -22,78 +22,82 @@ const STORAGE_KEY = "tutorial:chapter-v1:completed";
 const TUTORIAL_NAME = "chapter-v1";
 
 interface FoundUser {
-  exists: boolean;
-  passwordHashLength: number;
-  username: string | null;
-  tutorialsCompleted: string[];
+	exists: boolean;
+	passwordHashLength: number;
+	username: string | null;
+	tutorialsCompleted: string[];
 }
 
 describe("Tutorial cross-device persistence", () => {
-  it("does NOT auto-open if the user finished the tutorial on another device (server flag)", () => {
-    cy.resetDb();
-    cy.seedDb({
-      users: [{ ...users.alice, tutorialsCompleted: [TUTORIAL_NAME] }],
-      books: [bookFixture.book],
-      verses: bookFixture.verses,
-    });
-    cy.loginAs(users.alice.email, users.alice.password);
-    // Simulate a fresh device: localStorage is empty, but the JWT carries
-    // tutorialsCompleted from the seed, so initialFromServer short-circuits
-    // useTutorial to "completed" without consulting the storage flag.
-    cy.clearLocalStorage();
+	it("does NOT auto-open if the user finished the tutorial on another device (server flag)", () => {
+		cy.resetDb();
+		cy.seedDb({
+			users: [{ ...users.alice, tutorialsCompleted: [TUTORIAL_NAME] }],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+		});
+		cy.loginAs(users.alice.email, users.alice.password);
+		// Simulate a fresh device: localStorage is empty, but the JWT carries
+		// tutorialsCompleted from the seed, so initialFromServer short-circuits
+		// useTutorial to "completed" without consulting the storage flag.
+		cy.clearLocalStorage();
 
-    cy.visit("/chapter/gn/1");
-    cy.contains("No princípio", { timeout: 8000 }).should("be.visible");
-    cy.get(".driver-popover").should("not.exist");
-  });
+		cy.visit("/chapter/gn/1");
+		cy.contains("No princípio", { timeout: 8000 }).should("be.visible");
+		cy.get(".driver-popover").should("not.exist");
+	});
 
-  it("dismissing the tutorial persists the completion to the DB", () => {
-    cy.resetDb();
-    cy.seedDb({
-      // Explicit empty list so the chapter tour auto-opens (db:seed defaults
-      // an omitted value to ALL tour ids = nothing auto-opens).
-      users: [{ ...users.alice, tutorialsCompleted: [] }],
-      books: [bookFixture.book],
-      verses: bookFixture.verses,
-    });
-    cy.loginAs(users.alice.email, users.alice.password);
-    cy.clearLocalStorage();
+	it("dismissing the tutorial persists the completion to the DB", () => {
+		cy.resetDb();
+		cy.seedDb({
+			// Explicit empty list so the chapter tour auto-opens (db:seed defaults
+			// an omitted value to ALL tour ids = nothing auto-opens).
+			users: [{ ...users.alice, tutorialsCompleted: [] }],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+		});
+		cy.loginAs(users.alice.email, users.alice.password);
+		cy.clearLocalStorage();
 
-    cy.visit("/chapter/gn/1");
-    cy.get(".driver-popover.bc-tutorial", { timeout: 8000 }).should("be.visible");
+		cy.visit("/chapter/gn/1");
+		cy.get(".driver-popover.bc-tutorial", { timeout: 8000 }).should(
+			"be.visible",
+		);
 
-    cy.get(".driver-popover-close-btn").click();
-    cy.get(".driver-popover").should("not.exist");
+		cy.get(".driver-popover-close-btn").click();
+		cy.get(".driver-popover").should("not.exist");
 
-    // markTutorialCompleted is fire-and-forget; poll the DB until the write
-    // lands. cy.task itself isn't retry-aware, so wrap it in an explicit
-    // recursive check with a deadline.
-    const pollForFlag = (attempt: number): void => {
-      cy.task<FoundUser>("db:findUser", users.alice.email).then((u) => {
-        if (u.tutorialsCompleted.includes(TUTORIAL_NAME)) return;
-        if (attempt > 10) {
-          throw new Error(
-            `tutorialsCompleted never picked up '${TUTORIAL_NAME}' (last value: ${JSON.stringify(u.tutorialsCompleted)})`,
-          );
-        }
-        cy.wait(200);
-        pollForFlag(attempt + 1);
-      });
-    };
-    pollForFlag(0);
-  });
+		// markTutorialCompleted is fire-and-forget; poll the DB until the write
+		// lands. cy.task itself isn't retry-aware, so wrap it in an explicit
+		// recursive check with a deadline.
+		const pollForFlag = (attempt: number): void => {
+			cy.task<FoundUser>("db:findUser", users.alice.email).then((u) => {
+				if (u.tutorialsCompleted.includes(TUTORIAL_NAME)) return;
+				if (attempt > 10) {
+					throw new Error(
+						`tutorialsCompleted never picked up '${TUTORIAL_NAME}' (last value: ${JSON.stringify(u.tutorialsCompleted)})`,
+					);
+				}
+				cy.wait(200);
+				pollForFlag(attempt + 1);
+			});
+		};
+		pollForFlag(0);
+	});
 
-  it("?tour=1 still opens the tour even if the server says completed (refazer flow)", () => {
-    cy.resetDb();
-    cy.seedDb({
-      users: [{ ...users.alice, tutorialsCompleted: [TUTORIAL_NAME] }],
-      books: [bookFixture.book],
-      verses: bookFixture.verses,
-    });
-    cy.loginAs(users.alice.email, users.alice.password);
-    cy.clearLocalStorage();
+	it("?tour=1 still opens the tour even if the server says completed (refazer flow)", () => {
+		cy.resetDb();
+		cy.seedDb({
+			users: [{ ...users.alice, tutorialsCompleted: [TUTORIAL_NAME] }],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+		});
+		cy.loginAs(users.alice.email, users.alice.password);
+		cy.clearLocalStorage();
 
-    cy.visit("/chapter/gn/1?tour=1");
-    cy.get(".driver-popover.bc-tutorial", { timeout: 8000 }).should("be.visible");
-  });
+		cy.visit("/chapter/gn/1?tour=1");
+		cy.get(".driver-popover.bc-tutorial", { timeout: 8000 }).should(
+			"be.visible",
+		);
+	});
 });
