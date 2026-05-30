@@ -224,7 +224,7 @@ export async function setUserDisabledAction(
 			data: {
 				email: updated.email,
 				username: updated.username,
-				disabled: !!updated.disabledAt,
+				disabled: Boolean(updated.disabledAt),
 			},
 		};
 	} catch (err) {

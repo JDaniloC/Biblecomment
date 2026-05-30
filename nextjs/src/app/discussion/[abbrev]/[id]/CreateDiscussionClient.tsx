@@ -67,8 +67,8 @@ export default function CreateDiscussionClient({
 	const commentRef = useRef<HTMLParagraphElement>(null);
 	const [title, setTitle] = useState("");
 	const [body, setBody] = useState("");
-	const [quoteStart, setQuoteStart] = useState<number | undefined>(undefined);
-	const [quoteEnd, setQuoteEnd] = useState<number | undefined>(undefined);
+	const [quoteStart, setQuoteStart] = useState<number | undefined>();
+	const [quoteEnd, setQuoteEnd] = useState<number | undefined>();
 	const [submitting, setSubmitting] = useState(false);
 
 	/**

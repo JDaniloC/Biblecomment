@@ -16,7 +16,9 @@ describe("Onboarding tutorial (chapter)", () => {
   beforeEach(() => {
     cy.resetDb();
     cy.seedDb({
-      users: [users.alice],
+      // Explicit empty list = "no tours finished" so the chapter tour
+      // auto-opens. (db:seed defaults an omitted value to ALL tour ids.)
+      users: [{ ...users.alice, tutorialsCompleted: [] }],
       books: [bookFixture.book],
       verses: bookFixture.verses,
     });

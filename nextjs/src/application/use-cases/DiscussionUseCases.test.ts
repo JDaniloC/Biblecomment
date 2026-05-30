@@ -24,7 +24,7 @@ function makeComment(partial: Partial<Comment> = {}): Comment {
 function commentRepoStub(comments: Comment[]): ICommentRepository {
 	const byId = new Map(comments.map((c) => [c._id ?? "", c]));
 	return {
-		findById: async (id: string) => byId.get(id) ?? null,
+		findById: (id: string) => Promise.resolve(byId.get(id) ?? null),
 	} as unknown as ICommentRepository;
 }
 
@@ -36,7 +36,7 @@ function userRepoStub(verified: boolean): IUserRepository {
 		emailVerifiedAt: verified ? new Date() : undefined,
 	} as unknown as User;
 	return {
-		findByUsername: async () => user,
+		findByUsername: () => Promise.resolve(user),
 	} as unknown as IUserRepository;
 }
 
@@ -46,7 +46,7 @@ function capturingDiscussionRepo(): {
 } {
 	const created: Discussion[] = [];
 	const repo = {
-		async create(d: Omit<Discussion, "_id" | "createdAt" | "updatedAt">) {
+		create(d: Omit<Discussion, "_id" | "createdAt" | "updatedAt">) {
 			const full = {
 				...d,
 				_id: "d1",
@@ -54,7 +54,7 @@ function capturingDiscussionRepo(): {
 				updatedAt: new Date(),
 			} as Discussion;
 			created.push(full);
-			return full;
+			return Promise.resolve(full);
 		},
 	} as unknown as IDiscussionRepository;
 	return { repo, created };

@@ -70,18 +70,29 @@ describe("LGPD — delete account cascade", () => {
 				expect(aliceCommentRes.status).to.eq(201);
 				const aliceCommentId = aliceCommentRes.body._id as string;
 
-				cy.request({
-					method: "POST",
-					url: "/api/discussion/gn",
-					body: {
-						verseReference: "Gn 1:1",
-						verseText: "No princípio, Deus criou os céus e a terra.",
-						commentText: "Reflexão da alice.",
-						question: "O que significa 'no princípio'?",
-					},
-				}).then((aliceDiscRes) => {
-					expect(aliceDiscRes.status).to.eq(201);
-					const aliceDiscussionId = aliceDiscRes.body._id as string;
+				cy.task<{ id: string }>("db:seedComment", {
+					username: "alice",
+					abbrev: "gn",
+					chapter: 1,
+					verseNumber: 1,
+					text: "Reflexão da alice.",
+					tags: [],
+				})
+					.then((r) => r.id)
+					.then((anchorCommentId) =>
+						cy.request({
+							method: "POST",
+							url: "/api/discussion/gn",
+							body: {
+								commentId: anchorCommentId,
+								title: "Sobre a criação",
+								body: "O que significa 'no princípio'?",
+							},
+						}),
+					)
+					.then((aliceDiscRes) => {
+						expect(aliceDiscRes.status).to.eq(201);
+						const aliceDiscussionId = aliceDiscRes.body._id as string;
 
 					// ── Switch to bob: post a comment + answer alice's discussion ──
 					cy.clearCookies();
@@ -288,19 +299,29 @@ describe("LGPD — delete account cascade", () => {
 
 	it("when alice answered someone else's discussion, only her embedded answer is anonymized", () => {
 		cy.loginAs(users.bob.email, users.bob.password);
-		cy.request({
-			method: "POST",
-			url: "/api/discussion/gn",
-			body: {
-				verseReference: "Gn 1:2",
-				verseText:
-					"A terra era sem forma e vazia; havia trevas sobre a face do abismo.",
-				commentText: "",
-				question: "O que é 'sem forma e vazia'?",
-			},
-		}).then((res) => {
-			expect(res.status).to.eq(201);
-			const bobDiscussionId = res.body._id as string;
+		cy.task<{ id: string }>("db:seedComment", {
+			username: "bob",
+			abbrev: "gn",
+			chapter: 1,
+			verseNumber: 2,
+			text: "Comentário âncora do bob.",
+			tags: [],
+		})
+			.then((r) => r.id)
+			.then((anchorCommentId) =>
+				cy.request({
+					method: "POST",
+					url: "/api/discussion/gn",
+					body: {
+						commentId: anchorCommentId,
+						title: "Sobre o caos primordial",
+						body: "O que é 'sem forma e vazia'?",
+					},
+				}),
+			)
+			.then((res) => {
+				expect(res.status).to.eq(201);
+				const bobDiscussionId = res.body._id as string;
 
 			cy.clearCookies();
 			cy.loginAs(users.alice.email, users.alice.password);

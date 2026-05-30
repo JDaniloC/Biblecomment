@@ -18,7 +18,7 @@ export const ANONYMIZED_USERNAME = "[usuário removido]";
 export class GetUserByEmailUseCase {
 	constructor(private readonly userRepo: IUserRepository) {}
 
-	async execute(email: string): Promise<User | null> {
+	execute(email: string): Promise<User | null> {
 		return this.userRepo.findByEmail(email);
 	}
 }
@@ -26,7 +26,7 @@ export class GetUserByEmailUseCase {
 export class GetUserByUsernameUseCase {
 	constructor(private readonly userRepo: IUserRepository) {}
 
-	async execute(username: string): Promise<User | null> {
+	execute(username: string): Promise<User | null> {
 		return this.userRepo.findByUsername(username);
 	}
 }
@@ -239,7 +239,7 @@ export class SetUserDisabledUseCase {
 export class ListUsersForModerationUseCase {
 	constructor(private readonly userRepo: IUserRepository) {}
 
-	async execute(opts: {
+	execute(opts: {
 		q?: string;
 		cursor?: AdminUserCursor | null;
 		limit: number;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Book } from "@/domain/entities/Book";
 import { discussionsService } from "@/services/discussions";
@@ -108,6 +108,12 @@ export default function DiscussionDetailClient({
 	const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
 	const [editAnswerText, setEditAnswerText] = useState("");
 	const [savingEdit, setSavingEdit] = useState(false);
+	const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+	// Focus the edit textarea when an answer enters edit mode (replaces autoFocus).
+	useEffect(() => {
+		if (editingAnswerId) editTextareaRef.current?.focus();
+	}, [editingAnswerId]);
 
 	function startEdit(answerId: string, currentText: string) {
 		setEditingAnswerId(answerId);
@@ -174,12 +180,14 @@ export default function DiscussionDetailClient({
 	async function handleToggleDiscussionLike() {
 		if (!discussion?._id) return;
 		try {
-			const r = await discussionsService.toggleLike(
+			const result = await discussionsService.toggleLike(
 				"discussion",
 				discussion._id,
 			);
 			setDiscussion((d) =>
-				d ? { ...d, likeCount: r.likeCount, likedByMe: r.likedByMe } : d,
+				d
+					? { ...d, likeCount: result.likeCount, likedByMe: result.likedByMe }
+					: d,
 			);
 		} catch {
 			handleNotification("error", "Erro ao curtir.");
@@ -188,14 +196,18 @@ export default function DiscussionDetailClient({
 
 	async function handleToggleAnswerLike(answerId: string) {
 		try {
-			const r = await discussionsService.toggleLike("answer", answerId);
+			const result = await discussionsService.toggleLike("answer", answerId);
 			setDiscussion((d) =>
 				d
 					? {
 							...d,
 							answers: d.answers.map((a) =>
 								a._id === answerId
-									? { ...a, likeCount: r.likeCount, likedByMe: r.likedByMe }
+									? {
+											...a,
+											likeCount: result.likeCount,
+											likedByMe: result.likedByMe,
+										}
 									: a,
 							),
 						}
@@ -256,7 +268,7 @@ export default function DiscussionDetailClient({
 	}
 
 	const quoteText = discussion.commentText || discussion.verseText;
-	const hasTitle = !!discussion.title?.trim();
+	const hasTitle = Boolean(discussion.title?.trim());
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -347,7 +359,7 @@ export default function DiscussionDetailClient({
 				<div className="space-y-3 mb-6">
 					{(discussion.answers ?? []).map((a, i) => {
 						const canEdit =
-							!!a._id &&
+							Boolean(a._id) &&
 							(user.moderator ||
 								a.name === user.name ||
 								a.name === user.username);
@@ -366,7 +378,7 @@ export default function DiscussionDetailClient({
 									{canEdit && !isEditing && (
 										<button
 											type="button"
-											onClick={() => startEdit(a._id!, a.text)}
+											onClick={() => a._id && startEdit(a._id, a.text)}
 											className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition"
 										>
 											Editar
@@ -376,11 +388,11 @@ export default function DiscussionDetailClient({
 								{isEditing ? (
 									<div className="space-y-2">
 										<textarea
+											ref={editTextareaRef}
 											value={editAnswerText}
 											onChange={(e) => setEditAnswerText(e.target.value)}
 											rows={3}
 											className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
-											autoFocus
 										/>
 										<div className="flex gap-2 justify-end">
 											<button

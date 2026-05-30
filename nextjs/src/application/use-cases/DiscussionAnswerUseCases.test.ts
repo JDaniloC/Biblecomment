@@ -29,31 +29,29 @@ function fakeUser(partial: Partial<User> = {}): User {
 
 function makeUserRepo(user: User | null): IUserRepository {
 	return {
-		findByUsername: async () => user,
-		findByEmail: async () => user,
-		findById: async () => null,
-		findByUsernamePublic: async () => null,
-		searchByUsernamePrefix: async () => [],
-		findByUsernames: async () => [],
-		findManyByIds: async () => [],
-		findAll: async () => [],
-		findAllPaginated: async () => [],
-		findForModeration: async () => ({ items: [], nextCursor: null }),
-		create: async () => {
-			throw new Error("not implemented");
-		},
-		updatePassword: async () => {},
-		updatePasswordById: async () => {},
-		update: async () => null,
-		markTutorialCompleted: async () => {},
-		addBadges: async () => [],
-		setDisabled: async () => null,
-		setEmailVerified: async () => {},
-		setPendingEmail: async () => {},
-		clearPendingEmail: async () => {},
-		promotePendingEmail: async () => {},
-		findByEmailOrPendingEmail: async () => null,
-		delete: async () => {},
+		findByUsername: () => Promise.resolve(user),
+		findByEmail: () => Promise.resolve(user),
+		findById: () => Promise.resolve(null),
+		findByUsernamePublic: () => Promise.resolve(null),
+		searchByUsernamePrefix: () => Promise.resolve([]),
+		findByUsernames: () => Promise.resolve([]),
+		findManyByIds: () => Promise.resolve([]),
+		findAll: () => Promise.resolve([]),
+		findAllPaginated: () => Promise.resolve([]),
+		findForModeration: () => Promise.resolve({ items: [], nextCursor: null }),
+		create: () => Promise.reject(new Error("not implemented")),
+		updatePassword: () => Promise.resolve(),
+		updatePasswordById: () => Promise.resolve(),
+		update: () => Promise.resolve(null),
+		markTutorialCompleted: () => Promise.resolve(),
+		addBadges: () => Promise.resolve([]),
+		setDisabled: () => Promise.resolve(null),
+		setEmailVerified: () => Promise.resolve(),
+		setPendingEmail: () => Promise.resolve(),
+		clearPendingEmail: () => Promise.resolve(),
+		promotePendingEmail: () => Promise.resolve(),
+		findByEmailOrPendingEmail: () => Promise.resolve(null),
+		delete: () => Promise.resolve(),
 	};
 }
 
@@ -76,18 +74,20 @@ function fakeDiscussion(
 function discussionRepoStub(discussions: Discussion[]): IDiscussionRepository {
 	const byId = new Map(discussions.map((d) => [d._id ?? "", d]));
 	return {
-		findById: async (id: string) => byId.get(id) ?? null,
-		findManyByIds: async (ids: string[]) =>
-			ids.map((i) => byId.get(i)).filter((d): d is Discussion => Boolean(d)),
-		findAllPaginated: async () => discussions,
-		findByBookAbbrev: async () => discussions,
-		findByBookAbbrevPaginated: async () => discussions,
-		findAll: async () => discussions,
-		create: async (d) => ({ _id: "new", ...d }) as Discussion,
-		createMany: async () => discussions.length,
-		delete: async () => {},
-		anonymizeByUsername: async () => 0,
-		userHasOpenedDiscussion: async () => discussions.length > 0,
+		findById: (id: string) => Promise.resolve(byId.get(id) ?? null),
+		findManyByIds: (ids: string[]) =>
+			Promise.resolve(
+				ids.map((i) => byId.get(i)).filter((d): d is Discussion => Boolean(d)),
+			),
+		findAllPaginated: () => Promise.resolve(discussions),
+		findByBookAbbrev: () => Promise.resolve(discussions),
+		findByBookAbbrevPaginated: () => Promise.resolve(discussions),
+		findAll: () => Promise.resolve(discussions),
+		create: (d) => Promise.resolve({ _id: "new", ...d } as Discussion),
+		createMany: () => Promise.resolve(discussions.length),
+		delete: () => Promise.resolve(),
+		anonymizeByUsername: () => Promise.resolve(0),
+		userHasOpenedDiscussion: () => Promise.resolve(discussions.length > 0),
 	};
 }
 
@@ -95,7 +95,7 @@ function inMemoryAnswerRepo(): IDiscussionAnswerRepository {
 	let nextId = 1;
 	const rows: DiscussionAnswer[] = [];
 	return {
-		async add({ discussionId, userId, username, text }) {
+		add({ discussionId, userId, username, text }) {
 			const row: DiscussionAnswer = {
 				_id: `a${nextId++}`,
 				discussionId,
@@ -106,55 +106,57 @@ function inMemoryAnswerRepo(): IDiscussionAnswerRepository {
 				updatedAt: new Date(Date.now() + nextId),
 			};
 			rows.push(row);
-			return row;
+			return Promise.resolve(row);
 		},
-		async update(answerId, text) {
+		update(answerId, text) {
 			const row = rows.find((r) => r._id === answerId);
-			if (!row) return null;
+			if (!row) return Promise.resolve(null);
 			row.text = text;
 			row.updatedAt = new Date();
-			return row;
+			return Promise.resolve(row);
 		},
-		async findById(answerId) {
-			return rows.find((r) => r._id === answerId) ?? null;
+		findById(answerId) {
+			return Promise.resolve(rows.find((r) => r._id === answerId) ?? null);
 		},
-		async findByDiscussion(discussionId) {
-			return rows
-				.filter((r) => r.discussionId === discussionId)
-				.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+		findByDiscussion(discussionId) {
+			return Promise.resolve(
+				rows
+					.filter((r) => r.discussionId === discussionId)
+					.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+			);
 		},
-		async countByDiscussion(ids) {
+		countByDiscussion(ids) {
 			const out = new Map<string, number>();
 			for (const id of ids) {
 				const n = rows.filter((r) => r.discussionId === id).length;
 				if (n > 0) out.set(id, n);
 			}
-			return out;
+			return Promise.resolve(out);
 		},
-		async findByUser(userId) {
-			return rows.filter((r) => r.userId === userId);
+		findByUser(userId) {
+			return Promise.resolve(rows.filter((r) => r.userId === userId));
 		},
-		async userHasAnsweredAny(userId) {
-			return rows.some((r) => r.userId === userId);
+		userHasAnsweredAny(userId) {
+			return Promise.resolve(rows.some((r) => r.userId === userId));
 		},
-		async latestPerDiscussion() {
-			return [];
+		latestPerDiscussion() {
+			return Promise.resolve([]);
 		},
-		async anonymizeByUser(userId, replacement) {
+		anonymizeByUser(userId, replacement) {
 			let n = 0;
 			for (const r of rows)
 				if (r.userId === userId) {
 					r.username = replacement;
 					n++;
 				}
-			return n;
+			return Promise.resolve(n);
 		},
-		async deleteByDiscussion(discussionId) {
+		deleteByDiscussion(discussionId) {
 			const before = rows.length;
 			for (let i = rows.length - 1; i >= 0; i--) {
 				if (rows[i].discussionId === discussionId) rows.splice(i, 1);
 			}
-			return before - rows.length;
+			return Promise.resolve(before - rows.length);
 		},
 	};
 }
@@ -163,43 +165,44 @@ function inMemoryDiscussionLikeRepo(): IDiscussionLikeRepository {
 	const data = new Map<string, Set<string>>();
 	const key = (t: DiscussionLikeTarget, id: string) => `${t}:${id}`;
 	return {
-		async like(userId, t, id) {
-			const k = key(t, id);
-			if (!data.has(k)) data.set(k, new Set());
-			const s = data.get(k)!;
-			if (s.has(userId)) return false;
-			s.add(userId);
-			return true;
+		like(userId, t, id) {
+			const mapKey = key(t, id);
+			if (!data.has(mapKey)) data.set(mapKey, new Set());
+			const set = data.get(mapKey) ?? new Set<string>();
+			if (set.has(userId)) return Promise.resolve(false);
+			set.add(userId);
+			return Promise.resolve(true);
 		},
-		async unlike(userId, t, id) {
+		unlike(userId, t, id) {
 			data.get(key(t, id))?.delete(userId);
+			return Promise.resolve();
 		},
-		async hasLiked(userId, t, id) {
-			return data.get(key(t, id))?.has(userId) ?? false;
+		hasLiked(userId, t, id) {
+			return Promise.resolve(data.get(key(t, id))?.has(userId) ?? false);
 		},
-		async countByTargets(t, ids) {
+		countByTargets(t, ids) {
 			const out = new Map<string, number>();
 			for (const id of ids) {
 				const n = data.get(key(t, id))?.size ?? 0;
 				if (n > 0) out.set(id, n);
 			}
-			return out;
+			return Promise.resolve(out);
 		},
-		async whichLiked(userId, t, ids) {
+		whichLiked(userId, t, ids) {
 			const out = new Set<string>();
 			for (const id of ids) if (data.get(key(t, id))?.has(userId)) out.add(id);
-			return out;
+			return Promise.resolve(out);
 		},
-		async deleteAllByUser(userId) {
+		deleteAllByUser(userId) {
 			let n = 0;
-			for (const s of data.values()) if (s.delete(userId)) n++;
-			return n;
+			for (const set of data.values()) if (set.delete(userId)) n++;
+			return Promise.resolve(n);
 		},
-		async deleteByTarget(t, id) {
-			const k = key(t, id);
-			const n = data.get(k)?.size ?? 0;
-			data.delete(k);
-			return n;
+		deleteByTarget(t, id) {
+			const mapKey = key(t, id);
+			const n = data.get(mapKey)?.size ?? 0;
+			data.delete(mapKey);
+			return Promise.resolve(n);
 		},
 	};
 }
@@ -302,9 +305,11 @@ describe("GetDiscussionByIdUseCase", () => {
 			text: "one",
 		});
 		const likes = inMemoryDiscussionLikeRepo();
+		expect(a1._id).toBeDefined();
+		const a1Id = a1._id ?? "";
 		await likes.like("viewer", "discussion", "d1");
 		await likes.like("other", "discussion", "d1");
-		await likes.like("viewer", "answer", a1._id!);
+		await likes.like("viewer", "answer", a1Id);
 
 		const result = await new GetDiscussionByIdUseCase(
 			repo,

@@ -145,14 +145,30 @@ describe("@mentions", () => {
 
   describe("In discussion answers", () => {
     it("@bob in an answer creates a notification of type answer_mention", () => {
-      // Alice creates a discussion. Bob answers, mentioning mod.
+      // Alice creates a discussion anchored to a comment. Bob answers, mentioning mod.
       cy.loginAs(users.alice.email, users.alice.password);
-      cy.request({
-        method: "POST",
-        url: "/api/discussion/gn",
-        body: { verseReference: "Gn 1:1", question: "Discussão de alice" },
-      }).then((createRes) => {
-        const discussionId = createRes.body._id as string;
+      cy.task<{ id: string }>("db:seedComment", {
+        username: "alice",
+        abbrev: "gn",
+        chapter: 1,
+        verseNumber: 1,
+        text: "Comentário âncora para discussão.",
+        tags: [],
+      })
+        .then((r) => r.id)
+        .then((commentId) =>
+          cy.request({
+            method: "POST",
+            url: "/api/discussion/gn",
+            body: {
+              commentId,
+              title: "Discussão de alice",
+              body: "Discussão de alice",
+            },
+          }),
+        )
+        .then((createRes) => {
+          const discussionId = createRes.body._id as string;
 
         cy.clearCookies();
         cy.loginAs(users.bob.email, users.bob.password);

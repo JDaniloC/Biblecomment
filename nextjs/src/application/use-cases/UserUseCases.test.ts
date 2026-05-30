@@ -396,13 +396,15 @@ describe("UpdateUsernameUseCase", () => {
 		const findByEmail = vi
 			.fn()
 			.mockResolvedValue(opts.user === undefined ? fakeUser() : opts.user);
-		const findByUsername = vi.fn(async (slug: string) =>
-			opts.takenSlug === slug
-				? fakeUser({ username: slug, _id: "u-other" })
-				: null,
+		const findByUsername = vi.fn((slug: string) =>
+			Promise.resolve(
+				opts.takenSlug === slug
+					? fakeUser({ username: slug, _id: "u-other" })
+					: null,
+			),
 		);
-		const update = vi.fn(async (_email: string, data: Partial<User>) =>
-			fakeUser({ username: data.username ?? "alice" }),
+		const update = vi.fn((_email: string, data: Partial<User>) =>
+			Promise.resolve(fakeUser({ username: data.username ?? "alice" })),
 		);
 		const userRepo = {
 			findByEmail,

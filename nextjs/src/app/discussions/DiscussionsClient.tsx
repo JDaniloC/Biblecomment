@@ -126,7 +126,7 @@ export default function DiscussionsClient({
 			<PageTutorial
 				name={DISCUSSIONS_TUTORIAL_NAME}
 				steps={DISCUSSIONS_TUTORIAL}
-				enabled={!!user}
+				enabled={Boolean(user)}
 				alreadyCompleted={tutorialAlreadyCompleted}
 			/>
 		</div>

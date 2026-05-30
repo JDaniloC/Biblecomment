@@ -50,7 +50,9 @@ describe("Tutorial cross-device persistence", () => {
   it("dismissing the tutorial persists the completion to the DB", () => {
     cy.resetDb();
     cy.seedDb({
-      users: [users.alice],
+      // Explicit empty list so the chapter tour auto-opens (db:seed defaults
+      // an omitted value to ALL tour ids = nothing auto-opens).
+      users: [{ ...users.alice, tutorialsCompleted: [] }],
       books: [bookFixture.book],
       verses: bookFixture.verses,
     });

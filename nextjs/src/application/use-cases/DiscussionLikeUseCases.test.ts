@@ -10,43 +10,44 @@ export function inMemoryDiscussionLikeRepo(): IDiscussionLikeRepository {
 	const data = new Map<string, Set<string>>();
 	const key = (t: DiscussionLikeTarget, id: string) => `${t}:${id}`;
 	return {
-		async like(userId, t, id) {
-			const k = key(t, id);
-			if (!data.has(k)) data.set(k, new Set());
-			const s = data.get(k)!;
-			if (s.has(userId)) return false;
-			s.add(userId);
-			return true;
+		like(userId, t, id) {
+			const mapKey = key(t, id);
+			if (!data.has(mapKey)) data.set(mapKey, new Set());
+			const set = data.get(mapKey) ?? new Set<string>();
+			if (set.has(userId)) return Promise.resolve(false);
+			set.add(userId);
+			return Promise.resolve(true);
 		},
-		async unlike(userId, t, id) {
+		unlike(userId, t, id) {
 			data.get(key(t, id))?.delete(userId);
+			return Promise.resolve();
 		},
-		async hasLiked(userId, t, id) {
-			return data.get(key(t, id))?.has(userId) ?? false;
+		hasLiked(userId, t, id) {
+			return Promise.resolve(data.get(key(t, id))?.has(userId) ?? false);
 		},
-		async countByTargets(t, ids) {
+		countByTargets(t, ids) {
 			const out = new Map<string, number>();
 			for (const id of ids) {
 				const n = data.get(key(t, id))?.size ?? 0;
 				if (n > 0) out.set(id, n);
 			}
-			return out;
+			return Promise.resolve(out);
 		},
-		async whichLiked(userId, t, ids) {
+		whichLiked(userId, t, ids) {
 			const out = new Set<string>();
 			for (const id of ids) if (data.get(key(t, id))?.has(userId)) out.add(id);
-			return out;
+			return Promise.resolve(out);
 		},
-		async deleteAllByUser(userId) {
+		deleteAllByUser(userId) {
 			let n = 0;
-			for (const s of data.values()) if (s.delete(userId)) n++;
-			return n;
+			for (const set of data.values()) if (set.delete(userId)) n++;
+			return Promise.resolve(n);
 		},
-		async deleteByTarget(t, id) {
-			const k = key(t, id);
-			const n = data.get(k)?.size ?? 0;
-			data.delete(k);
-			return n;
+		deleteByTarget(t, id) {
+			const mapKey = key(t, id);
+			const n = data.get(mapKey)?.size ?? 0;
+			data.delete(mapKey);
+			return Promise.resolve(n);
 		},
 	};
 }
@@ -54,8 +55,8 @@ export function inMemoryDiscussionLikeRepo(): IDiscussionLikeRepository {
 describe("ToggleDiscussionLikeUseCase", () => {
 	it("first toggle likes a discussion → count 1, likedByMe true", async () => {
 		const uc = new ToggleDiscussionLikeUseCase(inMemoryDiscussionLikeRepo());
-		const r = await uc.execute("discussion", "d1", "u1");
-		expect(r).toEqual({
+		const result = await uc.execute("discussion", "d1", "u1");
+		expect(result).toEqual({
 			targetType: "discussion",
 			targetId: "d1",
 			likeCount: 1,
@@ -67,8 +68,8 @@ describe("ToggleDiscussionLikeUseCase", () => {
 		const repo = inMemoryDiscussionLikeRepo();
 		const uc = new ToggleDiscussionLikeUseCase(repo);
 		await uc.execute("answer", "a1", "u1");
-		const r = await uc.execute("answer", "a1", "u1");
-		expect(r).toEqual({
+		const result = await uc.execute("answer", "a1", "u1");
+		expect(result).toEqual({
 			targetType: "answer",
 			targetId: "a1",
 			likeCount: 0,
@@ -82,8 +83,8 @@ describe("ToggleDiscussionLikeUseCase", () => {
 		await uc.execute("discussion", "x", "u1");
 		await uc.execute("discussion", "x", "u2");
 		await uc.execute("answer", "x", "u1"); // same id, different target type
-		const r = await uc.execute("discussion", "x", "u3");
-		expect(r.likeCount).toBe(3);
+		const result = await uc.execute("discussion", "x", "u3");
+		expect(result.likeCount).toBe(3);
 		expect((await repo.countByTargets("answer", ["x"])).get("x")).toBe(1);
 	});
 });

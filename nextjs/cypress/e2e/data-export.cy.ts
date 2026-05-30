@@ -43,18 +43,29 @@ describe("LGPD — data export endpoint", () => {
   it("returns JSON with profile + comments + ownedDiscussions + answersAuthored + notifications", () => {
     // ── Bob opens a discussion that alice will answer (so answersAuthored is populated) ──
     cy.loginAs(users.bob.email, users.bob.password);
-    cy.request({
-      method: "POST",
-      url: "/api/discussion/gn",
-      body: {
-        verseReference: "Gn 1:2",
-        verseText: "A terra era sem forma e vazia.",
-        commentText: "",
-        question: "Pergunta do bob.",
-      },
-    }).then((res) => {
-      expect(res.status).to.eq(201);
-      const bobDiscussionId = res.body._id as string;
+    cy.task<{ id: string }>("db:seedComment", {
+      username: "bob",
+      abbrev: "gn",
+      chapter: 1,
+      verseNumber: 2,
+      text: "Comentário âncora do bob.",
+      tags: [],
+    })
+      .then((r) => r.id)
+      .then((anchorCommentId) =>
+        cy.request({
+          method: "POST",
+          url: "/api/discussion/gn",
+          body: {
+            commentId: anchorCommentId,
+            title: "Pergunta do bob.",
+            body: "Pergunta do bob.",
+          },
+        }),
+      )
+      .then((res) => {
+        expect(res.status).to.eq(201);
+        const bobDiscussionId = res.body._id as string;
 
       // ── Switch to alice: comment, own discussion, answer bob's discussion ──
       cy.clearCookies();
@@ -67,16 +78,31 @@ describe("LGPD — data export endpoint", () => {
           body: { text: "Comentário da alice exclusivo.", tags: ["devocional"] },
         }).its("status").should("eq", 201);
 
-        cy.request({
-          method: "POST",
-          url: "/api/discussion/gn",
-          body: {
-            verseReference: "Gn 1:1",
-            verseText: "No princípio, Deus criou os céus e a terra.",
-            commentText: "",
-            question: "Pergunta da alice.",
-          },
-        }).its("status").should("eq", 201);
+        // Anchor comment authored by bob so it doesn't count toward
+        // alice's exported `comments` (the discussion ownership is alice's,
+        // derived from the logged-in session, not the comment author).
+        cy.task<{ id: string }>("db:seedComment", {
+          username: "bob",
+          abbrev: "gn",
+          chapter: 1,
+          verseNumber: 1,
+          text: "Comentário âncora para a discussão da alice.",
+          tags: [],
+        })
+          .then((r) => r.id)
+          .then((anchorCommentId) =>
+            cy.request({
+              method: "POST",
+              url: "/api/discussion/gn",
+              body: {
+                commentId: anchorCommentId,
+                title: "Pergunta da alice.",
+                body: "Pergunta da alice.",
+              },
+            }),
+          )
+          .its("status")
+          .should("eq", 201);
 
         cy.request({
           method: "PATCH",
@@ -116,7 +142,7 @@ describe("LGPD — data export endpoint", () => {
 
           // answersAuthored: alice's reply on bob's discussion.
           expect(body.answersAuthored).to.have.length(1);
-          expect(body.answersAuthored[0].verseReference).to.eq("Gn 1:2");
+          expect(body.answersAuthored[0].verseReference).to.eq("gn 1:2");
           expect(body.answersAuthored[0].text).to.eq(
             "Resposta da alice na discussão do bob.",
           );

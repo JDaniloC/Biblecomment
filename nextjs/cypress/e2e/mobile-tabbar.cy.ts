@@ -7,7 +7,21 @@ describe("Mobile bottom tab bar", () => {
   beforeEach(() => {
     cy.resetDb();
     cy.seedDb({
-      users: [{ ...users.alice, tutorialsCompleted: ["chapter-v1"] }],
+      // All tours marked done so the /home tour doesn't auto-open and cover
+      // the bottom tab bar with the driver.js overlay (pointer-events:none).
+      // Mirrors src/lib/tutorial-config.ts.
+      users: [
+        {
+          ...users.alice,
+          tutorialsCompleted: [
+            "home-v1",
+            "chapter-v1",
+            "communities-v1",
+            "discussions-v1",
+            "profile-v1",
+          ],
+        },
+      ],
       books: [bookFixture.book],
       verses: bookFixture.verses,
     });
