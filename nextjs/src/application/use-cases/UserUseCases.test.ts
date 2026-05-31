@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+﻿import { describe, it, expect, vi } from "vitest";
 import {
 	SetModeratorUseCase,
 	SetUserDisabledUseCase,
@@ -160,7 +160,7 @@ describe("SetUserDisabledUseCase", () => {
 			"mod-jane",
 		);
 
-		// `by` is null on re-enable — there is no "disabled by" to record.
+		// `by` is null on re-enable â€” there is no "disabled by" to record.
 		expect(setDisabled).toHaveBeenCalledWith("alice@example.com", false, null);
 		expect(unhideAllByUsernameCascade).toHaveBeenCalledWith("alice");
 		expect(hideAllByUsername).not.toHaveBeenCalled();
@@ -239,7 +239,7 @@ describe("DeleteUserUseCase", () => {
 			.mockResolvedValue(
 				fakeUser({ email: "victim@example.com", username: "victim" }),
 			);
-		const del = vi.fn().mockResolvedValue(undefined);
+		const del = vi.fn(() => Promise.resolve());
 		const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
 		const useCase = new DeleteUserUseCase(
 			userRepo,
@@ -261,7 +261,7 @@ describe("DeleteUserUseCase", () => {
 		const findByEmail = vi
 			.fn()
 			.mockResolvedValue(fakeUser({ email: "alice@example.com" }));
-		const del = vi.fn().mockResolvedValue(undefined);
+		const del = vi.fn(() => Promise.resolve());
 		const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
 		const useCase = new DeleteUserUseCase(
 			userRepo,
@@ -306,7 +306,7 @@ describe("DeleteUserUseCase", () => {
 		const findByEmail = vi
 			.fn()
 			.mockResolvedValue(fakeUser({ username: "alice" }));
-		const del = vi.fn().mockResolvedValue(undefined);
+		const del = vi.fn(() => Promise.resolve());
 		const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
 
 		const commentRepo = noopCommentRepo();
@@ -351,7 +351,7 @@ describe("DeleteUserUseCase", () => {
 
 describe("MarkTutorialCompletedUseCase", () => {
 	it("delegates the email and tutorial name to the repo", async () => {
-		const markTutorialCompleted = vi.fn().mockResolvedValue(undefined);
+		const markTutorialCompleted = vi.fn(() => Promise.resolve());
 		const repo = { markTutorialCompleted } as unknown as IUserRepository;
 		const useCase = new MarkTutorialCompletedUseCase(repo);
 
@@ -363,8 +363,8 @@ describe("MarkTutorialCompletedUseCase", () => {
 		);
 	});
 
-	it("is idempotent — repeated calls just delegate again (repo enforces $addToSet)", async () => {
-		const markTutorialCompleted = vi.fn().mockResolvedValue(undefined);
+	it("is idempotent â€” repeated calls just delegate again (repo enforces $addToSet)", async () => {
+		const markTutorialCompleted = vi.fn(() => Promise.resolve());
 		const repo = { markTutorialCompleted } as unknown as IUserRepository;
 		const useCase = new MarkTutorialCompletedUseCase(repo);
 

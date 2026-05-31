@@ -42,8 +42,9 @@ function getVerseId(
 			expect(
 				verse,
 				`verse ${abbrev} ${chapter}:${verseNumber} should be seeded`,
-			).to.exist;
-			return verse!._id;
+			).to.not.equal(undefined);
+			if (!verse) throw new Error("verse not seeded");
+			return verse._id;
 		});
 }
 
@@ -171,10 +172,11 @@ describe("LGPD — delete account cascade", () => {
 									expect(
 										target,
 										"bob's comment should be in the reports queue pre-delete",
-									).to.exist;
-									expect(target!.reportCount).to.eq(1);
+									).to.not.equal(undefined);
+									if (!target) throw new Error("unreachable");
+									expect(target.reportCount).to.eq(1);
 									expect(
-										target!.reporters,
+										target.reporters,
 										"alice should be the reporter",
 									).to.include("alice");
 								},
@@ -235,7 +237,9 @@ describe("LGPD — delete account cascade", () => {
 									const bobCmt = all.find(
 										(c: { _id: string }) => c._id === bobCommentId,
 									);
-									expect(bobCmt, "bob's comment should still exist").to.exist;
+									expect(bobCmt, "bob's comment should still exist").to.not.equal(
+								undefined,
+							);
 									expect(bobCmt.username).to.eq("bob");
 									expect(bobCmt.likeCount, "alice's like cascaded out").to.eq(
 										0,
@@ -265,7 +269,7 @@ describe("LGPD — delete account cascade", () => {
 									expect(
 										stillThere,
 										"bob's comment should leave the reports queue post-delete",
-									).to.be.undefined;
+									).to.equal(undefined);
 								},
 							);
 							cy.task<number>("db:countReportsForComment", bobCommentId).should(
@@ -280,14 +284,16 @@ describe("LGPD — delete account cascade", () => {
 							// alice's discussion username is anonymized; bob's answer intact.
 							cy.request("GET", `/api/discussion/gn/${aliceDiscussionId}`).then(
 								(discRes) => {
-									const d = discRes.body;
-									expect(d.username).to.eq(ANON);
-									expect(d.question).to.eq("O que significa 'no princípio'?");
-									const bobAnswer = d.answers.find(
+									const disc = discRes.body;
+									expect(disc.username).to.eq(ANON);
+									expect(disc.question).to.eq("O que significa 'no princípio'?");
+									const bobAnswer = disc.answers.find(
 										(a: { name: string }) => a.name === "bob",
 									);
-									expect(bobAnswer, "bob's answer survives the cascade").to
-										.exist;
+									expect(
+										bobAnswer,
+										"bob's answer survives the cascade",
+									).to.not.equal(undefined);
 									expect(bobAnswer.text).to.eq("Resposta do bob para a alice.");
 								},
 							);
@@ -353,15 +359,19 @@ describe("LGPD — delete account cascade", () => {
 
 				cy.request("GET", `/api/discussion/gn/${bobDiscussionId}`).then(
 					(postRes) => {
-						const d = postRes.body;
-						expect(d.username, "bob's discussion ownership untouched").to.eq(
-							"bob",
-						);
-						const aliceAnswer = d.answers.find(
+						const disc = postRes.body;
+						expect(
+							disc.username,
+							"bob's discussion ownership untouched",
+						).to.eq("bob");
+						const aliceAnswer = disc.answers.find(
 							(a: { text: string }) =>
 								a.text === "Reflexão da alice sobre o tohu va-bohu.",
 						);
-						expect(aliceAnswer, "alice's answer text preserved").to.exist;
+						expect(
+							aliceAnswer,
+							"alice's answer text preserved",
+						).to.not.equal(undefined);
 						expect(
 							aliceAnswer.name,
 							"alice's name in answer is anonymized",

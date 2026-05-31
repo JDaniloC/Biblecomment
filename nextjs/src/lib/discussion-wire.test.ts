@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+﻿import { describe, it, expect } from "vitest";
 import { toDiscussionWire } from "./discussion-wire";
 import type { Discussion } from "@/domain/entities/Discussion";
 
@@ -10,25 +10,25 @@ function baseDiscussion(partial: Partial<Discussion> = {}): Discussion {
 		username: "bob",
 		verseReference: "JO 3:16",
 		verseText: "",
-		commentText: "texto do comentário",
-		question: "corpo da discussão",
+		commentText: "texto do comentÃ¡rio",
+		question: "corpo da discussÃ£o",
 		...partial,
 	};
 }
 
 describe("toDiscussionWire", () => {
 	it("passes through title, quote offsets and like fields on the discussion", () => {
-		const w = toDiscussionWire(
+		const wire = toDiscussionWire(
 			baseDiscussion({
-				title: "Meu título",
+				title: "Meu tÃ­tulo",
 				quoteStart: 2,
 				quoteEnd: 7,
 				likeCount: 4,
 				likedByMe: true,
 			}),
 		);
-		expect(w).toMatchObject({
-			title: "Meu título",
+		expect(wire).toMatchObject({
+			title: "Meu tÃ­tulo",
 			quoteStart: 2,
 			quoteEnd: 7,
 			likeCount: 4,
@@ -37,14 +37,14 @@ describe("toDiscussionWire", () => {
 	});
 
 	it("defaults title to empty string and likes to 0/false for legacy discussions", () => {
-		const w = toDiscussionWire(baseDiscussion());
-		expect(w.title).toBe("");
-		expect(w.likeCount).toBe(0);
-		expect(w.likedByMe).toBe(false);
+		const wire = toDiscussionWire(baseDiscussion());
+		expect(wire.title).toBe("");
+		expect(wire.likeCount).toBe(0);
+		expect(wire.likedByMe).toBe(false);
 	});
 
 	it("maps each answer's like fields into the wire answer shape", () => {
-		const w = toDiscussionWire(
+		const wire = toDiscussionWire(
 			baseDiscussion({
 				answers: [
 					{
@@ -62,7 +62,7 @@ describe("toDiscussionWire", () => {
 				],
 			}),
 		);
-		expect(w.answers[0]).toMatchObject({
+		expect(wire.answers[0]).toMatchObject({
 			_id: "a1",
 			name: "ana",
 			text: "resposta",
@@ -73,7 +73,7 @@ describe("toDiscussionWire", () => {
 	});
 
 	it("defaults answer likes to 0/false when absent", () => {
-		const w = toDiscussionWire(
+		const wire = toDiscussionWire(
 			baseDiscussion({
 				answers: [
 					{
@@ -88,7 +88,7 @@ describe("toDiscussionWire", () => {
 				],
 			}),
 		);
-		expect(w.answers[0].likeCount).toBe(0);
-		expect(w.answers[0].likedByMe).toBe(false);
+		expect(wire.answers[0].likeCount).toBe(0);
+		expect(wire.answers[0].likedByMe).toBe(false);
 	});
 });

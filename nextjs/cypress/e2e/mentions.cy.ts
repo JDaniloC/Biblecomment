@@ -1,5 +1,5 @@
-/**
- * @username mention parsing → notification creation.
+﻿/**
+ * @username mention parsing â†’ notification creation.
  *
  * The parser is unit-tested (parseMentions, 12 cases) and so is
  * NotifyMentionsUseCase (4 cases). This spec exercises the wire-up
@@ -23,8 +23,9 @@ function getVerseId(
 			expect(
 				verse,
 				`verse ${abbrev} ${chapter}:${verseNumber} should be seeded`,
-			).to.exist;
-			return verse!._id;
+			).to.not.equal(undefined);
+			if (!verse) throw new Error("verse not seeded");
+			return verse._id;
 		});
 }
 
@@ -45,7 +46,7 @@ describe("@mentions", () => {
 				cy.request({
 					method: "POST",
 					url: `/api/comments/${verseId}`,
-					body: { text: "Olá @bob, o que você acha?", tags: [] },
+					body: { text: "OlÃ¡ @bob, o que vocÃª acha?", tags: [] },
 				}).then((res) => {
 					expect(res.status).to.eq(201);
 				});
@@ -69,7 +70,7 @@ describe("@mentions", () => {
 				cy.request({
 					method: "POST",
 					url: `/api/comments/${verseId}`,
-					body: { text: "Olá @ghost-user-not-real, vamos ver", tags: [] },
+					body: { text: "OlÃ¡ @ghost-user-not-real, vamos ver", tags: [] },
 				});
 			});
 
@@ -162,7 +163,7 @@ describe("@mentions", () => {
 				abbrev: "gn",
 				chapter: 1,
 				verseNumber: 1,
-				text: "Comentário âncora para discussão.",
+				text: "ComentÃ¡rio Ã¢ncora para discussÃ£o.",
 				tags: [],
 			})
 				.then((r) => r.id)
@@ -172,8 +173,8 @@ describe("@mentions", () => {
 						url: "/api/discussion/gn",
 						body: {
 							commentId,
-							title: "Discussão de alice",
-							body: "Discussão de alice",
+							title: "DiscussÃ£o de alice",
+							body: "DiscussÃ£o de alice",
 						},
 					}),
 				)
@@ -200,7 +201,7 @@ describe("@mentions", () => {
 						const note = res.body.items.find(
 							(n: { type: string }) => n.type === "answer_mention",
 						);
-						expect(note, "answer_mention notification missing").to.exist;
+						expect(note, "answer_mention notification missing").to.not.equal(undefined);
 						expect(note.actor).to.eq("bob");
 						expect(note.url).to.eq(`/discussion/gn/${discussionId}`);
 					});

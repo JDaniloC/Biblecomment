@@ -1,7 +1,7 @@
-/**
+﻿/**
  * Discussion lifecycle: create / answer / notify / update-answer / delete.
  *
- * The create contract was restructured (CR — anchored discussions): a
+ * The create contract was restructured (CR â€” anchored discussions): a
  * discussion is always tied to a comment. The client sends only
  * { commentId, title, body }; the server reads the comment and stores its
  * text as the authoritative `commentText` snapshot and derives
@@ -15,7 +15,7 @@
 import users from "../fixtures/users.json";
 import bookFixture from "../fixtures/book-gn.json";
 
-const COMMENT_TEXT = "No princípio Deus criou os céus e a terra.";
+const COMMENT_TEXT = "No princÃ­pio Deus criou os cÃ©us e a terra.";
 
 /** Seed the anchor comment alice posts on gn 1:1 and yield its id. */
 function seedAnchorComment(): Cypress.Chainable<string> {
@@ -31,7 +31,7 @@ function seedAnchorComment(): Cypress.Chainable<string> {
 		.then((r) => r.id);
 }
 
-describe("Discussions — create, answer, notify, delete", () => {
+describe("Discussions â€” create, answer, notify, delete", () => {
 	beforeEach(() => {
 		cy.resetDb();
 		cy.seedDb({
@@ -50,21 +50,21 @@ describe("Discussions — create, answer, notify, delete", () => {
 					url: "/api/discussion/gn",
 					body: {
 						commentId,
-						title: "Sobre a criação",
-						body: "O que significa 'no princípio'?",
+						title: "Sobre a criaÃ§Ã£o",
+						body: "O que significa 'no princÃ­pio'?",
 					},
 				}).then((res) => {
 					expect(res.status).to.eq(201);
 					expect(res.body).to.have.property("_id");
 					expect(res.body).to.have.property("username", "alice");
 					expect(res.body).to.have.property("bookAbbrev", "gn");
-					expect(res.body).to.have.property("title", "Sobre a criação");
+					expect(res.body).to.have.property("title", "Sobre a criaÃ§Ã£o");
 					expect(res.body).to.have.property(
 						"question",
-						"O que significa 'no princípio'?",
+						"O que significa 'no princÃ­pio'?",
 					);
 					expect(res.body).to.have.property("commentId", commentId);
-					// Authoritative snapshot — server copied it from the comment.
+					// Authoritative snapshot â€” server copied it from the comment.
 					expect(res.body).to.have.property("commentText", COMMENT_TEXT);
 				});
 			});
@@ -79,7 +79,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					body: {
 						commentId,
 						title: "Snapshot autoritativo",
-						body: "Corpo da discussão.",
+						body: "Corpo da discussÃ£o.",
 						// Bogus fields the server must ignore.
 						commentText: "TEXTO FALSO QUE DEVE SER IGNORADO",
 						verseReference: "xx 99:99",
@@ -106,7 +106,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 				failOnStatusCode: false,
 				body: {
 					commentId: "000000000000000000000000",
-					title: "Sem comentário",
+					title: "Sem comentÃ¡rio",
 					body: "Corpo qualquer.",
 				},
 			}).then((res) => {
@@ -120,7 +120,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					method: "POST",
 					url: "/api/discussion/gn",
 					failOnStatusCode: false,
-					body: { commentId, title: "Título", body: "Pergunta?" },
+					body: { commentId, title: "TÃ­tulo", body: "Pergunta?" },
 				}).then((res) => {
 					expect(res.status).to.eq(401);
 				});
@@ -133,7 +133,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 				method: "POST",
 				url: "/api/discussion/gn",
 				failOnStatusCode: false,
-				body: { title: "Título", body: "Pergunta?" },
+				body: { title: "TÃ­tulo", body: "Pergunta?" },
 			}).then((res) => {
 				expect(res.status).to.eq(400);
 			});
@@ -160,7 +160,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					method: "POST",
 					url: "/api/discussion/gn",
 					failOnStatusCode: false,
-					body: { commentId, title: "Título", body: "" },
+					body: { commentId, title: "TÃ­tulo", body: "" },
 				}).then((res) => {
 					expect(res.status).to.eq(400);
 				});
@@ -176,7 +176,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					cy.request({
 						method: "POST",
 						url: "/api/discussion/gn",
-						body: { commentId, title: "Discussão de alice", body: "Pergunta?" },
+						body: { commentId, title: "DiscussÃ£o de alice", body: "Pergunta?" },
 					}),
 				)
 				.then((createRes) => {
@@ -188,13 +188,13 @@ describe("Discussions — create, answer, notify, delete", () => {
 					cy.request({
 						method: "PATCH",
 						url: `/api/discussion/gn/${discussionId}`,
-						body: { text: "Resposta do bob — sem mention" },
+						body: { text: "Resposta do bob â€” sem mention" },
 					}).then((patchRes) => {
 						expect(patchRes.status).to.eq(200);
 						expect(patchRes.body.answers).to.have.length(1);
 						expect(patchRes.body.answers[0]).to.deep.include({
 							name: "bob",
-							text: "Resposta do bob — sem mention",
+							text: "Resposta do bob â€” sem mention",
 						});
 					});
 
@@ -207,7 +207,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 						const note = res.body.items.find(
 							(n: { type: string }) => n.type === "discussion_answer",
 						);
-						expect(note, "discussion_answer notification missing").to.exist;
+						expect(note, "discussion_answer notification missing").to.not.equal(undefined);
 						expect(note.actor).to.eq("bob");
 						expect(note.recipient).to.eq("alice");
 						expect(note.url).to.eq(`/discussion/gn/${discussionId}`);
@@ -251,7 +251,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					cy.request({
 						method: "POST",
 						url: "/api/discussion/gn",
-						body: { commentId, title: "Título", body: "Pergunta?" },
+						body: { commentId, title: "TÃ­tulo", body: "Pergunta?" },
 					}),
 				)
 				.then((createRes) => {
@@ -288,7 +288,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					cy.request({
 						method: "POST",
 						url: "/api/discussion/gn",
-						body: { commentId, title: "Título", body: "Pergunta?" },
+						body: { commentId, title: "TÃ­tulo", body: "Pergunta?" },
 					}),
 				)
 				.then((createRes) => {
@@ -303,7 +303,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 						const answerId = (
 							patchRes.body.answers as Array<{ _id: string }>
 						)[0]._id;
-						// alice tries to edit bob's answer — must fail.
+						// alice tries to edit bob's answer â€” must fail.
 						cy.clearCookies();
 						cy.loginAs(users.alice.email, users.alice.password);
 						cy.request({
@@ -325,7 +325,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					cy.request({
 						method: "POST",
 						url: "/api/discussion/gn",
-						body: { commentId, title: "Título", body: "Pergunta?" },
+						body: { commentId, title: "TÃ­tulo", body: "Pergunta?" },
 					}),
 				)
 				.then((createRes) => {
@@ -360,7 +360,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					cy.request({
 						method: "POST",
 						url: "/api/discussion/gn",
-						body: { commentId, title: "Título", body: "Pergunta?" },
+						body: { commentId, title: "TÃ­tulo", body: "Pergunta?" },
 					}),
 				)
 				.then((createRes) => {
@@ -383,7 +383,7 @@ describe("Discussions — create, answer, notify, delete", () => {
 					cy.request({
 						method: "POST",
 						url: "/api/discussion/gn",
-						body: { commentId, title: "Título", body: "Pergunta?" },
+						body: { commentId, title: "TÃ­tulo", body: "Pergunta?" },
 					}),
 				)
 				.then((createRes) => {

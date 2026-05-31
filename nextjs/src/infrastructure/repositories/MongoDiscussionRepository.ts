@@ -26,6 +26,7 @@ function toEntity(doc: IDiscussionDocument): Discussion {
 }
 
 export class MongoDiscussionRepository implements IDiscussionRepository {
+	// skipcq: JS-0105
 	async findByBookAbbrev(bookAbbrev: string): Promise<Discussion[]> {
 		await connectToDatabase();
 		const docs = await DiscussionModel.find({ bookAbbrev }).sort({
@@ -34,6 +35,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return docs.map(toEntity);
 	}
 
+	// skipcq: JS-0105
 	async findByBookAbbrevPaginated(
 		bookAbbrev: string,
 		page: number,
@@ -49,6 +51,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return docs.map(toEntity);
 	}
 
+	// skipcq: JS-0105
 	async findById(id: string): Promise<Discussion | null> {
 		await connectToDatabase();
 		if (!mongoose.Types.ObjectId.isValid(id)) return null;
@@ -56,6 +59,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return doc ? toEntity(doc) : null;
 	}
 
+	// skipcq: JS-0105
 	async findManyByIds(ids: string[]): Promise<Discussion[]> {
 		if (ids.length === 0) return [];
 		await connectToDatabase();
@@ -67,6 +71,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return docs.map(toEntity);
 	}
 
+	// skipcq: JS-0105
 	async findAllPaginated(
 		page: number,
 		pageSize: number,
@@ -79,6 +84,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return docs.map(toEntity);
 	}
 
+	// skipcq: JS-0105
 	async create(
 		discussion: Omit<
 			Discussion,
@@ -90,6 +96,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return toEntity(doc);
 	}
 
+	// skipcq: JS-0105
 	async createMany(
 		discussions: Omit<
 			Discussion,
@@ -104,17 +111,20 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return inserted.length;
 	}
 
+	// skipcq: JS-0105
 	async delete(id: string): Promise<void> {
 		await connectToDatabase();
 		await DiscussionModel.findByIdAndDelete(id);
 	}
 
+	// skipcq: JS-0105
 	async findAll(): Promise<Discussion[]> {
 		await connectToDatabase();
 		const docs = await DiscussionModel.find({});
 		return docs.map(toEntity);
 	}
 
+	// skipcq: JS-0105
 	async anonymizeByUsername(
 		oldUsername: string,
 		replacement: string,
@@ -129,6 +139,7 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return result.modifiedCount ?? 0;
 	}
 
+	// skipcq: JS-0105
 	async userHasOpenedDiscussion(username: string): Promise<boolean> {
 		await connectToDatabase();
 		const doc = await DiscussionModel.findOne({ username }, { _id: 1 });

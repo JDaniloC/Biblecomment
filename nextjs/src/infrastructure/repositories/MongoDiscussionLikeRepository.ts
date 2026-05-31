@@ -17,6 +17,7 @@ function toObjectIds(ids: string[]): mongoose.Types.ObjectId[] {
 }
 
 export class MongoDiscussionLikeRepository implements IDiscussionLikeRepository {
+	// skipcq: JS-0105
 	async like(
 		userId: string,
 		targetType: DiscussionLikeTarget,
@@ -32,6 +33,7 @@ export class MongoDiscussionLikeRepository implements IDiscussionLikeRepository 
 		return (result.upsertedCount ?? 0) > 0;
 	}
 
+	// skipcq: JS-0105
 	async unlike(
 		userId: string,
 		targetType: DiscussionLikeTarget,
@@ -46,6 +48,7 @@ export class MongoDiscussionLikeRepository implements IDiscussionLikeRepository 
 		});
 	}
 
+	// skipcq: JS-0105
 	async hasLiked(
 		userId: string,
 		targetType: DiscussionLikeTarget,
@@ -60,6 +63,7 @@ export class MongoDiscussionLikeRepository implements IDiscussionLikeRepository 
 		return doc !== null;
 	}
 
+	// skipcq: JS-0105
 	async countByTargets(
 		targetType: DiscussionLikeTarget,
 		targetIds: string[],
@@ -80,6 +84,7 @@ export class MongoDiscussionLikeRepository implements IDiscussionLikeRepository 
 		return out;
 	}
 
+	// skipcq: JS-0105
 	async whichLiked(
 		userId: string,
 		targetType: DiscussionLikeTarget,
@@ -98,12 +103,14 @@ export class MongoDiscussionLikeRepository implements IDiscussionLikeRepository 
 		return out;
 	}
 
+	// skipcq: JS-0105
 	async deleteAllByUser(userId: string): Promise<number> {
 		await connectToDatabase();
 		const res = await DiscussionLikeModel.deleteMany({ userId });
 		return res.deletedCount ?? 0;
 	}
 
+	// skipcq: JS-0105
 	async deleteByTarget(
 		targetType: DiscussionLikeTarget,
 		targetId: string,

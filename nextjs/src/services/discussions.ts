@@ -49,7 +49,7 @@ export const discussionsService = {
 
 	async getForBook(
 		bookAbbrev: string,
-		page: number = 1,
+		page = 1,
 	): Promise<DiscussionWire[]> {
 		const res = await axios.get<DiscussionWire[]>(
 			`/api/discussion/${bookAbbrev}?pages=${page}`,
@@ -95,7 +95,7 @@ export const discussionsService = {
 		if (!result.ok) actionError(result.error);
 	},
 
-	async listAll(page: number = 1): Promise<DiscussionSummary[]> {
+	async listAll(page = 1): Promise<DiscussionSummary[]> {
 		const res = await axios.get<DiscussionSummary[]>(
 			`/api/discussions?pages=${page}`,
 		);

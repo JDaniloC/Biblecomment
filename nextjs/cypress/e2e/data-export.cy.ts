@@ -1,5 +1,5 @@
-/**
- * LGPD Art. 18 V — right to data portability.
+﻿/**
+ * LGPD Art. 18 V â€” right to data portability.
  *
  * GET /api/users/me/export must return a JSON dump of every record
  * tied to the authenticated user. No password, no other users' data.
@@ -22,12 +22,13 @@ function getVerseId(
 			expect(
 				verse,
 				`verse ${abbrev} ${chapter}:${verseNumber} should be seeded`,
-			).to.exist;
-			return verse!._id;
+			).to.not.equal(undefined);
+			if (!verse) throw new Error("verse not seeded");
+			return verse._id;
 		});
 }
 
-describe("LGPD — data export endpoint", () => {
+describe("LGPD â€” data export endpoint", () => {
 	beforeEach(() => {
 		cy.resetDb();
 		cy.seedDb({
@@ -48,14 +49,14 @@ describe("LGPD — data export endpoint", () => {
 	});
 
 	it("returns JSON with profile + comments + ownedDiscussions + answersAuthored + notifications", () => {
-		// ── Bob opens a discussion that alice will answer (so answersAuthored is populated) ──
+		// â”€â”€ Bob opens a discussion that alice will answer (so answersAuthored is populated) â”€â”€
 		cy.loginAs(users.bob.email, users.bob.password);
 		cy.task<{ id: string }>("db:seedComment", {
 			username: "bob",
 			abbrev: "gn",
 			chapter: 1,
 			verseNumber: 2,
-			text: "Comentário âncora do bob.",
+			text: "ComentÃ¡rio Ã¢ncora do bob.",
 			tags: [],
 		})
 			.then((r) => r.id)
@@ -74,7 +75,7 @@ describe("LGPD — data export endpoint", () => {
 				expect(res.status).to.eq(201);
 				const bobDiscussionId = res.body._id as string;
 
-				// ── Switch to alice: comment, own discussion, answer bob's discussion ──
+				// â”€â”€ Switch to alice: comment, own discussion, answer bob's discussion â”€â”€
 				cy.clearCookies();
 				cy.loginAs(users.alice.email, users.alice.password);
 
@@ -83,7 +84,7 @@ describe("LGPD — data export endpoint", () => {
 						method: "POST",
 						url: `/api/comments/${verseId}`,
 						body: {
-							text: "Comentário da alice exclusivo.",
+							text: "ComentÃ¡rio da alice exclusivo.",
 							tags: ["devocional"],
 						},
 					})
@@ -98,7 +99,7 @@ describe("LGPD — data export endpoint", () => {
 						abbrev: "gn",
 						chapter: 1,
 						verseNumber: 1,
-						text: "Comentário âncora para a discussão da alice.",
+						text: "ComentÃ¡rio Ã¢ncora para a discussÃ£o da alice.",
 						tags: [],
 					})
 						.then((r) => r.id)
@@ -119,12 +120,12 @@ describe("LGPD — data export endpoint", () => {
 					cy.request({
 						method: "PATCH",
 						url: `/api/discussion/gn/${bobDiscussionId}`,
-						body: { text: "Resposta da alice na discussão do bob." },
+						body: { text: "Resposta da alice na discussÃ£o do bob." },
 					})
 						.its("status")
 						.should("eq", 200);
 
-					// ── Export ──
+					// â”€â”€ Export â”€â”€
 					cy.request("GET", "/api/users/me/export").then((res) => {
 						expect(res.status).to.eq(200);
 						expect(res.headers["content-type"]).to.include("application/json");
@@ -151,7 +152,7 @@ describe("LGPD — data export endpoint", () => {
 						// Comments: exactly one, the one alice posted.
 						expect(body.comments).to.have.length(1);
 						expect(body.comments[0].text).to.eq(
-							"Comentário da alice exclusivo.",
+							"ComentÃ¡rio da alice exclusivo.",
 						);
 						expect(body.comments[0].username).to.eq("alice");
 
@@ -165,7 +166,7 @@ describe("LGPD — data export endpoint", () => {
 						expect(body.answersAuthored).to.have.length(1);
 						expect(body.answersAuthored[0].verseReference).to.eq("gn 1:2");
 						expect(body.answersAuthored[0].text).to.eq(
-							"Resposta da alice na discussão do bob.",
+							"Resposta da alice na discussÃ£o do bob.",
 						);
 					});
 				});
