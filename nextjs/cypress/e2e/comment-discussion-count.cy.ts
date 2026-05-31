@@ -6,8 +6,12 @@
  *      DiscussionModel.countByCommentId): "· 0" with none, "· 1" after one.
  *   2. Per-comment management actions live behind a kebab
  *      ([data-testid="comment-menu-<id>"], aria-label "Mais ações"). The menu
- *      mounts its items (Editar / Excluir / Reportar / mod-verify) only once
- *      opened; the inline Útil + Contribuir buttons stay visible regardless.
+ *      conditionally MOUNTS its items (Editar / Excluir / Reportar / mod-verify)
+ *      only once opened; the inline Útil + Contribuir buttons stay in the
+ *      footer row (NOT inside the menu). The menu body is an absolutely-
+ *      positioned popover, so we assert items exist / are removed on
+ *      open / close rather than viewport visibility (the popover can render
+ *      below the fold of a tall sidebar and may overlap the footer row).
  *
  * Mirrors comments.cy.ts for seeding (tutorialsCompleted so the chapter tour
  * overlay doesn't intercept clicks) and for opening a verse's comment panel,
@@ -35,10 +39,10 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 		});
 	});
 
-	/** Seed an anchor comment on gn 1:1 (as alice) and resolve to its id. */
+	/** Seed an anchor comment on gn 1:1 (as alice) and resolve to its id string. */
 	function seedAnchorComment() {
 		return cy
-			.task<string>("db:seedComment", {
+			.task<{ id: string }>("db:seedComment", {
 				username: "alice",
 				abbrev: "gn",
 				chapter: 1,
@@ -46,7 +50,7 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 				text: COMMENT_TEXT,
 				tags: [],
 			})
-			.then((id) => id as string);
+			.then((res) => res.id);
 	}
 
 	/** Open the verse-1 comment panel the way comments.cy.ts does. */
@@ -90,23 +94,38 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 			// The kebab trigger renders for the logged-in owner.
 			cy.get(`[data-testid="comment-menu-${commentId}"]`).should("exist");
 
-			// Útil + Contribuir stay inline (outside the menu) and visible.
+			// Útil + Contribuir stay inline in the footer (visible before open).
 			cy.get('[data-testid="comment-discuss"]').first().should("be.visible");
 
-			// Management items mount only after the menu opens.
+			// Management items are NOT mounted until the menu opens.
 			cy.get(`[data-testid="delete-${commentId}"]`).should("not.exist");
 
-			cy.get(`[data-testid="comment-menu-${commentId}"]`).click();
+			// Open the menu; aria-expanded flips, confirming the React handler
+			// fired before we probe the (conditionally mounted) items.
+			cy.get(`[data-testid="comment-menu-${commentId}"]`)
+				.click()
+				.should("have.attr", "aria-expanded", "true");
 
-			cy.get(`[data-testid="delete-${commentId}"]`).should("be.visible");
-			// Editar is an owner action inside the same menu.
-			cy.contains("Editar").should("be.visible");
+			// Delete (owner) + Editar now exist in the open menu's popover.
+			cy.get(`[data-testid="delete-${commentId}"]`).should("exist");
+			cy.get('[role="menu"]').should("contain", "Editar");
 
-			// Inline primary actions are unaffected by the open menu.
-			cy.get('[data-testid="comment-discuss"]').first().should("be.visible");
+			// Útil + Contribuir are inline, NOT inside the popover: the discuss
+			// button still exists outside any [role="menu"]. (The open popover is
+			// an absolutely-positioned z-20 layer that may visually overlap the
+			// footer row — that occlusion is expected, so it is not asserted.)
+			cy.get('[data-testid="comment-discuss"]').should("exist");
+			cy.get('[role="menu"]')
+				.find('[data-testid="comment-discuss"]')
+				.should("not.exist");
 
 			// Clicking outside closes the menu and unmounts its items.
 			cy.get("body").click(0, 0);
+			cy.get(`[data-testid="comment-menu-${commentId}"]`).should(
+				"have.attr",
+				"aria-expanded",
+				"false",
+			);
 			cy.get(`[data-testid="delete-${commentId}"]`).should("not.exist");
 		});
 	});
