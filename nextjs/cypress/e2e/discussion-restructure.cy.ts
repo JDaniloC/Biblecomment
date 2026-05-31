@@ -117,3 +117,144 @@ describe("Discussion restructure (UI flow)", () => {
 			});
 	});
 });
+
+/**
+ * Edit / delete a discussion from its detail page.
+ *
+ * The author (or a moderator) can edit the discussion's title + body inline
+ * and is shown a "· editada" marker afterwards, or delete the whole thread
+ * (guarded by the ConfirmContext modal) which returns to the book's list.
+ */
+describe("Discussion edit/delete", () => {
+	beforeEach(() => {
+		cy.resetDb();
+		cy.seedDb({
+			// Both users skip the chapter tutorial so its overlay never
+			// intercepts clicks; alice authors, bob is the non-author viewer.
+			users: [users.alice, users.bob].map((u) => ({
+				...u,
+				tutorialsCompleted: ["chapter-v1"],
+			})),
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+		});
+	});
+
+	/** Seed an anchor comment on gn 1:1 and resolve to its id. */
+	function seedAnchorComment() {
+		return cy
+			.task<string>("db:seedComment", {
+				username: "alice",
+				abbrev: "gn",
+				chapter: 1,
+				verseNumber: 1,
+				text: COMMENT_TEXT,
+				tags: [],
+			})
+			.then((id) => id as string);
+	}
+
+	/**
+	 * Create a discussion anchored to `commentId` via the real POST API
+	 * (mirrors discussionsService.create) and resolve to its `_id`. Caller must
+	 * already be authenticated.
+	 */
+	function createDiscussion(commentId: string, title: string, body: string) {
+		return cy
+			.request({
+				method: "POST",
+				url: "/api/discussion/gn",
+				body: { commentId, title, body },
+			})
+			.then((res) => {
+				expect(res.status).to.eq(201);
+				return res.body._id as string;
+			});
+	}
+
+	it("author edits title and body; an edited marker appears", () => {
+		cy.loginAs(users.alice.email, users.alice.password);
+		seedAnchorComment().then((commentId) => {
+			createDiscussion(commentId, "Título original", "Corpo original").then(
+				(discussionId) => {
+					cy.visit(`/discussion/gn/${discussionId}`);
+
+					cy.get('[data-testid="discussion-title"]').should(
+						"contain",
+						"Título original",
+					);
+					cy.get('[data-testid="discussion-edited"]').should("not.exist");
+
+					cy.get('[data-testid="discussion-edit"]').click();
+					cy.get('[data-testid="discussion-edit-title"]')
+						.clear()
+						.type("Título editado");
+					cy.get('[data-testid="discussion-edit-body"]')
+						.clear()
+						.type("Corpo editado");
+					cy.get('[data-testid="discussion-edit-save"]').click();
+
+					cy.get('[data-testid="discussion-title"]').should(
+						"contain",
+						"Título editado",
+					);
+					cy.get('[data-testid="discussion-body"]').should(
+						"contain",
+						"Corpo editado",
+					);
+					cy.get('[data-testid="discussion-edited"]').should("be.visible");
+
+					// Reload: edited content + marker must survive (server-side).
+					cy.reload();
+					cy.get('[data-testid="discussion-title"]').should(
+						"contain",
+						"Título editado",
+					);
+					cy.get('[data-testid="discussion-edited"]').should("be.visible");
+				},
+			);
+		});
+	});
+
+	it("author deletes the discussion and returns to the list", () => {
+		cy.loginAs(users.alice.email, users.alice.password);
+		seedAnchorComment().then((commentId) => {
+			createDiscussion(commentId, "Para excluir", "Corpo a excluir").then(
+				(discussionId) => {
+					cy.visit(`/discussion/gn/${discussionId}`);
+
+					cy.get('[data-testid="discussion-delete"]').click();
+
+					// ConfirmContext renders an alertdialog (not window.confirm);
+					// accept it via the affirmative button.
+					cy.get('[role="alertdialog"]')
+						.should("be.visible")
+						.within(() => {
+							cy.contains("button", "Excluir").click();
+						});
+
+					cy.location("pathname").should("eq", "/discussion/gn");
+				},
+			);
+		});
+	});
+
+	it("a non-author does NOT see edit/delete controls", () => {
+		cy.loginAs(users.alice.email, users.alice.password);
+		seedAnchorComment().then((commentId) => {
+			createDiscussion(commentId, "Da Alice", "Corpo da Alice").then(
+				(discussionId) => {
+					cy.loginAs(users.bob.email, users.bob.password);
+					cy.visit(`/discussion/gn/${discussionId}`);
+
+					cy.get('[data-testid="discussion-title"]').should(
+						"contain",
+						"Da Alice",
+					);
+					cy.get('[data-testid="discussion-edit"]').should("not.exist");
+					cy.get('[data-testid="discussion-delete"]').should("not.exist");
+				},
+			);
+		});
+	});
+});

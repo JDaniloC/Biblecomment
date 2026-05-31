@@ -299,6 +299,30 @@ export class UpdateAnswerUseCase {
 	}
 }
 
+export class UpdateDiscussionUseCase {
+	constructor(private readonly discussionRepo: IDiscussionRepository) {}
+
+	async execute(
+		id: string,
+		requesterUsername: string,
+		isModerator: boolean,
+		input: { title: string; body: string },
+	): Promise<Discussion> {
+		const discussion = await this.discussionRepo.findById(id);
+		if (!discussion) throw new Error("Discussion not found");
+		if (!isModerator && discussion.username !== requesterUsername) {
+			throw new Error("Unauthorized");
+		}
+		const title = input.title.replace(/[\r\n]+/g, " ").trim();
+		const updated = await this.discussionRepo.update(id, {
+			title,
+			question: input.body,
+		});
+		if (!updated) throw new Error("Discussion not found");
+		return updated;
+	}
+}
+
 export class DeleteDiscussionUseCase {
 	constructor(
 		private readonly discussionRepo: IDiscussionRepository,

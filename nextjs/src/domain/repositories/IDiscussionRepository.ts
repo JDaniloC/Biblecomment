@@ -13,6 +13,8 @@ export interface IDiscussionRepository {
   findManyByIds(ids: string[]): Promise<Discussion[]>;
   findAllPaginated(page: number, pageSize: number): Promise<Discussion[]>;
   create(discussion: Omit<Discussion, "_id" | "createdAt" | "updatedAt" | "answers" | "answersCount">): Promise<Discussion>;
+  /** Patch a discussion's editable fields (title + body). Returns the updated entity, or null if absent. */
+  update(id: string, patch: { title: string; question: string }): Promise<Discussion | null>;
   createMany(discussions: Omit<Discussion, "_id" | "createdAt" | "updatedAt" | "answers" | "answersCount">[]): Promise<number>;
   delete(id: string): Promise<void>;
   findAll(): Promise<Discussion[]>;

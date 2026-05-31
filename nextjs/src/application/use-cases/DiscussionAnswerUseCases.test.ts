@@ -85,6 +85,13 @@ function discussionRepoStub(discussions: Discussion[]): IDiscussionRepository {
 		findAll: () => Promise.resolve(discussions),
 		create: (d) => Promise.resolve({ _id: "new", ...d } as Discussion),
 		createMany: () => Promise.resolve(discussions.length),
+		update: (id, patch) => {
+			const d = byId.get(id);
+			if (!d) return Promise.resolve(null);
+			const updated = { ...d, ...patch } as Discussion;
+			byId.set(id, updated);
+			return Promise.resolve(updated);
+		},
 		delete: () => Promise.resolve(),
 		anonymizeByUsername: () => Promise.resolve(0),
 		userHasOpenedDiscussion: () => Promise.resolve(discussions.length > 0),

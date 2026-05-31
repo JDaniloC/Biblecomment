@@ -128,6 +128,13 @@ export const CreateDiscussionSchema = z.object({
 	quoteEnd: z.number().int().min(0).optional(),
 });
 
+// Author/moderator edit of a discussion. Only title + body are editable —
+// the linked comment snapshot and quote stay immutable (anti-deturpation).
+export const UpdateDiscussionSchema = z.object({
+	title: z.string().min(1).max(140),
+	body: z.string().min(1).max(1000),
+});
+
 export const AddAnswerSchema = z.object({
 	text: z.string().min(1).max(5000),
 });

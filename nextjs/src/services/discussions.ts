@@ -5,6 +5,7 @@ import {
 	createDiscussionAction,
 	addAnswerAction,
 	updateAnswerAction,
+	updateDiscussionAction,
 	deleteDiscussionAction,
 	toggleDiscussionLikeAction,
 } from "@/app/actions/discussions";
@@ -83,6 +84,16 @@ export const discussionsService = {
 			answerId,
 			text,
 		);
+		if (!result.ok) actionError(result.error);
+		return result.data;
+	},
+
+	async update(
+		bookAbbrev: string,
+		id: string,
+		draft: { title: string; body: string },
+	): Promise<DiscussionWire> {
+		const result = await updateDiscussionAction(bookAbbrev, id, draft);
 		if (!result.ok) actionError(result.error);
 		return result.data;
 	},

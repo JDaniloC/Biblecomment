@@ -2,13 +2,19 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Book } from "@/domain/entities/Book";
 import { discussionsService } from "@/services/discussions";
 import type { DiscussionWire } from "@/lib/discussion-wire";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { LikeButton } from "@/components/LikeButton";
+
+const TITLE_MAX = 140;
+const BODY_MAX = 1000;
+const ANSWER_MAX = 1000;
 
 interface SessionUser {
 	name: string;
@@ -102,6 +108,8 @@ export default function DiscussionDetailClient({
 	mode,
 }: Props) {
 	const { handleNotification } = useNotification();
+	const router = useRouter();
+	const confirm = useConfirm();
 	const [discussion, setDiscussion] = useState(initialDiscussion);
 	const [answerText, setAnswerText] = useState("");
 	const [submitting, setSubmitting] = useState(false);
@@ -109,6 +117,12 @@ export default function DiscussionDetailClient({
 	const [editAnswerText, setEditAnswerText] = useState("");
 	const [savingEdit, setSavingEdit] = useState(false);
 	const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+	// Discussion (thread) edit/delete state.
+	const [editingDiscussion, setEditingDiscussion] = useState(false);
+	const [editTitle, setEditTitle] = useState("");
+	const [editBody, setEditBody] = useState("");
+	const [savingDiscussion, setSavingDiscussion] = useState(false);
 
 	// Focus the edit textarea when an answer enters edit mode (replaces autoFocus).
 	useEffect(() => {
@@ -174,6 +188,65 @@ export default function DiscussionDetailClient({
 			handleNotification("error", "Erro ao enviar resposta.");
 		} finally {
 			setSubmitting(false);
+		}
+	}
+
+	function startEditDiscussion() {
+		if (!discussion) return;
+		setEditTitle(discussion.title?.trim() ? discussion.title : discussion.question);
+		setEditBody(discussion.question);
+		setEditingDiscussion(true);
+	}
+
+	function cancelEditDiscussion() {
+		setEditingDiscussion(false);
+		setEditTitle("");
+		setEditBody("");
+	}
+
+	async function saveDiscussion() {
+		if (!discussion?._id || !editTitle.trim() || !editBody.trim()) return;
+		setSavingDiscussion(true);
+		try {
+			const updated = await discussionsService.update(book.abbrev, discussion._id, {
+				title: editTitle.trim(),
+				body: editBody,
+			});
+			setDiscussion(updated);
+			cancelEditDiscussion();
+			handleNotification("success", "Discussão atualizada.");
+		} catch (err: unknown) {
+			const status = (err as { response?: { status?: number } })?.response
+				?.status;
+			if (status === 403) {
+				handleNotification(
+					"error",
+					"Você não tem permissão para editar esta discussão.",
+				);
+			} else {
+				handleNotification("error", "Erro ao salvar discussão.");
+			}
+		} finally {
+			setSavingDiscussion(false);
+		}
+	}
+
+	async function handleDeleteDiscussion() {
+		if (!discussion?._id) return;
+		const ok = await confirm({
+			title: "Excluir discussão",
+			description:
+				"Tem certeza? Esta ação remove a discussão e todas as respostas.",
+			confirmLabel: "Excluir",
+			variant: "danger",
+		});
+		if (!ok) return;
+		try {
+			await discussionsService.delete(book.abbrev, discussion._id);
+			handleNotification("success", "Discussão excluída.");
+			router.push(`/discussion/${book.abbrev}`);
+		} catch {
+			handleNotification("error", "Erro ao excluir discussão.");
 		}
 	}
 
@@ -269,6 +342,10 @@ export default function DiscussionDetailClient({
 
 	const quoteText = discussion.commentText || discussion.verseText;
 	const hasTitle = Boolean(discussion.title?.trim());
+	const canEditDiscussion =
+		user.moderator ||
+		discussion.username === user.username ||
+		discussion.username === user.name;
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -288,16 +365,102 @@ export default function DiscussionDetailClient({
 
 			<main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
 				<article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-6">
-					{/* 1. Title */}
-					<h1
-						data-testid="discussion-title"
-						className="text-xl font-bold text-slate-800 dark:text-slate-100"
-					>
-						{headingFor(discussion)}
-					</h1>
-					<p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">
-						por <strong>{discussion.username}</strong>
-					</p>
+					{/* 1. Title + author + edit/delete controls. */}
+					{!editingDiscussion && (
+						<>
+							<div className="flex items-start justify-between gap-3">
+								<h1
+									data-testid="discussion-title"
+									className="text-xl font-bold text-slate-800 dark:text-slate-100"
+								>
+									{headingFor(discussion)}
+								</h1>
+								{canEditDiscussion && (
+									<div className="flex items-center gap-2 shrink-0">
+										<button
+											type="button"
+											data-testid="discussion-edit"
+											onClick={startEditDiscussion}
+											className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-brand transition"
+										>
+											Editar
+										</button>
+										<button
+											type="button"
+											data-testid="discussion-delete"
+											onClick={handleDeleteDiscussion}
+											className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-red-500 transition"
+										>
+											Excluir
+										</button>
+									</div>
+								)}
+							</div>
+							<p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">
+								por <strong>{discussion.username}</strong>
+								{discussion.edited && (
+									<>
+										{" "}
+										<span
+											data-testid="discussion-edited"
+											className="text-xs text-slate-400 dark:text-slate-500"
+										>
+											· editada
+										</span>
+									</>
+								)}
+							</p>
+						</>
+					)}
+
+					{/* 1b. Inline edit form (replaces title + body). */}
+					{editingDiscussion && (
+						<div className="space-y-2 mb-4">
+							<input
+								data-testid="discussion-edit-title"
+								value={editTitle}
+								maxLength={TITLE_MAX}
+								onChange={(e) =>
+									setEditTitle(e.target.value.replace(/[\r\n]+/g, " "))
+								}
+								placeholder="Título"
+								className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30"
+							/>
+							<textarea
+								data-testid="discussion-edit-body"
+								value={editBody}
+								maxLength={BODY_MAX}
+								rows={5}
+								onChange={(e) => setEditBody(e.target.value)}
+								placeholder="Comentário da discussão"
+								className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-y"
+							/>
+							<p className="text-[11px] text-slate-400 dark:text-slate-500 text-right">
+								{editBody.length}/{BODY_MAX}
+							</p>
+							<div className="flex gap-2 justify-end">
+								<button
+									type="button"
+									onClick={cancelEditDiscussion}
+									disabled={savingDiscussion}
+									className="px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition disabled:opacity-50"
+								>
+									Cancelar
+								</button>
+								<button
+									type="button"
+									data-testid="discussion-edit-save"
+									onClick={saveDiscussion}
+									disabled={
+										savingDiscussion || !editTitle.trim() || !editBody.trim()
+									}
+									className="px-3 py-1.5 text-xs bg-brand text-white font-semibold rounded-md hover:bg-brand/90 disabled:opacity-50 transition"
+								>
+									{savingDiscussion ? "Salvando…" : "Salvar"}
+								</button>
+							</div>
+						</div>
+					)}
 
 					{/* 2. The comment being discussed (smaller, read-only). */}
 					{quoteText && (
@@ -332,7 +495,7 @@ export default function DiscussionDetailClient({
 					)}
 
 					{/* 3. The discussion body (larger), shown in full. */}
-					{hasTitle && (
+					{hasTitle && !editingDiscussion && (
 						<p
 							data-testid="discussion-body"
 							className="text-[15px] leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap"
@@ -445,9 +608,13 @@ export default function DiscussionDetailClient({
 						onChange={(e) => setAnswerText(e.target.value)}
 						placeholder="Sua resposta..."
 						rows={3}
+						maxLength={ANSWER_MAX}
 						data-testid="answer-input"
-						className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none mb-3"
+						className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-y"
 					/>
+					<p className="text-[11px] text-slate-400 dark:text-slate-500 text-right mb-3">
+						{answerText.length}/{ANSWER_MAX}
+					</p>
 					<button
 						onClick={handleAddAnswer}
 						disabled={submitting || !answerText.trim()}

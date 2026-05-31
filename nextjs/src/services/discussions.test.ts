@@ -51,6 +51,7 @@ const sampleDiscussion = {
 	answersCount: 0,
 	likeCount: 0,
 	likedByMe: false,
+	edited: false,
 };
 
 describe("discussionsService", () => {

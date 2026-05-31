@@ -112,6 +112,21 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 	}
 
 	// skipcq: JS-0105
+	async update(
+		id: string,
+		patch: { title: string; question: string },
+	): Promise<Discussion | null> {
+		await connectToDatabase();
+		if (!mongoose.Types.ObjectId.isValid(id)) return null;
+		const doc = await DiscussionModel.findByIdAndUpdate(
+			id,
+			{ $set: { title: patch.title, question: patch.question } },
+			{ returnDocument: "after" },
+		);
+		return doc ? toEntity(doc) : null;
+	}
+
+	// skipcq: JS-0105
 	async delete(id: string): Promise<void> {
 		await connectToDatabase();
 		await DiscussionModel.findByIdAndDelete(id);

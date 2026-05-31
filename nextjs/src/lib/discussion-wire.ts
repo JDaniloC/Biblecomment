@@ -25,6 +25,24 @@ export interface DiscussionWire extends Omit<Discussion, "answers"> {
 	/** Always numeric/boolean on the wire — defaulted when not enriched. */
 	likeCount: number;
 	likedByMe: boolean;
+	/** True when the thread was edited after creation (>1s after createdAt). */
+	edited: boolean;
+}
+
+/**
+ * A discussion counts as "edited" only when `updatedAt` is more than a second
+ * after `createdAt`. Mongoose stamps both timestamps together on insert, so the
+ * create-time write must not register as an edit; missing timestamps → false.
+ */
+export function isEdited(
+	createdAt?: Date | string,
+	updatedAt?: Date | string,
+): boolean {
+	if (!createdAt || !updatedAt) return false;
+	const created = new Date(createdAt).getTime();
+	const updated = new Date(updatedAt).getTime();
+	if (Number.isNaN(created) || Number.isNaN(updated)) return false;
+	return updated - created > 1000;
 }
 
 export function toDiscussionWire(discussion: Discussion): DiscussionWire {
@@ -43,5 +61,6 @@ export function toDiscussionWire(discussion: Discussion): DiscussionWire {
 		answersCount: discussion.answersCount ?? answers.length,
 		likeCount: discussion.likeCount ?? 0,
 		likedByMe: discussion.likedByMe ?? false,
+		edited: isEdited(discussion.createdAt, discussion.updatedAt),
 	};
 }
