@@ -115,9 +115,9 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 			cy.get('[role="menu"]')
 				.should("contain", "Editar")
 				.and((menu) => {
-					expect(menu.find(`[data-testid="delete-${commentId}"]`)).to.have.length(
-						1,
-					);
+					expect(
+						menu.find(`[data-testid="delete-${commentId}"]`),
+					).to.have.length(1);
 				});
 
 			// Útil + Contribuir are inline, NOT inside the popover: the discuss
