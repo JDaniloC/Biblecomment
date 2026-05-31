@@ -14,7 +14,21 @@ describe("Reading reminder preference", () => {
 	beforeEach(() => {
 		cy.resetDb();
 		cy.seedDb({
-			users: [{ ...users.alice, tutorialsCompleted: ["chapter-v1"] }],
+			// All tours marked done so none auto-opens on /profile and blocks the
+			// reading-reminder switch with the driver.js overlay (pointer-events
+			// :none + .driver-popover). Mirrors src/lib/tutorial-config.ts.
+			users: [
+				{
+					...users.alice,
+					tutorialsCompleted: [
+						"home-v1",
+						"chapter-v1",
+						"communities-v1",
+						"discussions-v1",
+						"profile-v1",
+					],
+				},
+			],
 		});
 		cy.loginAs(users.alice.email, users.alice.password);
 	});

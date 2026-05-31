@@ -26,6 +26,30 @@ async function ensureConnected(): Promise<void> {
 	connected = true;
 }
 
+/**
+ * Every guided-tour id. Kept in sync (by hand) with the TUTORIALS registry
+ * in src/lib/tutorial-config.ts — we don't import from src to keep the
+ * Cypress Node side self-contained. If a tour is added/renamed/bumped there,
+ * mirror it here.
+ *
+ * Used as the DEFAULT for a seeded user's `tutorialsCompleted` when the seed
+ * does not specify one: by marking every tour as already finished, the
+ * driver.js auto-start (<PageTutorial>/ChapterClient) stays closed so its
+ * pointer-events:none overlay + .driver-popover never block cy.click()/
+ * visibility assertions in specs that aren't about tutorials.
+ *
+ * A spec that DOES want a tour to auto-open must opt in by passing an
+ * explicit `tutorialsCompleted` that omits the relevant id — e.g. `[]` to
+ * show ALL tours (see tutorial.cy.ts, page-tutorials.cy.ts).
+ */
+const ALL_TUTORIAL_IDS = [
+	"home-v1",
+	"chapter-v1",
+	"communities-v1",
+	"discussions-v1",
+	"profile-v1",
+];
+
 const COLLECTIONS = [
 	"users",
 	"books",
@@ -35,6 +59,7 @@ const COLLECTIONS = [
 	"commentreports",
 	"discussions",
 	"discussionanswers",
+	"discussionlikes",
 	"notifications",
 	"passwordresettokens",
 	"userchapterreads",
@@ -410,9 +435,14 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
 					showBelief: u.showBelief ?? false,
 					badges: u.badges ?? [],
 					moderator: u.moderator ?? false,
-					tutorialsCompleted: u.tutorialsCompleted ?? [],
+					// Default to "all tours finished" so they don't auto-open and
+					// block unrelated specs. An explicit value (including []) is
+					// respected so tutorial specs can force a tour to appear.
+					tutorialsCompleted: u.tutorialsCompleted ?? ALL_TUTORIAL_IDS,
 					...(verified ? { emailVerifiedAt: new Date() } : {}),
-					...(u.pendingEmail ? { pendingEmail: u.pendingEmail.toLowerCase().trim() } : {}),
+					...(u.pendingEmail
+						? { pendingEmail: u.pendingEmail.toLowerCase().trim() }
+						: {}),
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				};

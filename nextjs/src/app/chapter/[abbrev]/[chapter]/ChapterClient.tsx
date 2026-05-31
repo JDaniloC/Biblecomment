@@ -141,6 +141,9 @@ export default function ChapterClient({
 	const [editingComment, setEditingComment] = useState<CommentData | null>(
 		null,
 	);
+	// Which comment's kebab “⋯” actions menu is open (null = none). One menu
+	// open at a time across the per-comment map.
+	const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 	const [editText, setEditText] = useState("");
 	const [editTags, setEditTags] = useState<Record<string, boolean>>({
 		devocional: false,
@@ -211,6 +214,17 @@ export default function ChapterClient({
 			// Comment counts are non-critical UI metadata; failures shouldn't surface.
 		}
 	}, [book.abbrev, chapter, community.active]);
+
+	// Escape closes the kebab actions menu. Outside-click is handled by the
+	// fixed backdrop button rendered behind the open menu.
+	useEffect(() => {
+		if (openMenuId === null) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setOpenMenuId(null);
+		};
+		document.addEventListener("keydown", onKey);
+		return () => document.removeEventListener("keydown", onKey);
+	}, [openMenuId]);
 
 	useEffect(() => {
 		// Skip the first paint when SSR already provided counts (no filter), but
@@ -584,14 +598,14 @@ export default function ChapterClient({
 	);
 
 	const handleDiscussion = useCallback(
-		(id: string, text: string, reference: string) => {
+		(commentId: string) => {
 			if (!user) {
 				requireLogin();
 				return;
 			}
-			router.push(
-				`/discussion/${book.abbrev}?commentId=${id}&ref=${encodeURIComponent(reference)}&text=${encodeURIComponent(text)}`,
-			);
+			// A discussion is always anchored to a comment — the create page
+			// fetches the comment's authoritative text from this id.
+			router.push(`/discussion/${book.abbrev}/new?commentId=${commentId}`);
 		},
 		[user, requireLogin, book.abbrev, router],
 	);
@@ -1322,7 +1336,10 @@ export default function ChapterClient({
 														>
 															{comment.username}
 														</Link>
-														<VerifiedBadge verified={comment.authorEmailVerified} size="xs" />
+														<VerifiedBadge
+															verified={comment.authorEmailVerified}
+															size="xs"
+														/>
 														{comment.verified && (
 															<span
 																className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
@@ -1399,7 +1416,7 @@ export default function ChapterClient({
 													<button
 														type="button"
 														onClick={() => handleLike(comment._id)}
-															title="Útil"
+														title="Útil"
 														className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap"
 													>
 														<svg
@@ -1414,21 +1431,19 @@ export default function ChapterClient({
 														>
 															<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
 														</svg>
-														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Útil · </span>{comment.likeCount}
+														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+															Útil ·{" "}
+														</span>
+														{comment.likeCount}
 													</button>
 
 													{/* Contribuir button */}
 													<button
 														type="button"
-														onClick={() =>
-															handleDiscussion(
-																comment._id,
-																comment.text,
-																`${comment.username} ${comment.bookReference}`,
-															)
-														}
+														onClick={() => handleDiscussion(comment._id)}
+														data-testid="comment-discuss"
 														className="flex items-center gap-[5px] px-2 h-[26px] rounded-[5px] border-none bg-transparent cursor-pointer font-medium text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap ml-0.5"
-															title="Contribuir"
+														title="Contribuir"
 													>
 														<svg
 															width="13"
@@ -1442,7 +1457,10 @@ export default function ChapterClient({
 														>
 															<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
 														</svg>
-														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Contribuir</span>
+														<span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+															Contribuir ·{" "}
+														</span>
+														{comment.discussionCount ?? 0}
 													</button>
 
 													{/* Share as image card (Pinterest-like) */}
@@ -1453,133 +1471,176 @@ export default function ChapterClient({
 														reference={comment.bookReference}
 													/>
 
-													{/* The "N Perspectivas" badge was removed: it merely
-                              re-displayed comment.likeCount, which the
-                              "Útil · N" button already shows — pure
-                              duplication. Spacer keeps the moderation /
-                              owner icon controls right-aligned. */}
-													<div className="ml-auto" />
-
-													{/* Moderator-only: toggle the admin-verified badge inline. */}
-													{user?.moderator && (
-														<button
-															type="button"
-															onClick={() => handleToggleVerified(comment._id)}
-															data-testid={`mod-verify-${comment._id}`}
-															data-verified={
-																comment.verified ? "true" : "false"
-															}
-															aria-label={
-																comment.verified
-																	? "Remover verificação"
-																	: "Verificar comentário"
-															}
-															title={
-																comment.verified
-																	? "Remover verificação"
-																	: "Verificar comentário"
-															}
-															className={`flex items-center justify-center w-7 h-7 ml-1 rounded-[5px] border-none bg-transparent cursor-pointer transition-colors ${
-																comment.verified
-																	? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
-																	: "text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400"
-															}`}
-														>
-															<svg
-																width="14"
-																height="14"
-																viewBox="0 0 24 24"
-																fill="none"
-																stroke="currentColor"
-																strokeWidth="2"
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																aria-hidden="true"
-															>
-																<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-																<polyline points="22 4 12 14.01 9 11.01" />
-															</svg>
-														</button>
-													)}
-
-													{/* Owner: edit pencil. Non-owner: report flag. */}
-													<div className="relative ml-1">
-														{isOwner ? (
+													{/* Management actions live behind a kebab “⋯” menu so the
+													    footer row no longer crowds (esp. for mods who also get the
+													    verify toggle). Only rendered when the viewer has at least one
+													    action — i.e. logged in (a non-owner always has Reportar). */}
+													{!!user && (
+														<div className="ml-auto relative">
 															<button
 																type="button"
-																aria-label="Editar comentário"
-																title="Editar"
+																onClick={() =>
+																	setOpenMenuId((prev) =>
+																		prev === comment._id ? null : comment._id,
+																	)
+																}
+																data-testid={`comment-menu-${comment._id}`}
+																aria-label="Mais ações"
+																aria-haspopup="menu"
+																aria-expanded={openMenuId === comment._id}
 																className="flex items-center justify-center w-7 h-7 rounded-[5px] border-none bg-transparent cursor-pointer text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-																onClick={() => startEdit(comment)}
 															>
 																<svg
-																	width="14"
-																	height="14"
+																	width="16"
+																	height="16"
 																	viewBox="0 0 24 24"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
+																	fill="currentColor"
+																	aria-hidden="true"
 																>
-																	<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-																	<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+																	<circle cx="12" cy="5" r="1.6" />
+																	<circle cx="12" cy="12" r="1.6" />
+																	<circle cx="12" cy="19" r="1.6" />
 																</svg>
 															</button>
-														) : (
-															<button
-																type="button"
-																aria-label="Reportar comentário"
-																title="Reportar"
-																data-testid={`report-${comment._id}`}
-																className="flex items-center justify-center w-7 h-7 rounded-[5px] border-none bg-transparent cursor-pointer text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-																onClick={() => handleReport(comment._id)}
-															>
-																<svg
-																	width="14"
-																	height="14"
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																>
-																	<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-																	<line x1="4" y1="22" x2="4" y2="15" />
-																</svg>
-															</button>
-														)}
-													</div>
-
-													{/* Owner: delete inline so they don't have to hunt
-                              for the comment on their profile. Backend still
-                              authorizes owner|moderator; we surface it only to
-                              the author here per product decision. */}
-													{isOwner && (
-														<button
-															type="button"
-															aria-label="Excluir comentário"
-															title="Excluir"
-															data-testid={`delete-${comment._id}`}
-															className="flex items-center justify-center w-7 h-7 ml-1 rounded-[5px] border-none bg-transparent cursor-pointer text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-															onClick={() => handleDelete(comment._id)}
-														>
-															<svg
-																width="14"
-																height="14"
-																viewBox="0 0 24 24"
-																fill="none"
-																stroke="currentColor"
-																strokeWidth="2"
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																aria-hidden="true"
-															>
-																<polyline points="3 6 5 6 21 6" />
-																<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-															</svg>
-														</button>
+															{openMenuId === comment._id && (
+																<>
+																	{/* Backdrop closes the menu on outside click. */}
+																	<button
+																		type="button"
+																		aria-hidden="true"
+																		tabIndex={-1}
+																		onClick={() => setOpenMenuId(null)}
+																		className="fixed inset-0 z-10 cursor-default border-none bg-transparent"
+																	/>
+																	<div
+																		role="menu"
+																		className="absolute right-0 mt-1 min-w-[10rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 py-1"
+																	>
+																		{user?.moderator && (
+																			<button
+																				type="button"
+																				role="menuitem"
+																				onClick={() => {
+																					setOpenMenuId(null);
+																					handleToggleVerified(comment._id);
+																				}}
+																				data-testid={`mod-verify-${comment._id}`}
+																				data-verified={
+																					comment.verified ? "true" : "false"
+																				}
+																				className="flex w-full items-center gap-2 text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
+																			>
+																				<svg
+																					width="14"
+																					height="14"
+																					viewBox="0 0 24 24"
+																					fill="none"
+																					stroke="currentColor"
+																					strokeWidth="2"
+																					strokeLinecap="round"
+																					strokeLinejoin="round"
+																					aria-hidden="true"
+																					className="shrink-0"
+																				>
+																					<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+																					<polyline points="22 4 12 14.01 9 11.01" />
+																				</svg>
+																				<span>
+																					{comment.verified
+																						? "Remover verificação"
+																						: "Verificar"}
+																				</span>
+																			</button>
+																		)}
+																		{isOwner ? (
+																			<>
+																				<button
+																					type="button"
+																					role="menuitem"
+																					onClick={() => {
+																						setOpenMenuId(null);
+																						startEdit(comment);
+																					}}
+																					className="flex w-full items-center gap-2 text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
+																				>
+																					<svg
+																						width="14"
+																						height="14"
+																						viewBox="0 0 24 24"
+																						fill="none"
+																						stroke="currentColor"
+																						strokeWidth="2"
+																						strokeLinecap="round"
+																						strokeLinejoin="round"
+																						aria-hidden="true"
+																						className="shrink-0"
+																					>
+																						<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+																						<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+																					</svg>
+																					<span>Editar</span>
+																				</button>
+																				<button
+																					type="button"
+																					role="menuitem"
+																					data-testid={`delete-${comment._id}`}
+																					onClick={() => {
+																						setOpenMenuId(null);
+																						handleDelete(comment._id);
+																					}}
+																					className="flex w-full items-center gap-2 text-left px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
+																				>
+																					<svg
+																						width="14"
+																						height="14"
+																						viewBox="0 0 24 24"
+																						fill="none"
+																						stroke="currentColor"
+																						strokeWidth="2"
+																						strokeLinecap="round"
+																						strokeLinejoin="round"
+																						aria-hidden="true"
+																						className="shrink-0"
+																					>
+																						<polyline points="3 6 5 6 21 6" />
+																						<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+																					</svg>
+																					<span>Excluir</span>
+																				</button>
+																			</>
+																		) : (
+																			<button
+																				type="button"
+																				role="menuitem"
+																				data-testid={`report-${comment._id}`}
+																				onClick={() => {
+																					setOpenMenuId(null);
+																					handleReport(comment._id);
+																				}}
+																				className="flex w-full items-center gap-2 text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer"
+																			>
+																				<svg
+																					width="14"
+																					height="14"
+																					viewBox="0 0 24 24"
+																					fill="none"
+																					stroke="currentColor"
+																					strokeWidth="2"
+																					strokeLinecap="round"
+																					strokeLinejoin="round"
+																					aria-hidden="true"
+																					className="shrink-0"
+																				>
+																					<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+																					<line x1="4" y1="22" x2="4" y2="15" />
+																				</svg>
+																				<span>Reportar</span>
+																			</button>
+																		)}
+																	</div>
+																</>
+															)}
+														</div>
 													)}
 												</div>
 											</div>

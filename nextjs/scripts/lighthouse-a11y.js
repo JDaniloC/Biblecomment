@@ -152,9 +152,20 @@ async function seedDatabase(uri) {
       state: "",
       belief: "",
       moderator: false,
-      // Pre-mark so the chapter onboarding tour doesn't auto-open during
-      // the audit — it would change the DOM mid-run and risk false flags.
-      tutorialsCompleted: ["chapter-v1"],
+      // Pre-mark ALL guided tours complete so none auto-opens during the
+      // audit. driver.js injects a #driver-dummy-element with
+      // aria-expanded="true" on a <div> (an aria-allowed-attr violation,
+      // weight 10) and an overlay that distorts the DOM — auditing that
+      // transient tour state, not the steady-state page, produces false
+      // a11y regressions on /home, /profile and /discussions. Keep this in
+      // sync with TUTORIALS in src/lib/tutorial-config.ts.
+      tutorialsCompleted: [
+        "home-v1",
+        "chapter-v1",
+        "communities-v1",
+        "discussions-v1",
+        "profile-v1",
+      ],
       createdAt: new Date(),
       updatedAt: new Date(),
     });
