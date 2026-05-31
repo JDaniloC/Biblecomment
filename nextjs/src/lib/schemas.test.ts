@@ -1,7 +1,11 @@
 ﻿import { describe, it, expect } from "vitest";
 import { CreateDiscussionSchema } from "./schemas";
 
-const valid = { commentId: "c1", title: "TÃ­tulo", body: "Corpo da discussÃ£o" };
+const valid = {
+	commentId: "c1",
+	title: "TÃ­tulo",
+	body: "Corpo da discussÃ£o",
+};
 
 describe("CreateDiscussionSchema", () => {
 	it("accepts a valid payload with optional quote offsets", () => {

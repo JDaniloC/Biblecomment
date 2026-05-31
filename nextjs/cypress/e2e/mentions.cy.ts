@@ -201,7 +201,9 @@ describe("@mentions", () => {
 						const note = res.body.items.find(
 							(n: { type: string }) => n.type === "answer_mention",
 						);
-						expect(note, "answer_mention notification missing").to.not.equal(undefined);
+						expect(note, "answer_mention notification missing").to.not.equal(
+							undefined,
+						);
 						expect(note.actor).to.eq("bob");
 						expect(note.url).to.eq(`/discussion/gn/${discussionId}`);
 					});

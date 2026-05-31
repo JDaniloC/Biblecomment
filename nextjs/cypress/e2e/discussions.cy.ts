@@ -176,7 +176,11 @@ describe("Discussions â€” create, answer, notify, delete", () => {
 					cy.request({
 						method: "POST",
 						url: "/api/discussion/gn",
-						body: { commentId, title: "DiscussÃ£o de alice", body: "Pergunta?" },
+						body: {
+							commentId,
+							title: "DiscussÃ£o de alice",
+							body: "Pergunta?",
+						},
 					}),
 				)
 				.then((createRes) => {
@@ -207,7 +211,9 @@ describe("Discussions â€” create, answer, notify, delete", () => {
 						const note = res.body.items.find(
 							(n: { type: string }) => n.type === "discussion_answer",
 						);
-						expect(note, "discussion_answer notification missing").to.not.equal(undefined);
+						expect(note, "discussion_answer notification missing").to.not.equal(
+							undefined,
+						);
 						expect(note.actor).to.eq("bob");
 						expect(note.recipient).to.eq("alice");
 						expect(note.url).to.eq(`/discussion/gn/${discussionId}`);

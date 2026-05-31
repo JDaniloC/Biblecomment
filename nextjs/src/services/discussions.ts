@@ -47,10 +47,7 @@ export const discussionsService = {
 		return result.data;
 	},
 
-	async getForBook(
-		bookAbbrev: string,
-		page = 1,
-	): Promise<DiscussionWire[]> {
+	async getForBook(bookAbbrev: string, page = 1): Promise<DiscussionWire[]> {
 		const res = await axios.get<DiscussionWire[]>(
 			`/api/discussion/${bookAbbrev}?pages=${page}`,
 		);
