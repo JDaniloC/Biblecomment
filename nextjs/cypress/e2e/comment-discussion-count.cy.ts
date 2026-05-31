@@ -62,9 +62,7 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 		seedAnchorComment().then((commentId) => {
 			// Before any discussion exists the count is 0.
 			openVerseOneSidebar();
-			cy.get('[data-testid="comment-discuss"]')
-				.first()
-				.should("contain", "0");
+			cy.get('[data-testid="comment-discuss"]').first().should("contain", "0");
 
 			// Create a discussion anchored to that comment via the real API.
 			cy.request({
@@ -79,9 +77,7 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 			cy.reload();
 			cy.get("li#1 button").first().click();
 			cy.contains(COMMENT_TEXT).should("be.visible");
-			cy.get('[data-testid="comment-discuss"]')
-				.first()
-				.should("contain", "1");
+			cy.get('[data-testid="comment-discuss"]').first().should("contain", "1");
 		});
 	});
 
