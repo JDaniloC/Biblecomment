@@ -193,7 +193,9 @@ export default function DiscussionDetailClient({
 
 	function startEditDiscussion() {
 		if (!discussion) return;
-		setEditTitle(discussion.title?.trim() ? discussion.title : discussion.question);
+		setEditTitle(
+			discussion.title?.trim() ? discussion.title : discussion.question,
+		);
 		setEditBody(discussion.question);
 		setEditingDiscussion(true);
 	}
@@ -208,10 +210,14 @@ export default function DiscussionDetailClient({
 		if (!discussion?._id || !editTitle.trim() || !editBody.trim()) return;
 		setSavingDiscussion(true);
 		try {
-			const updated = await discussionsService.update(book.abbrev, discussion._id, {
-				title: editTitle.trim(),
-				body: editBody,
-			});
+			const updated = await discussionsService.update(
+				book.abbrev,
+				discussion._id,
+				{
+					title: editTitle.trim(),
+					body: editBody,
+				},
+			);
 			setDiscussion(updated);
 			cancelEditDiscussion();
 			handleNotification("success", "Discussão atualizada.");

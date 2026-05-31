@@ -259,49 +259,53 @@ export async function updateAnswerAction(
  * enforces. The comment snapshot/quote stay immutable.
  */
 export async function updateDiscussionAction(
-  bookAbbrev: string,
-  discussionId: string,
-  draft: { title: string; body: string },
+	bookAbbrev: string,
+	discussionId: string,
+	draft: { title: string; body: string },
 ): Promise<ActionResult<DiscussionWire>> {
-  const session = await auth();
-  if (!session?.user) return authError();
+	const session = await auth();
+	if (!session?.user) return authError();
 
-  if (!draft.title?.trim() || !draft.body?.trim()) {
-    return { ok: false, error: "title e body são obrigatórios" };
-  }
+	if (!draft.title?.trim() || !draft.body?.trim()) {
+		return { ok: false, error: "title e body são obrigatórios" };
+	}
 
-  try {
-    const useCase = new UpdateDiscussionUseCase(new MongoDiscussionRepository());
-    const discussion = await useCase.execute(
-      discussionId,
-      session.user.username,
-      session.user.moderator,
-      { title: draft.title, body: draft.body },
-    );
+	try {
+		const useCase = new UpdateDiscussionUseCase(
+			new MongoDiscussionRepository(),
+		);
+		const discussion = await useCase.execute(
+			discussionId,
+			session.user.username,
+			session.user.moderator,
+			{ title: draft.title, body: draft.body },
+		);
 
-    // Re-hydrate answers + like stats so the client gets the full detail shape
-    // back (update() returns the bare discussion). Cheapest correct path: read
-    // it through the detail use case as the current viewer.
-    const detail = await new GetDiscussionByIdUseCase(
-      new MongoDiscussionRepository(),
-      new MongoDiscussionAnswerRepository(),
-      new MongoUserRepository(),
-      new MongoDiscussionLikeRepository(),
-    ).execute(discussionId, session.user.id);
+		// Re-hydrate answers + like stats so the client gets the full detail shape
+		// back (update() returns the bare discussion). Cheapest correct path: read
+		// it through the detail use case as the current viewer.
+		const detail = await new GetDiscussionByIdUseCase(
+			new MongoDiscussionRepository(),
+			new MongoDiscussionAnswerRepository(),
+			new MongoUserRepository(),
+			new MongoDiscussionLikeRepository(),
+		).execute(discussionId, session.user.id);
 
-    revalidateDiscussionPaths();
-    return { ok: true, data: toDiscussionWire(detail ?? discussion) };
-  } catch (err) {
-    if (err instanceof Error) {
-      if (err.message === "Unauthorized") return { ok: false, error: "Forbidden" };
-      if (err.message === "Discussion not found") return { ok: false, error: "NotFound" };
-    }
-    logger.error(
-      { err, action: "updateDiscussionAction", bookAbbrev, discussionId },
-      "update discussion failed",
-    );
-    return appError(err, "Erro ao editar discussão.");
-  }
+		revalidateDiscussionPaths();
+		return { ok: true, data: toDiscussionWire(detail ?? discussion) };
+	} catch (err) {
+		if (err instanceof Error) {
+			if (err.message === "Unauthorized")
+				return { ok: false, error: "Forbidden" };
+			if (err.message === "Discussion not found")
+				return { ok: false, error: "NotFound" };
+		}
+		logger.error(
+			{ err, action: "updateDiscussionAction", bookAbbrev, discussionId },
+			"update discussion failed",
+		);
+		return appError(err, "Erro ao editar discussão.");
+	}
 }
 
 /**

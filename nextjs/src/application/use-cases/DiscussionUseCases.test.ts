@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
-  CreateDiscussionUseCase,
-  UpdateDiscussionUseCase,
+	CreateDiscussionUseCase,
+	UpdateDiscussionUseCase,
 } from "./DiscussionUseCases";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
@@ -169,80 +169,83 @@ describe("CreateDiscussionUseCase", () => {
 });
 
 function editableDiscussionRepo(seed: Partial<Discussion> & { _id: string }) {
-  let current = { ...seed } as Discussion & { _id: string };
-  return {
-    repo: {
-      findById: async (id: string) =>
-        id === current._id ? { ...current } : null,
-      update: async (id: string, patch: { title: string; question: string }) => {
-        if (id !== current._id) return null;
-        current = { ...current, ...patch, updatedAt: new Date() };
-        return { ...current };
-      },
-    },
-    get: () => current,
-  };
+	let current = { ...seed } as Discussion & { _id: string };
+	return {
+		repo: {
+			findById: async (id: string) =>
+				id === current._id ? { ...current } : null,
+			update: async (
+				id: string,
+				patch: { title: string; question: string },
+			) => {
+				if (id !== current._id) return null;
+				current = { ...current, ...patch, updatedAt: new Date() };
+				return { ...current };
+			},
+		},
+		get: () => current,
+	};
 }
 
 describe("UpdateDiscussionUseCase", () => {
-  const seed = {
-    _id: "d1",
-    bookAbbrev: "jo",
-    username: "bob",
-    verseReference: "JO 3:16",
-    verseText: "",
-    commentText: "snapshot imutável",
-    title: "Título antigo",
-    question: "corpo antigo",
-    createdAt: new Date("2026-01-01T00:00:00Z"),
-    updatedAt: new Date("2026-01-01T00:00:00Z"),
-  };
+	const seed = {
+		_id: "d1",
+		bookAbbrev: "jo",
+		username: "bob",
+		verseReference: "JO 3:16",
+		verseText: "",
+		commentText: "snapshot imutável",
+		title: "Título antigo",
+		question: "corpo antigo",
+		createdAt: new Date("2026-01-01T00:00:00Z"),
+		updatedAt: new Date("2026-01-01T00:00:00Z"),
+	};
 
-  it("lets the author edit title and body", async () => {
-    const { repo, get } = editableDiscussionRepo(seed);
-    const uc = new UpdateDiscussionUseCase(repo as never);
-    const result = await uc.execute("d1", "bob", false, {
-      title: "Título novo",
-      body: "corpo novo",
-    });
-    expect(result.title).toBe("Título novo");
-    expect(result.question).toBe("corpo novo");
-    expect(get().commentText).toBe("snapshot imutável");
-  });
+	it("lets the author edit title and body", async () => {
+		const { repo, get } = editableDiscussionRepo(seed);
+		const uc = new UpdateDiscussionUseCase(repo as never);
+		const result = await uc.execute("d1", "bob", false, {
+			title: "Título novo",
+			body: "corpo novo",
+		});
+		expect(result.title).toBe("Título novo");
+		expect(result.question).toBe("corpo novo");
+		expect(get().commentText).toBe("snapshot imutável");
+	});
 
-  it("strips line breaks from the edited title", async () => {
-    const { repo } = editableDiscussionRepo(seed);
-    const uc = new UpdateDiscussionUseCase(repo as never);
-    const result = await uc.execute("d1", "bob", false, {
-      title: "linha 1\nlinha 2",
-      body: "corpo",
-    });
-    expect(result.title).toBe("linha 1 linha 2");
-  });
+	it("strips line breaks from the edited title", async () => {
+		const { repo } = editableDiscussionRepo(seed);
+		const uc = new UpdateDiscussionUseCase(repo as never);
+		const result = await uc.execute("d1", "bob", false, {
+			title: "linha 1\nlinha 2",
+			body: "corpo",
+		});
+		expect(result.title).toBe("linha 1 linha 2");
+	});
 
-  it("lets a moderator edit someone else's discussion", async () => {
-    const { repo } = editableDiscussionRepo(seed);
-    const uc = new UpdateDiscussionUseCase(repo as never);
-    const result = await uc.execute("d1", "carol", true, {
-      title: "Moderado",
-      body: "corpo",
-    });
-    expect(result.title).toBe("Moderado");
-  });
+	it("lets a moderator edit someone else's discussion", async () => {
+		const { repo } = editableDiscussionRepo(seed);
+		const uc = new UpdateDiscussionUseCase(repo as never);
+		const result = await uc.execute("d1", "carol", true, {
+			title: "Moderado",
+			body: "corpo",
+		});
+		expect(result.title).toBe("Moderado");
+	});
 
-  it("rejects a non-author non-moderator", async () => {
-    const { repo } = editableDiscussionRepo(seed);
-    const uc = new UpdateDiscussionUseCase(repo as never);
-    await expect(
-      uc.execute("d1", "carol", false, { title: "x", body: "y" }),
-    ).rejects.toThrow("Unauthorized");
-  });
+	it("rejects a non-author non-moderator", async () => {
+		const { repo } = editableDiscussionRepo(seed);
+		const uc = new UpdateDiscussionUseCase(repo as never);
+		await expect(
+			uc.execute("d1", "carol", false, { title: "x", body: "y" }),
+		).rejects.toThrow("Unauthorized");
+	});
 
-  it("throws when the discussion does not exist", async () => {
-    const { repo } = editableDiscussionRepo(seed);
-    const uc = new UpdateDiscussionUseCase(repo as never);
-    await expect(
-      uc.execute("missing", "bob", false, { title: "x", body: "y" }),
-    ).rejects.toThrow("Discussion not found");
-  });
+	it("throws when the discussion does not exist", async () => {
+		const { repo } = editableDiscussionRepo(seed);
+		const uc = new UpdateDiscussionUseCase(repo as never);
+		await expect(
+			uc.execute("missing", "bob", false, { title: "x", body: "y" }),
+		).rejects.toThrow("Discussion not found");
+	});
 });
