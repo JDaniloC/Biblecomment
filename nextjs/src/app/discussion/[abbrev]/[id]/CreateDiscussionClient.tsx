@@ -106,7 +106,9 @@ export default function CreateDiscussionClient({
 	}
 
 	function clearSelection() {
+		// skipcq: JS-W1042
 		setQuoteStart(undefined);
+		// skipcq: JS-W1042
 		setQuoteEnd(undefined);
 	}
 

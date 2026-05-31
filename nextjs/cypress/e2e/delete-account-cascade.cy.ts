@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LGPD Art. 18 — anonymize-on-delete cascade.
  *
  * Verifies the full DB-level cascade end-to-end (real Mongo, real
@@ -39,10 +39,6 @@ function getVerseId(
 			const verse = (
 				res.body as Array<{ _id: string; verseNumber: number }>
 			).find((v) => v.verseNumber === verseNumber);
-			expect(
-				verse,
-				`verse ${abbrev} ${chapter}:${verseNumber} should be seeded`,
-			).to.not.equal(undefined);
 			if (!verse) throw new Error("verse not seeded");
 			return verse._id;
 		});
@@ -169,10 +165,6 @@ describe("LGPD — delete account cascade", () => {
 										reporters: string[];
 									}>;
 									const target = reported.find((c) => c._id === bobCommentId);
-									expect(
-										target,
-										"bob's comment should be in the reports queue pre-delete",
-									).to.not.equal(undefined);
 									if (!target) throw new Error("unreachable");
 									expect(target.reportCount).to.eq(1);
 									expect(
@@ -229,18 +221,14 @@ describe("LGPD — delete account cascade", () => {
 									const aliceCmt = all.find(
 										(c: { _id: string }) => c._id === aliceCommentId,
 									);
-									expect(aliceCmt, "alice's comment should still exist").to
-										.exist;
+									assert.exists(aliceCmt, "alice's comment should still exist");
 									expect(aliceCmt.username).to.eq(ANON);
 									expect(aliceCmt.text).to.eq("Comentário da alice em Gn 1:1.");
 
 									const bobCmt = all.find(
 										(c: { _id: string }) => c._id === bobCommentId,
 									);
-									expect(
-										bobCmt,
-										"bob's comment should still exist",
-									).to.not.equal(undefined);
+									assert.exists(bobCmt, "bob's comment should still exist");
 									expect(bobCmt.username).to.eq("bob");
 									expect(bobCmt.likeCount, "alice's like cascaded out").to.eq(
 										0,
@@ -267,10 +255,10 @@ describe("LGPD — delete account cascade", () => {
 									const stillThere = reported.find(
 										(c) => c._id === bobCommentId,
 									);
-									expect(
+									assert.notExists(
 										stillThere,
 										"bob's comment should leave the reports queue post-delete",
-									).to.equal(undefined);
+									);
 								},
 							);
 							cy.task<number>("db:countReportsForComment", bobCommentId).should(
@@ -293,10 +281,7 @@ describe("LGPD — delete account cascade", () => {
 									const bobAnswer = disc.answers.find(
 										(a: { name: string }) => a.name === "bob",
 									);
-									expect(
-										bobAnswer,
-										"bob's answer survives the cascade",
-									).to.not.equal(undefined);
+									assert.exists(bobAnswer, "bob's answer survives the cascade");
 									expect(bobAnswer.text).to.eq("Resposta do bob para a alice.");
 								},
 							);
@@ -370,9 +355,7 @@ describe("LGPD — delete account cascade", () => {
 							(a: { text: string }) =>
 								a.text === "Reflexão da alice sobre o tohu va-bohu.",
 						);
-						expect(aliceAnswer, "alice's answer text preserved").to.not.equal(
-							undefined,
-						);
+						assert.exists(aliceAnswer, "alice's answer text preserved");
 						expect(
 							aliceAnswer.name,
 							"alice's name in answer is anonymized",

@@ -20,10 +20,6 @@ function getVerseId(
 			const verse = (
 				res.body as Array<{ _id: string; verseNumber: number }>
 			).find((v) => v.verseNumber === verseNumber);
-			expect(
-				verse,
-				`verse ${abbrev} ${chapter}:${verseNumber} should be seeded`,
-			).to.not.equal(undefined);
 			if (!verse) throw new Error("verse not seeded");
 			return verse._id;
 		});
@@ -201,9 +197,7 @@ describe("@mentions", () => {
 						const note = res.body.items.find(
 							(n: { type: string }) => n.type === "answer_mention",
 						);
-						expect(note, "answer_mention notification missing").to.not.equal(
-							undefined,
-						);
+						assert.exists(note, "answer_mention notification missing");
 						expect(note.actor).to.eq("bob");
 						expect(note.url).to.eq(`/discussion/gn/${discussionId}`);
 					});
