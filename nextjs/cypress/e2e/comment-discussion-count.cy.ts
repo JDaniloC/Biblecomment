@@ -107,8 +107,18 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 				.should("have.attr", "aria-expanded", "true");
 
 			// Delete (owner) + Editar now exist in the open menu's popover.
-			cy.get(`[data-testid="delete-${commentId}"]`).should("exist");
-			cy.get('[role="menu"]').should("contain", "Editar");
+			// Assert both within a single retry-able [role="menu"] query so the
+			// check is atomic: an async re-render (e.g. useSession resolving and
+			// re-rendering the card) can briefly unmount/remount the popover
+			// between two separate cy.get() commands, which made a delete-then-menu
+			// two-step flake even though the menu is open (aria-expanded=true).
+			cy.get('[role="menu"]')
+				.should("contain", "Editar")
+				.and((menu) => {
+					expect(menu.find(`[data-testid="delete-${commentId}"]`)).to.have.length(
+						1,
+					);
+				});
 
 			// Útil + Contribuir are inline, NOT inside the popover: the discuss
 			// button still exists outside any [role="menu"]. (The open popover is
@@ -119,13 +129,20 @@ describe("Comment sidebar — discussion count + kebab management menu", () => {
 				.find('[data-testid="comment-discuss"]')
 				.should("not.exist");
 
-			// Clicking outside closes the menu and unmounts its items.
-			cy.get("body").click(0, 0);
+			// Closing: the open menu renders a fixed-inset backdrop button
+			// (aria-hidden, tabindex=-1) whose onClick calls setOpenMenuId(null).
+			// It covers the kebab trigger, so close via the backdrop with
+			// { force: true } (it is intentionally aria-hidden / zero-content).
+			cy.get(`[data-testid="comment-menu-${commentId}"]`)
+				.parent()
+				.find('button[aria-hidden="true"][tabindex="-1"]')
+				.click({ force: true });
 			cy.get(`[data-testid="comment-menu-${commentId}"]`).should(
 				"have.attr",
 				"aria-expanded",
 				"false",
 			);
+			// Items unmount once the menu closes.
 			cy.get(`[data-testid="delete-${commentId}"]`).should("not.exist");
 		});
 	});
