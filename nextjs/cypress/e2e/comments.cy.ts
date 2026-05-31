@@ -323,6 +323,8 @@ describe("Comments — full lifecycle", () => {
 					cy.get("li#1 button").first().click();
 					cy.contains("alice inline-delete target").should("be.visible");
 
+					// Delete now lives in the per-comment kebab menu; open it first.
+					cy.get(`[data-testid="comment-menu-${id}"]`).click();
 					cy.get(`[data-testid="delete-${id}"]`).click();
 					cy.get('[role="alertdialog"]').should("be.visible");
 					cy.get('[role="alertdialog"] button[data-variant="danger"]').click();

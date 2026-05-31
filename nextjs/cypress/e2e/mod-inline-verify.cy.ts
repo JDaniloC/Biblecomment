@@ -60,18 +60,25 @@ describe("Moderator inline-verify on chapter comments", () => {
     cy.visit(`/verses/${VERSE.abbrev}/${VERSE.chapter}`);
     cy.get("li#1 button").first().click();
 
+    // The verify action lives in the per-comment kebab menu; its items mount
+    // only while the menu is open and the menu auto-closes after each action,
+    // so we re-open it to re-read the control between toggles.
+    cy.get('[data-testid^="comment-menu-"]').first().click();
     cy.get('[data-testid^="mod-verify-"]')
       .should("have.attr", "data-verified", "false")
       .click();
 
+    cy.get('[data-testid^="comment-menu-"]').first().click();
     cy.get('[data-testid^="mod-verify-"]').should(
       "have.attr",
       "data-verified",
       "true",
     );
 
-    // Toggle back off.
+    // Toggle back off (menu is open from the previous re-open), then re-open
+    // once more to confirm the control reverted.
     cy.get('[data-testid^="mod-verify-"]').click();
+    cy.get('[data-testid^="comment-menu-"]').first().click();
     cy.get('[data-testid^="mod-verify-"]').should(
       "have.attr",
       "data-verified",

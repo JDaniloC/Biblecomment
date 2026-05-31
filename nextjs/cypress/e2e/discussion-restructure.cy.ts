@@ -143,7 +143,7 @@ describe("Discussion edit/delete", () => {
 	/** Seed an anchor comment on gn 1:1 and resolve to its id. */
 	function seedAnchorComment() {
 		return cy
-			.task<string>("db:seedComment", {
+			.task<{ id: string }>("db:seedComment", {
 				username: "alice",
 				abbrev: "gn",
 				chapter: 1,
@@ -151,7 +151,7 @@ describe("Discussion edit/delete", () => {
 				text: COMMENT_TEXT,
 				tags: [],
 			})
-			.then((id) => id as string);
+			.then((res) => res.id);
 	}
 
 	/**
