@@ -66,6 +66,8 @@ export interface Comment {
    * UserModel lookup. Drives the inline verified badge on comment cards.
    */
   authorEmailVerified?: boolean;
+  /** Number of discussions anchored to this comment. Populated at read time. */
+  discussionCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

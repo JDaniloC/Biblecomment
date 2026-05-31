@@ -8,6 +8,7 @@ import { badRequest, serverError } from "@/lib/get-session";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { MongoCommunityMembershipRepository } from "@/infrastructure/repositories/MongoCommunityMembershipRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { partitionByApproved } from "@/lib/community-prioritization";
 
 type Params = { abbrev: string; chapter: string };
@@ -63,6 +64,9 @@ export async function GET(
 			comments.map((c) => c._id.toString()),
 			session?.user?.id,
 		);
+		const discCounts = await new MongoDiscussionRepository().countByCommentId(
+			comments.map((c) => c._id.toString()),
+		);
 
 		const titleComments = comments
 			.filter((c) => c.onTitle)
@@ -79,6 +83,7 @@ export async function GET(
 				verifiedBy: c.verifiedBy,
 				communitySlug: c.communitySlug,
 				onTitle: c.onTitle,
+				discussionCount: discCounts.get(c._id.toString()) ?? 0,
 			}));
 
 		const verseComments = comments
@@ -97,6 +102,7 @@ export async function GET(
 				communitySlug: c.communitySlug,
 				verseId: c.verseId.toString(),
 				onTitle: c.onTitle,
+				discussionCount: discCounts.get(c._id.toString()) ?? 0,
 			}));
 
 		const { prioritized, others } = partitionByApproved(

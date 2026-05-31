@@ -45,6 +45,7 @@ const DiscussionSchema = new Schema<IDiscussionDocument>(
 DiscussionSchema.index({ sourceId: 1 }, { unique: true, sparse: true });
 DiscussionSchema.index({ bookAbbrev: 1 });
 DiscussionSchema.index({ username: 1 });
+DiscussionSchema.index({ commentId: 1 });
 
 export const DiscussionModel: Model<IDiscussionDocument> =
 	mongoose.models.Discussion ||

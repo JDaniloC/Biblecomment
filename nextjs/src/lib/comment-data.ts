@@ -34,4 +34,5 @@ export interface CommentData {
    * verified badge on comment cards.
    */
   authorEmailVerified?: boolean;
+  discussionCount?: number;
 }

@@ -160,4 +160,24 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		const doc = await DiscussionModel.findOne({ username }, { _id: 1 });
 		return doc !== null;
 	}
+
+	// skipcq: JS-0105
+	async countByCommentId(commentIds: string[]): Promise<Map<string, number>> {
+		const out = new Map<string, number>();
+		if (commentIds.length === 0) return out;
+		await connectToDatabase();
+		const oids = commentIds
+			.filter((id) => mongoose.Types.ObjectId.isValid(id))
+			.map((id) => new mongoose.Types.ObjectId(id));
+		if (oids.length === 0) return out;
+		const rows = await DiscussionModel.aggregate<{
+			_id: mongoose.Types.ObjectId;
+			total: number;
+		}>([
+			{ $match: { commentId: { $in: oids } } },
+			{ $group: { _id: "$commentId", total: { $sum: 1 } } },
+		]);
+		for (const row of rows) out.set(row._id.toString(), row.total);
+		return out;
+	}
 }
