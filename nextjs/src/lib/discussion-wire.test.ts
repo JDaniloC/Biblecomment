@@ -92,6 +92,34 @@ describe("toDiscussionWire", () => {
 		expect(wire.answers[0].likedByMe).toBe(false);
 	});
 
+	it("carries each answer's createdAt into the wire", () => {
+		const created = new Date("2026-01-01T10:00:00Z");
+		const wire = toDiscussionWire(
+			baseDiscussion({
+				answers: [
+					{
+						_id: "a1",
+						discussionId: "d1",
+						userId: "u1",
+						username: "ana",
+						text: "resposta",
+						createdAt: created,
+						updatedAt: created,
+					},
+				],
+			}),
+		);
+		expect(wire.answers[0].createdAt).toEqual(created);
+	});
+
+	it("passes through authorEmailVerified (defaulting to false)", () => {
+		expect(toDiscussionWire(baseDiscussion()).authorEmailVerified).toBe(false);
+		expect(
+			toDiscussionWire(baseDiscussion({ authorEmailVerified: true }))
+				.authorEmailVerified,
+		).toBe(true);
+	});
+
 	it("marks a discussion edited only when updatedAt is after createdAt", () => {
 		const created = new Date("2024-01-01T00:00:00.000Z");
 		const fresh = toDiscussionWire(

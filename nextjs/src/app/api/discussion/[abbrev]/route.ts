@@ -31,6 +31,11 @@ export async function GET(
 		if (!book) return NextResponse.json([]);
 
 		const repo = new MongoDiscussionRepository();
+		// NOTE: this endpoint is intentionally NOT enriched with answersCount/
+		// likeCount/authorEmailVerified — it has no UI consumer today (getForBook
+		// is only hit by its unit test). If a "load more" ever wires it into the
+		// book list, pass answer/like/user repos here too (see the server page in
+		// discussion/[abbrev]/page.tsx) so cards keep their ❤/badge mid-scroll.
 		const useCase = new GetDiscussionsUseCase(repo);
 		const items = await useCase.execute(abbrev.toLowerCase(), {
 			page,

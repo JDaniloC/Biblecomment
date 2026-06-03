@@ -603,9 +603,9 @@ export default function ChapterClient({
 				requireLogin();
 				return;
 			}
-			// A discussion is always anchored to a comment — the create page
-			// fetches the comment's authoritative text from this id.
-			router.push(`/discussion/${book.abbrev}/new?commentId=${commentId}`);
+			// Open the comment's discussions page: it lists existing threads
+			// anchored to this comment and offers a "Nova discussão" CTA.
+			router.push(`/discussion/${book.abbrev}/comment/${commentId}`);
 		},
 		[user, requireLogin, book.abbrev, router],
 	);
@@ -1287,7 +1287,25 @@ export default function ChapterClient({
 															rows={5}
 															className="w-full border border-[#e2e8f0] dark:border-slate-700 rounded-lg px-3 py-2 text-[14px] text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 resize-y min-h-[120px] max-h-[60vh] focus:outline-none focus:ring-2 focus:ring-[#137ddb]/30 focus:border-[#137ddb] transition"
 														/>
-														<div className="flex gap-2 mt-2 justify-end">
+														<div className="flex items-center gap-2 mt-2 justify-end">
+															{(() => {
+																const len = editText.length;
+																const tooShort = len < MIN_LEN;
+																const tooLong = len > MAX_LEN;
+																const target = tooShort ? MIN_LEN : MAX_LEN;
+																const color = tooLong
+																	? "text-red-500 dark:text-red-400"
+																	: tooShort
+																		? "text-amber-500 dark:text-amber-400"
+																		: "text-slate-400 dark:text-slate-500";
+																return (
+																	<span
+																		className={`mr-auto text-[11px] font-medium ${color}`}
+																	>
+																		{len}/{target} caracteres
+																	</span>
+																);
+															})()}
 															<button
 																type="button"
 																onClick={() => setEditingComment(null)}
@@ -1297,7 +1315,11 @@ export default function ChapterClient({
 															</button>
 															<button
 																type="submit"
-																className="bg-[#137ddb] text-white text-[13px] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#0f69c0] transition"
+																disabled={
+																	editText.length < MIN_LEN ||
+																	editText.length > MAX_LEN
+																}
+																className="bg-[#137ddb] text-white text-[13px] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#0f69c0] transition disabled:opacity-50 disabled:cursor-not-allowed"
 															>
 																Salvar
 															</button>
@@ -1311,7 +1333,7 @@ export default function ChapterClient({
 										return (
 											<div
 												key={comment._id}
-												className="bg-white dark:bg-slate-900 border-l-4 border border-solid rounded-r-lg overflow-hidden shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)]"
+												className="bg-white dark:bg-slate-900 border-l-4 border border-solid rounded-r-lg overflow-visible shadow-[0px_1px_4px_0px_rgba(0,0,0,0.06)]"
 												style={{ borderColor }}
 											>
 												{/* Header row: category pills + username + date.

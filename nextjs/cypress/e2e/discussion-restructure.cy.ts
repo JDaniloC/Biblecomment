@@ -54,7 +54,13 @@ describe("Discussion restructure (UI flow)", () => {
 		// Tap "Contribuir" on the rendered comment.
 		cy.get('[data-testid="comment-discuss"]').first().click();
 
-		// We land on the create-discussion page anchored to that comment.
+		// We land on the comment's discussions page (lists existing threads).
+		cy.url().should("include", "/discussion/gn/comment/");
+		cy.get('[data-testid="comment-snapshot"]').should("contain", COMMENT_TEXT);
+		cy.get('[data-testid="comment-discussions-empty"]').should("be.visible");
+
+		// Start a new discussion from there → the create form.
+		cy.get('[data-testid="new-discussion"]').click();
 		cy.url().should("include", "/discussion/gn/new");
 
 		// The read-only comment snapshot shows the seeded comment text.

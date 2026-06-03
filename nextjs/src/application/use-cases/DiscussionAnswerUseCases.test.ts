@@ -96,6 +96,7 @@ function discussionRepoStub(discussions: Discussion[]): IDiscussionRepository {
 		anonymizeByUsername: () => Promise.resolve(0),
 		userHasOpenedDiscussion: () => Promise.resolve(discussions.length > 0),
 		countByCommentId: () => Promise.resolve(new Map<string, number>()),
+		findByCommentId: () => Promise.resolve(discussions),
 	};
 }
 

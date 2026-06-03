@@ -33,6 +33,8 @@ export interface Discussion {
 	likeCount?: number;
 	/** Whether the viewing user liked this discussion — populated at read time. */
 	likedByMe?: boolean;
+	/** Snapshot do estado de verificação de e-mail do autor — populado em leitura. */
+	authorEmailVerified?: boolean;
 	/**
 	 * Populated only by detail GETs (single discussion). The list endpoint
 	 * leaves it undefined and ships `answersCount` instead — answers live

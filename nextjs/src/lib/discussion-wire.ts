@@ -20,11 +20,15 @@ export interface DiscussionWire extends Omit<Discussion, "answers"> {
 		authorEmailVerified?: boolean;
 		likeCount: number;
 		likedByMe: boolean;
+		/** Quando a resposta foi criada (snapshot da entidade). */
+		createdAt?: Date;
 	}>;
 	answersCount: number;
 	/** Always numeric/boolean on the wire — defaulted when not enriched. */
 	likeCount: number;
 	likedByMe: boolean;
+	/** Always a boolean on the wire — false when not enriched. */
+	authorEmailVerified: boolean;
 	/** True when the thread was edited after creation (updatedAt past createdAt). */
 	edited: boolean;
 }
@@ -57,6 +61,7 @@ export function toDiscussionWire(discussion: Discussion): DiscussionWire {
 		authorEmailVerified: a.authorEmailVerified,
 		likeCount: a.likeCount ?? 0,
 		likedByMe: a.likedByMe ?? false,
+		createdAt: a.createdAt,
 	}));
 	return {
 		...discussion,
@@ -65,6 +70,7 @@ export function toDiscussionWire(discussion: Discussion): DiscussionWire {
 		answersCount: discussion.answersCount ?? answers.length,
 		likeCount: discussion.likeCount ?? 0,
 		likedByMe: discussion.likedByMe ?? false,
+		authorEmailVerified: discussion.authorEmailVerified ?? false,
 		edited: isEdited(discussion.createdAt, discussion.updatedAt),
 	};
 }

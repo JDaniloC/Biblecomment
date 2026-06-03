@@ -11,6 +11,8 @@ import { useConfirm } from "@/contexts/ConfirmContext";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { LikeButton } from "@/components/LikeButton";
+import { DiscussionCard } from "@/components/DiscussionCard";
+import { formatRelativeDate } from "@/lib/relative-date";
 
 const TITLE_MAX = 140;
 const BODY_MAX = 1000;
@@ -318,26 +320,21 @@ export default function DiscussionDetailClient({
 					) : (
 						<div className="space-y-3" data-testid="discussion-list">
 							{discussions.map((d) => (
-								<Link
+								<DiscussionCard
 									key={d._id}
-									href={`/discussion/${book.abbrev}/${d._id}`}
-									data-testid="discussion-card"
-									className="block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand transition"
-								>
-									<p className="text-xs font-medium text-brand mb-1">
-										{d.verseReference}
-									</p>
-									<h2 className="font-semibold text-slate-800 dark:text-slate-100">
-										{headingFor(d)}
-									</h2>
-									<div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
-										<span>por {d.username}</span>
-										<span>·</span>
-										<span>
-											{d.answersCount} resposta{d.answersCount !== 1 ? "s" : ""}
-										</span>
-									</div>
-								</Link>
+									data={{
+										_id: d._id ?? "",
+										abbrev: book.abbrev,
+										title: d.title,
+										question: d.question,
+										username: d.username,
+										verseReference: d.verseReference,
+										answersCount: d.answersCount,
+										createdAt: d.createdAt ?? new Date(),
+										authorEmailVerified: d.authorEmailVerified,
+										likeCount: d.likeCount,
+									}}
+								/>
 							))}
 						</div>
 					)}
@@ -382,28 +379,67 @@ export default function DiscussionDetailClient({
 									{headingFor(discussion)}
 								</h1>
 								{canEditDiscussion && (
-									<div className="flex items-center gap-2 shrink-0">
+									<div className="flex items-center gap-1.5 shrink-0">
 										<button
 											type="button"
 											data-testid="discussion-edit"
 											onClick={startEditDiscussion}
-											className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-brand transition"
+											aria-label="Editar discussão"
+											title="Editar"
+											className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-brand/10 hover:text-brand hover:scale-110 active:scale-95 transition"
 										>
-											Editar
+											<svg
+												width="15"
+												height="15"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												strokeWidth="2"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												aria-hidden="true"
+											>
+												<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+												<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+											</svg>
 										</button>
 										<button
 											type="button"
 											data-testid="discussion-delete"
 											onClick={handleDeleteDiscussion}
-											className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-red-500 transition"
+											aria-label="Excluir discussão"
+											title="Excluir"
+											className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-red-500/10 hover:text-red-500 hover:scale-110 active:scale-95 transition"
 										>
-											Excluir
+											<svg
+												width="15"
+												height="15"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												strokeWidth="2"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												aria-hidden="true"
+											>
+												<polyline points="3 6 5 6 21 6" />
+												<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+											</svg>
 										</button>
 									</div>
 								)}
 							</div>
 							<p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">
 								por <strong>{discussion.username}</strong>
+								{discussion.createdAt && (
+									<span
+										data-testid="discussion-created"
+										className="text-xs text-slate-400 dark:text-slate-500"
+									>
+										{" "}
+										· aberta {formatRelativeDate(discussion.createdAt)}
+									</span>
+								)}
 								{discussion.edited && (
 									<>
 										{" "}
@@ -432,6 +468,9 @@ export default function DiscussionDetailClient({
 								placeholder="Título"
 								className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30"
 							/>
+							<p className="text-[11px] text-slate-400 dark:text-slate-500 text-right">
+								{editTitle.length}/{TITLE_MAX}
+							</p>
 							<textarea
 								data-testid="discussion-edit-body"
 								value={editBody}
@@ -543,6 +582,14 @@ export default function DiscussionDetailClient({
 									<span className="inline-flex items-center gap-1">
 										<p className="text-xs font-semibold text-brand">{a.name}</p>
 										<VerifiedBadge verified={a.authorEmailVerified} size="xs" />
+										{a.createdAt && (
+											<span
+												data-testid="answer-created"
+												className="text-[11px] text-slate-400 dark:text-slate-500"
+											>
+												· {formatRelativeDate(a.createdAt)}
+											</span>
+										)}
 									</span>
 									{canEdit && !isEditing && (
 										<button
@@ -561,8 +608,12 @@ export default function DiscussionDetailClient({
 											value={editAnswerText}
 											onChange={(e) => setEditAnswerText(e.target.value)}
 											rows={3}
+											maxLength={ANSWER_MAX}
 											className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
 										/>
+										<p className="text-[11px] text-slate-400 dark:text-slate-500 text-right">
+											{editAnswerText.length}/{ANSWER_MAX}
+										</p>
 										<div className="flex gap-2 justify-end">
 											<button
 												type="button"

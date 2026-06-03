@@ -180,4 +180,14 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		for (const row of rows) out.set(row._id.toString(), row.total);
 		return out;
 	}
+
+	// skipcq: JS-0105
+	async findByCommentId(commentId: string): Promise<Discussion[]> {
+		await connectToDatabase();
+		if (!mongoose.Types.ObjectId.isValid(commentId)) return [];
+		const docs = await DiscussionModel.find({
+			commentId: new mongoose.Types.ObjectId(commentId),
+		}).sort({ createdAt: -1 });
+		return docs.map(toEntity);
+	}
 }

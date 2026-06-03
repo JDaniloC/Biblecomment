@@ -7,15 +7,60 @@ import { Discussion } from "@/domain/entities/Discussion";
 import { DiscussionAnswer } from "@/domain/entities/DiscussionAnswer";
 import { isEmailVerified, EmailNotVerifiedError } from "@/lib/auth-guards";
 
+/**
+ * Batch-enrich a list of discussions with the per-list aggregates each wired
+ * repo can supply — `answersCount` (answerRepo), `likeCount` (likeRepo) and
+ * `authorEmailVerified` (userRepo). Each enrichment is additive and skipped
+ * when its repo is absent, so callers keep identical behavior unwired. All
+ * lookups are batched over the full id/username set — never N+1.
+ */
+async function enrichDiscussionsForList(
+	discussions: Discussion[],
+	deps: {
+		answerRepo?: IDiscussionAnswerRepository;
+		likeRepo?: IDiscussionLikeRepository;
+		userRepo?: IUserRepository;
+	},
+): Promise<Discussion[]> {
+	if (discussions.length === 0) return discussions;
+	const ids = discussions.map((d) => d._id ?? "").filter(Boolean);
+
+	const answerCounts = deps.answerRepo
+		? await deps.answerRepo.countByDiscussion(ids)
+		: undefined;
+	const likeCounts = deps.likeRepo
+		? await deps.likeRepo.countByTargets("discussion", ids)
+		: undefined;
+	let verifiedMap: Map<string, boolean> | undefined;
+	if (deps.userRepo) {
+		const usernames = [...new Set(discussions.map((d) => d.username))];
+		const users = await deps.userRepo.findByUsernames(usernames);
+		verifiedMap = new Map(users.map((u) => [u.username, !!u.emailVerifiedAt]));
+	}
+
+	return discussions.map((d) => ({
+		...d,
+		...(answerCounts ? { answersCount: answerCounts.get(d._id ?? "") ?? 0 } : {}),
+		...(likeCounts ? { likeCount: likeCounts.get(d._id ?? "") ?? 0 } : {}),
+		...(verifiedMap
+			? { authorEmailVerified: verifiedMap.get(d.username) ?? false }
+			: {}),
+	}));
+}
+
 export class GetDiscussionsUseCase {
 	constructor(
 		private readonly discussionRepo: IDiscussionRepository,
 		private readonly answerRepo?: IDiscussionAnswerRepository,
+		private readonly likeRepo?: IDiscussionLikeRepository,
+		private readonly userRepo?: IUserRepository,
 	) {}
 
 	/**
-	 * Discussions for a book, with `answersCount` populated when the answer
-	 * repo is wired. List views render the count without inline answers.
+	 * Discussions for a book. `answersCount` is populated when the answer repo
+	 * is wired; `likeCount` and `authorEmailVerified` are batch-enriched when
+	 * the like/user repos are wired. List views render these without inline
+	 * answers.
 	 *
 	 * Pass `{ page, pageSize }` to push pagination down to the DB; without it,
 	 * every thread for the book is loaded (legacy behavior, kept for the
@@ -32,13 +77,34 @@ export class GetDiscussionsUseCase {
 					pagination.pageSize,
 				)
 			: await this.discussionRepo.findByBookAbbrev(bookAbbrev);
-		if (!this.answerRepo || discussions.length === 0) return discussions;
-		const ids = discussions.map((d) => d._id ?? "").filter(Boolean);
-		const counts = await this.answerRepo.countByDiscussion(ids);
-		return discussions.map((d) => ({
-			...d,
-			answersCount: counts.get(d._id ?? "") ?? 0,
-		}));
+		return enrichDiscussionsForList(discussions, {
+			answerRepo: this.answerRepo,
+			likeRepo: this.likeRepo,
+			userRepo: this.userRepo,
+		});
+	}
+}
+
+export class GetDiscussionsByCommentUseCase {
+	constructor(
+		private readonly discussionRepo: IDiscussionRepository,
+		private readonly answerRepo?: IDiscussionAnswerRepository,
+		private readonly likeRepo?: IDiscussionLikeRepository,
+		private readonly userRepo?: IUserRepository,
+	) {}
+
+	/**
+	 * Discussões ancoradas a um comentário. `answersCount` é populado quando o
+	 * answer repo está disponível; `likeCount` e `authorEmailVerified` são
+	 * enriquecidos em lote quando os repos de like/user estão presentes.
+	 */
+	async execute(commentId: string): Promise<Discussion[]> {
+		const discussions = await this.discussionRepo.findByCommentId(commentId);
+		return enrichDiscussionsForList(discussions, {
+			answerRepo: this.answerRepo,
+			likeRepo: this.likeRepo,
+			userRepo: this.userRepo,
+		});
 	}
 }
 
@@ -122,25 +188,26 @@ export class GetAllDiscussionsPaginatedUseCase {
 	constructor(
 		private readonly discussionRepo: IDiscussionRepository,
 		private readonly answerRepo?: IDiscussionAnswerRepository,
+		private readonly likeRepo?: IDiscussionLikeRepository,
+		private readonly userRepo?: IUserRepository,
 	) {}
 
 	/**
 	 * List page payload. Each item is a Discussion with `answersCount` filled
-	 * via batch aggregation on the DiscussionAnswer collection — no inline
-	 * answers (the list page doesn't render them).
+	 * via batch aggregation; `likeCount` and `authorEmailVerified` are
+	 * batch-enriched when the like/user repos are wired. No inline answers
+	 * (the list page doesn't render them).
 	 */
 	async execute(page: number, pageSize: number): Promise<Discussion[]> {
 		const discussions = await this.discussionRepo.findAllPaginated(
 			page,
 			pageSize,
 		);
-		if (!this.answerRepo || discussions.length === 0) return discussions;
-		const ids = discussions.map((d) => d._id ?? "").filter(Boolean);
-		const counts = await this.answerRepo.countByDiscussion(ids);
-		return discussions.map((d) => ({
-			...d,
-			answersCount: counts.get(d._id ?? "") ?? 0,
-		}));
+		return enrichDiscussionsForList(discussions, {
+			answerRepo: this.answerRepo,
+			likeRepo: this.likeRepo,
+			userRepo: this.userRepo,
+		});
 	}
 }
 

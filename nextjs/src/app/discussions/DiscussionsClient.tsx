@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { useNotification } from "@/contexts/NotificationContext";
 import { discussionsService } from "@/services/discussions";
 import Loading from "@/components/Loading";
+import { DiscussionCard } from "@/components/DiscussionCard";
 import { AppHeader } from "@/components/AppHeader";
 import { PageTutorial } from "@/components/Tutorial/PageTutorial";
 import {
@@ -28,6 +28,8 @@ interface DiscussionSummary {
 	verseReference: string;
 	answersCount: number;
 	createdAt: string;
+	authorEmailVerified?: boolean;
+	likeCount?: number;
 }
 
 export default function DiscussionsClient({
@@ -84,25 +86,21 @@ export default function DiscussionsClient({
 					) : (
 						<div className="space-y-4">
 							{discussions.map((d) => (
-								<Link
+								<DiscussionCard
 									key={d._id}
-									href={`/discussion/${d.bookAbbrev}/${d._id}`}
-									data-testid="discussion-card"
-									className="block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand transition"
-								>
-									<div className="text-xs text-brand font-medium mb-1">
-										{d.verseReference}
-									</div>
-									<p className="text-sm font-semibold text-gray-800 dark:text-slate-100 mb-2">
-										{d.title || d.question}
-									</p>
-									<div className="flex items-center justify-between text-xs text-gray-400 dark:text-slate-500">
-										<span>por {d.username}</span>
-										<span>
-											{d.answersCount} resposta{d.answersCount !== 1 ? "s" : ""}
-										</span>
-									</div>
-								</Link>
+									data={{
+										_id: d._id,
+										abbrev: d.bookAbbrev,
+										title: d.title,
+										question: d.question,
+										username: d.username,
+										verseReference: d.verseReference,
+										answersCount: d.answersCount,
+										createdAt: d.createdAt,
+										authorEmailVerified: d.authorEmailVerified,
+										likeCount: d.likeCount,
+									}}
+								/>
 							))}
 
 							{hasMore && !loading && (

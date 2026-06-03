@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
+import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { GetAllDiscussionsPaginatedUseCase } from "@/application/use-cases/DiscussionUseCases";
 import { serverError } from "@/lib/get-session";
 
@@ -18,6 +20,8 @@ export async function GET(req: Request) {
     const useCase = new GetAllDiscussionsPaginatedUseCase(
       new MongoDiscussionRepository(),
       new MongoDiscussionAnswerRepository(),
+      new MongoDiscussionLikeRepository(),
+      new MongoUserRepository(),
     );
     return NextResponse.json(await useCase.execute(page, PAGE_SIZE));
   } catch (err) {

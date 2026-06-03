@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
 import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
+import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { GetDiscussionsUseCase } from "@/application/use-cases/DiscussionUseCases";
 import { toDiscussionWire } from "@/lib/discussion-wire";
 import DiscussionDetailClient from "./[id]/DiscussionDetailClient";
@@ -26,6 +28,8 @@ export default async function DiscussionListPage({
 	const useCase = new GetDiscussionsUseCase(
 		new MongoDiscussionRepository(),
 		new MongoDiscussionAnswerRepository(),
+		new MongoDiscussionLikeRepository(),
+		new MongoUserRepository(),
 	);
 	const discussions = (await useCase.execute(abbrev)).map(toDiscussionWire);
 

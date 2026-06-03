@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
 	CreateDiscussionUseCase,
+	GetDiscussionsByCommentUseCase,
 	UpdateDiscussionUseCase,
 } from "./DiscussionUseCases";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
+import type { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import type { IDiscussionLikeRepository } from "@/domain/repositories/IDiscussionLikeRepository";
 import type { Discussion } from "@/domain/entities/Discussion";
 import type { Comment } from "@/domain/entities/Comment";
 import type { User } from "@/domain/entities/User";
@@ -247,5 +250,89 @@ describe("UpdateDiscussionUseCase", () => {
 		await expect(
 			uc.execute("missing", "bob", false, { title: "x", body: "y" }),
 		).rejects.toThrow("Discussion not found");
+	});
+});
+
+describe("GetDiscussionsByCommentUseCase", () => {
+	const discussions: Discussion[] = [
+		{
+			_id: "d1",
+			bookAbbrev: "jo",
+			commentId: "c1",
+			username: "bob",
+			verseReference: "JO 3:16",
+			verseText: "",
+			commentText: "",
+			question: "q1",
+		} as unknown as Discussion,
+		{
+			_id: "d2",
+			bookAbbrev: "jo",
+			commentId: "c1",
+			username: "ana",
+			verseReference: "JO 3:16",
+			verseText: "",
+			commentText: "",
+			question: "q2",
+		} as unknown as Discussion,
+	];
+
+	function discussionRepoStub(
+		seed: Discussion[],
+	): IDiscussionRepository {
+		return {
+			findByCommentId: (commentId: string) =>
+				Promise.resolve(seed.filter((d) => d.commentId === commentId)),
+		} as unknown as IDiscussionRepository;
+	}
+
+	function answerRepoStub(): IDiscussionAnswerRepository {
+		return {
+			countByDiscussion: (_ids: string[]) =>
+				Promise.resolve(new Map([["d1", 2]])),
+		} as unknown as IDiscussionAnswerRepository;
+	}
+
+	it("returns discussions with answersCount populated when answerRepo is wired", async () => {
+		const uc = new GetDiscussionsByCommentUseCase(
+			discussionRepoStub(discussions),
+			answerRepoStub(),
+		);
+		const result = await uc.execute("c1");
+		expect(result).toHaveLength(2);
+		expect(result[0].answersCount).toBe(2);
+		expect(result[1].answersCount).toBe(0);
+	});
+
+	it("returns discussions unmodified when answerRepo is not wired", async () => {
+		const uc = new GetDiscussionsByCommentUseCase(
+			discussionRepoStub(discussions),
+		);
+		const result = await uc.execute("c1");
+		expect(result).toHaveLength(2);
+		expect(result[0].answersCount).toBeUndefined();
+	});
+
+	it("enriches likeCount and authorEmailVerified in batch", async () => {
+		const likeRepo = {
+			countByTargets: async () => new Map([["d1", 5]]),
+		} as unknown as IDiscussionLikeRepository;
+		const userRepo = {
+			findByUsernames: async () => [
+				{ username: "bob", emailVerifiedAt: new Date() },
+			],
+		} as unknown as IUserRepository;
+
+		const uc = new GetDiscussionsByCommentUseCase(
+			discussionRepoStub(discussions),
+			undefined,
+			likeRepo,
+			userRepo,
+		);
+		const result = await uc.execute("c1");
+		expect(result[0].likeCount).toBe(5);
+		expect(result[1].likeCount).toBe(0);
+		expect(result[0].authorEmailVerified).toBe(true);
+		expect(result[1].authorEmailVerified).toBe(false);
 	});
 });

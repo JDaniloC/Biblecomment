@@ -44,4 +44,6 @@ export interface IDiscussionRepository {
 	userHasOpenedDiscussion(username: string): Promise<boolean>;
 	/** Batch count discussions grouped by their anchor commentId. Missing ids absent from the map. */
 	countByCommentId(commentIds: string[]): Promise<Map<string, number>>;
+	/** Discussões ancoradas a um comentário específico, mais recentes primeiro. */
+	findByCommentId(commentId: string): Promise<Discussion[]>;
 }
