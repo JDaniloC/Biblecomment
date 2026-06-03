@@ -140,9 +140,19 @@ describe("discussionsService", () => {
 		expect(mockedDelete).toHaveBeenCalledWith("gn", "d1");
 	});
 
-	it("listAll GETs /api/discussions?pages=:n", async () => {
+	it("listAll GETs /api/discussions?pages=:n with default sort=recent", async () => {
 		mockedAxios.get.mockResolvedValueOnce({ data: [] });
 		await discussionsService.listAll(3);
-		expect(mockedAxios.get).toHaveBeenCalledWith("/api/discussions?pages=3");
+		expect(mockedAxios.get).toHaveBeenCalledWith(
+			"/api/discussions?pages=3&sort=recent",
+		);
+	});
+
+	it("listAll forwards an explicit sort", async () => {
+		mockedAxios.get.mockResolvedValueOnce({ data: [] });
+		await discussionsService.listAll(1, "liked");
+		expect(mockedAxios.get).toHaveBeenCalledWith(
+			"/api/discussions?pages=1&sort=liked",
+		);
 	});
 });

@@ -274,6 +274,31 @@ export async function seedComment(
 	return { id: result.insertedId.toString() };
 }
 
+/**
+ * Force a discussion's stored `likeCount` to a specific value. The list/sort
+ * endpoints read this pre-aggregated counter (Phase 3.5), so this lets a spec
+ * make "Mais curtidas" ordering deterministic without driving the like UI.
+ */
+export async function setDiscussionLikeCount(input: {
+	discussionId: string;
+	likeCount: number;
+}): Promise<void> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	if (!mongoose.Types.ObjectId.isValid(input.discussionId)) {
+		throw new Error(
+			`setDiscussionLikeCount: invalid discussionId ${input.discussionId}`,
+		);
+	}
+	await db
+		.collection("discussions")
+		.updateOne(
+			{ _id: new mongoose.Types.ObjectId(input.discussionId) },
+			{ $set: { likeCount: input.likeCount } },
+		);
+}
+
 export async function seedChapterRead(input: {
 	email: string;
 	abbrev: string;

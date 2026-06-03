@@ -104,6 +104,16 @@ export class MongoDiscussionLikeRepository implements IDiscussionLikeRepository 
 	}
 
 	// skipcq: JS-0105
+	async findLikedDiscussionIds(userId: string): Promise<string[]> {
+		await connectToDatabase();
+		const rows = await DiscussionLikeModel.find(
+			{ userId, targetType: "discussion" },
+			{ targetId: 1 },
+		);
+		return rows.map((r) => r.targetId.toString());
+	}
+
+	// skipcq: JS-0105
 	async deleteAllByUser(userId: string): Promise<number> {
 		await connectToDatabase();
 		const res = await DiscussionLikeModel.deleteMany({ userId });

@@ -44,29 +44,34 @@ export default function DiscussionsClient({
 	const [loading, setLoading] = useState(true);
 	const [page, setPage] = useState(1);
 	const [hasMore, setHasMore] = useState(true);
+	const [sort, setSort] = useState<"recent" | "active" | "liked">("recent");
 
 	const load = useCallback(
-		async (p: number) => {
+		async (p: number, sortArg: "recent" | "active" | "liked" = sort) => {
 			setLoading(true);
 			try {
 				const data = (await discussionsService.listAll(
 					p,
+					sortArg,
 				)) as unknown as DiscussionSummary[];
 				if (p === 1) setDiscussions(data);
 				else setDiscussions((prev) => [...prev, ...data]);
-				if (data.length < 5) setHasMore(false);
+				setHasMore(data.length >= 5);
 			} catch {
 				handleNotification("error", "Erro ao carregar discussões.");
 			} finally {
 				setLoading(false);
 			}
 		},
-		[handleNotification],
+		[handleNotification, sort],
 	);
 
+	// Initial load and reload whenever the sort changes. Switching sort resets
+	// to page 1 (the pill onClick sets page=1) and replaces the list.
 	useEffect(() => {
-		load(1);
-	}, [load]);
+		load(1, sort);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [sort]);
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -76,6 +81,33 @@ export default function DiscussionsClient({
 				<h1 className="font-semibold text-2xl text-gray-800 dark:text-slate-100 mb-6">
 					Discussões
 				</h1>
+				<div data-testid="discussions-sort" className="flex gap-1 mb-4">
+					{(
+						[
+							["recent", "Recentes"],
+							["active", "Mais ativas"],
+							["liked", "Mais curtidas"],
+						] as const
+					).map(([value, label]) => (
+						<button
+							key={value}
+							type="button"
+							data-testid={`sort-${value}`}
+							aria-pressed={sort === value}
+							onClick={() => {
+								setSort(value);
+								setPage(1);
+							}}
+							className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
+								sort === value
+									? "bg-brand text-white"
+									: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+							}`}
+						>
+							{label}
+						</button>
+					))}
+				</div>
 				<div data-tour="discussions-list">
 					{loading && discussions.length === 0 ? (
 						<Loading />
@@ -108,7 +140,7 @@ export default function DiscussionsClient({
 									onClick={() => {
 										const next = page + 1;
 										setPage(next);
-										load(next);
+										load(next, sort);
 									}}
 									className="w-full mt-2 text-sm text-brand hover:underline py-2"
 								>

@@ -1,7 +1,18 @@
 import { Discussion } from "../entities/Discussion";
 
+/**
+ * DB-level sort order for discussion list reads.
+ * - `recent` → `{ createdAt: -1 }`
+ * - `active` → `{ answersCount: -1, createdAt: -1 }`
+ * - `liked`  → `{ likeCount: -1, createdAt: -1 }`
+ */
+export type DiscussionSort = "recent" | "active" | "liked";
+
 export interface IDiscussionRepository {
-	findByBookAbbrev(bookAbbrev: string): Promise<Discussion[]>;
+	findByBookAbbrev(
+		bookAbbrev: string,
+		sort?: DiscussionSort,
+	): Promise<Discussion[]>;
 	/**
 	 * DB-paginated variant of `findByBookAbbrev`. Used by the discussion list
 	 * tab on the book page so we don't pull every thread into memory just to
@@ -11,11 +22,16 @@ export interface IDiscussionRepository {
 		bookAbbrev: string,
 		page: number,
 		pageSize: number,
+		sort?: DiscussionSort,
 	): Promise<Discussion[]>;
 	findById(id: string): Promise<Discussion | null>;
 	/** Hydrate discussion docs by id list. Order is not preserved — caller re-sorts. */
 	findManyByIds(ids: string[]): Promise<Discussion[]>;
-	findAllPaginated(page: number, pageSize: number): Promise<Discussion[]>;
+	findAllPaginated(
+		page: number,
+		pageSize: number,
+		sort?: DiscussionSort,
+	): Promise<Discussion[]>;
 	create(
 		discussion: Omit<
 			Discussion,
@@ -46,4 +62,10 @@ export interface IDiscussionRepository {
 	countByCommentId(commentIds: string[]): Promise<Map<string, number>>;
 	/** Discussões ancoradas a um comentário específico, mais recentes primeiro. */
 	findByCommentId(commentId: string): Promise<Discussion[]>;
+	/** Ajusta o contador de respostas (delta +1/-1) de forma atômica ($inc). */
+	incrementAnswersCount(id: string, delta: number): Promise<void>;
+	/** Ajusta o contador de curtidas (delta +1/-1) de forma atômica ($inc). */
+	incrementLikeCount(id: string, delta: number): Promise<void>;
+	/** Decrementa em 1 o likeCount de várias discussões (cascata de exclusão de conta). */
+	decrementLikeCountMany(ids: string[]): Promise<void>;
 }

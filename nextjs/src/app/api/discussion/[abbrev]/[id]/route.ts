@@ -120,6 +120,7 @@ export async function DELETE(
 		const useCase = new DeleteDiscussionUseCase(
 			new MongoDiscussionRepository(),
 			new MongoDiscussionAnswerRepository(),
+			new MongoDiscussionLikeRepository(),
 		);
 		await useCase.execute(id, user.username, user.moderator);
 		return NextResponse.json({ success: true });

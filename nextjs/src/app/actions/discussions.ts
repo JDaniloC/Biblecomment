@@ -112,6 +112,7 @@ export async function toggleDiscussionLikeAction(
 	try {
 		const useCase = new ToggleDiscussionLikeUseCase(
 			new MongoDiscussionLikeRepository(),
+			new MongoDiscussionRepository(),
 		);
 		const result = await useCase.execute(targetType, targetId, session.user.id);
 		revalidateDiscussionPaths();
@@ -322,6 +323,7 @@ export async function deleteDiscussionAction(
 		const useCase = new DeleteDiscussionUseCase(
 			new MongoDiscussionRepository(),
 			new MongoDiscussionAnswerRepository(),
+			new MongoDiscussionLikeRepository(),
 		);
 		await useCase.execute(
 			discussionId,

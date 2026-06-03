@@ -103,9 +103,12 @@ export const discussionsService = {
 		if (!result.ok) actionError(result.error);
 	},
 
-	async listAll(page = 1): Promise<DiscussionSummary[]> {
+	async listAll(
+		page = 1,
+		sort: "recent" | "active" | "liked" = "recent",
+	): Promise<DiscussionSummary[]> {
 		const res = await axios.get<DiscussionSummary[]>(
-			`/api/discussions?pages=${page}`,
+			`/api/discussions?pages=${page}&sort=${sort}`,
 		);
 		return res.data;
 	},

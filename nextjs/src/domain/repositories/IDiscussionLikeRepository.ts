@@ -34,6 +34,8 @@ export interface IDiscussionLikeRepository {
 		targetType: DiscussionLikeTarget,
 		targetIds: string[],
 	): Promise<Set<string>>;
+	/** Ids de discussões (targetType "discussion") que o usuário curtiu. */
+	findLikedDiscussionIds(userId: string): Promise<string[]>;
 	/** Cascade: drop every like the user has given (account deletion). */
 	deleteAllByUser(userId: string): Promise<number>;
 	/** Cascade: drop every like on a target (discussion/answer deletion). */

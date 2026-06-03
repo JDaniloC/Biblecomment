@@ -2,13 +2,14 @@ import { describe, it, expect } from "vitest";
 import {
 	CreateDiscussionUseCase,
 	GetDiscussionsByCommentUseCase,
+	GetDiscussionsUseCase,
+	GetAllDiscussionsPaginatedUseCase,
 	UpdateDiscussionUseCase,
 } from "./DiscussionUseCases";
+import type { DiscussionSort } from "@/domain/repositories/IDiscussionRepository";
 import type { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
-import type { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import type { ICommentRepository } from "@/domain/repositories/ICommentRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
-import type { IDiscussionLikeRepository } from "@/domain/repositories/IDiscussionLikeRepository";
 import type { Discussion } from "@/domain/entities/Discussion";
 import type { Comment } from "@/domain/entities/Comment";
 import type { User } from "@/domain/entities/User";
@@ -253,7 +254,76 @@ describe("UpdateDiscussionUseCase", () => {
 	});
 });
 
+describe("DB-level sort forwarding", () => {
+	function sortCapturingRepo() {
+		const calls: { method: string; sort: DiscussionSort | undefined }[] = [];
+		const repo = {
+			findByBookAbbrev: (_abbrev: string, sort?: DiscussionSort) => {
+				calls.push({ method: "findByBookAbbrev", sort });
+				return Promise.resolve([] as Discussion[]);
+			},
+			findByBookAbbrevPaginated: (
+				_abbrev: string,
+				_page: number,
+				_pageSize: number,
+				sort?: DiscussionSort,
+			) => {
+				calls.push({ method: "findByBookAbbrevPaginated", sort });
+				return Promise.resolve([] as Discussion[]);
+			},
+			findAllPaginated: (
+				_page: number,
+				_pageSize: number,
+				sort?: DiscussionSort,
+			) => {
+				calls.push({ method: "findAllPaginated", sort });
+				return Promise.resolve([] as Discussion[]);
+			},
+		} as unknown as IDiscussionRepository;
+		return { repo, calls };
+	}
+
+	it("GetDiscussionsUseCase forwards an explicit sort to findByBookAbbrev", async () => {
+		const { repo, calls } = sortCapturingRepo();
+		const uc = new GetDiscussionsUseCase(repo);
+		await uc.execute("jo", undefined, "liked");
+		expect(calls).toEqual([{ method: "findByBookAbbrev", sort: "liked" }]);
+	});
+
+	it("GetDiscussionsUseCase forwards sort to findByBookAbbrevPaginated when paginated", async () => {
+		const { repo, calls } = sortCapturingRepo();
+		const uc = new GetDiscussionsUseCase(repo);
+		await uc.execute("jo", { page: 2, pageSize: 5 }, "active");
+		expect(calls).toEqual([
+			{ method: "findByBookAbbrevPaginated", sort: "active" },
+		]);
+	});
+
+	it("GetDiscussionsUseCase defaults to recent when sort is omitted", async () => {
+		const { repo, calls } = sortCapturingRepo();
+		const uc = new GetDiscussionsUseCase(repo);
+		await uc.execute("jo");
+		expect(calls).toEqual([{ method: "findByBookAbbrev", sort: "recent" }]);
+	});
+
+	it("GetAllDiscussionsPaginatedUseCase forwards an explicit sort", async () => {
+		const { repo, calls } = sortCapturingRepo();
+		const uc = new GetAllDiscussionsPaginatedUseCase(repo);
+		await uc.execute(1, 5, "active");
+		expect(calls).toEqual([{ method: "findAllPaginated", sort: "active" }]);
+	});
+
+	it("GetAllDiscussionsPaginatedUseCase defaults to recent when sort is omitted", async () => {
+		const { repo, calls } = sortCapturingRepo();
+		const uc = new GetAllDiscussionsPaginatedUseCase(repo);
+		await uc.execute(1, 5);
+		expect(calls).toEqual([{ method: "findAllPaginated", sort: "recent" }]);
+	});
+});
+
 describe("GetDiscussionsByCommentUseCase", () => {
+	// The repo's `toEntity` maps the stored answersCount/likeCount off each
+	// document, so these seeds already carry the counts the list path returns.
 	const discussions: Discussion[] = [
 		{
 			_id: "d1",
@@ -264,6 +334,8 @@ describe("GetDiscussionsByCommentUseCase", () => {
 			verseText: "",
 			commentText: "",
 			question: "q1",
+			answersCount: 2,
+			likeCount: 5,
 		} as unknown as Discussion,
 		{
 			_id: "d2",
@@ -274,49 +346,45 @@ describe("GetDiscussionsByCommentUseCase", () => {
 			verseText: "",
 			commentText: "",
 			question: "q2",
+			answersCount: 0,
+			likeCount: 0,
 		} as unknown as Discussion,
 	];
 
-	function discussionRepoStub(
-		seed: Discussion[],
-	): IDiscussionRepository {
+	function discussionRepoStub(seed: Discussion[]): IDiscussionRepository {
 		return {
 			findByCommentId: (commentId: string) =>
 				Promise.resolve(seed.filter((d) => d.commentId === commentId)),
 		} as unknown as IDiscussionRepository;
 	}
 
-	function answerRepoStub(): IDiscussionAnswerRepository {
-		return {
-			countByDiscussion: (_ids: string[]) =>
-				Promise.resolve(new Map([["d1", 2]])),
-		} as unknown as IDiscussionAnswerRepository;
-	}
-
-	it("returns discussions with answersCount populated when answerRepo is wired", async () => {
+	it("passes stored answersCount/likeCount through unchanged", async () => {
 		const uc = new GetDiscussionsByCommentUseCase(
 			discussionRepoStub(discussions),
-			answerRepoStub(),
 		);
 		const result = await uc.execute("c1");
 		expect(result).toHaveLength(2);
 		expect(result[0].answersCount).toBe(2);
+		expect(result[0].likeCount).toBe(5);
 		expect(result[1].answersCount).toBe(0);
+		expect(result[1].likeCount).toBe(0);
 	});
 
-	it("returns discussions unmodified when answerRepo is not wired", async () => {
+	it("short-circuits on an empty list", async () => {
+		const userRepo = {
+			findByUsernames: async () => {
+				throw new Error("should not be called for an empty list");
+			},
+		} as unknown as IUserRepository;
 		const uc = new GetDiscussionsByCommentUseCase(
 			discussionRepoStub(discussions),
+			userRepo,
 		);
-		const result = await uc.execute("c1");
-		expect(result).toHaveLength(2);
-		expect(result[0].answersCount).toBeUndefined();
+		const result = await uc.execute("nope");
+		expect(result).toHaveLength(0);
 	});
 
-	it("enriches likeCount and authorEmailVerified in batch", async () => {
-		const likeRepo = {
-			countByTargets: async () => new Map([["d1", 5]]),
-		} as unknown as IDiscussionLikeRepository;
+	it("enriches authorEmailVerified in batch while passing counts through", async () => {
 		const userRepo = {
 			findByUsernames: async () => [
 				{ username: "bob", emailVerifiedAt: new Date() },
@@ -325,13 +393,14 @@ describe("GetDiscussionsByCommentUseCase", () => {
 
 		const uc = new GetDiscussionsByCommentUseCase(
 			discussionRepoStub(discussions),
-			undefined,
-			likeRepo,
 			userRepo,
 		);
 		const result = await uc.execute("c1");
+		// Stored counters survive enrichment untouched.
 		expect(result[0].likeCount).toBe(5);
 		expect(result[1].likeCount).toBe(0);
+		expect(result[0].answersCount).toBe(2);
+		// authorEmailVerified comes from the user repo.
 		expect(result[0].authorEmailVerified).toBe(true);
 		expect(result[1].authorEmailVerified).toBe(false);
 	});

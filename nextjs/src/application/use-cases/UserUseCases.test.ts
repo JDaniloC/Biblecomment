@@ -44,6 +44,7 @@ function noopCommentLikeRepo() {
 function noopDiscussionLikeRepo() {
 	return {
 		deleteAllByUser: vi.fn().mockResolvedValue(0),
+		findLikedDiscussionIds: vi.fn().mockResolvedValue([]),
 	} as unknown as IDiscussionLikeRepository;
 }
 
@@ -56,6 +57,7 @@ function noopCommentReportRepo() {
 function noopDiscussionRepo() {
 	return {
 		anonymizeByUsername: vi.fn().mockResolvedValue(0),
+		decrementLikeCountMany: vi.fn().mockResolvedValue(undefined),
 	} as unknown as IDiscussionRepository;
 }
 
@@ -346,6 +348,72 @@ describe("DeleteUserUseCase", () => {
 		);
 		expect(notifRepo.deleteForUser).toHaveBeenCalledWith("alice");
 		expect(del).toHaveBeenCalledWith("alice@example.com");
+	});
+
+	it("decrements likeCount for each discussion the user had liked, capturing ids before the like cascade", async () => {
+		const findByEmail = vi
+			.fn()
+			.mockResolvedValue(fakeUser({ username: "alice", _id: "u1" }));
+		const del = vi.fn(() => Promise.resolve());
+		const userRepo = { findByEmail, delete: del } as unknown as IUserRepository;
+
+		const commentRepo = noopCommentRepo();
+		const commentLikeRepo = noopCommentLikeRepo();
+		const discussionLikeRepo = noopDiscussionLikeRepo();
+		const commentReportRepo = noopCommentReportRepo();
+		const discussionRepo = noopDiscussionRepo();
+		const discussionAnswerRepo = noopDiscussionAnswerRepo();
+		const notifRepo = noopNotificationRepo();
+
+		// The user had liked two discussions.
+		(
+			discussionLikeRepo.findLikedDiscussionIds as ReturnType<typeof vi.fn>
+		).mockResolvedValue(["d1", "d2"]);
+
+		// Guard ordering: capture-before-delete. If deleteAllByUser runs first
+		// it would (in reality) wipe the rows findLikedDiscussionIds reads, so we
+		// assert findLikedDiscussionIds is invoked before deleteAllByUser.
+		const order: string[] = [];
+		(
+			discussionLikeRepo.findLikedDiscussionIds as ReturnType<typeof vi.fn>
+		).mockImplementation(async () => {
+			order.push("find");
+			return ["d1", "d2"];
+		});
+		(
+			discussionLikeRepo.deleteAllByUser as ReturnType<typeof vi.fn>
+		).mockImplementation(async () => {
+			order.push("deleteAll");
+			return 2;
+		});
+
+		const useCase = new DeleteUserUseCase(
+			userRepo,
+			commentRepo,
+			commentLikeRepo,
+			discussionLikeRepo,
+			commentReportRepo,
+			discussionRepo,
+			discussionAnswerRepo,
+			notifRepo,
+		);
+		await useCase.execute("alice@example.com", "alice@example.com", false);
+
+		expect(discussionLikeRepo.findLikedDiscussionIds).toHaveBeenCalledWith(
+			"u1",
+		);
+		expect(discussionRepo.decrementLikeCountMany).toHaveBeenCalledWith([
+			"d1",
+			"d2",
+		]);
+		// capture happened before the likes were dropped.
+		expect(order.indexOf("find")).toBeLessThan(order.indexOf("deleteAll"));
+
+		// answersCount is denormalized per-discussion and must NOT be touched:
+		// answers are anonymized, not removed, so no answer-count method runs.
+		const dr = discussionRepo as unknown as Record<string, unknown>;
+		expect(dr.incrementAnswersCount).toBeUndefined();
+		expect(dr.decrementAnswersCount).toBeUndefined();
 	});
 });
 

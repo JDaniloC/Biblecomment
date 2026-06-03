@@ -2,10 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
-import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
-import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { GetDiscussionsByCommentUseCase } from "@/application/use-cases/DiscussionUseCases";
 import { AppHeader } from "@/components/AppHeader";
@@ -36,8 +34,6 @@ export default async function CommentDiscussionsPage({
 
 	const useCase = new GetDiscussionsByCommentUseCase(
 		new MongoDiscussionRepository(),
-		new MongoDiscussionAnswerRepository(),
-		new MongoDiscussionLikeRepository(),
 		new MongoUserRepository(),
 	);
 	const discussions = await useCase.execute(commentId);

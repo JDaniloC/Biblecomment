@@ -12,6 +12,8 @@ export interface IDiscussionDocument extends Document {
 	quoteEnd?: number;
 	title: string;
 	question: string;
+	answersCount: number;
+	likeCount: number;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -38,6 +40,10 @@ const DiscussionSchema = new Schema<IDiscussionDocument>(
 		// One-line headline. Defaults to "" so legacy docs upgrade lazily.
 		title: { type: String, default: "" },
 		question: { type: String, required: true },
+		// Contadores denormalizados (Fase 3) — mantidos em cada mutação e
+		// usados para ordenação no banco. Default 0; backfill via migração.
+		answersCount: { type: Number, default: 0 },
+		likeCount: { type: Number, default: 0 },
 	},
 	{ timestamps: true },
 );
@@ -46,6 +52,8 @@ DiscussionSchema.index({ sourceId: 1 }, { unique: true, sparse: true });
 DiscussionSchema.index({ bookAbbrev: 1 });
 DiscussionSchema.index({ username: 1 });
 DiscussionSchema.index({ commentId: 1 });
+DiscussionSchema.index({ bookAbbrev: 1, likeCount: -1, createdAt: -1 });
+DiscussionSchema.index({ bookAbbrev: 1, answersCount: -1, createdAt: -1 });
 
 export const DiscussionModel: Model<IDiscussionDocument> =
 	mongoose.models.Discussion ||

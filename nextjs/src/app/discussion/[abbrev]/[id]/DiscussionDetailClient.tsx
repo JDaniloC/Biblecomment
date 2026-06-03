@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Book } from "@/domain/entities/Book";
 import { discussionsService } from "@/services/discussions";
 import type { DiscussionWire } from "@/lib/discussion-wire";
+import type { DiscussionSort } from "@/domain/repositories/IDiscussionRepository";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { AppHeader } from "@/components/AppHeader";
@@ -31,6 +32,8 @@ interface Props {
 	book: Book;
 	user: SessionUser;
 	mode: "list" | "detail";
+	/** Active list sort order (book list). The selector UI lands in a later task. */
+	sort?: DiscussionSort;
 }
 
 /** Heading text for a discussion — falls back to the body for legacy threads. */
@@ -108,6 +111,7 @@ export default function DiscussionDetailClient({
 	book,
 	user,
 	mode,
+	sort = "recent",
 }: Props) {
 	const { handleNotification } = useNotification();
 	const router = useRouter();
@@ -312,6 +316,33 @@ export default function DiscussionDetailClient({
 						As discussões começam a partir de um comentário — toque em{" "}
 						<strong>Discutir</strong> em qualquer comentário do livro.
 					</p>
+
+					<div data-testid="discussions-sort" className="flex gap-1 mb-4">
+						{(
+							[
+								["recent", "Recentes"],
+								["active", "Mais ativas"],
+								["liked", "Mais curtidas"],
+							] as const
+						).map(([value, label]) => (
+							<button
+								key={value}
+								type="button"
+								data-testid={`sort-${value}`}
+								aria-pressed={(sort ?? "recent") === value}
+								onClick={() =>
+									router.push(`/discussion/${book.abbrev}?sort=${value}`)
+								}
+								className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
+									(sort ?? "recent") === value
+										? "bg-brand text-white"
+										: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+								}`}
+							>
+								{label}
+							</button>
+						))}
+					</div>
 
 					{discussions.length === 0 ? (
 						<p className="text-slate-400 dark:text-slate-500 text-center py-10">

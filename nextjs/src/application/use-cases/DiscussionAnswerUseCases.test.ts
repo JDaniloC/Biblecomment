@@ -97,6 +97,9 @@ function discussionRepoStub(discussions: Discussion[]): IDiscussionRepository {
 		userHasOpenedDiscussion: () => Promise.resolve(discussions.length > 0),
 		countByCommentId: () => Promise.resolve(new Map<string, number>()),
 		findByCommentId: () => Promise.resolve(discussions),
+		incrementAnswersCount: async () => {},
+		incrementLikeCount: async () => {},
+		decrementLikeCountMany: async () => {},
 	};
 }
 
@@ -213,6 +216,15 @@ function inMemoryDiscussionLikeRepo(): IDiscussionLikeRepository {
 			data.delete(mapKey);
 			return Promise.resolve(n);
 		},
+		findLikedDiscussionIds(userId) {
+			const out: string[] = [];
+			for (const [mapKey, set] of data) {
+				if (mapKey.startsWith("discussion:") && set.has(userId)) {
+					out.push(mapKey.slice("discussion:".length));
+				}
+			}
+			return Promise.resolve(out);
+		},
 	};
 }
 
@@ -233,6 +245,22 @@ describe("AddAnswerUseCase", () => {
 			username: "bob",
 			text: "first answer",
 		});
+	});
+
+	it("increments the discussion's denormalized answersCount by 1 after adding", async () => {
+		const repo = discussionRepoStub([fakeDiscussion("d1")]);
+		const calls: Array<[string, number]> = [];
+		repo.incrementAnswersCount = (id: string, delta: number) => {
+			calls.push([id, delta]);
+			return Promise.resolve();
+		};
+		const answers = inMemoryAnswerRepo();
+		const userRepo = makeUserRepo(fakeUser());
+		const uc = new AddAnswerUseCase(repo, answers, userRepo);
+
+		await uc.execute("d1", "u-bob", "bob", "first answer");
+
+		expect(calls).toEqual([["d1", 1]]);
 	});
 
 	it("rejects when the discussion is missing", async () => {
@@ -352,37 +380,21 @@ describe("GetDiscussionByIdUseCase", () => {
 });
 
 describe("GetAllDiscussionsPaginatedUseCase", () => {
-	it("populates answersCount via batch aggregation", async () => {
+	it("passes stored answersCount through from the document", async () => {
+		// answersCount is now a denormalized field on the discussion (mapped by
+		// the repo's toEntity), so the list path returns it unchanged — no
+		// read-time aggregation over an answer repo.
 		const discussions = [
-			fakeDiscussion("d1"),
-			fakeDiscussion("d2"),
-			fakeDiscussion("d3"),
+			fakeDiscussion("d1", { answersCount: 2 }),
+			fakeDiscussion("d2", { answersCount: 0 }),
+			fakeDiscussion("d3", { answersCount: 1 }),
 		];
 		const repo = discussionRepoStub(discussions);
-		const answers = inMemoryAnswerRepo();
-		await answers.add({
-			discussionId: "d1",
-			userId: "u1",
-			username: "x",
-			text: "a",
-		});
-		await answers.add({
-			discussionId: "d1",
-			userId: "u2",
-			username: "y",
-			text: "b",
-		});
-		await answers.add({
-			discussionId: "d3",
-			userId: "u1",
-			username: "x",
-			text: "c",
-		});
 
-		const result = await new GetAllDiscussionsPaginatedUseCase(
-			repo,
-			answers,
-		).execute(1, 50);
+		const result = await new GetAllDiscussionsPaginatedUseCase(repo).execute(
+			1,
+			50,
+		);
 
 		const counts = Object.fromEntries(
 			result.map((d) => [d._id, d.answersCount]),
@@ -416,5 +428,41 @@ describe("DeleteDiscussionUseCase cascade", () => {
 
 		expect(await answers.findByDiscussion("d1")).toEqual([]);
 		expect(await answers.findByDiscussion("d2")).toHaveLength(1);
+	});
+
+	it("removes orphan likes for the discussion and each of its answers", async () => {
+		const repo = discussionRepoStub([fakeDiscussion("d1")]);
+		const answers = inMemoryAnswerRepo();
+		const a1 = await answers.add({
+			discussionId: "d1",
+			userId: "u1",
+			username: "x",
+			text: "a",
+		});
+		const a2 = await answers.add({
+			discussionId: "d1",
+			userId: "u2",
+			username: "y",
+			text: "b",
+		});
+
+		const calls: Array<[DiscussionLikeTarget, string]> = [];
+		const likes: IDiscussionLikeRepository = {
+			...inMemoryDiscussionLikeRepo(),
+			deleteByTarget(t, id) {
+				calls.push([t, id]);
+				return Promise.resolve(0);
+			},
+		};
+
+		await new DeleteDiscussionUseCase(repo, answers, likes).execute(
+			"d1",
+			"alice",
+			false,
+		);
+
+		expect(calls).toContainEqual(["discussion", "d1"]);
+		expect(calls).toContainEqual(["answer", a1._id ?? ""]);
+		expect(calls).toContainEqual(["answer", a2._id ?? ""]);
 	});
 });

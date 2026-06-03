@@ -140,6 +140,13 @@ export class DeleteUserUseCase {
 		const user = await this.userRepo.findByEmail(targetEmail);
 		if (!user) throw new Error("User not found");
 
+		// Capture the discussions this user had liked BEFORE the cascade drops
+		// the like rows — otherwise deleteAllByUser wipes the source we'd read.
+		// We decrement each discussion's denormalized likeCount AFTER the wipe.
+		const likedDiscussionIds = user._id
+			? await this.discussionLikeRepo.findLikedDiscussionIds(user._id)
+			: [];
+
 		// LGPD Art. 18: anonymize the user's PII in dependent records before
 		// hard-deleting the User document. Discussion threads stay readable
 		// under "[usuário removido]" (top-level + per-answer snapshot);
@@ -170,6 +177,10 @@ export class DeleteUserUseCase {
 				: Promise.resolve(0),
 			this.notificationRepo.deleteForUser(user.username),
 		]);
+
+		// Now that the like rows are gone, bring the denormalized likeCount on
+		// each formerly-liked discussion back in step (bulk $inc -1).
+		await this.discussionRepo.decrementLikeCountMany(likedDiscussionIds);
 
 		await this.userRepo.delete(targetEmail);
 	}

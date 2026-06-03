@@ -1,4 +1,7 @@
-import { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
+import {
+	IDiscussionRepository,
+	DiscussionSort,
+} from "@/domain/repositories/IDiscussionRepository";
 import { Discussion } from "@/domain/entities/Discussion";
 import {
 	DiscussionModel,
@@ -6,6 +9,13 @@ import {
 } from "@/infrastructure/database/models/DiscussionModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import mongoose from "mongoose";
+
+/** Translate a `DiscussionSort` into a Mongo sort spec (createdAt tiebreaker). */
+function sortSpec(sort: DiscussionSort): Record<string, 1 | -1> {
+	if (sort === "active") return { answersCount: -1, createdAt: -1 };
+	if (sort === "liked") return { likeCount: -1, createdAt: -1 };
+	return { createdAt: -1 };
+}
 
 function toEntity(doc: IDiscussionDocument): Discussion {
 	return {
@@ -20,6 +30,8 @@ function toEntity(doc: IDiscussionDocument): Discussion {
 		quoteEnd: doc.quoteEnd,
 		title: doc.title ?? "",
 		question: doc.question,
+		answersCount: doc.answersCount,
+		likeCount: doc.likeCount,
 		createdAt: doc.createdAt,
 		updatedAt: doc.updatedAt,
 	};
@@ -27,11 +39,14 @@ function toEntity(doc: IDiscussionDocument): Discussion {
 
 export class MongoDiscussionRepository implements IDiscussionRepository {
 	// skipcq: JS-0105
-	async findByBookAbbrev(bookAbbrev: string): Promise<Discussion[]> {
+	async findByBookAbbrev(
+		bookAbbrev: string,
+		sort: DiscussionSort = "recent",
+	): Promise<Discussion[]> {
 		await connectToDatabase();
-		const docs = await DiscussionModel.find({ bookAbbrev }).sort({
-			createdAt: -1,
-		});
+		const docs = await DiscussionModel.find({ bookAbbrev }).sort(
+			sortSpec(sort),
+		);
 		return docs.map(toEntity);
 	}
 
@@ -40,12 +55,13 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		bookAbbrev: string,
 		page: number,
 		pageSize: number,
+		sort: DiscussionSort = "recent",
 	): Promise<Discussion[]> {
 		await connectToDatabase();
 		const safePage = Math.max(1, page);
 		const safeSize = Math.max(1, Math.min(pageSize, 100));
 		const docs = await DiscussionModel.find({ bookAbbrev })
-			.sort({ createdAt: -1 })
+			.sort(sortSpec(sort))
 			.skip((safePage - 1) * safeSize)
 			.limit(safeSize);
 		return docs.map(toEntity);
@@ -75,10 +91,11 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 	async findAllPaginated(
 		page: number,
 		pageSize: number,
+		sort: DiscussionSort = "recent",
 	): Promise<Discussion[]> {
 		await connectToDatabase();
 		const docs = await DiscussionModel.find({})
-			.sort({ createdAt: -1 })
+			.sort(sortSpec(sort))
 			.skip((page - 1) * pageSize)
 			.limit(pageSize);
 		return docs.map(toEntity);
@@ -189,5 +206,39 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 			commentId: new mongoose.Types.ObjectId(commentId),
 		}).sort({ createdAt: -1 });
 		return docs.map(toEntity);
+	}
+
+	// skipcq: JS-0105
+	async incrementAnswersCount(id: string, delta: number): Promise<void> {
+		await connectToDatabase();
+		if (!mongoose.Types.ObjectId.isValid(id)) return;
+		await DiscussionModel.updateOne(
+			{ _id: id },
+			{ $inc: { answersCount: delta } },
+		);
+	}
+
+	// skipcq: JS-0105
+	async incrementLikeCount(id: string, delta: number): Promise<void> {
+		await connectToDatabase();
+		if (!mongoose.Types.ObjectId.isValid(id)) return;
+		await DiscussionModel.updateOne(
+			{ _id: id },
+			{ $inc: { likeCount: delta } },
+		);
+	}
+
+	// skipcq: JS-0105
+	async decrementLikeCountMany(ids: string[]): Promise<void> {
+		if (ids.length === 0) return;
+		await connectToDatabase();
+		const oids = ids
+			.filter((i) => mongoose.Types.ObjectId.isValid(i))
+			.map((i) => new mongoose.Types.ObjectId(i));
+		if (oids.length === 0) return;
+		await DiscussionModel.updateMany(
+			{ _id: { $in: oids } },
+			{ $inc: { likeCount: -1 } },
+		);
 	}
 }

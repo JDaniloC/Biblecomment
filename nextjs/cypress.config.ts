@@ -7,6 +7,7 @@ import {
   countResetTokensForEmail,
   seedChapterRead,
   seedComment,
+  setDiscussionLikeCount,
   countChapterReads,
   countCommentLikesByUser,
   countLikesForComment,
@@ -72,6 +73,13 @@ export default defineConfig({
         },
         async "db:seedComment"(input: SeedCommentInput) {
           return await seedComment(input);
+        },
+        async "db:setDiscussionLikeCount"(input: {
+          discussionId: string;
+          likeCount: number;
+        }) {
+          await setDiscussionLikeCount(input);
+          return null;
         },
         async "db:countChapterReads"(email: string) {
           return await countChapterReads(email);
