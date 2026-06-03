@@ -6,6 +6,7 @@ import PWARegister from "@/components/PWARegister";
 import { AppShellChrome } from "@/components/AppShellChrome";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
+import { StructuredData } from "@/components/StructuredData";
 
 // Inter: app default sans (was inlined in 50+ places as a fontFamily
 // string). Loaded once here and applied via the body className so
@@ -33,11 +34,11 @@ const lora = Lora({
 export const metadata: Metadata = {
 	metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
 	title: {
-		default: "Bible Comment — Sua Biblioteca Bíblica",
+		default: "Bible Comment — Bíblia Comentada e Comentário Bíblico",
 		template: "%s | Bible Comment",
 	},
 	description:
-		"Compartilhe a mensagem de Deus com seus irmãos. 30.000+ versículos para estudo, comentário e discussão.",
+		"Bíblia comentada online: leia, comente e discuta a Palavra de Deus. 30.000+ versículos com comentários, exegese e estudos bíblicos da comunidade.",
 	applicationName: "Bible Comment",
 	keywords: [
 		"bíblia",
@@ -46,19 +47,27 @@ export const metadata: Metadata = {
 		"exegese",
 		"devocional",
 		"estudo bíblico",
+		"bíblia comentada",
+		"comentário bíblico",
+		"estudos bíblicos",
+		"bible comment",
 	],
 	authors: [{ name: "Bible Comment" }],
 	openGraph: {
-		title: "Bible Comment",
-		description: "Sua biblioteca bíblica para estudo, comentário e discussão.",
+		title: "Bible Comment — Bíblia Comentada e Comentário Bíblico",
+		description:
+			"Bíblia comentada online: leia, comente e discuta a Palavra de Deus. 30.000+ versículos com comentários, exegese e estudos bíblicos da comunidade.",
 		type: "website",
 		locale: "pt_BR",
 		siteName: "Bible Comment",
+		images: [{ url: "/screenshots/home-desktop.png", width: 1920, height: 1080 }],
 	},
 	twitter: {
-		card: "summary",
-		title: "Bible Comment",
-		description: "Sua biblioteca bíblica para estudo, comentário e discussão.",
+		card: "summary_large_image",
+		title: "Bible Comment — Bíblia Comentada e Comentário Bíblico",
+		description:
+			"Bíblia comentada online: leia, comente e discuta a Palavra de Deus. 30.000+ versículos com comentários, exegese e estudos bíblicos da comunidade.",
+		images: ["/screenshots/home-desktop.png"],
 	},
 	robots: { index: true, follow: true },
 	manifest: "/manifest.webmanifest",
@@ -115,6 +124,7 @@ export default function RootLayout({
 						__html: `try{var s=parseFloat(localStorage.getItem('bc-text-scale'));if(s>=0.85&&s<=1.4)document.documentElement.style.setProperty('--bc-text-scale',String(s));}catch(e){}`,
 					}}
 				/>
+				<StructuredData />
 				<a
 					href="#main-content"
 					className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200] focus:bg-white dark:focus:bg-slate-900 focus:text-brand focus:px-3 focus:py-2 focus:rounded focus:shadow-lg focus:outline-2 focus:outline-brand"

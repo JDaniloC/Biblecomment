@@ -92,16 +92,49 @@ export default async function VersesPage({
   ]);
   const alreadyRead = readChapters.includes(chapterNum);
 
+  // Breadcrumb structured data (Início › {book} › Capítulo n). Rendered in the
+  // server component so it lands in the initial HTML for crawlers; absolute
+  // URLs use the same base source as metadataBase / sitemap.
+  const base = (process.env.NEXTAUTH_URL ?? "http://localhost:3000").replace(
+    /\/+$/,
+    "",
+  );
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Início", item: `${base}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: book.name,
+        item: `${base}/verses/${abbrev}/1`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: `Capítulo ${chapterNum}`,
+        item: `${base}/verses/${abbrev}/${chapterNum}`,
+      },
+    ],
+  };
+
   return (
-    <ChapterClient
-      book={book}
-      verses={verses}
-      chapter={chapterNum}
-      user={session?.user ?? null}
-      tutorialAlreadyCompleted={tutorialAlreadyCompleted}
-      alreadyRead={alreadyRead}
-      initialCountMap={countMap}
-      initialTitleCount={titleCount}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      <ChapterClient
+        book={book}
+        verses={verses}
+        chapter={chapterNum}
+        user={session?.user ?? null}
+        tutorialAlreadyCompleted={tutorialAlreadyCompleted}
+        alreadyRead={alreadyRead}
+        initialCountMap={countMap}
+        initialTitleCount={titleCount}
+      />
+    </>
   );
 }

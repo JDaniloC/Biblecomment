@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
+import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { logger } from "@/lib/logger";
 
 // Without this, Next.js 14 statically renders the sitemap at `next build`
@@ -20,7 +21,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/login`,    lastModified: now, changeFrequency: "yearly",       priority: 0.3 },
     { url: `${baseUrl}/register`, lastModified: now, changeFrequency: "yearly",       priority: 0.3 },
     { url: `${baseUrl}/help`,     lastModified: now, changeFrequency: STATIC_CHANGE_FREQ, priority: 0.5 },
+    { url: `${baseUrl}/communities`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
   ];
+
+  // Public community detail pages. Communities have no private/visibility
+  // notion — every one is discoverable — so we page through the same `list`
+  // the discovery page uses. Wrapped in its own try/catch so a repo failure
+  // degrades to the static set without taking down the whole sitemap.
+  let communityPages: MetadataRoute.Sitemap = [];
+  try {
+    const communityRepo = new MongoCommunityRepository();
+    const PAGE_SIZE = 100;
+    let page = 1;
+    for (;;) {
+      const { items, total } = await communityRepo.list({ page, pageSize: PAGE_SIZE });
+      communityPages.push(
+        ...items.map((c) => ({
+          url: `${baseUrl}/communities/${c.slug}`,
+          lastModified: c.updatedAt ?? now,
+          changeFrequency: CHAPTER_CHANGE_FREQ,
+          priority: 0.5,
+        })),
+      );
+      if (page * PAGE_SIZE >= total || items.length === 0) break;
+      page += 1;
+    }
+  } catch (err) {
+    logger.warn({ err }, "sitemap: skipping community pages — community repo unavailable");
+  }
 
   // Discoverable chapter URLs. Auth gates the actual content, but
   // sitemap submission still helps when the gate is later relaxed and
@@ -51,5 +79,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     logger.warn({ err }, "sitemap: skipping chapter pages — book repo unavailable");
   }
 
-  return [...staticPages, ...chapterPages];
+  return [...staticPages, ...communityPages, ...chapterPages];
 }

@@ -152,15 +152,15 @@ export default async function RootPage() {
 				<section className="bg-gradient-to-b from-white to-stone-50 dark:from-slate-900 dark:to-slate-950 pt-12 md:pt-16 pb-10 px-4">
 					<div className="max-w-3xl mx-auto text-center space-y-4 mb-8">
 						<h1 className="font-lora text-4xl md:text-5xl font-bold text-stone-800 dark:text-stone-100 tracking-tight leading-tight">
-							Sua Biblioteca Bíblica
+							Bíblia Comentada
 						</h1>
 						<p className="text-stone-500 dark:text-stone-400 text-lg md:text-xl">
 							30.000+ versículos · Comentários · Reflexões
 						</p>
 						<p className="text-stone-500 dark:text-stone-400 text-sm md:text-base max-w-xl mx-auto pt-2">
-							Um espaço para o ensino e propagação da Bíblia, a Palavra de Deus,
-							através do compartilhamento de comentários e interpretações da
-							comunidade.
+							O Bible Comment é um espaço para o ensino e a propagação da Bíblia,
+							a Palavra de Deus — uma bíblia comentada pela comunidade, com
+							comentário bíblico, exegese e estudos bíblicos compartilhados.
 						</p>
 					</div>
 					<OmniSearch />
@@ -422,6 +422,14 @@ export default async function RootPage() {
 						)}
 					</div>
 				</div>
+				{/* Copyright line — intentionally names both brand spellings
+				    ("BibleComment" and "Bible Comment") plus the Portuguese intent
+				    terms so the homepage carries those signals as crawlable text. */}
+				<p className="max-w-5xl mx-auto mt-4 text-center text-[11px] text-stone-400 dark:text-stone-500">
+					&copy; {new Date().getFullYear()} BibleComment. O seu portal de
+					estudos e Bíblia Comentada. Todos os direitos reservados sobre o
+					portal Bible Comment.
+				</p>
 			</footer>
 		</div>
 	);
