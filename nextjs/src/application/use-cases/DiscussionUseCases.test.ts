@@ -319,6 +319,24 @@ describe("DB-level sort forwarding", () => {
 		await uc.execute(1, 5);
 		expect(calls).toEqual([{ method: "findAllPaginated", sort: "recent" }]);
 	});
+
+	it("GetAllDiscussionsPaginatedUseCase forwards filters to findAllPaginated", async () => {
+		let captured: { q?: string; bookAbbrev?: string } | undefined;
+		const repo = {
+			findAllPaginated: (
+				_page: number,
+				_pageSize: number,
+				_sort?: DiscussionSort,
+				filters?: { q?: string; bookAbbrev?: string },
+			) => {
+				captured = filters;
+				return Promise.resolve([] as Discussion[]);
+			},
+		} as unknown as IDiscussionRepository;
+		const uc = new GetAllDiscussionsPaginatedUseCase(repo);
+		await uc.execute(1, 5, "recent", { q: "graça", bookAbbrev: "jo" });
+		expect(captured).toEqual({ q: "graça", bookAbbrev: "jo" });
+	});
 });
 
 describe("GetDiscussionsByCommentUseCase", () => {

@@ -18,13 +18,22 @@ export async function GET(req: Request) {
 			["recent", "active", "liked"].includes(rawSort) ? rawSort : "recent"
 		) as DiscussionSort;
 
+		const q = searchParams.get("q") ?? undefined;
+		const bookRaw = searchParams.get("book") ?? "";
+		const validBook = /^[a-z0-9-]{1,20}$/.test(bookRaw) ? bookRaw : "";
+
 		// List page consumer (DiscussionsClient) reads stored `answersCount`/
 		// `likeCount` straight off each row; userRepo only fills authorEmailVerified.
 		const useCase = new GetAllDiscussionsPaginatedUseCase(
 			new MongoDiscussionRepository(),
 			new MongoUserRepository(),
 		);
-		return NextResponse.json(await useCase.execute(page, PAGE_SIZE, sort));
+		return NextResponse.json(
+			await useCase.execute(page, PAGE_SIZE, sort, {
+				q,
+				bookAbbrev: validBook || undefined,
+			}),
+		);
 	} catch (err) {
 		return serverError(err);
 	}

@@ -106,10 +106,13 @@ export const discussionsService = {
 	async listAll(
 		page = 1,
 		sort: "recent" | "active" | "liked" = "recent",
+		q = "",
+		bookAbbrev = "",
 	): Promise<DiscussionSummary[]> {
-		const res = await axios.get<DiscussionSummary[]>(
-			`/api/discussions?pages=${page}&sort=${sort}`,
-		);
+		let url = `/api/discussions?pages=${page}&sort=${sort}`;
+		if (q.trim()) url += `&q=${encodeURIComponent(q)}`;
+		if (bookAbbrev) url += `&book=${bookAbbrev}`;
+		const res = await axios.get<DiscussionSummary[]>(url);
 		return res.data;
 	},
 

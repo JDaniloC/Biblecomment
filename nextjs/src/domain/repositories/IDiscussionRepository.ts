@@ -31,6 +31,7 @@ export interface IDiscussionRepository {
 		page: number,
 		pageSize: number,
 		sort?: DiscussionSort,
+		filters?: { q?: string; bookAbbrev?: string },
 	): Promise<Discussion[]>;
 	create(
 		discussion: Omit<

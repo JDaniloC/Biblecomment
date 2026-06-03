@@ -175,11 +175,13 @@ export class GetAllDiscussionsPaginatedUseCase {
 		page: number,
 		pageSize: number,
 		sort: DiscussionSort = "recent",
+		filters?: { q?: string; bookAbbrev?: string },
 	): Promise<Discussion[]> {
 		const discussions = await this.discussionRepo.findAllPaginated(
 			page,
 			pageSize,
 			sort,
+			filters,
 		);
 		return enrichDiscussionsForList(discussions, { userRepo: this.userRepo });
 	}

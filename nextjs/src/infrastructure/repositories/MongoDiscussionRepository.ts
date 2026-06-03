@@ -8,6 +8,7 @@ import {
 	IDiscussionDocument,
 } from "@/infrastructure/database/models/DiscussionModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
+import { escapeRegExp } from "@/lib/escape-regexp";
 import mongoose from "mongoose";
 
 /** Translate a `DiscussionSort` into a Mongo sort spec (createdAt tiebreaker). */
@@ -92,12 +93,25 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		page: number,
 		pageSize: number,
 		sort: DiscussionSort = "recent",
+		filters?: { q?: string; bookAbbrev?: string },
 	): Promise<Discussion[]> {
 		await connectToDatabase();
-		const docs = await DiscussionModel.find({})
+		const safePage = Math.max(1, page);
+		const safeSize = Math.max(1, Math.min(pageSize, 100));
+
+		const query: Record<string, unknown> = {};
+		const book = filters?.bookAbbrev?.trim();
+		if (book) query.bookAbbrev = book;
+		const q = filters?.q?.trim();
+		if (q) {
+			const rx = new RegExp(escapeRegExp(q), "i");
+			query.$or = [{ title: rx }, { question: rx }];
+		}
+
+		const docs = await DiscussionModel.find(query)
 			.sort(sortSpec(sort))
-			.skip((page - 1) * pageSize)
-			.limit(pageSize);
+			.skip((safePage - 1) * safeSize)
+			.limit(safeSize);
 		return docs.map(toEntity);
 	}
 
