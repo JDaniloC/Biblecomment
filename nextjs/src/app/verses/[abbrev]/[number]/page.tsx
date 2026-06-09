@@ -7,6 +7,7 @@ import { MongoCommentRepository } from "@/infrastructure/repositories/MongoComme
 import { MongoUserChapterReadRepository } from "@/infrastructure/repositories/MongoUserChapterReadRepository";
 import ChapterClient from "@/app/chapter/[abbrev]/[chapter]/ChapterClient";
 import { CHAPTER_TUTORIAL_NAME } from "@/lib/tutorial-config";
+import { bookSlug } from "@/lib/book-slug";
 
 type Params = { abbrev: string; number: string };
 
@@ -108,7 +109,7 @@ export default async function VersesPage({
         "@type": "ListItem",
         position: 2,
         name: book.name,
-        item: `${base}/verses/${abbrev}/1`,
+        item: `${base}/comentario/${bookSlug(book.name)}`,
       },
       {
         "@type": "ListItem",

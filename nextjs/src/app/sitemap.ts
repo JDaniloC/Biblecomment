@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { MongoCommunityRepository } from "@/infrastructure/repositories/MongoCommunityRepository";
 import { logger } from "@/lib/logger";
+import { bookSlug } from "@/lib/book-slug";
 
 // Without this, Next.js 14 statically renders the sitemap at `next build`
 // time. The book list is captured then — empty in CI before the seed,
@@ -50,6 +51,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     logger.warn({ err }, "sitemap: skipping community pages — community repo unavailable");
   }
 
+  // Book commentary hub pages (/comentario + /comentario/{slug}). Public,
+  // crawlable SEO landing pages. Own try/catch so a repo failure degrades to
+  // the rest of the sitemap. findAll() is memoized so this does not add a DB
+  // round-trip on top of the chapter loop below.
+  let commentaryPages: MetadataRoute.Sitemap = [];
+  try {
+    const bookRepo = new MongoBookRepository();
+    const books = await bookRepo.findAll();
+    commentaryPages = [
+      {
+        url: `${baseUrl}/comentario`,
+        lastModified: now,
+        changeFrequency: STATIC_CHANGE_FREQ,
+        priority: 0.7,
+      },
+      ...books.map((book) => ({
+        url: `${baseUrl}/comentario/${bookSlug(book.name)}`,
+        lastModified: now,
+        changeFrequency: STATIC_CHANGE_FREQ,
+        priority: 0.7,
+      })),
+    ];
+  } catch (err) {
+    logger.warn({ err }, "sitemap: skipping commentary pages — book repo unavailable");
+  }
+
   // Discoverable chapter URLs. Auth gates the actual content, but
   // sitemap submission still helps when the gate is later relaxed and
   // signals the link graph today.
@@ -79,5 +106,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     logger.warn({ err }, "sitemap: skipping chapter pages — book repo unavailable");
   }
 
-  return [...staticPages, ...communityPages, ...chapterPages];
+  return [...staticPages, ...communityPages, ...commentaryPages, ...chapterPages];
 }

@@ -387,6 +387,12 @@ export default async function RootPage() {
 							Sobre
 						</Link>
 						<Link
+							href="/comentario"
+							className="hover:text-stone-600 dark:hover:text-stone-300 transition"
+						>
+							Comentário bíblico
+						</Link>
+						<Link
 							href="/privacy"
 							className="hover:text-stone-600 dark:hover:text-stone-300 transition"
 						>
