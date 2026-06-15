@@ -18,8 +18,9 @@ const targets = [
 	{ file: "icon-192.png", size: 192, padding: 0.12, bg: "#ffffff" },
 	{ file: "icon-512.png", size: 512, padding: 0.12, bg: "#ffffff" },
 	// Maskable: Android crops up to ~20% on each edge, so keep logo within
-	// the inner 60% safe zone. Brand color background reads as intentional.
-	{ file: "icon-512-maskable.png", size: 512, padding: 0.25, bg: "#1075d3" },
+	// the inner 60% safe zone. White background matches the standard icon so
+	// the navy mark stays legible (a brand-blue ground muddied the dark logo).
+	{ file: "icon-512-maskable.png", size: 512, padding: 0.25, bg: "#ffffff" },
 ];
 
 // Dark-mode favicons: the #D5EEF7 mark on a transparent ground so it
