@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { MongoBookRepository } from "@/infrastructure/repositories/MongoBookRepository";
 import { GetAllBooksUseCase, CreateBookUseCase } from "@/application/use-cases/BookUseCases";
 import { getSessionUser, forbidden, badRequest, serverError } from "@/lib/get-session";
+import { buildBooksResponse } from "./buildResponse";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,8 @@ export async function GET() {
   try {
     const repo = new MongoBookRepository();
     const useCase = new GetAllBooksUseCase(repo);
-    return NextResponse.json(await useCase.execute());
+    const books = await useCase.execute();
+    return buildBooksResponse(books);
   } catch (err) {
     return serverError(err);
   }

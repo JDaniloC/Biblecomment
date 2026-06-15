@@ -3,6 +3,7 @@ import { Inter, Lora, Merriweather } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "./providers";
 import PWARegister from "@/components/PWARegister";
+import OfflineSyncProvider from "@/components/OfflineSyncProvider";
 import { AppShellChrome } from "@/components/AppShellChrome";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
@@ -138,6 +139,7 @@ export default function RootLayout({
 					<AppShellChrome />
 				</SessionProvider>
 				<PWARegister />
+				<OfflineSyncProvider />
 			</body>
 		</html>
 	);

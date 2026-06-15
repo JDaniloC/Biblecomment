@@ -8,8 +8,9 @@
 // avoid /verses/ caching entirely.
 //
 // Bump CACHE_VERSION to force clients to drop old caches on activate.
-const CACHE_VERSION = "biblecomment-v5";
-const RUNTIME_CACHE = "biblecomment-runtime-v5";
+// Phase 1 shipped v5; Phase 2 → v6 (chapter offline routing + dataset shell).
+const CACHE_VERSION = "biblecomment-v6";
+const RUNTIME_CACHE = "biblecomment-runtime-v6";
 const SHELL_ASSETS = [
 	"/",
 	"/offline",
@@ -21,6 +22,10 @@ const SHELL_ASSETS = [
 	// (BooksIndex) renders offline on first run. Kept fresh at runtime by
 	// the /api/books handler below.
 	"/api/books",
+	// Offline reading shell: one cached document that renders ANY chapter
+	// from the IndexedDB dataset. Precached so a failed /verses/* navigation
+	// can be answered with it offline (see the navigation catch below).
+	"/leitura-offline",
 ];
 
 self.addEventListener("install", (event) => {
@@ -142,7 +147,17 @@ self.addEventListener("fetch", (event) => {
 						return caches
 							.open(RUNTIME_CACHE)
 							.then((cache) => cache.match(url.pathname + "?offline=1"))
-							.then((snap) => snap || offlineFallback());
+							.then((snap) => {
+									// snapshot (has comments) wins; else the precached
+									// /leitura-offline shell renders this chapter from the
+									// IndexedDB dataset (address bar stays on the real
+									// /verses/:abbrev/:number, so the shell reads the target
+									// from location.pathname); else the generic offline page.
+									if (snap) return snap;
+									return caches
+										.match("/leitura-offline")
+										.then((shell) => shell || offlineFallback());
+								});
 					}
 					// Non-chapter navigation offline: serve an exact cached copy
 					// if we have one, else the precached PUBLIC home (navigable

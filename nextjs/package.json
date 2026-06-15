@@ -60,6 +60,7 @@
     "cypress": "^15.14.1",
     "eslint": "^10.3.0",
     "eslint-config-next": "^16.2.6",
+    "fake-indexeddb": "^6.2.5",
     "mongodb-memory-server": "^11.0.1",
     "start-server-and-test": "^3.0.2",
     "typescript": "^6.0.2",

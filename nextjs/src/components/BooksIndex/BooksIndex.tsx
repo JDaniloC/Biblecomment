@@ -82,8 +82,12 @@ export default function BooksIndex({ initialBooks, onChangeChapter, closeBookCom
 
   useEffect(() => {
     if (books.length === 0) {
-      axios.get<Book[]>("/api/books")
-        .then(({ data }) => setBooks(data))
+      // /api/books now returns { books, version } (the version drives the
+      // offline-dataset sync). Tolerate the legacy bare-array shape too so a
+      // stale SW-cached body from a prior deploy still hydrates the grid.
+      axios
+        .get<{ books: Book[]; version: string } | Book[]>("/api/books")
+        .then(({ data }) => setBooks(Array.isArray(data) ? data : data.books))
         .catch(() => handleNotification("error", "Erro ao carregar livros."));
     }
   }, [handleNotification, books.length]);

@@ -25,6 +25,12 @@ import { PageTutorial } from "@/components/Tutorial/PageTutorial";
 import { BadgesTab } from "./_components/BadgesTab";
 import { ReadingReminderCard } from "./_components/ReadingReminderCard";
 import { Toggle } from "./_components/Toggle";
+import {
+	OFFLINE_BIBLE_PREF_KEY,
+	isOfflineBibleEnabled,
+} from "@/components/OfflineSyncProvider";
+import { syncOfflineBible } from "@/lib/offline/bibleSync";
+import { getMeta, clearStore, type SyncStatus } from "@/lib/offline/bibleStore";
 
 const { beliefs, states } = collectionsData as {
 	beliefs: string[];
@@ -1014,6 +1020,94 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 	},
 ];
 
+/* ─────────────────── Offline Bible card (config tab) ─────────────────── */
+function statusLabel(status: SyncStatus | null): string {
+	switch (status) {
+		case "ready":
+			return "Bíblia disponível offline.";
+		case "syncing":
+			return "Baixando a Bíblia para uso offline…";
+		case "partial":
+			return "Download incompleto — será retomado quando você abrir o app online.";
+		case "off":
+			return "Leitura offline desligada.";
+		default:
+			return "Ainda não baixada.";
+	}
+}
+
+function OfflineBibleCard() {
+	const { handleNotification } = useNotification();
+	const [enabled, setEnabled] = useState(true);
+	const [status, setStatus] = useState<SyncStatus | null>(null);
+
+	// Hydrate the toggle + status from localStorage + the store on mount.
+	useEffect(() => {
+		setEnabled(isOfflineBibleEnabled());
+		getMeta()
+			.then((m) => setStatus(m?.status ?? null))
+			.catch(() => setStatus(null));
+	}, []);
+
+	const onToggle = useCallback(
+		async (next: boolean) => {
+			setEnabled(next);
+			window.localStorage.setItem(OFFLINE_BIBLE_PREF_KEY, next ? "1" : "0");
+			if (next) {
+				setStatus("syncing");
+				// Notify up front — the download runs in the background and the
+				// status line reflects completion ("ready"/"partial").
+				handleNotification("info", "Baixando a Bíblia para uso offline…");
+				try {
+					await syncOfflineBible({ enabled: true });
+					const m = await getMeta();
+					setStatus(m?.status ?? "ready");
+				} catch {
+					// syncOfflineBible never rejects; guard for safety.
+				}
+			} else {
+				// Off → free the storage so the dataset isn't left orphaned.
+				await clearStore().catch(() => undefined);
+				setStatus("off");
+				handleNotification("info", "Leitura offline desligada.");
+			}
+		},
+		[handleNotification],
+	);
+
+	return (
+		<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6">
+			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-4">
+				Leitura offline
+			</div>
+			<div className="flex items-start gap-3.5" data-testid="offline-bible-toggle">
+				<Toggle
+					checked={enabled}
+					onChange={onToggle}
+					dataTestid="offline-bible-switch"
+					ariaLabel="Disponibilizar a Bíblia offline"
+				/>
+				<div>
+					<div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-[19.5px]">
+						Disponibilizar a Bíblia offline (recomendado)
+					</div>
+					<div className="text-xs text-slate-400 dark:text-slate-500 leading-[18px] mt-0.5">
+						Baixa o texto de todos os capítulos (alguns MB, uma vez) para que
+						você possa ler sem internet. Os comentários continuam disponíveis
+						apenas online.
+					</div>
+					<div
+						data-testid="offline-bible-status"
+						className="text-xs text-brand mt-1.5 font-medium"
+					>
+						{statusLabel(status)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 /* ──────────────────────── Main component ──────────────────────── */
 const VALID_TABS: Tab[] = ["overview", "comments", "favorites", "badges", "config"];
 
@@ -1610,6 +1704,9 @@ export default function ProfileClient({
 
 							{/* ── Card: Lembrete diário de leitura ── */}
 							<ReadingReminderCard />
+
+							{/* ── Card: Leitura offline (download da Bíblia) ── */}
+							<OfflineBibleCard />
 
 							{/* ── Card 2: Privacidade ── */}
 							<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5">
