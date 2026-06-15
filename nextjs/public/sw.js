@@ -8,8 +8,8 @@
 // avoid /verses/ caching entirely.
 //
 // Bump CACHE_VERSION to force clients to drop old caches on activate.
-const CACHE_VERSION = "biblecomment-v4";
-const RUNTIME_CACHE = "biblecomment-runtime-v4";
+const CACHE_VERSION = "biblecomment-v5";
+const RUNTIME_CACHE = "biblecomment-runtime-v5";
 const SHELL_ASSETS = [
 	"/",
 	"/offline",
@@ -17,6 +17,10 @@ const SHELL_ASSETS = [
 	"/icons/icon-192.png",
 	"/icons/icon-512.png",
 	"/apple-touch-icon.png",
+	// Public, non-personalized book list — precached so the library
+	// (BooksIndex) renders offline on first run. Kept fresh at runtime by
+	// the /api/books handler below.
+	"/api/books",
 ];
 
 self.addEventListener("install", (event) => {
@@ -90,6 +94,28 @@ self.addEventListener("fetch", (event) => {
 	// Same-origin only; never intercept third-party (Google Fonts, Sentry, etc).
 	if (url.origin !== self.location.origin) return;
 
+	// Public book list: network-first so it stays fresh, but fall back to
+	// the last cached copy offline so the library still renders. This is
+	// the one /api/ route safe to cache (no user/session data).
+	if (url.pathname === "/api/books") {
+		event.respondWith(
+			fetch(request)
+				.then((response) => {
+					if (response.ok) {
+						const clone = response.clone();
+						caches
+							.open(CACHE_VERSION)
+							.then((cache) => cache.put(request, clone));
+					}
+					return response;
+				})
+				.catch(() =>
+					caches.match(request).then((cached) => cached || offlineFallback()),
+				),
+		);
+		return;
+	}
+
 	// APIs and auth endpoints: always hit the network. Stale comments or
 	// session data would be worse than a network error.
 	if (url.pathname.startsWith("/api/")) return;
@@ -118,7 +144,15 @@ self.addEventListener("fetch", (event) => {
 							.then((cache) => cache.match(url.pathname + "?offline=1"))
 							.then((snap) => snap || offlineFallback());
 					}
-					return offlineFallback();
+					// Non-chapter navigation offline: serve an exact cached copy
+					// if we have one, else the precached PUBLIC home (navigable
+					// book grid), else the generic offline page. Never serve a
+					// personalized page (/home, /profile) — only public `/`.
+					return caches.match(request).then(
+						(exact) =>
+							exact ||
+							caches.match("/").then((home) => home || offlineFallback()),
+					);
 				}),
 		);
 		return;
