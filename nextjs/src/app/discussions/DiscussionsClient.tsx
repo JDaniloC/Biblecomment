@@ -122,6 +122,7 @@ export default function DiscussionsClient({
 					/>
 					<select
 						data-testid="discussions-book-filter"
+						aria-label="Filtrar por livro"
 						value={bookAbbrev}
 						onChange={(e) => {
 							// Updating bookAbbrev triggers the [sort, bookAbbrev]
@@ -172,7 +173,7 @@ export default function DiscussionsClient({
 					{loading && discussions.length === 0 ? (
 						<Loading />
 					) : discussions.length === 0 ? (
-						<div className="text-center text-gray-400 dark:text-slate-500 py-10">
+						<div className="text-center text-gray-500 dark:text-slate-400 py-10">
 							Nenhuma discussão encontrada.
 						</div>
 					) : (
