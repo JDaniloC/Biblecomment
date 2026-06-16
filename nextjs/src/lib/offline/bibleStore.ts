@@ -114,7 +114,8 @@ export async function isBookSynced(
     "readonly",
     (s) => s.get(abbrev),
   );
-  return !!book && book.version === version;
+  // Optional chaining narrows cleanly: undefined book → undefined !== version.
+  return book?.version === version;
 }
 
 /** Drop the entire offline dataset (toggle off / quota cleanup). */

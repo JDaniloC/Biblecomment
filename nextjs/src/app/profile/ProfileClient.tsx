@@ -32,7 +32,7 @@ import {
 import { syncOfflineBible } from "@/lib/offline/bibleSync";
 import { getMeta, clearStore, type SyncStatus } from "@/lib/offline/bibleStore";
 
-const { beliefs, states } = collectionsData as {
+const { beliefs } = collectionsData as {
 	beliefs: string[];
 	states: string[];
 };
@@ -1045,7 +1045,7 @@ function OfflineBibleCard() {
 	useEffect(() => {
 		setEnabled(isOfflineBibleEnabled());
 		getMeta()
-			.then((m) => setStatus(m?.status ?? null))
+			.then((meta) => setStatus(meta?.status ?? null))
 			.catch(() => setStatus(null));
 	}, []);
 
@@ -1060,8 +1060,8 @@ function OfflineBibleCard() {
 				handleNotification("info", "Baixando a Bíblia para uso offline…");
 				try {
 					await syncOfflineBible({ enabled: true });
-					const m = await getMeta();
-					setStatus(m?.status ?? "ready");
+					const meta = await getMeta();
+					setStatus(meta?.status ?? "ready");
 				} catch {
 					// syncOfflineBible never rejects; guard for safety.
 				}

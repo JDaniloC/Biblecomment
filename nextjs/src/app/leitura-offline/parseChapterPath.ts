@@ -10,9 +10,9 @@
 export function parseChapterPath(
   pathname: string,
 ): { abbrev: string; chapter: number } | null {
-  const m = pathname.match(/^\/verses\/([^/]+)\/(\d+)\/?$/);
-  if (!m) return null;
-  const chapter = parseInt(m[2], 10);
+  const match = pathname.match(/^\/verses\/([^/]+)\/(\d+)\/?$/);
+  if (!match) return null;
+  const chapter = parseInt(match[2], 10);
   if (Number.isNaN(chapter)) return null;
-  return { abbrev: m[1], chapter };
+  return { abbrev: match[1], chapter };
 }

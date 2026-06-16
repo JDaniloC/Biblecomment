@@ -43,7 +43,7 @@ export function ChapterReader({
           // Guard on a real _id: offline verses have none, and without this
           // `undefined === undefined` would mark every verse "selected".
           const isSelected =
-            !!verse._id && selectedVerse?._id === verse._id && !isTitleMode;
+            Boolean(verse._id) && selectedVerse?._id === verse._id && !isTitleMode;
           return (
             <li
               key={verse._id ?? `${verse.verseNumber}`}

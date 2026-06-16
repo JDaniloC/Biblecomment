@@ -13,25 +13,26 @@ const BOOKS = [
 function booksResponse() {
   return {
     ok: true,
-    json: async () => ({ books: BOOKS, version: VERSION }),
+    json: () => Promise.resolve({ books: BOOKS, version: VERSION }),
   } as Response;
 }
 
 function bookVersesResponse(abbrev: string) {
   return {
     ok: true,
-    json: async () => ({
-      abbrev,
-      chapters: { "1": [{ n: 1, t: `${abbrev} 1:1` }] },
-    }),
+    json: () =>
+      Promise.resolve({
+        abbrev,
+        chapters: { "1": [{ n: 1, t: `${abbrev} 1:1` }] },
+      }),
   } as Response;
 }
 
 // Routes a fetch URL to the right canned response.
 function routeFetch(url: string): Response {
   if (url === "/api/books") return booksResponse();
-  const m = url.match(/^\/api\/books\/([^/]+)\/verses$/);
-  if (m) return bookVersesResponse(m[1]);
+  const match = url.match(/^\/api\/books\/([^/]+)\/verses$/);
+  if (match) return bookVersesResponse(match[1]);
   throw new Error(`unexpected fetch ${url}`);
 }
 
