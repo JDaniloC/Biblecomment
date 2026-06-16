@@ -43,4 +43,17 @@ describe("manifest.webmanifest", () => {
 		expect(manifest.icons.length).toBeGreaterThanOrEqual(2);
 		expect(manifest.screenshots.length).toBeGreaterThanOrEqual(1);
 	});
+
+	// Task E: point browser install prompts at the published Play app instead
+	// of offering the (inferior) PWA install on Android.
+	it("prefers the related Play app for install", () => {
+		expect(manifest.prefer_related_applications).toBe(true);
+		expect(manifest.related_applications).toEqual([
+			{
+				platform: "play",
+				url: "https://play.google.com/store/apps/details?id=br.com.biblecomment.app",
+				id: "br.com.biblecomment.app",
+			},
+		]);
+	});
 });

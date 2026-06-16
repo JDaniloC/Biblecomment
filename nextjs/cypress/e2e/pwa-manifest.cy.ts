@@ -16,6 +16,9 @@ describe("PWA manifest + share_target prefill", () => {
 			expect(m.share_target.action).to.eq("/search");
 			expect(m.share_target.params).to.deep.eq({ text: "q" });
 			expect(m.launch_handler.client_mode).to.include("navigate-existing");
+			// Task E: install prompts prefer the published Play app.
+			expect(m.prefer_related_applications).to.eq(true);
+			expect(m.related_applications[0].id).to.eq("br.com.biblecomment.app");
 		});
 	});
 
