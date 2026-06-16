@@ -38,8 +38,7 @@ function routeFetch(url: string): Response {
 
 describe("syncOfflineBible", () => {
 	beforeEach(() => {
-		// eslint-disable-next-line no-global-assign
-		indexedDB = new IDBFactory();
+		vi.stubGlobal("indexedDB", new IDBFactory());
 		vi.restoreAllMocks();
 	});
 	afterEach(() => vi.restoreAllMocks());

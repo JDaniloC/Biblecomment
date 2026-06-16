@@ -112,16 +112,13 @@ describe("Email verification", () => {
 			const verse = (
 				res.body as Array<{ _id: string; verseNumber: number }>
 			).find((v) => v.verseNumber === 1);
-			expect(verse, "verse Gn 1:1 should be seeded").to.exist;
+			if (!verse) throw new Error("verse Gn 1:1 should be seeded");
 
 			cy.request({
 				method: "POST",
-				url: `/api/comments/${verse!._id}`,
+				url: `/api/comments/${verse._id}`,
 				body: {
-					text:
-						"Comentário tentando ser publicado sem verificação. " +
-						"Texto longo o suficiente para satisfazer o limite mínimo " +
-						"de duzentos caracteres exigidos pelo sistema. ".repeat(2),
+					text: `Comentário tentando ser publicado sem verificação. Texto longo o suficiente para satisfazer o limite mínimo ${"de duzentos caracteres exigidos pelo sistema. ".repeat(2)}`,
 					tags: ["devocional"],
 				},
 				failOnStatusCode: false,
@@ -179,16 +176,13 @@ describe("Email verification", () => {
 			const verse = (
 				res.body as Array<{ _id: string; verseNumber: number }>
 			).find((v) => v.verseNumber === 1);
-			expect(verse).to.exist;
+			if (!verse) throw new Error("verse Gn 1:1 should be seeded");
 
 			cy.request({
 				method: "POST",
-				url: `/api/comments/${verse!._id}`,
+				url: `/api/comments/${verse._id}`,
 				body: {
-					text:
-						"Comentário publicado após a verificação do e-mail. " +
-						"Texto longo o suficiente para satisfazer o limite mínimo " +
-						"de duzentos caracteres exigidos pelo sistema. ".repeat(2),
+					text: `Comentário publicado após a verificação do e-mail. Texto longo o suficiente para satisfazer o limite mínimo ${"de duzentos caracteres exigidos pelo sistema. ".repeat(2)}`,
 					tags: ["devocional"],
 				},
 			}).then((createRes) => {
