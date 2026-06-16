@@ -8,11 +8,11 @@
 // /verses/:abbrev/:number navigation while keeping the address bar on the real
 // chapter URL, so the shell reads its target from location.pathname.
 export function parseChapterPath(
-  pathname: string,
+	pathname: string,
 ): { abbrev: string; chapter: number } | null {
-  const m = pathname.match(/^\/verses\/([^/]+)\/(\d+)\/?$/);
-  if (!m) return null;
-  const chapter = parseInt(m[2], 10);
-  if (Number.isNaN(chapter)) return null;
-  return { abbrev: m[1], chapter };
+	const match = pathname.match(/^\/verses\/([^/]+)\/(\d+)\/?$/);
+	if (!match) return null;
+	const chapter = parseInt(match[2], 10);
+	if (Number.isNaN(chapter)) return null;
+	return { abbrev: match[1], chapter };
 }
