@@ -344,7 +344,10 @@ function EmailVerificationCard({
 		try {
 			const mod = await import("@/app/actions/email-verification");
 			await mod.requestEmailVerificationAction();
-			handleNotification("success", `Enviamos um link para ${pendingEmail ?? currentEmail}.`);
+			handleNotification(
+				"success",
+				`Enviamos um link para ${pendingEmail ?? currentEmail}.`,
+			);
 		} catch {
 			handleNotification("error", "Erro ao enviar verificação.");
 		} finally {
@@ -359,7 +362,10 @@ function EmailVerificationCard({
 			const mod = await import("@/app/actions/email-verification");
 			const res = await mod.requestEmailChangeAction(newEmail.trim());
 			if (res.ok) {
-				handleNotification("success", `Enviamos um link de confirmação para ${newEmail.trim()}.`);
+				handleNotification(
+					"success",
+					`Enviamos um link de confirmação para ${newEmail.trim()}.`,
+				);
 				setNewEmail("");
 				onChanged();
 				await updateSession({ pendingEmail: newEmail.trim() });
@@ -396,7 +402,9 @@ function EmailVerificationCard({
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2 text-[13px] mb-4">
-				<span className="text-slate-800 dark:text-slate-100">{currentEmail}</span>
+				<span className="text-slate-800 dark:text-slate-100">
+					{currentEmail}
+				</span>
 				{emailVerified ? (
 					<span
 						data-testid="email-verification-state-verified"
@@ -456,7 +464,10 @@ function EmailVerificationCard({
 			) : null}
 
 			<div className="border-t border-slate-100 dark:border-slate-800 pt-4">
-				<label htmlFor="profile-new-email" className="block text-[13px] font-semibold mb-1.5 text-slate-800 dark:text-slate-100">
+				<label
+					htmlFor="profile-new-email"
+					className="block text-[13px] font-semibold mb-1.5 text-slate-800 dark:text-slate-100"
+				>
 					Trocar e-mail
 				</label>
 				<div className="flex gap-2">
@@ -1080,7 +1091,10 @@ function OfflineBibleCard() {
 			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-4">
 				Leitura offline
 			</div>
-			<div className="flex items-start gap-3.5" data-testid="offline-bible-toggle">
+			<div
+				className="flex items-start gap-3.5"
+				data-testid="offline-bible-toggle"
+			>
 				<Toggle
 					checked={enabled}
 					onChange={onToggle}
@@ -1109,7 +1123,13 @@ function OfflineBibleCard() {
 }
 
 /* ──────────────────────── Main component ──────────────────────── */
-const VALID_TABS: Tab[] = ["overview", "comments", "favorites", "badges", "config"];
+const VALID_TABS: Tab[] = [
+	"overview",
+	"comments",
+	"favorites",
+	"badges",
+	"config",
+];
 
 export default function ProfileClient({
 	user,
@@ -1167,7 +1187,9 @@ export default function ProfileClient({
 		if (!profile) return;
 		if (searchParams.get("verify") !== "1") return;
 		if (profile.emailVerified && !profile.pendingEmail) return;
-		import("@/app/actions/email-verification").then((mod) => mod.requestEmailVerificationAction());
+		import("@/app/actions/email-verification").then((mod) =>
+			mod.requestEmailVerificationAction(),
+		);
 	}, [profile, searchParams]);
 
 	/* ── Data loaders ── */
@@ -1719,10 +1741,7 @@ export default function ProfileClient({
 									className="flex items-start gap-3.5 pb-4"
 									data-testid="show-belief-toggle"
 								>
-									<Toggle
-										checked={showReligion}
-										onChange={setShowReligion}
-									/>
+									<Toggle checked={showReligion} onChange={setShowReligion} />
 									<div>
 										<div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-[19.5px]">
 											Mostrar minha religião no perfil público
@@ -1739,10 +1758,7 @@ export default function ProfileClient({
 
 								{/* Toggle 2 */}
 								<div className="flex items-start gap-3.5">
-									<Toggle
-										checked={showHistory}
-										onChange={setShowHistory}
-									/>
+									<Toggle checked={showHistory} onChange={setShowHistory} />
 									<div>
 										<div className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-[19.5px]">
 											Permitir que outros vejam meu histórico de comentários
