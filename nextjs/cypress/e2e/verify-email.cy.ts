@@ -27,6 +27,7 @@ interface MemoryEmail {
 
 function fetchLatestVerificationEmail(
   toEmail: string,
+  attemptsLeft = 10,
 ): Cypress.Chainable<MemoryEmail> {
   return cy
     .request<{ messages: MemoryEmail[] }>("/api/dev/last-email")
@@ -35,16 +36,22 @@ function fetchLatestVerificationEmail(
       const found = [...inbox]
         .reverse()
         .find(
-          (m) =>
-            m.to.toLowerCase() === toEmail.toLowerCase() &&
-            /confirme|verif/i.test(m.subject),
+          (msg) =>
+            msg.to.toLowerCase() === toEmail.toLowerCase() &&
+            /confirme|verif/i.test(msg.subject),
         );
-      if (!found) {
+      if (found) return cy.wrap(found);
+      if (attemptsLeft <= 0) {
         throw new Error(
-          `No verification email for ${toEmail} (inbox has ${inbox.length} message(s))`,
+          `No verification email for ${toEmail} after polling (inbox has ${inbox.length} message(s))`,
         );
       }
-      return cy.wrap(found);
+      // The send action is fire-and-forget — the email may not have been
+      // written to the dev inbox yet. Wait briefly and poll again instead of
+      // failing on the first empty read (the race that flaked this spec).
+      return cy
+        .wait(300)
+        .then(() => fetchLatestVerificationEmail(toEmail, attemptsLeft - 1));
     });
 }
 
@@ -235,9 +242,11 @@ describe("Email verification", () => {
       // return 401.
       cy.loginAs(email2, password);
       cy.visit("/profile?tab=config");
-      cy.get('[data-testid="email-verification-state-verified"]').should(
-        "be.visible",
-      );
+      // Longer timeout: under the full-suite CI load the verified badge can
+      // take >4s to paint, which flaked this assertion.
+      cy.get('[data-testid="email-verification-state-verified"]', {
+        timeout: 10000,
+      }).should("be.visible");
       cy.contains(email2);
     },
   );
