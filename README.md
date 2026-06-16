@@ -1,8 +1,11 @@
 <p align="center">
-  <img src=".github/title.png">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/index-dark.png">
+    <img alt="Home" src=".github/index.png">
+  </picture>
 </p>
 
-> A web site to read and share comments about Bible verses.
+> A web site to read and share bible comments.
 
 <p align="center">
   <img src="https://img.shields.io/badge/-Next.js%2015-black?style=flat&logo=next.js"/>
@@ -11,10 +14,7 @@
   <img src="https://img.shields.io/badge/-Tailwind%20v4-black?style=flat&logo=tailwindcss"/>
   <img src="https://img.shields.io/badge/-Vitest-black?style=flat&logo=vitest"/>
   <img src="https://img.shields.io/badge/-Cypress-black?style=flat&logo=cypress"/>
-</p>
-
-<p align="center">
-  <img alt="Home" src=".github/index.png">
+  <img src="https://img.shields.io/badge/-PWA-black?style=flat&logo=pwa"/>
 </p>
 
 ## Motivation
@@ -31,13 +31,17 @@ application under [`nextjs/`](./nextjs).
 - **NextAuth.js v5** — credentials auth with bcrypt password hashing
 - **Tailwind v4** — `@theme` tokens in CSS, no `tailwind.config.ts` colors
 - **next-themes** — dark mode (`attribute="class"`, system-aware)
+- **PWA** — installable app + offline Bible reading via a service worker
+  (`public/sw.js`) and an IndexedDB verse dataset (`lib/offline/`)
 - **pino** — structured server logs (`logger.error` wired into all `5xx` paths)
 - **Sentry** — optional error reporting (no-op without `SENTRY_DSN`)
 - **Zod** — request body validation across 9 schemas
-- **Vitest** — unit tests for use cases + helpers (89 tests)
+- **Vitest** — unit tests for use cases, lib, and the offline store/sync
+  (500+ tests)
 - **Cypress 15** — integration + E2E tests with `mongodb-memory-server`
-  (~58 tests across auth, RBAC, comments, discussions, mentions,
-  notifications, moderation, search, SEO)
+  (49 specs across auth, RBAC, comments, discussions, communities,
+  offline reading, PWA, email verification, moderation, search, SEO, and
+  a Lighthouse a11y gate)
 
 ## Architecture
 
@@ -49,7 +53,7 @@ src/
 ├── domain/              # Entities (Comment, Discussion, User, ...) + repository interfaces
 ├── application/         # Use cases — orchestrate domain operations
 ├── infrastructure/      # Mongoose models + repository implementations
-├── lib/                 # Auth, logger, parse-body, schemas, share-verse, mentions
+├── lib/                 # Auth, logger, parse-body, schemas, share-verse, mentions, offline (IndexedDB sync)
 ├── services/            # Client-side service façades (single source of HTTP/Action calls)
 ├── app/                 # Next.js routes
 │   ├── actions/         # Server Actions (comments, discussions, users, moderation, notifications)
@@ -104,6 +108,16 @@ existing `catch` blocks that read `err.response?.status` keep working.
 - **Dark mode** + adjustable text size (persisted in `localStorage`)
 - **Mobile responsive** — sidebar drawer, swipe between chapters,
   keyboard nav (← / → / Esc) on the chapter page
+- **Communities** — group spaces that scope discussions and comments
+  (`communitySlug`), with a community filter on the global lists
+- **Installable PWA + offline reading** — install to the home screen; each
+  chapter's verse text is downloaded once into IndexedDB and served by a
+  service worker (`public/sw.js`), so the whole Bible reads offline
+  (comments are best-effort, cached per chapter you've opened)
+- **Web push + daily reading reminder** — opt-in browser notifications
+  (`web-push`/VAPID) and a scheduled reading reminder
+- **Reading plan** — the “Reavivados Por Sua Palavra” daily chapter
+  surfaced on the library
 - **SEO** — `generateMetadata` per page, `app/sitemap.ts`,
   `app/robots.ts`, OG/Twitter cards
 
@@ -113,10 +127,11 @@ existing `catch` blocks that read `err.response?.status` keep working.
 cd nextjs
 cp .env.local.example .env.local     # set MONGODB_URI, NEXTAUTH_SECRET
 npm install
-npm run dev                          # http://localhost:3000 (start a Mongo separately, or use `npm run dev:mongo` for an in-memory one)
+npm run dev                          # http://localhost:3001 (start a Mongo separately)
+npm run dev:mongo                    # same, but with a bundled in-memory Mongo
 ```
 
-`npm run dev` orchestrates an in-memory Mongo instance and pipes its
+`npm run dev:mongo` orchestrates an in-memory Mongo instance and pipes its
 URI into the Next.js process — no Docker needed for local development.
 
 Run the unit tests:
