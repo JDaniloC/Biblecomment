@@ -16,6 +16,7 @@
     "cy:test": "node scripts/cy-test.js",
     "cy:test:dev": "node scripts/cy-test.js dev",
     "a11y": "node scripts/lighthouse-a11y.js",
+    "gen:audio": "node --env-file-if-exists=.env scripts/generate-audio.js",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status"
@@ -47,6 +48,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1074.0",
     "@lhci/cli": "^0.15.1",
     "@netlify/plugin-nextjs": "^5.15.10",
     "@next/bundle-analyzer": "^16.2.4",
