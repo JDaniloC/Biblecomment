@@ -32,6 +32,8 @@ import {
 } from "@/app/actions/comments";
 import { toggleCommentVerifiedAction } from "@/app/actions/moderation";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { ListenButton } from "@/components/AudioPlayer/ListenButton";
 
 interface SessionUser {
 	name: string;
@@ -99,6 +101,8 @@ export default function ChapterClient({
 	const router = useRouter();
 	const { handleNotification } = useNotification();
 	const confirm = useConfirm();
+	const { state: audioState, seekToVerse } = useAudioPlayer();
+	const audioOnThisChapter = audioState.abbrev === book.abbrev && audioState.chapter === chapter;
 
 	// Accrue reading time toward the daily streak session (logged-in only).
 	useReadingTime(!!user);
@@ -718,7 +722,12 @@ export default function ChapterClient({
 			<AppHeader
 				user={user}
 				loginCallbackUrl={`/verses/${book.abbrev}/${chapter}`}
-				trailing={<FontSizeControl />}
+				trailing={
+					<>
+						<ListenButton abbrev={book.abbrev} chapter={chapter} />
+						<FontSizeControl />
+					</>
+				}
 			/>
 
 			<div className="flex flex-1 relative min-h-0">
@@ -846,7 +855,14 @@ export default function ChapterClient({
 							countMap={countMap}
 							selectedVerse={selectedVerse}
 							isTitleMode={isTitleMode}
-							onSelectVerse={openVersePanel}
+							nowReadingVerse={audioOnThisChapter ? audioState.currentVerse : null}
+							onSelectVerse={(verse) => {
+								if (audioOnThisChapter && audioState.isPlaying) {
+									seekToVerse(verse.verseNumber);
+									return;
+								}
+								openVersePanel(verse);
+							}}
 						/>
 
 						<div className="mt-10 flex justify-between">

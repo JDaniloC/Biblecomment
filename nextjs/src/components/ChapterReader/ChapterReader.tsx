@@ -16,6 +16,9 @@ interface ChapterReaderProps {
 	// Tapping a verse opens its comment panel. Omitted offline → verses are
 	// plain (no panel) but still copyable.
 	onSelectVerse?: (verse: Verse) => void;
+	// The verse number currently being read aloud by the audio player.
+	// Null when no audio is playing or the player is on a different chapter.
+	nowReadingVerse?: number | null;
 }
 
 // Presentational verse column shared by the online ChapterClient and the
@@ -30,6 +33,7 @@ export function ChapterReader({
 	selectedVerse = null,
 	isTitleMode = false,
 	onSelectVerse,
+	nowReadingVerse = null,
 }: ChapterReaderProps) {
 	return (
 		<div className="relative">
@@ -46,11 +50,13 @@ export function ChapterReader({
 						Boolean(verse._id) &&
 						selectedVerse?._id === verse._id &&
 						!isTitleMode;
+					const isNowReading = verse.verseNumber === nowReadingVerse && !isTitleMode;
 					return (
 						<li
 							key={verse._id ?? `${verse.verseNumber}`}
 							id={String(verse.verseNumber)}
 							data-tour={idx === 0 ? "verse-first" : undefined}
+							data-now-reading={isNowReading ? "true" : undefined}
 							className="group relative"
 						>
 							<button
@@ -58,13 +64,17 @@ export function ChapterReader({
 								onClick={() => onSelectVerse?.(verse)}
 								className={`flex items-start gap-2 md:gap-3 w-full text-left rounded-r-[4px] transition border-l-4 border-solid pt-3 pr-2.5 pl-1.5 md:pl-3 md:pt-2 md:pb-2 hover:bg-[rgba(19,125,219,0.07)] dark:hover:bg-[rgba(19,125,219,0.16)] active:bg-[rgba(19,125,219,0.12)] dark:active:bg-[rgba(19,125,219,0.22)] min-h-[44px] ${count > 0 ? "pb-7 md:pb-2" : "pb-3"}`}
 								style={{
-									borderLeftColor: isSelected ? "#137ddb" : "transparent",
-									background: isSelected ? "rgba(19,125,219,0.04)" : undefined,
+									borderLeftColor: isNowReading || isSelected ? "#137ddb" : "transparent",
+									background: isNowReading
+										? "rgba(19,125,219,0.12)"
+										: isSelected
+											? "rgba(19,125,219,0.04)"
+											: undefined,
 								}}
 							>
 								<span
 									className="font-sans font-bold text-[14px] md:text-[13px] w-5 md:w-5 flex-shrink-0 text-right mt-[2px] transition"
-									style={{ color: isSelected ? "#137ddb" : "#94a3b8" }}
+									style={{ color: isNowReading || isSelected ? "#137ddb" : "#94a3b8" }}
 								>
 									{verse.verseNumber}
 								</span>

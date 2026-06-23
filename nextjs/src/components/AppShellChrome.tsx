@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { MiniPlayer } from "@/components/AudioPlayer/MiniPlayer";
 
 // Rotas sem app-shell: a barra não deve aparecer.
 const DENY = ["/login", "/register", "/offline", "/forgot-password", "/reset-password"];
@@ -14,5 +15,10 @@ export function AppShellChrome() {
   const user = data?.user
     ? { username: (data.user as { username: string }).username }
     : null;
-  return <MobileTabBar user={user} />;
+  return (
+    <>
+      <MiniPlayer />
+      <MobileTabBar user={user} />
+    </>
+  );
 }
