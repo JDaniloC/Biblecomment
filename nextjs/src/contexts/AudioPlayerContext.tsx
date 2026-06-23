@@ -18,6 +18,9 @@ import {
   isChapterAvailable,
   verseAtTime,
   nextChapterWithin,
+  prevChapterWithin,
+  adjacentVerse,
+  firstVerse,
 } from "@/lib/audio/player";
 import { getVoiceId } from "@/lib/audio/voice-pref";
 import {
@@ -35,6 +38,8 @@ interface AudioPlayerContextValue {
   toggle: () => void;
   seekToVerse: (verse: number) => void;
   seekBy: (deltaMs: number) => void;
+  prevVerse: () => void;
+  nextVerse: () => void;
   setRate: (rate: number) => void;
   next: () => void;
   stop: () => void;
@@ -188,6 +193,34 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }
 
+  // Skip to the next verse; at the last verse, roll into the next chapter.
+  function nextVerse() {
+    const t = timingsRef.current;
+    const st = stateRef.current;
+    if (!t) return;
+    const cur = st.currentVerse ?? firstVerse(t);
+    if (cur == null) return;
+    const nv = adjacentVerse(t, cur, 1);
+    if (nv != null) seekToVerse(nv);
+    else next(); // past the last verse → next chapter (autoplay from start)
+  }
+
+  // Skip to the previous verse; at the first verse, roll into the previous chapter.
+  function prevVerse() {
+    const t = timingsRef.current;
+    const st = stateRef.current;
+    if (!t) return;
+    const cur = st.currentVerse ?? firstVerse(t);
+    if (cur == null) return;
+    const pv = adjacentVerse(t, cur, -1);
+    if (pv != null) {
+      seekToVerse(pv);
+    } else if (st.abbrev && st.chapter != null) {
+      const pc = prevChapterWithin(manifest, st.abbrev, st.chapter);
+      if (pc != null) void playChapter(st.abbrev, pc);
+    }
+  }
+
   function setRate(rate: number) {
     const audio = audioRef.current;
     if (audio) audio.playbackRate = rate;
@@ -227,11 +260,20 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
     ms.setActionHandler("play", () => toggle());
     ms.setActionHandler("pause", () => toggle());
+    // Lockscreen scrubbing stays time-based; track buttons step by verse.
     ms.setActionHandler("seekbackward", () => seekBy(-15000));
     ms.setActionHandler("seekforward", () => seekBy(15000));
-    ms.setActionHandler("nexttrack", () => next());
+    ms.setActionHandler("previoustrack", () => prevVerse());
+    ms.setActionHandler("nexttrack", () => nextVerse());
     return () => {
-      for (const a of ["play", "pause", "seekbackward", "seekforward", "nexttrack"] as const) {
+      for (const a of [
+        "play",
+        "pause",
+        "seekbackward",
+        "seekforward",
+        "previoustrack",
+        "nexttrack",
+      ] as const) {
         try {
           ms.setActionHandler(a, null);
         } catch {
@@ -251,6 +293,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     toggle,
     seekToVerse,
     seekBy,
+    prevVerse,
+    nextVerse,
     setRate,
     next,
     stop,

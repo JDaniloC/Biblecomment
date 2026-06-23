@@ -56,3 +56,39 @@ export function nextChapterWithin(
   const next = chapter + 1;
   return hasChapter(manifest, abbrev, next) ? next : null;
 }
+
+export function prevChapterWithin(
+  manifest: VoiceManifest | null,
+  abbrev: string,
+  chapter: number,
+): number | null {
+  if (!manifest || chapter <= 1) return null;
+  const prev = chapter - 1;
+  return hasChapter(manifest, abbrev, prev) ? prev : null;
+}
+
+/**
+ * The verse number adjacent to `current` in chapter order, in the given
+ * direction (+1 next, -1 previous). Verse numbers need not be contiguous —
+ * we step through the sorted keys. Returns null at the edge (no such verse) or
+ * when `current` isn't in the timings.
+ */
+export function adjacentVerse(
+  timings: VerseTimings,
+  current: number,
+  dir: 1 | -1,
+): number | null {
+  const nums = Object.keys(timings.verses)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const idx = nums.indexOf(current);
+  if (idx === -1) return null;
+  const next = nums[idx + dir];
+  return next === undefined ? null : next;
+}
+
+/** Smallest verse number in the timings, or null if empty. */
+export function firstVerse(timings: VerseTimings): number | null {
+  const nums = Object.keys(timings.verses).map(Number);
+  return nums.length ? Math.min(...nums) : null;
+}

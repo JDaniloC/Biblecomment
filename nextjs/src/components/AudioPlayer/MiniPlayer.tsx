@@ -2,12 +2,14 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 
 const RATES = [0.75, 1, 1.25, 1.5, 2];
 
 export function MiniPlayer() {
-  const { state, toggle, seekBy, setRate, next, stop } = useAudioPlayer();
+  const { state, toggle, prevVerse, nextVerse, setRate, stop } = useAudioPlayer();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -30,6 +32,15 @@ export function MiniPlayer() {
                       shadow-lg px-3 py-2">
         <button
           type="button"
+          aria-label="Versículo anterior"
+          data-testid="mini-player-prev"
+          onClick={prevVerse}
+          className="shrink-0 text-lg px-2 py-1 text-slate-600 dark:text-slate-300"
+        >
+          ⏮
+        </button>
+        <button
+          type="button"
           aria-label={isPlaying ? "Pausar" : "Tocar"}
           data-testid="mini-player-toggle"
           onClick={toggle}
@@ -37,19 +48,35 @@ export function MiniPlayer() {
         >
           {isPlaying ? "❚❚" : "▶"}
         </button>
-        <button type="button" aria-label="Voltar 15 segundos" onClick={() => seekBy(-15000)}
-                className="shrink-0 text-sm px-2 py-1 text-slate-600 dark:text-slate-300">-15s</button>
-        <button type="button" aria-label="Avançar 15 segundos" onClick={() => seekBy(15000)}
-                className="shrink-0 text-sm px-2 py-1 text-slate-600 dark:text-slate-300">+15s</button>
+        <button
+          type="button"
+          aria-label="Próximo versículo"
+          data-testid="mini-player-next"
+          onClick={nextVerse}
+          className="shrink-0 text-lg px-2 py-1 text-slate-600 dark:text-slate-300"
+        >
+          ⏭
+        </button>
 
-        <div className="flex-1 min-w-0">
-          <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{label}</p>
-          <p className="truncate text-xs text-slate-500">
-            {state.status === "loading" ? "Carregando…"
-              : state.status === "error" ? "Erro ao tocar"
-              : "Bíblia narrada"}
-          </p>
-        </div>
+        {/* Tapping the title takes the page to the chapter currently playing. */}
+        <button
+          type="button"
+          data-testid="mini-player-title"
+          aria-label={`Ir para ${label}`}
+          onClick={() => router.push(`/verses/${state.abbrev}/${state.chapter}`)}
+          className="flex-1 min-w-0 text-left"
+        >
+          <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+            {label}
+          </span>
+          <span className="block truncate text-xs text-slate-500">
+            {state.status === "loading"
+              ? "Carregando…"
+              : state.status === "error"
+                ? "Erro ao tocar"
+                : "Bíblia narrada"}
+          </span>
+        </button>
 
         <select
           aria-label="Velocidade"
@@ -63,8 +90,6 @@ export function MiniPlayer() {
           ))}
         </select>
 
-        <button type="button" aria-label="Próximo capítulo" onClick={next}
-                className="shrink-0 text-sm px-2 py-1 text-slate-600 dark:text-slate-300">⏭</button>
         <button type="button" aria-label="Fechar player" data-testid="mini-player-close" onClick={stop}
                 className="shrink-0 text-slate-400 px-1">✕</button>
       </div>

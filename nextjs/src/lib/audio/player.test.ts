@@ -6,6 +6,9 @@ import {
   isChapterAvailable,
   verseAtTime,
   nextChapterWithin,
+  prevChapterWithin,
+  adjacentVerse,
+  firstVerse,
 } from "./player";
 import type { VoiceManifest, VerseTimings } from "./types";
 
@@ -70,5 +73,32 @@ describe("nextChapterWithin", () => {
     expect(nextChapterWithin(manifest, "gn", 1)).toBe(2);
     expect(nextChapterWithin(manifest, "gn", 2)).toBe(null);
     expect(nextChapterWithin(null, "gn", 1)).toBe(null);
+  });
+});
+
+describe("prevChapterWithin", () => {
+  it("returns the previous chapter number if present, else null (and never below 1)", () => {
+    expect(prevChapterWithin(manifest, "gn", 2)).toBe(1);
+    expect(prevChapterWithin(manifest, "gn", 1)).toBe(null);
+    expect(prevChapterWithin(null, "gn", 2)).toBe(null);
+  });
+});
+
+describe("adjacentVerse", () => {
+  it("steps to the next/previous verse in chapter order", () => {
+    expect(adjacentVerse(timings, 1, 1)).toBe(2);
+    expect(adjacentVerse(timings, 2, -1)).toBe(1);
+  });
+  it("returns null at the edges and for an unknown current verse", () => {
+    expect(adjacentVerse(timings, 2, 1)).toBe(null); // last verse, no next
+    expect(adjacentVerse(timings, 1, -1)).toBe(null); // first verse, no prev
+    expect(adjacentVerse(timings, 99, 1)).toBe(null); // not in timings
+  });
+});
+
+describe("firstVerse", () => {
+  it("returns the smallest verse number, or null when empty", () => {
+    expect(firstVerse(timings)).toBe(1);
+    expect(firstVerse({ ...timings, verses: {} })).toBe(null);
   });
 });
