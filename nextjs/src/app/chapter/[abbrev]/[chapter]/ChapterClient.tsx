@@ -34,6 +34,7 @@ import { toggleCommentVerifiedAction } from "@/app/actions/moderation";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { ListenButton } from "@/components/AudioPlayer/ListenButton";
+import { ChapterListenBar } from "@/components/AudioPlayer/ChapterListenBar";
 
 interface SessionUser {
 	name: string;
@@ -101,8 +102,13 @@ export default function ChapterClient({
 	const router = useRouter();
 	const { handleNotification } = useNotification();
 	const confirm = useConfirm();
-	const { state: audioState, seekToVerse } = useAudioPlayer();
+	const { state: audioState, seekToVerse, isChapterAvailable } = useAudioPlayer();
 	const audioOnThisChapter = audioState.abbrev === book.abbrev && audioState.chapter === chapter;
+	// True whenever *some* bottom audio bar (idle prompt or engaged mini
+	// player) can be showing on mobile — used to keep that bar from covering
+	// the chapter's own bottom content (prev/next links).
+	const mobileAudioBarVisible =
+		isChapterAvailable(book.abbrev, chapter) || audioState.status !== "idle";
 
 	// Accrue reading time toward the daily streak session (logged-in only).
 	useReadingTime(!!user);
@@ -729,13 +735,14 @@ export default function ChapterClient({
 					</>
 				}
 			/>
+			<ChapterListenBar abbrev={book.abbrev} chapter={chapter} />
 
 			<div className="flex flex-1 relative min-h-0">
 				<main
 					id="main-content"
 					onTouchStart={onTouchStart}
 					onTouchEnd={onTouchEnd}
-					className={`flex-1 overflow-y-auto transition-[padding] duration-200 ${showSidebar ? "md:pr-[420px]" : ""}`}
+					className={`flex-1 overflow-y-auto transition-[padding] duration-200 ${showSidebar ? "md:pr-[420px]" : ""} ${mobileAudioBarVisible ? "pb-16 md:pb-0" : ""}`}
 				>
 					<div className="max-w-[680px] mx-auto px-6 py-10">
 						<div className="flex items-center gap-4 mb-2 text-sm text-gray-400 dark:text-gray-500">

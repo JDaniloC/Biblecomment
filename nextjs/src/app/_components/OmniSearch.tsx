@@ -1,9 +1,22 @@
 "use client";
 
+import { useId } from "react";
 import { useUnifiedSearch } from "@/lib/hooks/useUnifiedSearch";
 import { HighlightText, UserAvatar } from "@/components/SearchPrimitives";
 
-export default function OmniSearch() {
+interface Props {
+  /**
+   * "floating" (default): results overlay the page below the input — needs
+   * an unclipped ancestor, which is what the header offers.
+   * "inline": results sit in normal flow instead — for the mobile search
+   * Modal, whose dialog body clips/scrolls its content, so an absolutely
+   * positioned overlay gets cut off instead of showing.
+   */
+  variant?: "floating" | "inline";
+}
+
+export default function OmniSearch({ variant = "floating" }: Props) {
+  const inputId = useId();
   const {
     inputRef,
     query,
@@ -37,11 +50,11 @@ export default function OmniSearch() {
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
           )}
-          <label htmlFor="omni-search-input" className="sr-only">
+          <label htmlFor={inputId} className="sr-only">
             Buscar versículos, comentários ou @usuário
           </label>
           <input
-            id="omni-search-input"
+            id={inputId}
             ref={inputRef}
             type="text"
             value={query}
@@ -68,7 +81,13 @@ export default function OmniSearch() {
       </form>
 
       {open && query.length >= 2 && (
-        <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-[0px_12px_40px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] z-50 overflow-hidden max-h-[430px] overflow-y-auto">
+        <div
+          className={
+            variant === "floating"
+              ? "absolute top-[calc(100%+4px)] left-0 right-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-[0px_12px_40px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] z-50 overflow-hidden max-h-[430px] overflow-y-auto"
+              : "mt-2 border-t border-slate-100 dark:border-slate-800"
+          }
+        >
           {!loading && !hasResults && (
             <div className="px-4 py-6 text-center text-slate-400 dark:text-slate-500 text-[13px]">
               Nenhum resultado para &ldquo;{query}&rdquo;

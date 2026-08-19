@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import OmniSearch from "@/app/_components/OmniSearch";
+import Modal from "@/components/Modal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { AuthMenu } from "@/components/AuthMenu";
@@ -168,7 +169,10 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
 				</nav>
 
 				<div data-tour="omnisearch" className="flex-1 min-w-0">
-					<OmniSearch />
+					<div className="hidden md:block">
+						<OmniSearch />
+					</div>
+					<MobileSearchTrigger />
 				</div>
 
 				{/* Desktop: trailing inline. Mobile: behind a "⋮" popover so
@@ -247,6 +251,50 @@ function MobileToolsMenu({ children }: { children: React.ReactNode }) {
 					</div>
 				</>
 			)}
+		</div>
+	);
+}
+
+/**
+ * Mobile-only search entry point. OmniSearch's always-expanded input eats
+ * most of the header's width on phones, so mobile gets a compact icon that
+ * opens the same search inside the shared Modal instead.
+ */
+function MobileSearchTrigger() {
+	const [open, setOpen] = useState(false);
+	return (
+		<div className="md:hidden flex-shrink-0">
+			<button
+				type="button"
+				onClick={() => setOpen(true)}
+				aria-label="Buscar"
+				data-testid="header-search-button"
+				className={NAV_LINK_CLASS}
+			>
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					aria-hidden="true"
+				>
+					<circle cx="11" cy="11" r="8" />
+					<path d="m21 21-4.35-4.35" />
+				</svg>
+			</button>
+			{/* No title bar: it would put the close button ahead of the input in
+			    DOM order, and Modal auto-focuses the first focusable element —
+			    the input should be the one that gets focus, so people can start
+			    typing immediately. Backdrop tap / Escape still close it. */}
+			<Modal show={open} onClose={() => setOpen(false)} ariaLabel="Buscar" size="sm">
+				<div data-testid="header-search-modal">
+					<OmniSearch variant="inline" />
+				</div>
+			</Modal>
 		</div>
 	);
 }

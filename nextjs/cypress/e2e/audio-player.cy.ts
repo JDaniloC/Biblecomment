@@ -58,6 +58,67 @@ const timings = {
   },
 };
 
+// Single visit hook: seeds localStorage and stubs HTMLMediaElement before the
+// page loads so no home/chapter tour can auto-open and steal pointer-events.
+//
+// All five tour ids are seeded so every page tour is suppressed:
+//   chapter-v1, home-v1, communities-v1, discussions-v1, profile-v1
+//
+// HTMLMediaElement stub:
+//   load()       — fires loadedmetadata synchronously (triggers onLoaded).
+//   play()       — sets paused=false, returns Promise.resolve().
+//   pause()      — sets paused=true.
+//   currentTime  — getter/setter backed by closure; setter fires timeupdate
+//                  so the provider's onTime handler updates currentVerse.
+function stubAudioAndTours(win: Cypress.AUTWindow) {
+  // Suppress all onboarding tours.
+  win.localStorage.setItem(
+    "tutorialsCompleted",
+    JSON.stringify([
+      "chapter-v1",
+      "home-v1",
+      "communities-v1",
+      "discussions-v1",
+      "profile-v1",
+    ]),
+  );
+
+  // Stub HTMLMediaElement so headless Electron never decodes real audio.
+  const proto = win.HTMLMediaElement.prototype as HTMLMediaElement;
+  let t = 0;
+
+  Object.defineProperty(proto, "paused", {
+    writable: true,
+    value: true,
+    configurable: true,
+  });
+
+  Object.defineProperty(proto, "currentTime", {
+    get() {
+      return t;
+    },
+    set(v: number) {
+      t = v;
+      this.dispatchEvent(new win.Event("timeupdate"));
+    },
+    configurable: true,
+  });
+
+  proto.play = function () {
+    (this as unknown as { paused: boolean }).paused = false;
+    return Promise.resolve();
+  };
+
+  proto.pause = function () {
+    (this as unknown as { paused: boolean }).paused = true;
+  };
+
+  // load() fires loadedmetadata so the provider's onLoaded callback runs.
+  proto.load = function () {
+    this.dispatchEvent(new win.Event("loadedmetadata"));
+  };
+}
+
 describe("audio player", () => {
   beforeEach(() => {
     // Reset and seed the DB with Genesis 1 so the chapter page renders.
@@ -82,68 +143,7 @@ describe("audio player", () => {
   });
 
   it("shows the listen button, plays, and highlights the now-reading verse", () => {
-    // Single visit: seed localStorage and stub HTMLMediaElement before the
-    // page loads so no home/chapter tour can auto-open and steal pointer-events.
-    //
-    // All five tour ids are seeded so every page tour is suppressed:
-    //   chapter-v1, home-v1, communities-v1, discussions-v1, profile-v1
-    //
-    // HTMLMediaElement stub:
-    //   load()       — fires loadedmetadata synchronously (triggers onLoaded).
-    //   play()       — sets paused=false, returns Promise.resolve().
-    //   pause()      — sets paused=true.
-    //   currentTime  — getter/setter backed by closure; setter fires timeupdate
-    //                  so the provider's onTime handler updates currentVerse.
-    cy.visit("/verses/gn/1", {
-      onBeforeLoad(win) {
-        // Suppress all onboarding tours.
-        win.localStorage.setItem(
-          "tutorialsCompleted",
-          JSON.stringify([
-            "chapter-v1",
-            "home-v1",
-            "communities-v1",
-            "discussions-v1",
-            "profile-v1",
-          ]),
-        );
-
-        // Stub HTMLMediaElement so headless Electron never decodes real audio.
-        const proto = win.HTMLMediaElement.prototype as HTMLMediaElement;
-        let t = 0;
-
-        Object.defineProperty(proto, "paused", {
-          writable: true,
-          value: true,
-          configurable: true,
-        });
-
-        Object.defineProperty(proto, "currentTime", {
-          get() {
-            return t;
-          },
-          set(v: number) {
-            t = v;
-            this.dispatchEvent(new win.Event("timeupdate"));
-          },
-          configurable: true,
-        });
-
-        proto.play = function () {
-          (this as unknown as { paused: boolean }).paused = false;
-          return Promise.resolve();
-        };
-
-        proto.pause = function () {
-          (this as unknown as { paused: boolean }).paused = true;
-        };
-
-        // load() fires loadedmetadata so the provider's onLoaded callback runs.
-        proto.load = function () {
-          this.dispatchEvent(new win.Event("loadedmetadata"));
-        };
-      },
-    });
+    cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
 
     // Manifest is fetched once on mount by AudioPlayerProvider.
     cy.wait("@manifest");
@@ -183,5 +183,23 @@ describe("audio player", () => {
     cy.get('[data-testid="mini-player-toggle"]').should("be.visible");
     cy.get('[data-testid="mini-player-rate"]').should("be.visible");
     cy.get('[data-testid="mini-player-close"]').should("be.visible");
+  });
+
+  it("shows a persistent listen bar on mobile that hands off to the mini player", () => {
+    cy.viewport(390, 844); // iPhone-ish, matches mobile-tabbar.cy.ts convention
+    cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
+
+    cy.wait("@manifest");
+
+    // Idle: the persistent "listen" bar fills the gap before playback starts;
+    // the mini player (which only mounts once engaged) is not there yet.
+    cy.get('[data-testid="chapter-listen-bar"]').should("be.visible");
+    cy.get('[data-testid="mini-player"]').should("not.exist");
+
+    cy.get('[data-testid="chapter-listen-bar-button"]').click();
+
+    // Engaged: the mini player takes over the same bottom slot, idle bar hides.
+    cy.get('[data-testid="mini-player"]').should("be.visible");
+    cy.get('[data-testid="chapter-listen-bar"]').should("not.exist");
   });
 });

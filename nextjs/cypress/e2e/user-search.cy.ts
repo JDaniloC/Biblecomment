@@ -59,4 +59,37 @@ describe("Search by @username", () => {
       cy.location("pathname").should("eq", "/u/bob");
     });
   });
+
+  describe("Mobile — search icon opens a modal", () => {
+    beforeEach(() => {
+      cy.viewport(390, 844); // iPhone-ish, matches mobile-tabbar.cy.ts convention
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.visit("/home");
+    });
+
+    it("hides the inline search bar and shows a search icon instead", () => {
+      cy.get('[data-testid="header-search-button"]').should("be.visible");
+      // The desktop OmniSearch instance is still mounted (CSS-hidden), same
+      // pattern as the header's "⋮" trailing-slot duplication — not removed
+      // from the DOM, just not visible at this breakpoint.
+      cy.findByLabelText(/Buscar versículos/i).should("not.be.visible");
+    });
+
+    it("opens a modal with a working search on tap", () => {
+      cy.get('[data-testid="header-search-button"]').click();
+      // The input should be the one that grabs focus (not a close button
+      // ahead of it in DOM order), so keyboard/assistive-tech users can
+      // start typing immediately.
+      cy.focused().should("have.attr", "aria-label", "Buscar versículos, comentários ou @usuário");
+      // Scoped to the modal: a second (CSS-hidden) OmniSearch instance stays
+      // mounted behind it with the same accessible label, so an unscoped
+      // findByLabelText would match both and fail as ambiguous.
+      cy.get('[data-testid="header-search-modal"]').within(() => {
+        cy.findByLabelText(/Buscar versículos/i).should("be.visible").type("@bo");
+        cy.get('[data-testid="omni-search-users"]').should("be.visible");
+        cy.get('[data-testid="omni-search-user-bob"]').click();
+      });
+      cy.location("pathname").should("eq", "/u/bob");
+    });
+  });
 });

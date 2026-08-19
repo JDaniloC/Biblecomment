@@ -24,7 +24,9 @@ export function MiniPlayer() {
   const bar = (
     <div
       data-testid="mini-player"
-      className="fixed inset-x-0 z-50 px-3 pb-[env(safe-area-inset-bottom)]
+      // z-[45]: below Modal's z-50 (so an open modal's backdrop correctly
+      // dims this instead of it painting through), above MobileTabBar's z-40.
+      className="fixed inset-x-0 z-[45] px-3 pb-[env(safe-area-inset-bottom)]
                  bottom-[calc(3.5rem+env(safe-area-inset-bottom))] md:bottom-0"
     >
       <div className="mx-auto max-w-2xl flex items-center gap-2 rounded-t-xl md:rounded-xl
