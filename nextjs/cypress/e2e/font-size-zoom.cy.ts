@@ -61,4 +61,38 @@ describe("Accessibility — global zoom", () => {
       .and("contain", "17px")
       .and("not.contain", "var(--bc-text-scale");
   });
+
+  // `100vh`/px lengths inside a `zoom`-ed ancestor render scaled by that zoom
+  // factor (unlike `vh`, which always resolves against the real viewport).
+  // The comments sidebar sizes itself with `calc(100vh - 68px)`, so at any
+  // scale != 1 it must counter-divide by `--bc-text-scale`, or its rendered
+  // edges drift from the real viewport (gap at the bottom when scale < 1,
+  // unreachable overflow when scale > 1).
+  it("comments sidebar fills exactly from the header to the viewport bottom at any text scale", () => {
+    cy.visit(`/verses/${abbrev}/1`);
+    cy.get('[data-testid="verse-text"]').first().click();
+    cy.get('[data-testid="comments-sidebar"]').should("be.visible");
+
+    function assertSidebarFillsViewport() {
+      cy.window().then((win) => {
+        cy.get('[data-testid="comments-sidebar"]').then(([el]) => {
+          const rect = el.getBoundingClientRect();
+          expect(rect.bottom).to.be.closeTo(win.innerHeight, 2);
+          expect(rect.top).to.be.closeTo(68, 2);
+        });
+      });
+    }
+
+    assertSidebarFillsViewport();
+
+    cy.findByLabelText("Diminuir tamanho do texto").click();
+    cy.findByLabelText("Diminuir tamanho do texto").click();
+    assertSidebarFillsViewport();
+
+    cy.findByLabelText("Resetar tamanho do texto").click();
+    cy.findByLabelText("Aumentar tamanho do texto").click();
+    cy.findByLabelText("Aumentar tamanho do texto").click();
+    cy.findByLabelText("Aumentar tamanho do texto").click();
+    assertSidebarFillsViewport();
+  });
 });

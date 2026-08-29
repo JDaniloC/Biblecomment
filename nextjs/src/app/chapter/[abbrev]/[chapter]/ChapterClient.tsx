@@ -154,6 +154,9 @@ export default function ChapterClient({
 	// Which comment's kebab “⋯” actions menu is open (null = none). One menu
 	// open at a time across the per-comment map.
 	const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+	// True when the last-opened menu didn't have room to drop down (trigger
+	// near the bottom of the scrollable sidebar) and should open upward instead.
+	const [menuOpensUp, setMenuOpensUp] = useState(false);
 	const [editText, setEditText] = useState("");
 	const [editTags, setEditTags] = useState<Record<string, boolean>>({
 		devocional: false,
@@ -735,7 +738,7 @@ export default function ChapterClient({
 					</>
 				}
 			/>
-			<ChapterListenBar abbrev={book.abbrev} chapter={chapter} />
+			{!showSidebar && <ChapterListenBar abbrev={book.abbrev} chapter={chapter} />}
 
 			<div className="flex flex-1 relative min-h-0">
 				<main
@@ -896,7 +899,8 @@ export default function ChapterClient({
 				{showSidebar && (
 					<aside
 						ref={sidebarRef2}
-						className="fixed top-[68px] left-0 right-0 bottom-0 md:inset-auto md:right-0 bg-white dark:bg-slate-900 md:border-l border-slate-200 dark:border-slate-700 z-30 flex flex-col md:w-[420px] md:top-[68px] md:h-[calc(100vh-68px)]"
+						data-testid="comments-sidebar"
+						className="fixed top-[calc(68px/var(--bc-text-scale,1))] left-0 right-0 bottom-0 md:inset-auto md:right-0 bg-white dark:bg-slate-900 md:border-l border-slate-200 dark:border-slate-700 z-30 flex flex-col md:w-[420px] md:top-[calc(68px/var(--bc-text-scale,1))] md:h-[calc((100vh-68px)/var(--bc-text-scale,1))]"
 					>
 						<div className="border-b border-slate-200 dark:border-slate-700 px-5 py-3.5 flex items-center gap-3">
 							<div className="flex-1 min-w-0">
@@ -1428,11 +1432,23 @@ export default function ChapterClient({
 														<div className="ml-auto relative">
 															<button
 																type="button"
-																onClick={() =>
-																	setOpenMenuId((prev) =>
-																		prev === comment._id ? null : comment._id,
-																	)
-																}
+																onClick={(e) => {
+																	if (openMenuId === comment._id) {
+																		setOpenMenuId(null);
+																		return;
+																	}
+																	// Flip the menu upward when it wouldn't fit below the
+																	// trigger — e.g. the last comment in the sidebar, where
+																	// there's no room to scroll down to reach the items.
+																	const rect = e.currentTarget.getBoundingClientRect();
+																	const MENU_HEIGHT_ESTIMATE = 180;
+																	const spaceBelow = window.innerHeight - rect.bottom;
+																	setMenuOpensUp(
+																		spaceBelow < MENU_HEIGHT_ESTIMATE &&
+																			rect.top > spaceBelow,
+																	);
+																	setOpenMenuId(comment._id);
+																}}
 																data-testid={`comment-menu-${comment._id}`}
 																aria-label="Mais ações"
 																aria-haspopup="menu"
@@ -1463,7 +1479,7 @@ export default function ChapterClient({
 																	/>
 																	<div
 																		role="menu"
-																		className="absolute right-0 mt-1 min-w-[10rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 py-1"
+																		className={`absolute right-0 min-w-[10rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 py-1 ${menuOpensUp ? "bottom-full mb-1" : "top-full mt-1"}`}
 																	>
 																		{user?.moderator && (
 																			<button

@@ -202,4 +202,23 @@ describe("audio player", () => {
     cy.get('[data-testid="mini-player"]').should("be.visible");
     cy.get('[data-testid="chapter-listen-bar"]').should("not.exist");
   });
+
+  it("hides the idle listen bar while the comments sidebar is open on mobile", () => {
+    cy.viewport(390, 844);
+    cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
+
+    cy.wait("@manifest");
+    cy.get('[data-testid="chapter-listen-bar"]').should("be.visible");
+
+    // Opening a verse's comments covers the same bottom slot on mobile —
+    // the idle "Ouvir este capítulo" prompt would otherwise render on top
+    // of the sidebar (both fixed to the bottom of the viewport).
+    cy.get('[data-testid="verse-text"]').first().click();
+    cy.get('[data-testid="comments-sidebar"]').should("be.visible");
+    cy.get('[data-testid="chapter-listen-bar"]').should("not.exist");
+
+    // Closing the sidebar brings the idle bar back.
+    cy.findByLabelText("Fechar comentários").click();
+    cy.get('[data-testid="chapter-listen-bar"]').should("be.visible");
+  });
 });

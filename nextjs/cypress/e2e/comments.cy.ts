@@ -353,6 +353,37 @@ describe("Comments — full lifecycle", () => {
 				});
 			});
 		});
+
+		// Regression: the kebab menu used to always drop down from the
+		// trigger. On a short viewport (or a comment near the bottom of the
+		// sidebar) that pushed the menu below the visible area with no way
+		// to scroll down far enough to reach it.
+		it("opens upward when there is no room to drop down below the trigger", () => {
+			cy.loginAs(users.alice.email, users.alice.password);
+			getVerseId("gn", 1, 1).then((verseId) => {
+				cy.request("POST", `/api/comments/${verseId}`, {
+					text: "alice's comment on a short screen",
+					tags: [],
+				}).then((res) => {
+					const id = res.body._id as string;
+
+					cy.viewport(1024, 320); // little room below the trigger
+					cy.visit("/verses/gn/1");
+					cy.get("li#1 button").first().click();
+					cy.get(`[data-testid="comment-menu-${id}"]`).click();
+
+					cy.get(`[data-testid="comment-menu-${id}"]`).then(([trigger]) => {
+						const triggerRect = trigger.getBoundingClientRect();
+						cy.get('[role="menu"]').then(([menu]) => {
+							const menuRect = menu.getBoundingClientRect();
+							// Opens upward: sits above the trigger, fully on-screen.
+							expect(menuRect.bottom).to.be.at.most(triggerRect.top + 1);
+							expect(menuRect.top).to.be.at.least(0);
+						});
+					});
+				});
+			});
+		});
 	});
 
 	// Regression: in a standalone PWA the Android back gesture maps to
