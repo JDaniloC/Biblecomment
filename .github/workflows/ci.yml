@@ -57,6 +57,12 @@ jobs:
         run: npm ci
 
       - name: Cypress
+        env:
+          # audio-player.cy.ts only renders the ListenButton/ChapterListenBar
+          # (mediaBaseUrl() -> non-null) when this is set at `next build` time.
+          # Must stay "https://audio.test" — the spec's cy.intercept only
+          # stubs that exact dummy origin, not the real prod R2 URL.
+          NEXT_PUBLIC_AUDIO_BASE_URL: ${{ vars.NEXT_PUBLIC_AUDIO_BASE_URL }}
         run: npm run cy:test
 
       - name: Upload screenshots on failure
