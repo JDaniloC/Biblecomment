@@ -12,4 +12,9 @@ export interface IFollowRepository {
   listFollowerIds(userId: string): Promise<string[]>;
   countFollowers(userId: string): Promise<number>;
   countFollowing(userId: string): Promise<number>;
+  /**
+   * LGPD cascade: drop every relation the user is part of, in both
+   * directions. Counts are computed live, so there is nothing to adjust.
+   */
+  removeAllForUser(userId: string): Promise<number>;
 }

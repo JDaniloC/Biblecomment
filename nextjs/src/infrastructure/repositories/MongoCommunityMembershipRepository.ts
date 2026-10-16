@@ -5,6 +5,14 @@ import {
 	ICommunityMembershipDocument,
 } from "@/infrastructure/database/models/CommunityMembershipModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
+import type { QueryFilter } from "mongoose";
+
+// Approved members, including legacy rows written before `status` existed
+// (toEntity maps those to "approved" too). Every counter/visibility query
+// should use this rather than `{ status: "approved" }`.
+const APPROVED: QueryFilter<ICommunityMembershipDocument> = {
+	$or: [{ status: "approved" }, { status: { $exists: false } }],
+};
 
 function toEntity(doc: ICommunityMembershipDocument): CommunityMembership {
 	return {
@@ -142,6 +150,51 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		return (r.deletedCount ?? 0) > 0;
 	}
 
+	async removeReturningStatus(
+		userId: string,
+		communityId: string,
+	): Promise<"pending" | "approved" | null> {
+		await connectToDatabase();
+		// lean(): a hydrated doc gets the schema default ("pending") for a
+		// legacy row that has no status, hiding that it counted as approved.
+		const doc = await CommunityMembershipModel.findOneAndDelete({
+			userId,
+			communityId,
+		}).lean();
+		if (!doc) return null;
+		return (doc.status as "pending" | "approved" | undefined) ?? "approved";
+	}
+
+	async removePending(userId: string, communityId: string): Promise<boolean> {
+		await connectToDatabase();
+		const r = await CommunityMembershipModel.deleteOne({
+			userId,
+			communityId,
+			status: "pending",
+		});
+		return (r.deletedCount ?? 0) > 0;
+	}
+
+	async removeAllByUser(userId: string): Promise<number> {
+		await connectToDatabase();
+		const r = await CommunityMembershipModel.deleteMany({ userId });
+		return r.deletedCount ?? 0;
+	}
+
+	async listApprovedOrdered(communityId: string): Promise<CommunityMembership[]> {
+		await connectToDatabase();
+		const docs = await CommunityMembershipModel.find({
+			communityId,
+			...APPROVED,
+		}).sort({ joinedAt: 1, _id: 1 });
+		const rows = docs.map(toEntity);
+		// Stable partition: moderators keep their seniority order ahead of members.
+		return [
+			...rows.filter((m) => m.role === "moderator"),
+			...rows.filter((m) => m.role !== "moderator"),
+		];
+	}
+
 	async getStatus(
 		userId: string,
 		communityId: string,
@@ -151,7 +204,9 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 			{ userId, communityId },
 			{ status: 1, _id: 0 },
 		).lean();
-		return (doc?.status as "pending" | "approved" | undefined) ?? null;
+		if (!doc) return null;
+		// Legacy rows predate `status` and count as approved everywhere else.
+		return (doc.status as "pending" | "approved" | undefined) ?? "approved";
 	}
 
 	async findOne(
@@ -171,7 +226,7 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		// off-by-N when a fresh DB hasn't been migrated yet.
 		return CommunityMembershipModel.countDocuments({
 			communityId,
-			$or: [{ status: "approved" }, { status: { $exists: false } }],
+			...APPROVED,
 		});
 	}
 
@@ -183,7 +238,7 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		const docs = await CommunityMembershipModel.find(
 			{
 				communityId,
-				$or: [{ status: "approved" }, { status: { $exists: false } }],
+				...APPROVED,
 			},
 			{ userId: 1, _id: 0 },
 		).lean();
@@ -203,7 +258,7 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		const docs = await CommunityMembershipModel.find(
 			{
 				communityId: { $in: communityIds },
-				$or: [{ status: "approved" }, { status: { $exists: false } }],
+				...APPROVED,
 			},
 			{ userId: 1, communityId: 1, _id: 0 },
 		).lean();

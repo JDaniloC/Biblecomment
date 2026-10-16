@@ -14,11 +14,22 @@
  * Connection comes from process.env.MONGODB_URI (same env the app uses).
  * NEVER run against a non-local URI without --dry-run first; use
  * scripts/safety.js#assertLocalMongoUri pattern if in doubt.
+ *
+ * Steps 2 and 4 skip users that no longer exist (or are mid-deletion), so a
+ * re-run can't resurrect memberships/follows of deleted accounts. For orphan
+ * cleanup and counter drift after account deletions, use
+ * scripts/reconcile-user-data.js instead of this migration.
  */
 
 const mongoose = require("mongoose");
 
 const DRY = process.argv.includes("--dry-run");
+
+// Legacy-tolerant "approved member" predicate (matches the app's
+// MongoCommunityMembershipRepository): status-less rows count as approved.
+const APPROVED = {
+	$or: [{ status: "approved" }, { status: { $exists: false } }],
+};
 
 async function main() {
 	const uri = process.env.MONGODB_URI;
@@ -45,12 +56,28 @@ async function main() {
 		console.log(`[migrate]   backfilled: ${r.modifiedCount}`);
 	}
 
+	// Existing accounts (not mid-deletion). Steps 2 and 4 must never write
+	// rows for anyone outside this set.
+	const liveIds = new Set(
+		(
+			await db
+				.collection("users")
+				.find({ deletion: { $exists: false } }, { projection: { _id: 1 } })
+				.toArray()
+		).map((u) => String(u._id)),
+	);
+
 	// 2) Each community creator → approved moderator membership.
 	const communities = await db.collection("communities").find({}).toArray();
 	let creatorEnsured = 0;
+	let creatorsGone = 0;
 	for (const c of communities) {
 		const owner = c.createdBy;
 		if (!owner) continue;
+		if (!liveIds.has(String(owner))) {
+			creatorsGone++;
+			continue;
+		}
 		const existing = await db
 			.collection("communitymemberships")
 			.findOne({ communityId: String(c._id), userId: String(owner) });
@@ -82,13 +109,18 @@ async function main() {
 		}
 	}
 	console.log(`[migrate] creator memberships ensured: ${creatorEnsured}`);
+	if (creatorsGone > 0) {
+		console.log(
+			`[migrate] creators that no longer exist (skipped; see reconcile-user-data.js): ${creatorsGone}`,
+		);
+	}
 
 	// 3) Recompute memberCount = count of approved memberships per community.
 	let recounted = 0;
 	for (const c of communities) {
 		const count = await db.collection("communitymemberships").countDocuments({
 			communityId: String(c._id),
-			status: "approved",
+			...APPROVED,
 		});
 		if (count !== (c.memberCount ?? 0)) {
 			recounted++;
@@ -109,8 +141,12 @@ async function main() {
 		.collection("communitymemberships")
 		.find({ status: "approved" })
 		.toArray();
+	const communityIds = new Set(communities.map((c) => String(c._id)));
 	let followsInserted = 0;
 	for (const m of approved) {
+		// Never resurrect a follow for a deleted user or community.
+		if (!liveIds.has(String(m.userId))) continue;
+		if (!communityIds.has(String(m.communityId))) continue;
 		const existing = await db.collection("communityfollows").findOne({
 			userId: String(m.userId),
 			communityId: String(m.communityId),

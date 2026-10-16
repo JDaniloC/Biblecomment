@@ -140,6 +140,18 @@ export class MongoDiscussionAnswerRepository implements IDiscussionAnswerReposit
     return result.modifiedCount ?? 0;
   }
 
+  async detachUser(
+    userId: string,
+    replacement: { username: string; userId: string },
+  ): Promise<number> {
+    await connectToDatabase();
+    const result = await DiscussionAnswerModel.updateMany(
+      { userId },
+      { $set: { username: replacement.username, userId: replacement.userId } },
+    );
+    return result.modifiedCount ?? 0;
+  }
+
   async deleteByDiscussion(discussionId: string): Promise<number> {
     if (!mongoose.Types.ObjectId.isValid(discussionId)) return 0;
     await connectToDatabase();

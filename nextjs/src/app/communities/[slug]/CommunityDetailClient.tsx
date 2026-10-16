@@ -134,6 +134,15 @@ function formatDate(iso: string | null): string {
 	}
 }
 
+/**
+ * Approve/reject answer 404 when the join request is no longer pending
+ * (another moderator already handled it, or the requester deleted their
+ * account) — the row is stale, not a failure.
+ */
+function isStaleRequestError(err: unknown): boolean {
+	return (err as { response?: { status?: number } })?.response?.status === 404;
+}
+
 export default function CommunityDetailClient({
 	community,
 	isMember: initialIsMember,
@@ -433,8 +442,14 @@ export default function CommunityDetailClient({
 			);
 			setPending((prev) => prev.filter((r) => r.userId !== userId));
 			if (changed) setMemberCount((c) => c + 1);
-		} catch {
-			handleNotification("error", "Erro ao aprovar.");
+		} catch (err) {
+			if (isStaleRequestError(err)) {
+				// Nobody was approved — drop the stale row, leave counts alone.
+				setPending((prev) => prev.filter((r) => r.userId !== userId));
+				handleNotification("info", "Essa solicitação não está mais pendente.");
+			} else {
+				handleNotification("error", "Erro ao aprovar.");
+			}
 		} finally {
 			setBusy(false);
 		}
@@ -507,8 +522,13 @@ export default function CommunityDetailClient({
 		try {
 			await communityService.reject(community.slug, userId);
 			setPending((prev) => prev.filter((r) => r.userId !== userId));
-		} catch {
-			handleNotification("error", "Erro ao recusar.");
+		} catch (err) {
+			if (isStaleRequestError(err)) {
+				setPending((prev) => prev.filter((r) => r.userId !== userId));
+				handleNotification("info", "Essa solicitação não está mais pendente.");
+			} else {
+				handleNotification("error", "Erro ao recusar.");
+			}
 		} finally {
 			setBusy(false);
 		}

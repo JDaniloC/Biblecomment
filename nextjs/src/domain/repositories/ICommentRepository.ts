@@ -80,6 +80,12 @@ export interface ICommentRepository {
 		replacement: string,
 	): Promise<number>;
 	/**
+	 * Rewrite the moderator snapshots (`verifiedBy`, `hiddenBy`) that name
+	 * `from` — used when that moderator is renamed or deleted. Returns the
+	 * number of comments updated.
+	 */
+	replaceModeratorRefs(from: string, to: string): Promise<number>;
+	/**
 	 * Cursor-paginated all-comments query for the moderation panel. The
 	 * cursor is `(createdAt, id)` of the last item returned by the previous
 	 * page, so the next page filters with `createdAt < cursor.createdAt OR

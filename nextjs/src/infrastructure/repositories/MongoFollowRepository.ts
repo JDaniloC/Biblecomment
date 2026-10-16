@@ -55,4 +55,12 @@ export class MongoFollowRepository implements IFollowRepository {
     await connectToDatabase();
     return FollowModel.countDocuments({ followerId: userId });
   }
+
+  async removeAllForUser(userId: string): Promise<number> {
+    await connectToDatabase();
+    const result = await FollowModel.deleteMany({
+      $or: [{ followerId: userId }, { followingId: userId }],
+    });
+    return result.deletedCount ?? 0;
+  }
 }

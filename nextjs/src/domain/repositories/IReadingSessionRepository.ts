@@ -4,4 +4,6 @@ export interface IReadingSessionRepository {
 	registerDay(userId: string, date: string): Promise<void>;
 	/** All BRT day-strings the user has a reading session for. */
 	findDays(userId: string): Promise<string[]>;
+	/** LGPD cascade: drop every session of the user (account deletion). */
+	deleteAllByUser(userId: string): Promise<number>;
 }

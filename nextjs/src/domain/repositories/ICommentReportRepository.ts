@@ -33,6 +33,8 @@ export interface ICommentReportRepository {
 
   /** Cascade on user deletion. */
   deleteAllByUser(userId: string): Promise<number>;
+  /** Re-key the reporter-name snapshot after a username change. */
+  renameUsername(oldUsername: string, newUsername: string): Promise<number>;
 
   /** Cascade when a comment is hard-deleted. */
   deleteAllByComment(commentId: string): Promise<number>;

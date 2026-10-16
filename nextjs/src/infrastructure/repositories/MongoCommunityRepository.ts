@@ -9,6 +9,7 @@ import {
 	ICommunityDocument,
 } from "@/infrastructure/database/models/CommunityModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
+import mongoose from "mongoose";
 
 function toEntity(doc: ICommunityDocument): Community {
 	return {
@@ -86,6 +87,44 @@ export class MongoCommunityRepository implements ICommunityRepository {
 	async countCreatedBy(userId: string): Promise<number> {
 		await connectToDatabase();
 		return CommunityModel.countDocuments({ createdBy: userId });
+	}
+
+	async listCreatedBy(userId: string): Promise<Community[]> {
+		await connectToDatabase();
+		const docs = await CommunityModel.find({ createdBy: userId }).sort({
+			createdAt: 1,
+		});
+		return docs.map(toEntity);
+	}
+
+	async setCreatedBy(id: string, userId: string): Promise<void> {
+		await connectToDatabase();
+		await CommunityModel.updateOne({ _id: id }, { $set: { createdBy: userId } });
+	}
+
+	async setCounters(
+		id: string,
+		counters: { memberCount: number; followerCount: number },
+	): Promise<void> {
+		if (!mongoose.Types.ObjectId.isValid(id)) return;
+		await connectToDatabase();
+		// Only touch the row when a counter actually changes: Mongoose
+		// timestamps bump updatedAt, which is the sitemap's community lastmod.
+		await CommunityModel.updateOne(
+			{
+				_id: id,
+				$or: [
+					{ memberCount: { $ne: counters.memberCount } },
+					{ followerCount: { $ne: counters.followerCount } },
+				],
+			},
+			{
+				$set: {
+					memberCount: counters.memberCount,
+					followerCount: counters.followerCount,
+				},
+			},
+		);
 	}
 
 	async findManyByIds(ids: string[]): Promise<Community[]> {

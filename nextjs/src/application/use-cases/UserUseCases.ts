@@ -10,10 +10,28 @@ import { ICommentReportRepository } from "@/domain/repositories/ICommentReportRe
 import { IDiscussionRepository } from "@/domain/repositories/IDiscussionRepository";
 import { IDiscussionAnswerRepository } from "@/domain/repositories/IDiscussionAnswerRepository";
 import { INotificationRepository } from "@/domain/repositories/INotificationRepository";
+import { ICommunityRepository } from "@/domain/repositories/ICommunityRepository";
+import { ICommunityMembershipRepository } from "@/domain/repositories/ICommunityMembershipRepository";
+import { ICommunityFollowRepository } from "@/domain/repositories/ICommunityFollowRepository";
+import { IFollowRepository } from "@/domain/repositories/IFollowRepository";
+import { IUserChapterReadRepository } from "@/domain/repositories/IUserChapterReadRepository";
+import { IReadingSessionRepository } from "@/domain/repositories/IReadingSessionRepository";
+import { IReadingReminderPreferenceRepository } from "@/domain/repositories/IReadingReminderPreferenceRepository";
+import { IPushSubscriptionRepository } from "@/domain/repositories/IPushSubscriptionRepository";
+import { IEmailVerificationTokenRepository } from "@/domain/repositories/IEmailVerificationTokenRepository";
+import { IPasswordResetTokenRepository } from "@/domain/repositories/IPasswordResetTokenRepository";
 import { User } from "@/domain/entities/User";
 import { isValidUsername } from "@/lib/sanitize-username";
+import { isActiveAccount } from "@/lib/auth-guards";
+import { HandOverOwnedCommunitiesUseCase } from "./CommunityUseCases";
 
 export const ANONYMIZED_USERNAME = "[usuário removido]";
+/**
+ * Replaces a deleted user's id on records that are kept (discussion
+ * answers), cutting the pseudonymous link back to the person. Never a
+ * valid ObjectId, so it can't collide with a real account.
+ */
+export const DELETED_USER_ID = "deleted-user";
 
 export class GetUserByEmailUseCase {
 	constructor(private readonly userRepo: IUserRepository) {}
@@ -55,135 +73,375 @@ export class UpdateUserProfileUseCase {
 			showBelief?: boolean;
 		},
 	): Promise<User> {
+		// Copy only the editable profile fields: `data` reaches us from a
+		// server action, and the repo $sets whatever it is given (moderator,
+		// emailVerifiedAt, renameFrom…).
+		const patch: Pick<User, "state" | "belief" | "displayName" | "showBelief"> = {};
+		if (typeof data.state === "string") patch.state = data.state;
+		if (typeof data.belief === "string") patch.belief = data.belief;
+		if (typeof data.showBelief === "boolean") patch.showBelief = data.showBelief;
 		if (data.displayName !== undefined) {
-			const trimmed = data.displayName.trim();
+			const trimmed = String(data.displayName).trim();
 			if (trimmed.length < 1 || trimmed.length > 80) {
 				throw new Error("Invalid displayName length");
 			}
-			data = { ...data, displayName: trimmed };
+			patch.displayName = trimmed;
 		}
-		const updated = await this.userRepo.update(email, data);
+		const updated = await this.userRepo.update(email, patch);
 		if (!updated) throw new Error("User not found");
 		return updated;
 	}
 }
 
+export interface UpdateUsernameRepos {
+	user: IUserRepository;
+	comment: ICommentRepository;
+	commentReport: ICommentReportRepository;
+	discussion: IDiscussionRepository;
+	discussionAnswer: IDiscussionAnswerRepository;
+	notification: INotificationRepository;
+	pushSubscription: IPushSubscriptionRepository;
+	readingReminder: IReadingReminderPreferenceRepository;
+}
+
 /**
  * Rename a user's slug, cascading the snapshot field across every
- * collection that stored it: comments, discussions, discussion answers,
- * and notifications (recipient + actor).
+ * collection that stored it: comments (author and the verifiedBy/hiddenBy
+ * moderator snapshots), comment reports, discussions, discussion answers,
+ * notifications, push subscriptions, the reading reminder preference and
+ * other users' disabledBy. Push subscriptions and reminders are keyed by
+ * username, so missing them would silence the user's devices — and hand
+ * them to whoever registers the old name next.
  *
- * Validation order is deliberate: format → noop short-circuit → uniqueness
- * → user fetch → write → cascade. The cascade is fire-and-forget after
- * the user write commits, so a partial cascade leaves the user pointing
- * at the new slug while old references slowly converge — re-running the
- * use case with the same target is idempotent and finishes the work.
+ * The new slug has no live owner, so records still keyed by it (left by a
+ * deleted account) are purged before it is claimed. The claim is a
+ * compare-and-set (`beginRename`) that also stores the old slug as
+ * `renameFrom`; the marker is cleared only once the awaited cascade
+ * succeeded. Until then the old slug stays unavailable to everyone
+ * (`isUsernameHeld`), and running the use case again — same target or a
+ * new one — or the account-maintenance cron finishes the pending cascade
+ * first. Every cascade step is a pure move, safe to repeat.
  */
 export class UpdateUsernameUseCase {
-	constructor(
-		private readonly userRepo: IUserRepository,
-		private readonly commentRepo: ICommentRepository,
-		private readonly discussionRepo: IDiscussionRepository,
-		private readonly answerRepo: IDiscussionAnswerRepository,
-		private readonly notificationRepo: INotificationRepository,
-	) {}
+	constructor(private readonly repos: UpdateUsernameRepos) {}
 
 	async execute(currentEmail: string, newUsername: string): Promise<User> {
 		if (!isValidUsername(newUsername)) {
 			throw new Error("Invalid username format");
 		}
 
-		const user = await this.userRepo.findByEmail(currentEmail);
-		if (!user) throw new Error("User not found");
+		const r = this.repos;
+		const user = await r.user.findByEmail(currentEmail);
+		// A rename racing an account deletion would move content out from
+		// under the deletion cascade.
+		if (!user?._id || !isActiveAccount(user)) throw new Error("User not found");
 
-		if (user.username === newUsername) return user;
+		if (user.renameFrom) {
+			await this.cascade(user.renameFrom, user.username, user._id ?? "");
+			await r.user.clearRenameFrom(user._id ?? "");
+		}
+		if (user.username === newUsername) return { ...user, renameFrom: undefined };
 
-		const taken = await this.userRepo.findByUsername(newUsername);
-		if (taken) throw new Error("Username already taken");
-
-		const oldUsername = user.username;
-		const updated = await this.userRepo.update(currentEmail, {
-			username: newUsername,
-		});
-		if (!updated) throw new Error("Failed to rename");
+		if (await r.user.isUsernameHeld(newUsername)) {
+			throw new Error("Username already taken");
+		}
 
 		await Promise.all([
-			this.commentRepo.anonymizeByUsername(oldUsername, newUsername),
-			this.discussionRepo.anonymizeByUsername(oldUsername, newUsername),
-			this.answerRepo.anonymizeByUser(updated._id ?? "", newUsername),
-			this.notificationRepo.renameUsername(oldUsername, newUsername),
+			r.pushSubscription.deleteAllByUsername(newUsername),
+			r.readingReminder.deleteByUsername(newUsername),
+			r.notification.deleteForUser(newUsername),
 		]);
+		const oldUsername = user.username;
+		const updated = await r.user.beginRename(user._id, oldUsername, newUsername);
+		// Another rename of this account got there first.
+		if (!updated) throw new Error("Rename conflict");
 
-		return updated;
+		await this.cascade(oldUsername, newUsername, updated._id ?? "");
+		await r.user.clearRenameFrom(updated._id ?? "");
+		return { ...updated, renameFrom: undefined };
+	}
+
+	private async cascade(from: string, to: string, userId: string) {
+		const r = this.repos;
+		await Promise.all([
+			r.comment.anonymizeByUsername(from, to),
+			r.comment.replaceModeratorRefs(from, to),
+			r.commentReport.renameUsername(from, to),
+			r.discussion.anonymizeByUsername(from, to),
+			r.discussionAnswer.anonymizeByUser(userId, to),
+			r.notification.renameUsername(from, to),
+			r.pushSubscription.renameUsername(from, to),
+			r.readingReminder.renameUsername(from, to),
+			r.user.replaceDisabledBy(from, to),
+		]);
 	}
 }
 
+export interface DeleteUserRepos {
+	user: IUserRepository;
+	comment: ICommentRepository;
+	commentLike: ICommentLikeRepository;
+	commentReport: ICommentReportRepository;
+	discussion: IDiscussionRepository;
+	discussionLike: IDiscussionLikeRepository;
+	discussionAnswer: IDiscussionAnswerRepository;
+	notification: INotificationRepository;
+	community: ICommunityRepository;
+	communityMembership: ICommunityMembershipRepository;
+	communityFollow: ICommunityFollowRepository;
+	follow: IFollowRepository;
+	chapterRead: IUserChapterReadRepository;
+	readingSession: IReadingSessionRepository;
+	readingReminder: IReadingReminderPreferenceRepository;
+	pushSubscription: IPushSubscriptionRepository;
+	emailVerificationToken: IEmailVerificationTokenRepository;
+	passwordResetToken: IPasswordResetTokenRepository;
+}
+
+export interface DeleteUserHooks {
+	/**
+	 * Called once the account is marked as being deleted, before any record
+	 * is touched — e.g. to drop cached sessions so the user stops writing.
+	 */
+	onMarked?(userId: string): void;
+}
+
+/**
+ * Thrown when a deletion failed after the account was marked: the user
+ * can no longer sign in, and the account-maintenance cron (or any retry)
+ * completes the cascade from the stored snapshot.
+ */
+export class DeletionIncompleteError extends Error {
+	constructor(
+		readonly userId: string,
+		cause: unknown,
+	) {
+		super("Account deletion incomplete", { cause });
+		this.name = "DeletionIncompleteError";
+	}
+}
+
+/**
+ * Delete an account (LGPD Art. 18): the user's own records are removed,
+ * content other people interact with (comments, discussions, answers) is
+ * kept under ANONYMIZED_USERNAME, and the denormalized counters those
+ * records fed are recomputed.
+ *
+ * No transactions (the deployment doesn't use them), so the cascade is
+ * built to be re-run until it completes, with the User document — deleted
+ * last — as the progress record:
+ *  1. Mark the account (`beginDeletion`). From here on it can't sign in,
+ *     its sessions are rejected (on other instances once their session
+ *     cache expires) and the content and username-keyed write paths refuse
+ *     it (`isActiveAccount`). Id-keyed rows a stale session still writes
+ *     (likes, reading data) are swept by scripts/reconcile-user-data.js.
+ *  2. Snapshot the communities and discussions whose counters depend on
+ *     this user's rows and merge it into the stored snapshot (which keeps
+ *     what earlier, failed attempts saw).
+ *  3. Hand over (or delete) the communities the user created.
+ *  4. Remove / anonymize every user-keyed record. Each step is idempotent.
+ *  5. Recompute the snapshot's counters from the remaining rows. Unlike a
+ *     $inc, a retry can't double-count, and a crash between 4 and 5 is
+ *     repaired by the retry because the snapshot survived on the user.
+ *  6. Delete the user.
+ *
+ * A failure after step 1 surfaces as DeletionIncompleteError; the user
+ * can't retry (they're locked out), so FinishPendingDeletionsUseCase does.
+ */
 export class DeleteUserUseCase {
 	constructor(
-		private readonly userRepo: IUserRepository,
-		private readonly commentRepo: ICommentRepository,
-		private readonly commentLikeRepo: ICommentLikeRepository,
-		private readonly discussionLikeRepo: IDiscussionLikeRepository,
-		private readonly commentReportRepo: ICommentReportRepository,
-		private readonly discussionRepo: IDiscussionRepository,
-		private readonly discussionAnswerRepo: IDiscussionAnswerRepository,
-		private readonly notificationRepo: INotificationRepository,
+		private readonly repos: DeleteUserRepos,
+		private readonly hooks: DeleteUserHooks = {},
 	) {}
 
 	async execute(
 		requestorEmail: string,
 		targetEmail: string,
 		isModerator: boolean,
-	): Promise<void> {
+	): Promise<{ userId: string }> {
 		if (requestorEmail !== targetEmail && !isModerator)
 			throw new Error("Unauthorized");
-		const user = await this.userRepo.findByEmail(targetEmail);
-		if (!user) throw new Error("User not found");
+		const r = this.repos;
+		const user = await r.user.findByEmail(targetEmail);
+		if (!user?._id) throw new Error("User not found");
+		const userId = user._id;
 
-		// Capture the discussions this user had liked BEFORE the cascade drops
-		// the like rows — otherwise deleteAllByUser wipes the source we'd read.
-		// We decrement each discussion's denormalized likeCount AFTER the wipe.
-		const likedDiscussionIds = user._id
-			? await this.discussionLikeRepo.findLikedDiscussionIds(user._id)
-			: [];
+		const marked = await r.user.beginDeletion(userId, {
+			communityIds: [],
+			discussionIds: [],
+		});
+		if (!marked) throw new Error("User not found");
+		this.hooks.onMarked?.(userId);
 
-		// LGPD Art. 18: anonymize the user's PII in dependent records before
-		// hard-deleting the User document. Discussion threads stay readable
-		// under "[usuário removido]" (top-level + per-answer snapshot);
-		// notifications referencing the user (as recipient or actor) are
-		// removed since they no longer have meaning.
-		// Likes and reports (CommentLike / CommentReport) are keyed by userId —
-		// deleteMany strips them cleanly without touching the parent comment.
-		await Promise.all([
-			this.commentRepo.anonymizeByUsername(user.username, ANONYMIZED_USERNAME),
-			user._id
-				? this.commentLikeRepo.deleteAllByUser(user._id)
-				: Promise.resolve(0),
-			user._id
-				? this.discussionLikeRepo.deleteAllByUser(user._id)
-				: Promise.resolve(0),
-			user._id
-				? this.commentReportRepo.deleteAllByUser(user._id)
-				: Promise.resolve(0),
-			this.discussionRepo.anonymizeByUsername(
-				user.username,
-				ANONYMIZED_USERNAME,
-			),
-			user._id
-				? this.discussionAnswerRepo.anonymizeByUser(
-						user._id,
-						ANONYMIZED_USERNAME,
-					)
-				: Promise.resolve(0),
-			this.notificationRepo.deleteForUser(user.username),
-		]);
-
-		// Now that the like rows are gone, bring the denormalized likeCount on
-		// each formerly-liked discussion back in step (bulk $inc -1).
-		await this.discussionRepo.decrementLikeCountMany(likedDiscussionIds);
-
-		await this.userRepo.delete(targetEmail);
+		try {
+			// Re-read after marking: no rename can start from here on
+			// (beginRename refuses a marked account), so these are final. A
+			// rename whose cascade never finished leaves records under the old
+			// slug too; both must be cleaned before the slug is released.
+			const current = (await r.user.findByEmail(targetEmail)) ?? user;
+			const usernames = [current.renameFrom, current.username].filter(
+				(u): u is string => !!u,
+			);
+			await this.cascade(userId, usernames);
+		} catch (err) {
+			throw new DeletionIncompleteError(userId, err);
+		}
+		return { userId };
 	}
+
+	private async cascade(userId: string, usernames: string[]): Promise<void> {
+		const r = this.repos;
+		const [memberships, followedCommunityIds, likedDiscussionIds] =
+			await Promise.all([
+				r.communityMembership.listForUser(userId),
+				r.communityFollow.followedCommunityIds(userId),
+				r.discussionLike.findLikedDiscussionIds(userId),
+			]);
+		const snapshot = await r.user.beginDeletion(userId, {
+			communityIds: [
+				...new Set([
+					...memberships.map((m) => m.communityId),
+					...followedCommunityIds,
+				]),
+			],
+			discussionIds: likedDiscussionIds,
+		});
+		// Deleted concurrently by another attempt that got further.
+		if (!snapshot) return;
+
+		await new HandOverOwnedCommunitiesUseCase(
+			r.community,
+			r.communityMembership,
+			r.communityFollow,
+			r.user,
+			r.notification,
+		).execute(userId);
+
+		await Promise.all([
+			r.communityMembership.removeAllByUser(userId),
+			r.communityFollow.removeAllByUser(userId),
+			r.follow.removeAllForUser(userId),
+			r.commentLike.deleteAllByUser(userId),
+			r.commentReport.deleteAllByUser(userId),
+			r.discussionLike.deleteAllByUser(userId),
+			r.discussionAnswer.detachUser(userId, {
+				username: ANONYMIZED_USERNAME,
+				userId: DELETED_USER_ID,
+			}),
+			r.chapterRead.deleteAllByUser(userId),
+			r.readingSession.deleteAllByUser(userId),
+			r.emailVerificationToken.deleteByUserId(userId),
+			r.passwordResetToken.deleteByUserId(userId),
+		]);
+		// Slug by slug, the old one (renameFrom) first: a rename cascade still
+		// in flight moves rows old → new, so a row either is anonymized under
+		// the old slug before it moves, or has moved before the new slug is
+		// swept.
+		for (const username of usernames) {
+			await Promise.all([
+				r.comment.anonymizeByUsername(username, ANONYMIZED_USERNAME),
+				r.comment.replaceModeratorRefs(username, ANONYMIZED_USERNAME),
+				r.discussion.anonymizeByUsername(username, ANONYMIZED_USERNAME),
+				// Notifications about the user (as recipient or actor) lose
+				// their meaning once the account is gone.
+				r.notification.deleteForUser(username),
+				r.user.replaceDisabledBy(username, ANONYMIZED_USERNAME),
+				r.readingReminder.deleteByUsername(username),
+				r.pushSubscription.deleteAllByUsername(username),
+			]);
+		}
+
+		// One community at a time: each needs two counts and the pool is small.
+		for (const communityId of snapshot.communityIds) {
+			const [memberCount, followerCount] = await Promise.all([
+				r.communityMembership.countApproved(communityId),
+				r.communityFollow.countByCommunity(communityId),
+			]);
+			await r.community.setCounters(communityId, { memberCount, followerCount });
+		}
+		if (snapshot.discussionIds.length > 0) {
+			const likes = await r.discussionLike.countByTargets(
+				"discussion",
+				snapshot.discussionIds,
+			);
+			await r.discussion.setLikeCounts(
+				new Map(snapshot.discussionIds.map((id) => [id, likes.get(id) ?? 0])),
+			);
+		}
+
+		await r.user.deleteById(userId);
+	}
+}
+
+/**
+ * Resume deletions that started but never finished (the user is locked
+ * out by then, so nobody else would). Run by the account-maintenance cron;
+ * the grace period keeps it off deletions still running in a request.
+ */
+export class FinishPendingDeletionsUseCase {
+	constructor(
+		private readonly userRepo: IUserRepository,
+		private readonly deleteUser: DeleteUserUseCase,
+	) {}
+
+	async execute(opts: {
+		now: Date;
+		graceMs: number;
+		limit: number;
+	}): Promise<PendingRunResult> {
+		const pending = await this.userRepo.findPendingDeletions(
+			new Date(opts.now.getTime() - opts.graceMs),
+			opts.limit,
+		);
+		const result: PendingRunResult = { finished: [], failed: [] };
+		// One at a time: each cascade already saturates the small pool.
+		for (const u of pending) {
+			try {
+				await this.deleteUser.execute(u.email, u.email, false);
+				result.finished.push(u._id ?? "");
+			} catch (err) {
+				result.failed.push({ userId: u._id ?? "", error: describeError(err) });
+			}
+		}
+		return result;
+	}
+}
+
+/**
+ * Resume renames whose cascade never finished (`renameFrom` still set).
+ * The profile UI can't resubmit the same slug, so without this the old
+ * slug — and whatever still sits under it — would stay held forever.
+ */
+export class FinishPendingRenamesUseCase {
+	constructor(
+		private readonly userRepo: IUserRepository,
+		private readonly updateUsername: UpdateUsernameUseCase,
+	) {}
+
+	async execute(opts: { limit: number }): Promise<PendingRunResult> {
+		const pending = await this.userRepo.findPendingRenames(opts.limit);
+		const result: PendingRunResult = { finished: [], failed: [] };
+		for (const u of pending) {
+			try {
+				// Same target: the use case only finishes the pending cascade.
+				await this.updateUsername.execute(u.email, u.username);
+				result.finished.push(u._id ?? "");
+			} catch (err) {
+				result.failed.push({ userId: u._id ?? "", error: describeError(err) });
+			}
+		}
+		return result;
+	}
+}
+
+export interface PendingRunResult {
+	finished: string[];
+	failed: Array<{ userId: string; error: string }>;
+}
+
+function describeError(err: unknown): string {
+	const cause = err instanceof Error && err.cause !== undefined ? err.cause : err;
+	return cause instanceof Error ? cause.message : String(cause);
 }
 
 export class MarkTutorialCompletedUseCase {

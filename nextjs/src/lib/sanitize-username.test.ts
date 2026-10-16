@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeUsername, isValidUsername } from "./sanitize-username";
+import {
+  sanitizeUsername,
+  isValidUsername,
+  isReservedUsername,
+  RESERVED_USERNAMES,
+} from "./sanitize-username";
 
 describe("sanitizeUsername", () => {
   it("lowercases ASCII", () => {
@@ -73,5 +78,41 @@ describe("isValidUsername", () => {
   it("rejects special chars", () => {
     expect(isValidUsername("a@b")).toBe(false);
     expect(isValidUsername("a.b")).toBe(false);
+  });
+
+  it("rejects reserved sentinel names", () => {
+    expect(isValidUsername("system")).toBe(false);
+    expect(isValidUsername("deleted-user")).toBe(false);
+  });
+
+  it("accepts names that merely contain a reserved word", () => {
+    expect(isValidUsername("system-2")).toBe(true);
+    expect(isValidUsername("systems")).toBe(true);
+    expect(isValidUsername("deleted-user-2")).toBe(true);
+  });
+});
+
+describe("isReservedUsername", () => {
+  it("flags every RESERVED_USERNAMES entry", () => {
+    for (const name of RESERVED_USERNAMES) {
+      expect(isReservedUsername(name)).toBe(true);
+    }
+    expect(RESERVED_USERNAMES.has("system")).toBe(true);
+    expect(RESERVED_USERNAMES.has("deleted-user")).toBe(true);
+  });
+
+  it("is case-insensitive", () => {
+    expect(isReservedUsername("System")).toBe(true);
+    expect(isReservedUsername("DELETED-USER")).toBe(true);
+  });
+
+  it("does not flag ordinary names", () => {
+    expect(isReservedUsername("felipe")).toBe(false);
+    expect(isReservedUsername("system-2")).toBe(false);
+  });
+
+  it("is what a display name of a sentinel sanitizes to", () => {
+    expect(isReservedUsername(sanitizeUsername("System"))).toBe(true);
+    expect(isReservedUsername(sanitizeUsername("Deleted User"))).toBe(true);
   });
 });

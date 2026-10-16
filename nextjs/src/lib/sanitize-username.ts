@@ -29,6 +29,25 @@ export function sanitizeUsername(input: string): string {
     .slice(0, MAX_USERNAME_LEN);
 }
 
+/**
+ * Slugs no account may hold because the app writes them as sentinels:
+ *  - "system" is the actor of badge notifications; an account by that name
+ *    would be credited with them (and deleting it would wipe them all).
+ *  - "deleted-user" is written to DiscussionAnswer.userId when the author
+ *    deletes their account (DELETED_USER_ID).
+ * Other sentinels ("alguém", "[usuário removido]") can't pass
+ * USERNAME_PATTERN, so they need no entry here.
+ */
+export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
+  "system",
+  "deleted-user",
+]);
+
+export function isReservedUsername(slug: string): boolean {
+  return RESERVED_USERNAMES.has(slug.toLowerCase());
+}
+
+/** Canonical pattern AND not a reserved sentinel. */
 export function isValidUsername(slug: string): boolean {
-  return USERNAME_PATTERN.test(slug);
+  return USERNAME_PATTERN.test(slug) && !isReservedUsername(slug);
 }

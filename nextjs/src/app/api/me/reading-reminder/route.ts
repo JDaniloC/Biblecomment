@@ -6,7 +6,11 @@ import {
 	UpdateReadingReminderUseCase,
 } from "@/application/use-cases/ReadingReminderUseCases";
 import { parseBody } from "@/lib/parse-body";
-import { unauthorized, serverError } from "@/lib/get-session";
+import {
+	getActiveSessionUser,
+	unauthorized,
+	serverError,
+} from "@/lib/get-session";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +37,8 @@ export async function GET() {
 
 export async function PUT(req: Request) {
 	try {
-		const session = await auth();
-		if (!session?.user?.username) return unauthorized();
+		const user = await getActiveSessionUser();
+		if (!user?.username) return unauthorized();
 
 		const parsed = await parseBody(req, UpdateSchema);
 		if (!parsed.ok) return parsed.response;
@@ -43,7 +47,7 @@ export async function PUT(req: Request) {
 			new MongoReadingReminderPreferenceRepository(),
 		);
 		const pref = await useCase.execute({
-			username: session.user.username,
+			username: user.username,
 			enabled: parsed.data.enabled,
 			hourLocal: parsed.data.hourLocal,
 			tz: parsed.data.tz,

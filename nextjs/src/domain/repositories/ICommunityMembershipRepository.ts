@@ -42,8 +42,29 @@ export interface ICommunityMembershipRepository {
 	): Promise<boolean>;
 	remove(userId: string, communityId: string): Promise<boolean>;
 	/**
+	 * Atomically remove the (user, community) row and return the status it
+	 * had at that moment (legacy status-less rows read as "approved"), or
+	 * null if there was none. Lets the caller decrement memberCount exactly
+	 * once even when an approval races the removal.
+	 */
+	removeReturningStatus(
+		userId: string,
+		communityId: string,
+	): Promise<"pending" | "approved" | null>;
+	/** Remove the row only while it is still a pending request. */
+	removePending(userId: string, communityId: string): Promise<boolean>;
+	/** LGPD cascade: drop every membership row (any status) of this user. */
+	removeAllByUser(userId: string): Promise<number>;
+	/**
+	 * Approved members (legacy-tolerant), moderators first, each group in
+	 * join order. Used to pick a new creator when the creator's account is
+	 * deleted.
+	 */
+	listApprovedOrdered(communityId: string): Promise<CommunityMembership[]>;
+	/**
 	 * Returns this (user, community) row's status — or `null` if no row
-	 * exists. Single O(1) lookup against the composite unique index;
+	 * exists (legacy status-less rows read as "approved"). Single O(1)
+	 * lookup against the composite unique index;
 	 * cheaper than `approvedUserIds().includes(userId)` for big
 	 * communities. Used by the leave route to decide whether to
 	 * decrement memberCount.

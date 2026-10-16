@@ -1,4 +1,4 @@
-import { User } from "../entities/User";
+import { User, UserDeletion } from "../entities/User";
 import { PublicUserDTO } from "../dto/PublicUserDTO";
 import { AdminUserDTO } from "../dto/AdminUserDTO";
 
@@ -88,4 +88,47 @@ export interface IUserRepository {
    */
   addBadges(userId: string, badgeIds: string[]): Promise<string[]>;
   delete(email: string): Promise<void>;
+  /** Hard-delete by primary id. Returns `true` if a row was removed. */
+  deleteById(userId: string): Promise<boolean>;
+  /**
+   * Mark the account as being deleted and merge `snapshot` into the stored
+   * deletion snapshot (first `requestedAt` wins, id lists are unioned).
+   * Returns the merged snapshot, or null when the user no longer exists.
+   * See [[DeleteUserUseCase]].
+   */
+  beginDeletion(
+    userId: string,
+    snapshot: { communityIds: string[]; discussionIds: string[] },
+  ): Promise<UserDeletion | null>;
+  /**
+   * Rewrite the `disabledBy` moderator snapshot on every user — used when
+   * that moderator is renamed or deleted. Returns the number of users updated.
+   */
+  replaceDisabledBy(from: string, to: string): Promise<number>;
+  /**
+   * Accounts whose deletion started at or before `requestedBefore` and never
+   * finished, oldest first — the account-maintenance cron resumes them.
+   */
+  findPendingDeletions(requestedBefore: Date, limit: number): Promise<User[]>;
+  /**
+   * Whether a username is unavailable: some account holds it, or still
+   * holds it as `renameFrom` while its rename cascade is unfinished.
+   * Case-insensitive, like findByUsername.
+   */
+  isUsernameHeld(username: string): Promise<boolean>;
+  /** Drop the `renameFrom` marker once the rename cascade completed. */
+  clearRenameFrom(userId: string): Promise<void>;
+  /**
+   * Compare-and-set rename: switch `from` → `to` and store `renameFrom`
+   * only if the account still has username `from`, no pending rename and is
+   * neither disabled nor being deleted. Returns the updated user, or null
+   * when something else changed the account first. Throws "Username already
+   * taken" when another account claimed `to` meanwhile.
+   */
+  beginRename(userId: string, from: string, to: string): Promise<User | null>;
+  /**
+   * Active accounts with an unfinished rename cascade (`renameFrom` set),
+   * in a stable order.
+   */
+  findPendingRenames(limit: number): Promise<User[]>;
 }

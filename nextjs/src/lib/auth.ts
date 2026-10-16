@@ -2,6 +2,7 @@ import NextAuth, { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
+import { loadSessionUser } from "@/lib/session-revalidation";
 
 const userRepo = new MongoUserRepository();
 
@@ -32,10 +33,10 @@ export const authConfig: NextAuthConfig = {
         const valid = await bcrypt.compare(rawPassword, user.password);
         if (!valid) return null;
 
-        // A moderator-disabled account cannot start a new session. Existing
-        // JWTs are stateless and expire on their own — by design, no
-        // per-request DB revalidation.
-        if (user.disabledAt) return null;
+        // A moderator-disabled account, or one whose deletion is in
+        // progress, cannot start a new session. Sessions it already holds
+        // are dropped by the DB revalidation in the jwt callback below.
+        if (user.disabledAt || user.deletion) return null;
 
         return {
           id: user._id!,
@@ -52,7 +53,7 @@ export const authConfig: NextAuthConfig = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id ?? "";
         token.email = (user.email ?? "") as string;
@@ -64,23 +65,44 @@ export const authConfig: NextAuthConfig = {
         token.emailVerified = (user as { emailVerified: boolean }).emailVerified;
         token.pendingEmail = (user as { pendingEmail: string | null }).pendingEmail;
       }
-      // Client-triggered session refresh (useSession().update(...)) lands
-      // here with `trigger="update"` and `session` carrying the new fields.
-      // Without this, renaming the slug leaves the JWT stale and downstream
-      // writes (createCommentAction etc.) author records under the old
-      // username — orphaning them since the user table no longer has it.
-      if (trigger === "update" && session && typeof session === "object") {
-        const next = session as { username?: string; displayName?: string; name?: string; email?: string; emailVerified?: boolean; pendingEmail?: string | null };
-        if (typeof next.username === "string") token.username = next.username;
-        if (typeof next.displayName === "string") token.name = next.displayName;
-        else if (typeof next.name === "string") token.name = next.name;
-        if (typeof next.email === "string") token.email = next.email;
-        if (typeof (next as { emailVerified?: boolean }).emailVerified === "boolean") {
-          token.emailVerified = (next as { emailVerified: boolean }).emailVerified;
-        }
-        if ("pendingEmail" in (next as object)) {
-          token.pendingEmail = (next as { pendingEmail: string | null }).pendingEmail;
-        }
+      // Tokens minted before `id` was a claim can't be revalidated; make
+      // them sign in again rather than trusting their claims.
+      if (!token.id) return null;
+      // Revalidate against the DB on every session read (cached ~60s per
+      // process, see lib/session-revalidation.ts). A deleted, disabled or
+      // mid-deletion account loses its session: returning null makes
+      // Auth.js treat the request as signed out and clear the cookie. For
+      // active accounts the DB is the only source of the identity claims.
+      //
+      // Client-triggered refreshes (useSession().update(...)) land here with
+      // `trigger="update"` and only force a fresh read: every call site
+      // writes the DB first, and the payload the client sends is ignored —
+      // copying it would let any signed-in client claim another user's
+      // email or username whenever the lookup below fails open.
+      //
+      // `claimsAt` is when the read behind the current claims started; it
+      // keeps another instance's older cache entry from rolling the claims
+      // back after a rename or email change. A failed lookup ("unknown")
+      // keeps the token as-is rather than logging everyone out on a
+      // transient DB error.
+      const claimsAt = typeof token.claimsAt === "number" ? token.claimsAt : undefined;
+      const state = await loadSessionUser(token.id, {
+        fresh: !!user || trigger === "update",
+        notBefore: claimsAt,
+      });
+      if (state.status === "inactive") return null;
+      if (state.status === "active") {
+        token.email = state.user.email;
+        token.username = state.user.username;
+        token.name = state.user.name;
+        token.moderator = state.user.moderator;
+        token.emailVerified = state.user.emailVerified;
+        token.pendingEmail = state.user.pendingEmail;
+        // Never move backwards. A result older than `claimsAt` can only be a
+        // new read on an instance whose clock lags the one that set it — its
+        // data is newer, but lowering `claimsAt` to its timestamp would let
+        // other instances serve entries older than the current claims.
+        token.claimsAt = Math.max(claimsAt ?? 0, state.fetchedAt);
       }
       return token;
     },

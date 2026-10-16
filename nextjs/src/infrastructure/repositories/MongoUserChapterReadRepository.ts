@@ -27,6 +27,12 @@ export class MongoUserChapterReadRepository implements IUserChapterReadRepositor
     return result.upsertedCount > 0;
   }
 
+  async deleteAllByUser(userId: string): Promise<number> {
+    await connectToDatabase();
+    const result = await UserChapterReadModel.deleteMany({ userId });
+    return result.deletedCount ?? 0;
+  }
+
   async unmarkRead(userId: string, abbrev: string, chapter: number): Promise<void> {
     await connectToDatabase();
     await UserChapterReadModel.deleteOne({

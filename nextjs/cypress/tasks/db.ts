@@ -67,6 +67,10 @@ const COLLECTIONS = [
 	"communities",
 	"communitymemberships",
 	"communityfollows",
+	"emailverificationtokens",
+	"pushsubscriptions",
+	"readingsessions",
+	"readingreminderpreferences",
 ];
 
 export async function resetDatabase(): Promise<void> {
@@ -588,4 +592,90 @@ export async function seedDatabase(payload: SeedPayload): Promise<void> {
 		}));
 		await db.collection("communitymemberships").insertMany(docs);
 	}
+}
+
+/** User._id as a string, or null — capture it before deleting the user. */
+export async function getUserId(email: string): Promise<string | null> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	const doc = await db
+		.collection("users")
+		.findOne({ email: email.toLowerCase() }, { projection: { _id: 1 } });
+	return doc ? String(doc._id) : null;
+}
+
+/**
+ * Rows still pointing at a user, per collection. Takes the id/username
+ * captured BEFORE the deletion (a lookup by email would find nobody
+ * afterwards and report 0 for the wrong reason).
+ */
+export async function countUserRefs(input: {
+	userId: string;
+	username: string;
+}): Promise<Record<string, number>> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	const { userId, username } = input;
+	const count = (name: string, filter: Record<string, unknown>) =>
+		db.collection(name).countDocuments(filter);
+	const entries: Array<[string, Promise<number>]> = [
+		["communitymemberships", count("communitymemberships", { userId })],
+		["communityfollows", count("communityfollows", { userId })],
+		[
+			"follows",
+			count("follows", { $or: [{ followerId: userId }, { followingId: userId }] }),
+		],
+		["commentlikes", count("commentlikes", { userId })],
+		["commentreports", count("commentreports", { userId })],
+		["discussionlikes", count("discussionlikes", { userId })],
+		["discussionanswers", count("discussionanswers", { userId })],
+		["userchapterreads", count("userchapterreads", { userId })],
+		["readingsessions", count("readingsessions", { userId })],
+		["passwordresettokens", count("passwordresettokens", { userId })],
+		["emailverificationtokens", count("emailverificationtokens", { userId })],
+		["pushsubscriptions", count("pushsubscriptions", { username })],
+		["readingreminderpreferences", count("readingreminderpreferences", { username })],
+		[
+			"notifications",
+			count("notifications", { $or: [{ recipient: username }, { actor: username }] }),
+		],
+		["comments", count("comments", { username })],
+		["discussions", count("discussions", { username })],
+		["communitiesCreated", count("communities", { createdBy: userId })],
+		["users", count("users", { username })],
+	];
+	const values = await Promise.all(entries.map(([, p]) => p));
+	return Object.fromEntries(entries.map(([k], i) => [k, values[i]]));
+}
+
+/** Insert a user→user follow row (there is no API route, only a server action). */
+export async function seedFollow(input: {
+	follower: string;
+	following: string;
+}): Promise<null> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	const ids = await db
+		.collection("users")
+		.find(
+			{ username: { $in: [input.follower, input.following] } },
+			{ projection: { _id: 1, username: 1 } },
+		)
+		.toArray();
+	const idOf = (u: string) => {
+		const doc = ids.find((d) => d.username === u);
+		if (!doc) throw new Error(`seedFollow: user ${u} not seeded`);
+		return String(doc._id);
+	};
+	const now = new Date();
+	await db.collection("follows").insertOne({
+		followerId: idOf(input.follower),
+		followingId: idOf(input.following),
+		createdAt: now,
+		updatedAt: now,
+	});
+	return null;
 }

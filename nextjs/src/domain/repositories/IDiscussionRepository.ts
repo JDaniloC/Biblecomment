@@ -67,6 +67,9 @@ export interface IDiscussionRepository {
 	incrementAnswersCount(id: string, delta: number): Promise<void>;
 	/** Ajusta o contador de curtidas (delta +1/-1) de forma atômica ($inc). */
 	incrementLikeCount(id: string, delta: number): Promise<void>;
-	/** Decrementa em 1 o likeCount de várias discussões (cascata de exclusão de conta). */
-	decrementLikeCountMany(ids: string[]): Promise<void>;
+	/**
+	 * Grava o likeCount recalculado (a partir das curtidas) de cada discussão
+	 * — cascata de exclusão de conta. Idempotente, ao contrário de um $inc.
+	 */
+	setLikeCounts(counts: Map<string, number>): Promise<void>;
 }

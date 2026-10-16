@@ -5,6 +5,7 @@ import {
   ListUsersForModerationUseCase,
   SetUserDisabledUseCase,
 } from "@/application/use-cases/UserUseCases";
+import { forgetSessionUser } from "@/lib/session-revalidation";
 import {
   getSessionUser,
   forbidden,
@@ -77,6 +78,7 @@ export async function PATCH(req: Request) {
       new MongoCommentRepository(),
     );
     const updated = await useCase.execute(email, disabled, user.username);
+    if (updated._id) forgetSessionUser(updated._id);
 
     return NextResponse.json({
       email: updated.email,

@@ -59,6 +59,26 @@ export interface User {
    * is set to the confirmation time.
    */
   pendingEmail?: string;
+  /**
+   * Previous username while a rename's cascade (comments, notifications,
+   * devices…) hasn't completed. The old slug can't be taken by anyone
+   * until it clears, and a retry of the rename finishes the cascade.
+   */
+  renameFrom?: string;
+  /**
+   * Present while an account deletion is in progress (DeleteUserUseCase).
+   * The snapshot lists the communities and discussions whose denormalized
+   * counters must be recomputed once the user's rows are gone, so a retry
+   * after a partial failure can still finish the job. While present the
+   * account can't sign in and existing sessions are rejected (lib/auth.ts).
+   */
+  deletion?: UserDeletion;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface UserDeletion {
+  requestedAt: Date;
+  communityIds: string[];
+  discussionIds: string[];
 }

@@ -271,16 +271,22 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 	}
 
 	// skipcq: JS-0105
-	async decrementLikeCountMany(ids: string[]): Promise<void> {
-		if (ids.length === 0) return;
+	async setLikeCounts(counts: Map<string, number>): Promise<void> {
+		const ops = [...counts]
+			.filter(([id]) => mongoose.Types.ObjectId.isValid(id))
+			.map(([id, likeCount]) => ({
+				updateOne: {
+					// Skip rows already right, so updatedAt (the hub's sitemap
+					// lastmod) only moves when the rendered count changes.
+					filter: {
+						_id: new mongoose.Types.ObjectId(id),
+						likeCount: { $ne: likeCount },
+					},
+					update: { $set: { likeCount } },
+				},
+			}));
+		if (ops.length === 0) return;
 		await connectToDatabase();
-		const oids = ids
-			.filter((i) => mongoose.Types.ObjectId.isValid(i))
-			.map((i) => new mongoose.Types.ObjectId(i));
-		if (oids.length === 0) return;
-		await DiscussionModel.updateMany(
-			{ _id: { $in: oids } },
-			{ $inc: { likeCount: -1 } },
-		);
+		await DiscussionModel.bulkWrite(ops);
 	}
 }

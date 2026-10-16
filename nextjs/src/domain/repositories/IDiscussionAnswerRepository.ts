@@ -34,8 +34,18 @@ export interface IDiscussionAnswerRepository {
     limit: number,
   ): Promise<Array<{ discussionId: string; lastAnswerAt: Date; answerCount: number }>>;
 
-  /** LGPD cascade — rewrites username on every row authored by the user. */
+  /** Rewrites username on every row authored by the user (username change). */
   anonymizeByUser(userId: string, replacement: string): Promise<number>;
+
+  /**
+   * LGPD cascade on account deletion — rewrites both username and userId
+   * so the kept answers no longer point back at the person (and a stale
+   * session can no longer edit them).
+   */
+  detachUser(
+    userId: string,
+    replacement: { username: string; userId: string },
+  ): Promise<number>;
 
   /** Cascade when a discussion is hard-deleted. */
   deleteByDiscussion(discussionId: string): Promise<number>;

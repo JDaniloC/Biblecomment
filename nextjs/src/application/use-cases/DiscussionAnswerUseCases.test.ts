@@ -52,6 +52,14 @@ function makeUserRepo(user: User | null): IUserRepository {
 		promotePendingEmail: () => Promise.resolve(),
 		findByEmailOrPendingEmail: () => Promise.resolve(null),
 		delete: () => Promise.resolve(),
+		deleteById: () => Promise.resolve(false),
+		beginDeletion: () => Promise.resolve(null),
+		replaceDisabledBy: () => Promise.resolve(0),
+		findPendingDeletions: () => Promise.resolve([]),
+		isUsernameHeld: () => Promise.resolve(false),
+		clearRenameFrom: () => Promise.resolve(),
+		beginRename: () => Promise.resolve(null),
+		findPendingRenames: () => Promise.resolve([]),
 	};
 }
 
@@ -99,7 +107,7 @@ function discussionRepoStub(discussions: Discussion[]): IDiscussionRepository {
 		findByCommentId: () => Promise.resolve(discussions),
 		incrementAnswersCount: async () => {},
 		incrementLikeCount: async () => {},
-		decrementLikeCountMany: async () => {},
+		setLikeCounts: async () => {},
 	};
 }
 
@@ -159,6 +167,16 @@ function inMemoryAnswerRepo(): IDiscussionAnswerRepository {
 			for (const r of rows)
 				if (r.userId === userId) {
 					r.username = replacement;
+					n++;
+				}
+			return Promise.resolve(n);
+		},
+		detachUser(userId, replacement) {
+			let n = 0;
+			for (const r of rows)
+				if (r.userId === userId) {
+					r.username = replacement.username;
+					r.userId = replacement.userId;
 					n++;
 				}
 			return Promise.resolve(n);
@@ -271,6 +289,21 @@ describe("AddAnswerUseCase", () => {
 		await expect(uc.execute("missing", "u-bob", "bob", "x")).rejects.toThrow(
 			"Discussion not found",
 		);
+	});
+
+	it("refuses a disabled answerer and does not write an answer", async () => {
+		const repo = discussionRepoStub([fakeDiscussion("d1")]);
+		const answers = inMemoryAnswerRepo();
+		const uc = new AddAnswerUseCase(
+			repo,
+			answers,
+			makeUserRepo(fakeUser({ disabledAt: new Date() })),
+		);
+
+		await expect(uc.execute("d1", "u-bob", "bob", "first answer")).rejects.toThrow(
+			"Unauthorized",
+		);
+		expect(await answers.findByDiscussion("d1")).toHaveLength(0);
 	});
 
 	it("rejects when answerer email is not verified and does not write an answer", async () => {

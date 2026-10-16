@@ -20,6 +20,11 @@ import type { ICommunityMembershipRepository } from "@/domain/repositories/IComm
 import type { ICommunityFollowRepository } from "@/domain/repositories/ICommunityFollowRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import {
+	makeCommunityRepo,
+	makeFollowRepo,
+	makeMembershipRepo,
+} from "./__fakes__/communityRepos";
 import type { Notification } from "@/domain/entities/Notification";
 import type { Community } from "@/domain/entities/Community";
 import type { CommunityMembership } from "@/domain/entities/CommunityMembership";
@@ -54,246 +59,14 @@ function makeUserRepo(users: Record<string, User>): IUserRepository {
 		promotePendingEmail: async () => {},
 		findByEmailOrPendingEmail: async () => null,
 		delete: async () => {},
-	};
-}
-
-function makeCommunityRepo(): ICommunityRepository & {
-	_items: Map<string, Community>;
-} {
-	const items = new Map<string, Community>();
-	let nextId = 1;
-	return {
-		_items: items,
-		async create(input) {
-			const c: Community = {
-				_id: `c-${nextId++}`,
-				slug: input.slug,
-				name: input.name,
-				description: input.description,
-				createdBy: input.createdBy,
-				memberCount: 0,
-				followerCount: 0,
-				createdAt: new Date(),
-			};
-			items.set(c._id!, c);
-			return c;
-		},
-		async findById(id) {
-			return items.get(id) ?? null;
-		},
-		async findBySlug(slug) {
-			return Array.from(items.values()).find((c) => c.slug === slug) ?? null;
-		},
-		async list() {
-			return { items: Array.from(items.values()), total: items.size };
-		},
-		async countCreatedBy(userId) {
-			return Array.from(items.values()).filter((c) => c.createdBy === userId)
-				.length;
-		},
-		async findManyByIds(ids) {
-			return ids.map((id) => items.get(id)).filter((x): x is Community => !!x);
-		},
-		async incrementMemberCount(id, delta) {
-			const c = items.get(id);
-			if (c) c.memberCount += delta;
-		},
-		async incrementFollowerCount(id, delta) {
-			const c = items.get(id);
-			if (c) c.followerCount += delta;
-		},
-		// Fake repo must match the async interface signature even though
-		// the in-memory Map ops are sync — skip DeepSource JS-0116 here.
-		// skipcq: JS-0116
-		async deleteById(id) {
-			return items.delete(id);
-		},
-	};
-}
-
-function makeFollowRepo(): ICommunityFollowRepository & {
-	_rows: Map<string, Date>;
-} {
-	const rows = new Map<string, Date>();
-	const key = (u: string, c: string) => `${u}::${c}`;
-	return {
-		_rows: rows,
-		async follow(userId, communityId) {
-			const k = key(userId, communityId);
-			if (rows.has(k)) return false;
-			rows.set(k, new Date());
-			return true;
-		},
-		async unfollow(userId, communityId) {
-			return rows.delete(key(userId, communityId));
-		},
-		async isFollowing(userId, communityId) {
-			return rows.has(key(userId, communityId));
-		},
-		async followedCommunityIds(userId) {
-			return (
-				[...rows.entries()]
-					.filter(([k]) => k.startsWith(`${userId}::`))
-					// Newest follow first — sort by followedAt desc to mirror Mongo.
-					.sort((a, b) => b[1].getTime() - a[1].getTime())
-					.map(([k]) => k.split("::")[1])
-			);
-		},
-		async listForUser(userId) {
-			return [...rows.entries()]
-				.filter(([k]) => k.startsWith(`${userId}::`))
-				.map(
-					([k, t]): CommunityFollow => ({
-						userId: k.split("::")[0],
-						communityId: k.split("::")[1],
-						followedAt: t,
-					}),
-				);
-		},
-		async listByCommunity(communityId) {
-			return [...rows.entries()]
-				.filter(([k]) => k.endsWith(`::${communityId}`))
-				.sort((a, b) => b[1].getTime() - a[1].getTime())
-				.map(
-					([k, t]): CommunityFollow => ({
-						userId: k.split("::")[0],
-						communityId: k.split("::")[1],
-						followedAt: t,
-					}),
-				);
-		},
-		async countByCommunity(communityId) {
-			return [...rows.keys()].filter((k) => k.endsWith(`::${communityId}`))
-				.length;
-		},
-		async removeAllByUser(userId) {
-			const prev = rows.size;
-			[...rows.keys()]
-				.filter((k) => k.startsWith(`${userId}::`))
-				.forEach((k) => rows.delete(k));
-			return prev - rows.size;
-		},
-		async removeAllByCommunity(communityId) {
-			const prev = rows.size;
-			[...rows.keys()]
-				.filter((k) => k.endsWith(`::${communityId}`))
-				.forEach((k) => rows.delete(k));
-			return prev - rows.size;
-		},
-	};
-}
-
-type Row = { status: "pending" | "approved"; role: "member" | "moderator" };
-
-function makeMembershipRepo(): ICommunityMembershipRepository & {
-	_rows: Map<string, Row>;
-} {
-	const rows = new Map<string, Row>();
-	const key = (u: string, c: string) => `${u}::${c}`;
-	const split = (k: string) => k.split("::");
-	return {
-		_rows: rows,
-		async join(userId, communityId) {
-			const k = key(userId, communityId);
-			if (rows.has(k)) return false;
-			rows.set(k, { status: "approved", role: "member" });
-			return true;
-		},
-		async leave(userId, communityId) {
-			return rows.delete(key(userId, communityId));
-		},
-		async isMember(userId, communityId) {
-			return rows.has(key(userId, communityId));
-		},
-		async listCommunityIdsForUser(userId) {
-			return [...rows.keys()]
-				.filter((k) => k.startsWith(`${userId}::`))
-				.map((k) => split(k)[1]);
-		},
-		async listMemberIds(communityId, page, pageSize) {
-			const all = [...rows.keys()]
-				.filter((k) => k.endsWith(`::${communityId}`))
-				.map((k) => split(k)[0]);
-			const start = (page - 1) * pageSize;
-			return { items: all.slice(start, start + pageSize), total: all.length };
-		},
-		async listForUser(userId) {
-			return [...rows.entries()]
-				.filter(([k]) => k.startsWith(`${userId}::`))
-				.map(([k, v]): CommunityMembership => {
-					const [u, c] = split(k);
-					return { userId: u, communityId: c, ...v };
-				});
-		},
-		async createRequest(userId, communityId) {
-			const k = key(userId, communityId);
-			if (!rows.has(k)) rows.set(k, { status: "pending", role: "member" });
-		},
-		async seedCreator(userId, communityId) {
-			rows.set(key(userId, communityId), {
-				status: "approved",
-				role: "moderator",
-			});
-		},
-		async listByStatus(communityId, status) {
-			return [...rows.entries()]
-				.filter(
-					([k, v]) => k.endsWith(`::${communityId}`) && v.status === status,
-				)
-				.map(([k, v]): CommunityMembership => {
-					const [u, c] = split(k);
-					return { userId: u, communityId: c, ...v };
-				});
-		},
-		async setStatus(userId, communityId, status) {
-			const r = rows.get(key(userId, communityId));
-			if (!r || r.status === status) return false;
-			r.status = status;
-			return true;
-		},
-		async remove(userId, communityId) {
-			return rows.delete(key(userId, communityId));
-		},
-		async getStatus(userId, communityId) {
-			const r = rows.get(key(userId, communityId));
-			return r ? r.status : null;
-		},
-		async findOne(userId, communityId) {
-			const r = rows.get(key(userId, communityId));
-			if (!r) return null;
-			return { userId, communityId, ...r };
-		},
-		async countApproved(communityId) {
-			return [...rows.entries()].filter(
-				([k, v]) => k.endsWith(`::${communityId}`) && v.status === "approved",
-			).length;
-		},
-		async approvedUserIds(communityId) {
-			return [...rows.entries()]
-				.filter(
-					([k, v]) => k.endsWith(`::${communityId}`) && v.status === "approved",
-				)
-				.map(([k]) => split(k)[0]);
-		},
-		async setRole(userId, communityId, role) {
-			const r = rows.get(key(userId, communityId));
-			if (!r || r.role === role) return false;
-			r.role = role;
-			return true;
-		},
-		async isModerator(userId, communityId) {
-			const r = rows.get(key(userId, communityId));
-			return Boolean(r) && r?.role === "moderator" && r?.status === "approved";
-		},
-		// Async signature is interface-mandated — skip JS-0116.
-		// skipcq: JS-0116
-		async removeAllByCommunity(communityId) {
-			const before = rows.size;
-			[...rows.keys()]
-				.filter((k) => k.endsWith(`::${communityId}`))
-				.forEach((k) => rows.delete(k));
-			return before - rows.size;
-		},
+		deleteById: async () => false,
+		beginDeletion: async () => null,
+		replaceDisabledBy: async () => 0,
+		findPendingDeletions: async () => [],
+		isUsernameHeld: async () => false,
+		clearRenameFrom: async () => {},
+		beginRename: async () => null,
+		findPendingRenames: async () => [],
 	};
 }
 
@@ -412,6 +185,24 @@ describe("CreateCommunityUseCase", () => {
 				name: "Ghosts",
 			}),
 		).rejects.toThrow(/actor/i);
+	});
+
+	it("rejects an actor whose account is being deleted", async () => {
+		const deleting: User = {
+			...alice,
+			deletion: { requestedAt: new Date(), communityIds: [], discussionIds: [] },
+		};
+		const uc = new CreateCommunityUseCase(
+			communityRepo,
+			makeUserRepo({ "alice@example.com": deleting }),
+			membershipRepo,
+			followRepo,
+		);
+
+		await expect(
+			uc.execute({ actorEmail: "alice@example.com", slug: "reformados", name: "Reformados" }),
+		).rejects.toThrow(/actor/i);
+		expect(await communityRepo.findBySlug("reformados")).toBeNull();
 	});
 
 	it("rejects when actor email is not verified", async () => {
@@ -644,6 +435,83 @@ describe("Community follow use-cases (plan_community follow-up)", () => {
 		expect((await communityRepo.findBySlug("alpha"))?.memberCount).toBe(1);
 		expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(0);
 	});
+
+	describe("stale requests", () => {
+		const liveUsers = (...ids: string[]) =>
+			({
+				findManyByIds: async (want: string[]) =>
+					want
+						.filter((id) => ids.includes(id))
+						.map((id) => ({ _id: id, username: id }) as User),
+			}) as unknown as IUserRepository;
+
+		beforeEach(async () => {
+			await membershipRepo.seedCreator("mod", communityId);
+		});
+
+		it("ApproveMember drops a request whose account was deleted instead of approving it", async () => {
+			await membershipRepo.createRequest("ghost", communityId);
+			const uc = new ApproveMemberUseCase(
+				communityRepo,
+				membershipRepo,
+				followRepo,
+				liveUsers("mod"),
+			);
+
+			await expect(
+				uc.execute({ slug: "alpha", actorId: "mod", targetUserId: "ghost" }),
+			).rejects.toThrow(/não encontrada/i);
+			expect(await membershipRepo.getStatus("ghost", communityId)).toBeNull();
+			expect(await followRepo.isFollowing("ghost", communityId)).toBe(false);
+			const c = await communityRepo.findBySlug("alpha");
+			expect(c).toMatchObject({ memberCount: 0, followerCount: 0 });
+		});
+
+		it("ApproveMember doesn't re-follow on a repeat approval", async () => {
+			await membershipRepo.createRequest("u1", communityId);
+			const uc = new ApproveMemberUseCase(
+				communityRepo,
+				membershipRepo,
+				followRepo,
+				liveUsers("mod", "u1"),
+			);
+			await uc.execute({ slug: "alpha", actorId: "mod", targetUserId: "u1" });
+			// The member unfollows; a second (stale) approve must not undo that.
+			await new UnfollowCommunityUseCase(communityRepo, followRepo).execute({
+				slug: "alpha",
+				userId: "u1",
+			});
+
+			const again = await uc.execute({
+				slug: "alpha",
+				actorId: "mod",
+				targetUserId: "u1",
+			});
+
+			expect(again.changed).toBe(false);
+			expect(await followRepo.isFollowing("u1", communityId)).toBe(false);
+			expect((await communityRepo.findBySlug("alpha"))?.followerCount).toBe(0);
+		});
+
+		it("RejectMember refuses an approved member and leaves memberCount alone", async () => {
+			await membershipRepo.createRequest("u1", communityId);
+			await new ApproveMemberUseCase(communityRepo, membershipRepo).execute({
+				slug: "alpha",
+				actorId: "mod",
+				targetUserId: "u1",
+			});
+
+			await expect(
+				new RejectMemberUseCase(communityRepo, membershipRepo).execute({
+					slug: "alpha",
+					actorId: "mod",
+					targetUserId: "u1",
+				}),
+			).rejects.toThrow(/não encontrada/i);
+			expect(await membershipRepo.getStatus("u1", communityId)).toBe("approved");
+			expect((await communityRepo.findBySlug("alpha"))?.memberCount).toBe(1);
+		});
+	});
 });
 
 describe("ListCommunityMembersUseCase", () => {
@@ -702,6 +570,14 @@ describe("ListCommunityMembersUseCase", () => {
 			findByEmailOrPendingEmail: async () => null,
 			findById: async () => null,
 			delete: async () => {},
+			deleteById: async () => false,
+			beginDeletion: async () => null,
+			replaceDisabledBy: async () => 0,
+			findPendingDeletions: async () => [],
+			isUsernameHeld: async () => false,
+			clearRenameFrom: async () => {},
+			beginRename: async () => null,
+			findPendingRenames: async () => [],
 		};
 		await membershipRepo.createRequest("u-alice", c._id!);
 		await membershipRepo.setStatus("u-alice", c._id!, "approved");
@@ -787,6 +663,14 @@ describe("ListCommunityFollowersUseCase", () => {
 			findByEmailOrPendingEmail: async () => null,
 			findById: async () => null,
 			delete: async () => {},
+			deleteById: async () => false,
+			beginDeletion: async () => null,
+			replaceDisabledBy: async () => 0,
+			findPendingDeletions: async () => [],
+			isUsernameHeld: async () => false,
+			clearRenameFrom: async () => {},
+			beginRename: async () => null,
+			findPendingRenames: async () => [],
 		};
 		const c = await communityRepo.create({
 			slug: "alpha",
@@ -906,6 +790,14 @@ function makeUserRepoWithIds(byId: Record<string, string>): IUserRepository {
 		findByEmailOrPendingEmail: async () => null,
 		findById: async () => null,
 		delete: async () => {},
+		deleteById: async () => false,
+		beginDeletion: async () => null,
+		replaceDisabledBy: async () => 0,
+		findPendingDeletions: async () => [],
+		isUsernameHeld: async () => false,
+		clearRenameFrom: async () => {},
+		beginRename: async () => null,
+		findPendingRenames: async () => [],
 	};
 }
 

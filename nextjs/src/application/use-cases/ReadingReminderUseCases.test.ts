@@ -18,6 +18,8 @@ function makeRepo(
 		upsert: vi.fn().mockResolvedValue({} as ReadingReminderPreference),
 		findAllEnabled: vi.fn().mockResolvedValue([]),
 		markSent: vi.fn().mockResolvedValue(undefined),
+		deleteByUsername: vi.fn().mockResolvedValue(undefined),
+		renameUsername: vi.fn().mockResolvedValue(undefined),
 		...overrides,
 	};
 }

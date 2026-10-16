@@ -44,6 +44,7 @@ function answerRepoStub(
     userHasAnsweredAny: async () => false,
     latestPerDiscussion: async () => [],
     anonymizeByUser: async () => 0,
+    detachUser: async () => 0,
     deleteByDiscussion: async () => 0,
     ...overrides,
   };

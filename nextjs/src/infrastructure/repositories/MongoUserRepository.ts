@@ -3,7 +3,7 @@ import {
   IUserRepository,
   AdminUserCursor,
 } from "@/domain/repositories/IUserRepository";
-import { User } from "@/domain/entities/User";
+import { User, UserDeletion } from "@/domain/entities/User";
 import { PublicUserDTO } from "@/domain/dto/PublicUserDTO";
 import { AdminUserDTO } from "@/domain/dto/AdminUserDTO";
 import { UserModel, IUserDocument } from "@/infrastructure/database/models/UserModel";
@@ -29,6 +29,14 @@ function toEntity(doc: IUserDocument): User {
     disabledBy: doc.disabledBy,
     emailVerifiedAt: doc.emailVerifiedAt,
     pendingEmail: doc.pendingEmail,
+    renameFrom: doc.renameFrom,
+    deletion: doc.deletion?.requestedAt
+      ? {
+          requestedAt: doc.deletion.requestedAt,
+          communityIds: [...(doc.deletion.communityIds ?? [])],
+          discussionIds: [...(doc.deletion.discussionIds ?? [])],
+        }
+      : undefined,
   };
 }
 
@@ -109,9 +117,12 @@ export class MongoUserRepository implements IUserRepository {
   }
 
   async findManyByIds(userIds: string[]): Promise<User[]> {
-    if (userIds.length === 0) return [];
+    // Ids come from join rows and URL params; a malformed one would make
+    // the whole $in throw a CastError, so it simply matches nobody.
+    const ids = userIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (ids.length === 0) return [];
     await connectToDatabase();
-    const docs = await UserModel.find({ _id: { $in: userIds } });
+    const docs = await UserModel.find({ _id: { $in: ids } });
     return docs.map(toEntity);
   }
 
@@ -263,6 +274,112 @@ export class MongoUserRepository implements IUserRepository {
   async delete(email: string): Promise<void> {
     await connectToDatabase();
     await UserModel.deleteOne({ email: email.toLowerCase() });
+  }
+
+  async deleteById(userId: string): Promise<boolean> {
+    await connectToDatabase();
+    if (!mongoose.Types.ObjectId.isValid(userId)) return false;
+    const res = await UserModel.deleteOne({ _id: userId });
+    return res.deletedCount > 0;
+  }
+
+  async beginDeletion(
+    userId: string,
+    snapshot: { communityIds: string[]; discussionIds: string[] },
+  ): Promise<UserDeletion | null> {
+    await connectToDatabase();
+    // $min keeps the first attempt's timestamp; $addToSet merges this
+    // attempt's ids with any a previous (failed) attempt already stored.
+    const doc = await UserModel.findOneAndUpdate(
+      { _id: userId },
+      {
+        $min: { "deletion.requestedAt": new Date() },
+        $addToSet: {
+          "deletion.communityIds": { $each: snapshot.communityIds },
+          "deletion.discussionIds": { $each: snapshot.discussionIds },
+        },
+      },
+      { returnDocument: "after" },
+    );
+    return doc ? (toEntity(doc).deletion ?? null) : null;
+  }
+
+  async findPendingDeletions(requestedBefore: Date, limit: number): Promise<User[]> {
+    await connectToDatabase();
+    const docs = await UserModel.find({
+      "deletion.requestedAt": { $lte: requestedBefore },
+    })
+      .sort({ "deletion.requestedAt": 1 })
+      .limit(limit);
+    return docs.map(toEntity);
+  }
+
+  async isUsernameHeld(username: string): Promise<boolean> {
+    await connectToDatabase();
+    // Same case-insensitive match as findByUsername.
+    const pattern = {
+      $regex: `^${username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      $options: "i",
+    };
+    const doc = await UserModel.exists({
+      $or: [{ username: pattern }, { renameFrom: pattern }],
+    });
+    return doc !== null;
+  }
+
+  async clearRenameFrom(userId: string): Promise<void> {
+    await connectToDatabase();
+    await UserModel.updateOne({ _id: userId }, { $unset: { renameFrom: "" } });
+  }
+
+  async beginRename(userId: string, from: string, to: string): Promise<User | null> {
+    await connectToDatabase();
+    try {
+      const doc = await UserModel.findOneAndUpdate(
+        {
+          _id: userId,
+          username: from,
+          renameFrom: { $exists: false },
+          // Re-checked here, atomically: a deletion or disable that landed
+          // after the caller read the account must win.
+          deletion: { $exists: false },
+          disabledAt: { $exists: false },
+        },
+        { $set: { username: to, renameFrom: from } },
+        { returnDocument: "after" },
+      );
+      return doc ? toEntity(doc) : null;
+    } catch (err) {
+      // Another account claimed the slug between the availability check
+      // and this write (unique index on username).
+      if ((err as { code?: number }).code === 11000) {
+        throw new Error("Username already taken");
+      }
+      throw err;
+    }
+  }
+
+  async findPendingRenames(limit: number): Promise<User[]> {
+    await connectToDatabase();
+    // Disabled accounts can't be renamed (UpdateUsernameUseCase refuses
+    // them), so they'd fail every run; they resume once re-enabled.
+    const docs = await UserModel.find({
+      renameFrom: { $exists: true },
+      deletion: { $exists: false },
+      disabledAt: { $exists: false },
+    })
+      .sort({ _id: 1 })
+      .limit(limit);
+    return docs.map(toEntity);
+  }
+
+  async replaceDisabledBy(from: string, to: string): Promise<number> {
+    await connectToDatabase();
+    const res = await UserModel.updateMany(
+      { disabledBy: from },
+      { $set: { disabledBy: to } },
+    );
+    return res.modifiedCount ?? 0;
   }
 
   async setEmailVerified(userId: string, when: Date): Promise<void> {

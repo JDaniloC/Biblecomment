@@ -159,8 +159,14 @@ export default function PrivacyPage() {
           <li>
             <strong>Eliminação</strong> &mdash; ao excluir sua conta o registro
             do usuário é apagado e seus comentários, discussões e respostas
-            são anonimizados como &ldquo;[usuário removido]&rdquo;. Notificações
-            que mencionam você são removidas.
+            são anonimizados como &ldquo;[usuário removido]&rdquo;. São
+            removidos também suas curtidas, denúncias, notificações,
+            participações e inscrições em comunidades, quem você segue e quem
+            segue você, seu histórico e lembretes de leitura e as inscrições
+            de notificação dos seus dispositivos. Comunidades que você criou
+            passam para o moderador (ou, na falta dele, o membro aprovado)
+            mais antigo; sem outros membros aprovados, a comunidade é
+            excluída.
           </li>
           <li>
             <strong>Revogação do consentimento</strong> &mdash; equivalente à

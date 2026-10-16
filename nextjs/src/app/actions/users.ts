@@ -4,22 +4,18 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
-import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
-import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
-import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
-import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
-import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
-import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import {
 	UpdateUserProfileUseCase,
-	UpdateUsernameUseCase,
-	DeleteUserUseCase,
 	SetModeratorUseCase,
 	SetUserDisabledUseCase,
 	MarkTutorialCompletedUseCase,
+	DeletionIncompleteError,
 } from "@/application/use-cases/UserUseCases";
 import { ChangePasswordUseCase } from "@/application/use-cases/AuthUseCases";
+import { forgetSessionUser } from "@/lib/session-revalidation";
+import { UpdateProfileSchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
+import { makeDeleteUserUseCase, makeUpdateUsernameUseCase } from "./_account";
 import type { ActionResult } from "./comments";
 
 function authError(): ActionResult<never> {
@@ -42,11 +38,15 @@ export async function updateProfileAction(updates: {
 }): Promise<ActionResult<{ updated: true }>> {
 	const session = await auth();
 	if (!session?.user) return authError();
+	// Server actions take arbitrary client input: validate the shape (and
+	// drop unknown keys) before it gets anywhere near the user document.
+	const parsed = UpdateProfileSchema.safeParse(updates);
+	if (!parsed.success) return { ok: false, error: "Invalid profile data" };
 
 	try {
 		const repo = new MongoUserRepository();
 		const useCase = new UpdateUserProfileUseCase(repo);
-		await useCase.execute(session.user.email, updates);
+		await useCase.execute(session.user.email, parsed.data);
 		revalidatePath("/profile", "page");
 		return { ok: true, data: { updated: true } };
 	} catch (err) {
@@ -77,14 +77,11 @@ export async function updateUsernameAction(
 	if (!session?.user) return authError();
 
 	try {
-		const useCase = new UpdateUsernameUseCase(
-			new MongoUserRepository(),
-			new MongoCommentRepository(),
-			new MongoDiscussionRepository(),
-			new MongoDiscussionAnswerRepository(),
-			new MongoNotificationRepository(),
+		const updated = await makeUpdateUsernameUseCase().execute(
+			session.user.email,
+			newUsername,
 		);
-		const updated = await useCase.execute(session.user.email, newUsername);
+		if (updated._id) forgetSessionUser(updated._id);
 		revalidatePath("/profile", "page");
 		return { ok: true, data: { username: updated.username } };
 	} catch (err) {
@@ -102,30 +99,32 @@ export async function updateUsernameAction(
 }
 
 /**
- * Delete the current user (or another user, if the actor is a moderator).
- * Replaces axios.delete(/api/users) with body { email }.
+ * Delete the current user's own account. Replaces axios.delete(/api/users)
+ * with body { email }. Self-only: deleting someone else goes through
+ * `deleteUserAction`, which is moderator-gated and audit-logged.
+ *
+ * `pending` means the account is marked (and already locked) but the
+ * cascade didn't finish; the account-maintenance cron completes it.
  */
 export async function deleteSelfAction(
 	email: string,
-): Promise<ActionResult<{ deleted: true }>> {
+): Promise<ActionResult<{ deleted: true; pending?: true }>> {
 	const session = await auth();
 	if (!session?.user) return authError();
+	if (email !== session.user.email) return { ok: false, error: "Forbidden" };
 
 	try {
-		const useCase = new DeleteUserUseCase(
-			new MongoUserRepository(),
-			new MongoCommentRepository(),
-			new MongoCommentLikeRepository(),
-			new MongoDiscussionLikeRepository(),
-			new MongoCommentReportRepository(),
-			new MongoDiscussionRepository(),
-			new MongoDiscussionAnswerRepository(),
-			new MongoNotificationRepository(),
-		);
-		await useCase.execute(session.user.email, email, session.user.moderator);
+		await makeDeleteUserUseCase().execute(email, email, false);
 		revalidatePath("/profile", "page");
 		return { ok: true, data: { deleted: true } };
 	} catch (err) {
+		if (err instanceof DeletionIncompleteError) {
+			logger.warn(
+				{ err: err.cause, userId: err.userId, action: "deleteSelfAction" },
+				"account deletion incomplete; left to the account-maintenance cron",
+			);
+			return { ok: true, data: { deleted: true, pending: true } };
+		}
 		if (err instanceof Error) {
 			if (err.message === "Unauthorized")
 				return { ok: false, error: "Forbidden" };
@@ -143,31 +142,34 @@ export async function deleteSelfAction(
  */
 export async function deleteUserAction(
 	email: string,
-): Promise<ActionResult<{ deleted: true }>> {
+): Promise<ActionResult<{ deleted: true; pending?: true }>> {
 	const session = await auth();
 	if (!session?.user) return authError();
 	if (!session.user.moderator) return { ok: false, error: "Forbidden" };
 
+	let pending = false;
 	try {
-		const useCase = new DeleteUserUseCase(
-			new MongoUserRepository(),
-			new MongoCommentRepository(),
-			new MongoCommentLikeRepository(),
-			new MongoDiscussionLikeRepository(),
-			new MongoCommentReportRepository(),
-			new MongoDiscussionRepository(),
-			new MongoDiscussionAnswerRepository(),
-			new MongoNotificationRepository(),
-		);
-		await useCase.execute(session.user.email, email, true);
+		try {
+			await makeDeleteUserUseCase().execute(session.user.email, email, true);
+		} catch (err) {
+			if (!(err instanceof DeletionIncompleteError)) throw err;
+			logger.warn(
+				{ err: err.cause, userId: err.userId, action: "deleteUserAction" },
+				"account deletion incomplete; left to the account-maintenance cron",
+			);
+			pending = true;
+		}
 
 		logger.info(
-			{ actor: session.user.email, target: email, action: "delete_user" },
+			{ actor: session.user.email, target: email, pending, action: "delete_user" },
 			"user deleted by moderator",
 		);
 
 		revalidatePath("/admin/moderation", "page");
-		return { ok: true, data: { deleted: true } };
+		return {
+			ok: true,
+			data: pending ? { deleted: true, pending: true } : { deleted: true },
+		};
 	} catch (err) {
 		if (err instanceof Error) {
 			if (err.message === "Unauthorized")
@@ -207,6 +209,7 @@ export async function setUserDisabledAction(
 			disabled,
 			session.user.username,
 		);
+		if (updated._id) forgetSessionUser(updated._id);
 
 		logger.info(
 			{
@@ -327,6 +330,7 @@ export async function setModeratorAction(
 		const repo = new MongoUserRepository();
 		const useCase = new SetModeratorUseCase(repo);
 		const updated = await useCase.execute(email, moderator);
+		if (updated._id) forgetSessionUser(updated._id);
 
 		logger.info(
 			{

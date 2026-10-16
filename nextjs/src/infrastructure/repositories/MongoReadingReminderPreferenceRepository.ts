@@ -59,6 +59,26 @@ export class MongoReadingReminderPreferenceRepository
 		return docs.map(toEntity);
 	}
 
+	async deleteByUsername(username: string): Promise<void> {
+		await connectToDatabase();
+		await ReadingReminderPreferenceModel.deleteOne({ username });
+	}
+
+	async renameUsername(oldUsername: string, newUsername: string): Promise<void> {
+		await connectToDatabase();
+		// username is unique. If the target already has a row (a retried
+		// rename moved it, or the user saved a new preference since), it is
+		// the current one: drop the leftover instead of overwriting it.
+		if (await ReadingReminderPreferenceModel.exists({ username: newUsername })) {
+			await ReadingReminderPreferenceModel.deleteOne({ username: oldUsername });
+			return;
+		}
+		await ReadingReminderPreferenceModel.updateOne(
+			{ username: oldUsername },
+			{ $set: { username: newUsername } },
+		);
+	}
+
 	async markSent(username: string, sentAt: Date): Promise<void> {
 		await connectToDatabase();
 		await ReadingReminderPreferenceModel.updateOne(

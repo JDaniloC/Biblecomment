@@ -66,6 +66,21 @@ export class MongoPushSubscriptionRepository implements IPushSubscriptionReposit
 		return (res.deletedCount ?? 0) > 0;
 	}
 
+	async deleteAllByUsername(username: string): Promise<number> {
+		await connectToDatabase();
+		const res = await PushSubscriptionModel.deleteMany({ username });
+		return res.deletedCount ?? 0;
+	}
+
+	async renameUsername(oldUsername: string, newUsername: string): Promise<number> {
+		await connectToDatabase();
+		const res = await PushSubscriptionModel.updateMany(
+			{ username: oldUsername },
+			{ $set: { username: newUsername } },
+		);
+		return res.modifiedCount ?? 0;
+	}
+
 	async deleteByEndpoints(endpoints: string[]): Promise<number> {
 		if (endpoints.length === 0) return 0;
 		await connectToDatabase();

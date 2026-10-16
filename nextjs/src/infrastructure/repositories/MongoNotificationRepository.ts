@@ -9,8 +9,14 @@ import mongoose from "mongoose";
 import { PushNotificationService } from "@/application/services/PushNotificationService";
 import { MongoPushSubscriptionRepository } from "@/infrastructure/repositories/MongoPushSubscriptionRepository";
 import { webPushSender } from "@/infrastructure/push/WebPushSender";
+import { escapeRegExp } from "@/lib/escape-regexp";
 
 let pushService: PushNotificationService | null = null;
+
+// Actor names that don't belong to a single account: badge notices
+// ("system"), fallbacks when the actor can't be resolved ("alguém") and
+// the name left behind by account deletion (ANONYMIZED_USERNAME).
+const SENTINEL_ACTORS = new Set(["system", "alguém", "[usuário removido]"]);
 
 /**
  * Best-effort Web Push mirror of an in-app notification. Fire-and-forget
@@ -45,6 +51,80 @@ function firePush(n: {
 			tag: n.type,
 		})
 		.catch(() => {});
+}
+
+/**
+ * Update pipeline for notifications whose actor is being renamed. Besides
+ * `actor`, the old handle is denormalized into `message` ("@old mencionou
+ * você", "@old começou a te seguir", …) and, for new_follower, into
+ * `resourceId` and `url` ("/u/old"). Left alone those keep pointing at the
+ * old slug, which anyone can re-register.
+ *
+ * MongoDB has no regex replace, so the message is rebuilt from the
+ * $regexFindAll matches. Token boundaries mirror MENTION_REGEX in
+ * lib/mentions.ts — not preceded by a word char or "@", not followed by a
+ * username char — so renaming "ana" leaves "@anabela" and "x@ana" alone.
+ * `idx` from $regexFindAll and $substrCP both count code points.
+ */
+function renameActorPipeline(oldUsername: string, newUsername: string) {
+	const oldHandle = `@${oldUsername}`;
+	const handleRegex = `(?<![A-Za-z0-9_@])${escapeRegExp(oldHandle)}(?![A-Za-z0-9_-])`;
+	const isFollow = { $eq: ["$type", "new_follower"] };
+	return [
+		{
+			$set: {
+				actor: { $literal: newUsername },
+				message: {
+					$let: {
+						vars: {
+							acc: {
+								$reduce: {
+									input: {
+										$regexFindAll: { input: "$message", regex: handleRegex },
+									},
+									initialValue: { out: "", pos: 0 },
+									in: {
+										out: {
+											$concat: [
+												"$$value.out",
+												{
+													$substrCP: [
+														"$message",
+														"$$value.pos",
+														{ $subtract: ["$$this.idx", "$$value.pos"] },
+													],
+												},
+												{ $literal: `@${newUsername}` },
+											],
+										},
+										pos: { $add: ["$$this.idx", [...oldHandle].length] },
+									},
+								},
+							},
+						},
+						in: {
+							$concat: [
+								"$$acc.out",
+								{
+									$substrCP: [
+										"$message",
+										"$$acc.pos",
+										{ $subtract: [{ $strLenCP: "$message" }, "$$acc.pos"] },
+									],
+								},
+							],
+						},
+					},
+				},
+				resourceId: {
+					$cond: [isFollow, { $literal: newUsername }, "$resourceId"],
+				},
+				url: {
+					$cond: [isFollow, { $literal: `/u/${newUsername}` }, "$url"],
+				},
+			},
+		},
+	];
 }
 
 function toEntity(doc: INotificationDocument): Notification {
@@ -139,9 +219,11 @@ export class MongoNotificationRepository implements INotificationRepository {
 
 	async deleteForUser(username: string): Promise<number> {
 		await connectToDatabase();
-		const result = await NotificationModel.deleteMany({
-			$or: [{ recipient: username }, { actor: username }],
-		});
+		// Sentinel actors are shared by everyone, so never treat them as this
+		// user's own activity — even for a legacy account holding that name.
+		const or: Record<string, string>[] = [{ recipient: username }];
+		if (!SENTINEL_ACTORS.has(username)) or.push({ actor: username });
+		const result = await NotificationModel.deleteMany({ $or: or });
 		return result.deletedCount ?? 0;
 	}
 
@@ -164,24 +246,36 @@ export class MongoNotificationRepository implements INotificationRepository {
 		return doc !== null;
 	}
 
+	/**
+	 * Returns recipient-side + actor-side modified counts, so a notification
+	 * where the user is both recipient and actor counts twice.
+	 */
 	async renameUsername(
 		oldUsername: string,
 		newUsername: string,
 	): Promise<number> {
 		await connectToDatabase();
-		// Two updateMany — one per field — keeps each query selective on its
-		// own index. A combined $or with mixed $set would touch fields the
+		// Two updateMany — one per role — keeps each query selective on its
+		// own field. A combined $or with mixed $set would touch fields the
 		// user didn't actually change.
-		const [a, b] = await Promise.all([
+		const updates = [
 			NotificationModel.updateMany(
 				{ recipient: oldUsername },
 				{ $set: { recipient: newUsername } },
 			),
-			NotificationModel.updateMany(
-				{ actor: oldUsername },
-				{ $set: { actor: newUsername } },
-			),
-		]);
-		return (a.modifiedCount ?? 0) + (b.modifiedCount ?? 0);
+		];
+		// Sentinel actors are shared by everyone (see deleteForUser): a legacy
+		// account holding that name must not take over every badge notice.
+		if (!SENTINEL_ACTORS.has(oldUsername)) {
+			updates.push(
+				NotificationModel.updateMany(
+					{ actor: oldUsername },
+					renameActorPipeline(oldUsername, newUsername),
+					{ updatePipeline: true },
+				),
+			);
+		}
+		const results = await Promise.all(updates);
+		return results.reduce((sum, r) => sum + (r.modifiedCount ?? 0), 0);
 	}
 }

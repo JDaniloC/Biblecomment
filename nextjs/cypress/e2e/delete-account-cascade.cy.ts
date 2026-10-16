@@ -2,7 +2,7 @@
  * LGPD Art. 18 — anonymize-on-delete cascade.
  *
  * Verifies the full DB-level cascade end-to-end (real Mongo, real
- * sessions). UserUseCases.test.ts mocks the four repositories; this
+ * sessions). UserUseCases.test.ts covers the use case with fakes; this
  * spec confirms the wired implementation actually mutates documents
  * the way the unit test asserts.
  *
@@ -363,5 +363,220 @@ describe("LGPD — delete account cascade", () => {
 					},
 				);
 			});
+	});
+});
+
+/**
+ * The rest of the cascade: communities (membership, follows, counters,
+ * ownership), the social graph, reading data, devices — and that a deleted
+ * account's existing session stops working. Row counts use the id/username
+ * captured BEFORE the delete; a lookup by email afterwards would find no
+ * user and report 0 for the wrong reason.
+ */
+describe("LGPD — delete account: communities, social graph and sessions", () => {
+	const SESSION_COOKIE = /authjs\.session-token|next-auth\.session-token/;
+
+	type CommunityDTO = {
+		_id: string;
+		createdBy: string;
+		memberCount: number;
+		followerCount: number;
+		updatedAt: string;
+	};
+	const getCommunity = (slug: string) =>
+		cy
+			.request({ url: `/api/communities/${slug}`, failOnStatusCode: false })
+			.then((res) => res);
+
+	function deleteSelf(email: string, password: string) {
+		cy.clearCookies();
+		cy.loginAs(email, password);
+		cy.request({ method: "DELETE", url: "/api/users", body: { email } })
+			.its("status")
+			.should("eq", 200);
+		cy.clearCookies();
+	}
+
+	beforeEach(() => {
+		cy.resetDb();
+	});
+
+	it("removes alice's community rows, follows, reading data and devices, and fixes the counters", () => {
+		cy.seedDb({
+			users: [users.alice, users.bob],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+			communities: [
+				{ slug: "reformados", name: "Reformados", createdBy: users.bob.username, memberCount: 2 },
+			],
+			communityMemberships: [
+				{ username: users.bob.username, communitySlug: "reformados", status: "approved", role: "moderator" },
+				{ username: users.alice.username, communitySlug: "reformados", status: "approved" },
+			],
+			communityFollows: [
+				{ username: users.bob.username, communitySlug: "reformados" },
+				{ username: users.alice.username, communitySlug: "reformados" },
+			],
+		});
+		cy.task("db:seedFollow", { follower: users.alice.username, following: users.bob.username });
+		cy.task("db:seedFollow", { follower: users.bob.username, following: users.alice.username });
+		cy.task("db:seedChapterRead", { email: users.alice.email, abbrev: "gn", chapter: 1 });
+
+		// Alice's own devices, reminders and reading sessions, through the API.
+		cy.loginAs(users.alice.email, users.alice.password);
+		cy.request("POST", "/api/push/subscribe", {
+			endpoint: "https://push.example.test/alice-device",
+			keys: { p256dh: "p256dh-key", auth: "auth-key" },
+		});
+		cy.request("PUT", "/api/me/reading-reminder", { enabled: true, hourLocal: 7 });
+		cy.request("POST", "/api/me/reading-session");
+		cy.clearCookies();
+
+		getCommunity("reformados").then((before) => {
+			const c = (before.body as { community: CommunityDTO }).community;
+			expect(c.memberCount).to.eq(2);
+			expect(c.followerCount).to.eq(2);
+
+			cy.task<string>("db:getUserId", users.alice.email).then((aliceId) => {
+				cy.task<Record<string, number>>("db:countUserRefs", {
+					userId: aliceId,
+					username: users.alice.username,
+				}).then((refs) => {
+					// Sanity: the seeding really created every kind of row.
+					for (const k of [
+						"communitymemberships",
+						"communityfollows",
+						"follows",
+						"userchapterreads",
+						"readingsessions",
+						"pushsubscriptions",
+						"readingreminderpreferences",
+					]) {
+						expect(refs[k], `${k} before delete`).to.be.greaterThan(0);
+					}
+				});
+
+				deleteSelf(users.alice.email, users.alice.password);
+
+				cy.task<Record<string, number>>("db:countUserRefs", {
+					userId: aliceId,
+					username: users.alice.username,
+				}).then((refs) => {
+					for (const [k, n] of Object.entries(refs)) {
+						expect(n, `${k} rows left for alice`).to.eq(0);
+					}
+				});
+			});
+
+			getCommunity("reformados").then((after) => {
+				const a = (after.body as { community: CommunityDTO }).community;
+				expect(a.memberCount).to.eq(1);
+				expect(a.followerCount).to.eq(1);
+				// The page changed (a member's comments drop off), so its
+				// sitemap lastmod moves too.
+				expect(new Date(a.updatedAt).getTime()).to.be.greaterThan(
+					new Date(c.updatedAt).getTime(),
+				);
+			});
+		});
+	});
+
+	it("hands a community alice created to its senior approved member, who can then manage it", () => {
+		cy.seedDb({
+			users: [users.alice, users.bob],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+			communities: [
+				{ slug: "da-alice", name: "Da Alice", createdBy: users.alice.username, memberCount: 2 },
+			],
+			communityMemberships: [
+				{ username: users.alice.username, communitySlug: "da-alice", status: "approved", role: "moderator" },
+				{ username: users.bob.username, communitySlug: "da-alice", status: "approved" },
+			],
+		});
+
+		deleteSelf(users.alice.email, users.alice.password);
+
+		cy.task<string>("db:getUserId", users.bob.email).then((bobId) => {
+			getCommunity("da-alice").then((res) => {
+				const c = (res.body as { community: CommunityDTO }).community;
+				expect(c.createdBy).to.eq(bobId);
+				expect(c.memberCount).to.eq(1);
+			});
+		});
+		// Creator-only action: proves bob really owns it now.
+		cy.loginAs(users.bob.email, users.bob.password);
+		cy.request("DELETE", "/api/communities/da-alice").its("status").should("eq", 200);
+	});
+
+	it("deletes a community alice created when nobody else is an approved member", () => {
+		cy.seedDb({
+			users: [users.alice, users.bob],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+			communities: [
+				{ slug: "so-da-alice", name: "Só da Alice", createdBy: users.alice.username, memberCount: 1 },
+			],
+			communityMemberships: [
+				{ username: users.alice.username, communitySlug: "so-da-alice", status: "approved", role: "moderator" },
+				{ username: users.bob.username, communitySlug: "so-da-alice", status: "pending" },
+			],
+		});
+
+		deleteSelf(users.alice.email, users.alice.password);
+
+		getCommunity("so-da-alice").its("status").should("eq", 404);
+		cy.task<string>("db:getUserId", users.bob.email).then((bobId) => {
+			cy.task<Record<string, number>>("db:countUserRefs", {
+				userId: bobId,
+				username: users.bob.username,
+			})
+				.its("communitymemberships")
+				.should("eq", 0);
+		});
+	});
+
+	it("a session of an account deleted by a moderator stops working", () => {
+		cy.seedDb({
+			users: [users.alice, users.mod],
+			books: [bookFixture.book],
+			verses: bookFixture.verses,
+		});
+		let aliceId = "";
+		cy.task<string>("db:getUserId", users.alice.email).then((id) => {
+			aliceId = id;
+		});
+		cy.loginAs(users.alice.email, users.alice.password);
+		cy.request("/api/users/me").its("status").should("eq", 200);
+		cy.getCookies().then((cookies) => {
+			const session = cookies.find((c) => SESSION_COOKIE.test(c.name));
+			expect(session, "alice has a session cookie").to.exist;
+
+			cy.clearCookies();
+			cy.loginAs(users.mod.email, users.mod.password);
+			cy.request({
+				method: "DELETE",
+				url: "/api/users",
+				body: { email: users.alice.email },
+			})
+				.its("status")
+				.should("eq", 200);
+
+			// Replay alice's still-unexpired JWT against routes that trust the
+			// token's claims without looking the account up themselves — only
+			// the session revalidation can turn them away.
+			cy.clearCookies();
+			cy.setCookie(session!.name, session!.value);
+			cy.request("/api/auth/session").then((res) => expect(res.body, "session").to.equal(null));
+			cy.request({ method: "POST", url: "/api/me/reading-session", failOnStatusCode: false })
+				.its("status")
+				.should("eq", 401);
+			cy.task<Record<string, number>>("db:countUserRefs", {
+				userId: aliceId,
+				username: users.alice.username,
+			})
+				.its("readingsessions")
+				.should("eq", 0);
+		});
 	});
 });

@@ -104,6 +104,15 @@ export class MongoCommentReportRepository implements ICommentReportRepository {
     return res.deletedCount ?? 0;
   }
 
+  async renameUsername(oldUsername: string, newUsername: string): Promise<number> {
+    await connectToDatabase();
+    const res = await CommentReportModel.updateMany(
+      { username: oldUsername },
+      { $set: { username: newUsername } },
+    );
+    return res.modifiedCount ?? 0;
+  }
+
   async deleteAllByComment(commentId: string): Promise<number> {
     if (!mongoose.Types.ObjectId.isValid(commentId)) return 0;
     await connectToDatabase();

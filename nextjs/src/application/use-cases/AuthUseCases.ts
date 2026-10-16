@@ -1,9 +1,13 @@
 import bcrypt from "bcryptjs";
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
+import { IPushSubscriptionRepository } from "@/domain/repositories/IPushSubscriptionRepository";
+import { IReadingReminderPreferenceRepository } from "@/domain/repositories/IReadingReminderPreferenceRepository";
+import { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import { User } from "@/domain/entities/User";
 import {
   sanitizeUsername,
   isValidUsername,
+  isReservedUsername,
   MIN_USERNAME_LEN,
 } from "@/lib/sanitize-username";
 
@@ -43,8 +47,23 @@ export interface RegisterUserInput {
   password: string;
 }
 
+/**
+ * Records keyed by username rather than user id. A free slug has no live
+ * owner, so whatever still sits under it was left by a deleted (or renamed)
+ * account and must not be inherited by the new one — above all devices,
+ * which would receive the new account's push notifications.
+ */
+export interface UsernameKeyedRepos {
+  pushSubscription: IPushSubscriptionRepository;
+  readingReminder: IReadingReminderPreferenceRepository;
+  notification: INotificationRepository;
+}
+
 export class RegisterUserUseCase {
-  constructor(private readonly userRepo: IUserRepository) {}
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly usernameKeyed?: UsernameKeyedRepos,
+  ) {}
 
   async execute(input: RegisterUserInput): Promise<User> {
     const { email, displayName, password } = input;
@@ -53,8 +72,8 @@ export class RegisterUserUseCase {
     if (existingEmail) throw new Error("Email already registered");
 
     // Compute the slug. If the caller passed one, it must already be
-    // canonical; we do NOT silently rewrite it. Sanitization is only
-    // applied to derive a slug from displayName.
+    // canonical (and not a reserved sentinel); we do NOT silently rewrite
+    // it. Sanitization is only applied to derive a slug from displayName.
     let slug: string;
     if (input.username) {
       if (!isValidUsername(input.username)) {
@@ -70,15 +89,26 @@ export class RegisterUserUseCase {
     }
 
     // Disambiguate against existing usernames (best-effort 50 retries).
+    // Reserved sentinels count as taken, so a display name like "System"
+    // yields "system-2" instead of the badge-notification actor.
+    // A slug still held as another account's `renameFrom` counts as taken.
     const finalUsername = await disambiguate(slug, async (s) => {
-      const hit = await this.userRepo.findByUsername(s);
-      return hit !== null;
+      if (isReservedUsername(s)) return true;
+      return this.userRepo.isUsernameHeld(s);
     });
 
     if (input.username && finalUsername !== input.username) {
       // Caller provided an exact slug but it's taken — surface 409 instead
       // of silently renaming.
       throw new Error("Username already taken");
+    }
+
+    if (this.usernameKeyed) {
+      await Promise.all([
+        this.usernameKeyed.pushSubscription.deleteAllByUsername(finalUsername),
+        this.usernameKeyed.readingReminder.deleteByUsername(finalUsername),
+        this.usernameKeyed.notification.deleteForUser(finalUsername),
+      ]);
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);

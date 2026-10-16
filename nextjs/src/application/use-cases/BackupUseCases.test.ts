@@ -47,6 +47,14 @@ function repoReturning(users: User[]): IUserRepository {
     promotePendingEmail: async () => {},
     findByEmailOrPendingEmail: async () => null,
     delete: async () => {},
+    deleteById: async () => false,
+    beginDeletion: async () => null,
+    replaceDisabledBy: async () => 0,
+    findPendingDeletions: async () => [],
+    isUsernameHeld: async () => false,
+    clearRenameFrom: async () => {},
+    beginRename: async () => null,
+    findPendingRenames: async () => [],
   };
 }
 

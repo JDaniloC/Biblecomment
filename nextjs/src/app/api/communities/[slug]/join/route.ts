@@ -58,16 +58,16 @@ export async function DELETE(
 		if (!c || !c._id) {
 			return NextResponse.json({ error: "Not found" }, { status: 404 });
 		}
-		// O(1) lookup against the (userId, communityId) unique index —
-		// replaces an earlier `approvedUserIds().includes()` scan that was
-		// O(N) on the approved-member list (Copilot review on PR #205).
-		const prev = await memberships.getStatus(userId, c._id);
-		const removed = await memberships.remove(userId, c._id);
-		if (removed && prev === "approved") {
+		// One atomic find-and-delete against the (userId, communityId)
+		// unique index: the status we decrement on is the one the row had
+		// when it was removed, so an approval racing the leave can't leave
+		// memberCount one too high.
+		const prev = await memberships.removeReturningStatus(userId, c._id);
+		if (prev === "approved") {
 			await communities.incrementMemberCount(c._id, -1);
 		}
 		return NextResponse.json({
-			removed,
+			removed: prev !== null,
 			wasApproved: prev === "approved",
 		});
 	} catch (err) {

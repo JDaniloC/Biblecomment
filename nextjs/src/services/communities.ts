@@ -11,6 +11,21 @@ async function parseError(res: Response): Promise<string> {
 	}
 }
 
+/**
+ * Same message as `parseError`, plus the axios-style `response.status`
+ * the other services expose (see `_action-error.ts`), so callers can
+ * branch on e.g. 404 without string-matching the body.
+ */
+async function httpError(
+	res: Response,
+): Promise<Error & { response: { status: number } }> {
+	const err = new Error(await parseError(res)) as Error & {
+		response: { status: number };
+	};
+	err.response = { status: res.status };
+	return err;
+}
+
 export interface ListCommunitiesResponse {
 	items: Community[];
 	total: number;
@@ -161,21 +176,29 @@ export const communityService = {
 	 * pending → approved. The community page uses it to avoid drifting
 	 * the optimistic memberCount when a moderator double-clicks Aprovar
 	 * on a row that was already approved.
+	 *
+	 * Throws with `response.status === 404` when the request is gone
+	 * (requester's account deleted) — callers treat that as handled.
 	 */
 	async approve(slug: string, userId: string): Promise<{ changed: boolean }> {
 		const res = await fetch(`/api/communities/${slug}/requests/${userId}`, {
 			method: "POST",
 		});
-		if (!res.ok) throw new Error(await parseError(res));
+		if (!res.ok) throw await httpError(res);
 		const body = (await res.json().catch(() => ({}))) as { changed?: boolean };
 		return { changed: body.changed ?? true };
 	},
 
+	/**
+	 * Throws with `response.status === 404` when the request is no longer
+	 * pending (already approved/rejected by another moderator, or the
+	 * requester's account was deleted) — callers treat that as handled.
+	 */
 	async reject(slug: string, userId: string): Promise<void> {
 		const res = await fetch(`/api/communities/${slug}/requests/${userId}`, {
 			method: "DELETE",
 		});
-		if (!res.ok) throw new Error(await parseError(res));
+		if (!res.ok) throw await httpError(res);
 	},
 
 	async setModerator(

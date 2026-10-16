@@ -280,4 +280,23 @@ describe("CreateCommentUseCase (plan_community: no community gate)", () => {
 
 		expect(create).not.toHaveBeenCalled();
 	});
+
+	it.each([
+		["being deleted", { deletion: { requestedAt: new Date(), communityIds: [], discussionIds: [] } }],
+		["disabled", { disabledAt: new Date() }],
+	])("rejects a verified account that is %s", async (_label, state) => {
+		const create = vi.fn();
+		const uc = new CreateCommentUseCase(
+			{ create } as unknown as ICommentRepository,
+			makeVerseRepo(),
+			{
+				findByUsername: vi.fn().mockResolvedValue(fakeUser(state)),
+			} as unknown as IUserRepository,
+		);
+
+		await expect(
+			uc.execute({ verseId: "v1", username: "stranger", text: "olá", tags: [] }),
+		).rejects.toThrow("Unauthorized");
+		expect(create).not.toHaveBeenCalled();
+	});
 });

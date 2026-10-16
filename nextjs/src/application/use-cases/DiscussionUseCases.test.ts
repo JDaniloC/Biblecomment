@@ -158,6 +158,21 @@ describe("CreateDiscussionUseCase", () => {
 		);
 	});
 
+	it("refuses a verified author whose account is being deleted", async () => {
+		const { repo } = capturingDiscussionRepo();
+		const users = {
+			findByUsername: () =>
+				Promise.resolve({
+					username: "bob",
+					emailVerifiedAt: new Date(),
+					deletion: { requestedAt: new Date(), communityIds: [], discussionIds: [] },
+				} as unknown as User),
+		} as unknown as IUserRepository;
+		const uc = new CreateDiscussionUseCase(repo, commentRepoStub([makeComment()]), users);
+
+		await expect(uc.execute({ ...base })).rejects.toThrow("Unauthorized");
+	});
+
 	it("throws when the author's email is not verified", async () => {
 		const { repo } = capturingDiscussionRepo();
 		const uc = new CreateDiscussionUseCase(

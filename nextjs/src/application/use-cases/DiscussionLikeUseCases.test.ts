@@ -31,7 +31,7 @@ function spyDiscussionRepo(): IDiscussionRepository {
 		findByCommentId: notImpl,
 		incrementAnswersCount: vi.fn(() => Promise.resolve()),
 		incrementLikeCount: vi.fn(() => Promise.resolve()),
-		decrementLikeCountMany: notImpl,
+		setLikeCounts: notImpl,
 	} as unknown as IDiscussionRepository;
 }
 

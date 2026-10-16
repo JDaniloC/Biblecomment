@@ -4,7 +4,11 @@ import type { ICommunityFollowRepository } from "@/domain/repositories/ICommunit
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { INotificationRepository } from "@/domain/repositories/INotificationRepository";
 import type { Community } from "@/domain/entities/Community";
-import { isEmailVerified, EmailNotVerifiedError } from "@/lib/auth-guards";
+import {
+	isActiveAccount,
+	isEmailVerified,
+	EmailNotVerifiedError,
+} from "@/lib/auth-guards";
 
 /** Hard cap on communities a single user can create. Surfaced as friendly UI error in Phase 4.2. */
 export const MAX_COMMUNITIES_PER_USER = 3;
@@ -28,7 +32,7 @@ export class CreateCommunityUseCase {
 
 	async execute(input: CreateCommunityInput): Promise<Community> {
 		const actor = await this.userRepo.findByEmail(input.actorEmail);
-		if (!actor || !actor._id) throw new Error("Actor not found");
+		if (!actor?._id || !isActiveAccount(actor)) throw new Error("Actor not found");
 
 		// Gate: only verified users may create communities.
 		if (!isEmailVerified(actor)) {
@@ -185,6 +189,15 @@ export class ApproveMemberUseCase {
 		const c = await this.communities.findBySlug(slug);
 		if (!c || !c._id) throw new Error("Comunidade não encontrada");
 		await assertModerator(this.memberships, actorId, c._id);
+		// A request whose account was deleted must not become a member (nor
+		// a follower) of a user that no longer exists — drop the stale row.
+		if (this.userRepo) {
+			const [target] = await this.userRepo.findManyByIds([targetUserId]);
+			if (!target || target.deletion) {
+				await this.memberships.removePending(targetUserId, c._id);
+				throw new Error("Solicitação não encontrada");
+			}
+		}
 		const changed = await this.memberships.setStatus(
 			targetUserId,
 			c._id,
@@ -192,8 +205,10 @@ export class ApproveMemberUseCase {
 		);
 		if (changed) await this.communities.incrementMemberCount(c._id, 1);
 		// Auto-follow on approval (idempotent — `follow()` returns false when
-		// the row was already there). Only bump followerCount on a fresh row.
-		if (this.follows) {
+		// the row was already there). Only bump followerCount on a fresh row,
+		// and only when this call actually approved someone: re-approving (or
+		// approving a request that no longer exists) must not re-follow.
+		if (this.follows && changed) {
 			const created = await this.follows.follow(targetUserId, c._id);
 			if (created) await this.communities.incrementFollowerCount(c._id, 1);
 		}
@@ -309,7 +324,10 @@ export class RejectMemberUseCase {
 		const c = await this.communities.findBySlug(slug);
 		if (!c || !c._id) throw new Error("Comunidade não encontrada");
 		await assertModerator(this.memberships, actorId, c._id);
-		await this.memberships.remove(targetUserId, c._id);
+		// Only pending requests can be rejected. Removing an approved row here
+		// would leave memberCount one too high (and could drop the creator).
+		const removed = await this.memberships.removePending(targetUserId, c._id);
+		if (!removed) throw new Error("Solicitação não encontrada");
 	}
 }
 
@@ -506,14 +524,123 @@ export class DeleteCommunityUseCase {
 		if (community.createdBy !== actorId) {
 			throw new Error("Apenas o criador pode excluir a comunidade");
 		}
-		// Order: drop join rows first so a partial failure leaves the
-		// community visible (and re-attemptable) rather than orphaning
-		// memberships against a missing community.
-		const [removedMemberships, removedFollows] = await Promise.all([
-			this.memberships.removeAllByCommunity(community._id),
-			this.follows.removeAllByCommunity(community._id),
-		]);
-		await this.communities.deleteById(community._id);
-		return { removedMemberships, removedFollows };
+		return deleteCommunityCascade(
+			{
+				communities: this.communities,
+				memberships: this.memberships,
+				follows: this.follows,
+			},
+			community._id,
+		);
+	}
+}
+
+/**
+ * Remove a community with its membership and follow rows. Order: drop the
+ * join rows first so a partial failure leaves the community visible (and
+ * re-attemptable) rather than orphaning memberships against a missing
+ * community.
+ */
+async function deleteCommunityCascade(
+	repos: {
+		communities: ICommunityRepository;
+		memberships: ICommunityMembershipRepository;
+		follows: ICommunityFollowRepository;
+	},
+	communityId: string,
+): Promise<{ removedMemberships: number; removedFollows: number }> {
+	const [removedMemberships, removedFollows] = await Promise.all([
+		repos.memberships.removeAllByCommunity(communityId),
+		repos.follows.removeAllByCommunity(communityId),
+	]);
+	await repos.communities.deleteById(communityId);
+	return { removedMemberships, removedFollows };
+}
+
+/**
+ * Account-deletion step for the communities the user created: each one is
+ * handed to the most senior approved moderator (or, failing that, the most
+ * senior approved member) who still has an account; a community with nobody
+ * left to take it over is deleted. Runs before the user's own membership
+ * rows go, and is safe to repeat — handed-over communities no longer list
+ * the user as creator.
+ */
+export class HandOverOwnedCommunitiesUseCase {
+	constructor(
+		private readonly communities: ICommunityRepository,
+		private readonly memberships: ICommunityMembershipRepository,
+		private readonly follows: ICommunityFollowRepository,
+		private readonly userRepo: IUserRepository,
+		private readonly notifications?: INotificationRepository,
+	) {}
+
+	async execute(userId: string): Promise<{
+		handedOver: Array<{ communityId: string; newCreatorId: string }>;
+		deleted: string[];
+	}> {
+		const handedOver: Array<{ communityId: string; newCreatorId: string }> = [];
+		const deleted: string[] = [];
+		for (const c of await this.communities.listCreatedBy(userId)) {
+			if (!c._id) continue;
+			const successor = await this.pickSuccessor(c._id, userId);
+			if (!successor) {
+				await deleteCommunityCascade(
+					{
+						communities: this.communities,
+						memberships: this.memberships,
+						follows: this.follows,
+					},
+					c._id,
+				);
+				deleted.push(c._id);
+				continue;
+			}
+			// Make sure the new creator can moderate before flipping
+			// createdBy (the commit point). seedCreator is idempotent and the
+			// successor is already approved, so memberCount doesn't change.
+			await this.memberships.seedCreator(successor.id, c._id);
+			await this.communities.setCreatedBy(c._id, successor.id);
+			handedOver.push({ communityId: c._id, newCreatorId: successor.id });
+			if (successor.username && this.notifications) {
+				try {
+					await this.notifications.create({
+						recipient: successor.username,
+						actor: "system",
+						type: "community_role_promoted",
+						resourceType: "community",
+						resourceId: c._id,
+						message: `Você agora é responsável pela comunidade ${c.name}.`,
+						url: `/communities/${c.slug}`,
+					});
+				} catch {
+					/* best-effort */
+				}
+			}
+		}
+		return { handedOver, deleted };
+	}
+
+	private async pickSuccessor(
+		communityId: string,
+		leavingUserId: string,
+	): Promise<{ id: string; username?: string } | null> {
+		const candidates = (
+			await this.memberships.listApprovedOrdered(communityId)
+		).filter((m) => m.userId !== leavingUserId);
+		if (candidates.length === 0) return null;
+		const live = new Map(
+			(
+				await this.userRepo.findManyByIds(candidates.map((m) => m.userId))
+			).map((u) => [u._id, u]),
+		);
+		for (const m of candidates) {
+			const user = live.get(m.userId);
+			// Disabled accounts can't sign in to manage it, and one that is
+			// being deleted itself would leave the community ownerless again.
+			if (user && isActiveAccount(user)) {
+				return { id: m.userId, username: user.username };
+			}
+		}
+		return null;
 	}
 }

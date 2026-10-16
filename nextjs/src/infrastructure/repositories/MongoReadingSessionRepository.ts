@@ -22,4 +22,10 @@ export class MongoReadingSessionRepository
 		);
 		return docs.map((d) => d.date);
 	}
+
+	async deleteAllByUser(userId: string): Promise<number> {
+		await connectToDatabase();
+		const result = await ReadingSessionModel.deleteMany({ userId });
+		return result.deletedCount ?? 0;
+	}
 }

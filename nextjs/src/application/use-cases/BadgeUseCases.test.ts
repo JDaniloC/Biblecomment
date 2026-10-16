@@ -60,6 +60,14 @@ function makeRepos(opts: {
     promotePendingEmail: async () => {},
     findByEmailOrPendingEmail: async () => null,
     delete: async () => {},
+    deleteById: async () => false,
+    beginDeletion: async () => null,
+    replaceDisabledBy: async () => 0,
+    findPendingDeletions: async () => [],
+    isUsernameHeld: async () => false,
+    clearRenameFrom: async () => {},
+    beginRename: async () => null,
+    findPendingRenames: async () => [],
     _badges: userBadges,
   } as IUserRepository & { _badges: Map<string, string[]> };
 
@@ -71,6 +79,7 @@ function makeRepos(opts: {
     countByUserPerBook: async () => opts.chaptersReadByBook ?? {},
     findAllForUser: async () => [],
     findReadTimestamps: async () => [],
+    deleteAllByUser: async () => 0,
   };
 
   const comment = {
@@ -108,6 +117,7 @@ function makeRepos(opts: {
     userHasAnsweredAny: async () => opts.hasAnsweredDiscussion ?? false,
     latestPerDiscussion: async () => [],
     anonymizeByUser: async () => 0,
+    detachUser: async () => 0,
     deleteByDiscussion: async () => 0,
   };
 
@@ -134,6 +144,7 @@ function makeRepos(opts: {
   } as IBookRepository;
 
   const readingSession = {
+    deleteAllByUser: async () => 0,
     registerDay: async () => {},
     findDays: async () => [],
   };

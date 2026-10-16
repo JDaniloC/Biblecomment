@@ -81,6 +81,16 @@ function inMemoryReportRepo(): ICommentReportRepository {
       for (const inner of byComment.values()) if (inner.delete(userId)) n++;
       return n;
     },
+    async renameUsername(oldUsername, newUsername) {
+      let n = 0;
+      for (const inner of byComment.values())
+        for (const [userId, username] of inner)
+          if (username === oldUsername) {
+            inner.set(userId, newUsername);
+            n++;
+          }
+      return n;
+    },
     async deleteAllByComment(commentId) {
       const n = byComment.get(commentId)?.size ?? 0;
       byComment.delete(commentId);

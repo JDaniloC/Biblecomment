@@ -5,6 +5,7 @@ import { getSessionUser, forbidden, notFound, serverError } from "@/lib/get-sess
 import { parseBody } from "@/lib/parse-body";
 import { SetModeratorSchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
+import { forgetSessionUser } from "@/lib/session-revalidation";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export async function PATCH(req: Request) {
     const repo = new MongoUserRepository();
     const useCase = new SetModeratorUseCase(repo);
     const updated = await useCase.execute(email, moderator);
+    if (updated._id) forgetSessionUser(updated._id);
 
     logger.info(
       { actor: actor.email, target: email, moderator, action: "set_moderator" },

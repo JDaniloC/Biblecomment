@@ -10,6 +10,10 @@ export interface IReadingReminderPreferenceRepository {
 	 * fine and stays correct regardless of the user's timezone.
 	 */
 	findAllEnabled(): Promise<ReadingReminderPreference[]>;
+	/** LGPD cascade: drop the user's preference (account deletion). */
+	deleteByUsername(username: string): Promise<void>;
+	/** Re-key the preference after a username change. */
+	renameUsername(oldUsername: string, newUsername: string): Promise<void>;
 	/** Marks the reminder as sent. Idempotent. */
 	markSent(username: string, sentAt: Date): Promise<void>;
 }

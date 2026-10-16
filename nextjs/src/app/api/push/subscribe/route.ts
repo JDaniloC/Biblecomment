@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { MongoPushSubscriptionRepository } from "@/infrastructure/repositories/MongoPushSubscriptionRepository";
-import { getSessionUser, unauthorized, serverError } from "@/lib/get-session";
+import {
+	getActiveSessionUser,
+	getSessionUser,
+	unauthorized,
+	serverError,
+} from "@/lib/get-session";
 import { parseBody } from "@/lib/parse-body";
 import { PushSubscribeSchema, PushUnsubscribeSchema } from "@/lib/schemas";
 
@@ -8,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
 	try {
-		const user = await getSessionUser();
+		const user = await getActiveSessionUser();
 		if (!user) return unauthorized();
 
 		const parsed = await parseBody(req, PushSubscribeSchema);

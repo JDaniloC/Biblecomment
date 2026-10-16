@@ -300,6 +300,15 @@ export class MongoCommentRepository implements ICommentRepository {
 		return result.modifiedCount ?? 0;
 	}
 
+	async replaceModeratorRefs(from: string, to: string): Promise<number> {
+		await connectToDatabase();
+		const [verified, hidden] = await Promise.all([
+			CommentModel.updateMany({ verifiedBy: from }, { $set: { verifiedBy: to } }),
+			CommentModel.updateMany({ hiddenBy: from }, { $set: { hiddenBy: to } }),
+		]);
+		return (verified.modifiedCount ?? 0) + (hidden.modifiedCount ?? 0);
+	}
+
 	async findForModeration(opts: {
 		q?: string;
 		cursor?: { createdAt: Date; id: string } | null;

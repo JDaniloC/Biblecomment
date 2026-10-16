@@ -47,6 +47,15 @@ function inMemoryRepo(): IUserChapterReadRepository {
         .filter((v) => v.userId === userId)
         .map((v) => v.readAt);
     },
+    async deleteAllByUser(userId) {
+      let n = 0;
+      for (const [k, v] of data) {
+        if (v.userId !== userId) continue;
+        data.delete(k);
+        n++;
+      }
+      return n;
+    },
   };
 }
 

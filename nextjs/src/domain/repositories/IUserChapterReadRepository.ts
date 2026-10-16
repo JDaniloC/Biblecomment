@@ -7,6 +7,9 @@ export interface IUserChapterReadRepository {
    */
   markRead(userId: string, abbrev: string, chapter: number): Promise<boolean>;
 
+  /** LGPD cascade: drop the user's whole reading history (account deletion). */
+  deleteAllByUser(userId: string): Promise<number>;
+
   /** Remove the read mark. No-op if it wasn't there. */
   unmarkRead(userId: string, abbrev: string, chapter: number): Promise<void>;
 

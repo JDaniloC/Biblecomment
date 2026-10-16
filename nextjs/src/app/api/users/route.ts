@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
-import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
-import { MongoCommentLikeRepository } from "@/infrastructure/repositories/MongoCommentLikeRepository";
-import { MongoDiscussionLikeRepository } from "@/infrastructure/repositories/MongoDiscussionLikeRepository";
-import { MongoCommentReportRepository } from "@/infrastructure/repositories/MongoCommentReportRepository";
-import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
-import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
+import { MongoPushSubscriptionRepository } from "@/infrastructure/repositories/MongoPushSubscriptionRepository";
+import { MongoReadingReminderPreferenceRepository } from "@/infrastructure/repositories/MongoReadingReminderPreferenceRepository";
 import { MongoNotificationRepository } from "@/infrastructure/repositories/MongoNotificationRepository";
 import { RegisterUserUseCase } from "@/application/use-cases/AuthUseCases";
-import {
-	UpdateUserProfileUseCase,
-	DeleteUserUseCase,
-} from "@/application/use-cases/UserUseCases";
+import { UpdateUserProfileUseCase } from "@/application/use-cases/UserUseCases";
+import { makeDeleteUserUseCase } from "@/app/actions/_account";
+import { DeletionIncompleteError } from "@/application/use-cases/UserUseCases";
+import { logger } from "@/lib/logger";
 import {
 	getSessionUser,
 	unauthorized,
@@ -42,7 +38,8 @@ export async function GET(req: Request) {
 
 		await connectToDatabase();
 
-		const users = await UserModel.find({})
+		// Accounts being deleted are already gone as far as others can tell.
+		const users = await UserModel.find({ deletion: { $exists: false } })
 			.sort({ createdAt: -1 })
 			.skip((page - 1) * PAGE_SIZE)
 			.limit(PAGE_SIZE)
@@ -64,7 +61,9 @@ export async function GET(req: Request) {
 			...(includeEmail ? { email: u.email } : {}),
 			username: u.username,
 			state: u.state,
-			belief: u.belief,
+			// Religious belief is sensitive data (LGPD Art. 11): only shown when
+			// the user opted in, same as the public profile.
+			belief: u.showBelief ? u.belief : undefined,
 			total_comments: countMap[u.username] ?? 0,
 		}));
 
@@ -81,7 +80,11 @@ export async function POST(req: Request) {
 		const { email, displayName, username, password } = parsed.data;
 
 		const repo = new MongoUserRepository();
-		const useCase = new RegisterUserUseCase(repo);
+		const useCase = new RegisterUserUseCase(repo, {
+			pushSubscription: new MongoPushSubscriptionRepository(),
+			readingReminder: new MongoReadingReminderPreferenceRepository(),
+			notification: new MongoNotificationRepository(),
+		});
 		const user = await useCase.execute({
 			email,
 			displayName,
@@ -137,21 +140,38 @@ export async function DELETE(req: Request) {
 		const parsed = await parseBody(req, DeleteUserSchema);
 		if (!parsed.ok) return parsed.response;
 
-		const useCase = new DeleteUserUseCase(
-			new MongoUserRepository(),
-			new MongoCommentRepository(),
-			new MongoCommentLikeRepository(),
-			new MongoDiscussionLikeRepository(),
-			new MongoCommentReportRepository(),
-			new MongoDiscussionRepository(),
-			new MongoDiscussionAnswerRepository(),
-			new MongoNotificationRepository(),
-		);
-		await useCase.execute(user.email, parsed.data.email, user.moderator);
+		const target = parsed.data.email;
+		try {
+			await makeDeleteUserUseCase().execute(user.email, target, user.moderator);
+		} catch (err) {
+			// Marked but not finished: the account is already locked and the
+			// account-maintenance cron completes the cascade.
+			if (!(err instanceof DeletionIncompleteError)) throw err;
+			logger.warn(
+				{ err: err.cause, userId: err.userId, action: "delete_user" },
+				"account deletion incomplete; left to the account-maintenance cron",
+			);
+			if (target !== user.email) {
+				logger.info(
+					{ actor: user.email, target, pending: true, action: "delete_user" },
+					"user deleted by moderator",
+				);
+			}
+			return NextResponse.json({ success: true, pending: true }, { status: 202 });
+		}
+		if (target !== user.email) {
+			logger.info(
+				{ actor: user.email, target, action: "delete_user" },
+				"user deleted by moderator",
+			);
+		}
 		return NextResponse.json({ success: true });
 	} catch (err) {
 		if (err instanceof Error && err.message === "Unauthorized") {
 			return forbidden();
+		}
+		if (err instanceof Error && err.message === "User not found") {
+			return NextResponse.json({ error: "Not found" }, { status: 404 });
 		}
 		return serverError(err);
 	}

@@ -7,6 +7,9 @@ import {
   countResetTokensForEmail,
   seedChapterRead,
   seedComment,
+  getUserId,
+  countUserRefs,
+  seedFollow,
   setDiscussionLikeCount,
   countChapterReads,
   countCommentLikesByUser,
@@ -107,6 +110,15 @@ export default defineConfig({
         },
         async "db:getUserBadges"(email: string) {
           return await getUserBadges(email);
+        },
+        async "db:getUserId"(email: string) {
+          return await getUserId(email);
+        },
+        async "db:countUserRefs"(input: { userId: string; username: string }) {
+          return await countUserRefs(input);
+        },
+        async "db:seedFollow"(input: { follower: string; following: string }) {
+          return await seedFollow(input);
         },
       });
     },

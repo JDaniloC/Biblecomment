@@ -8,7 +8,7 @@ import { IDiscussionLikeRepository } from "@/domain/repositories/IDiscussionLike
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { Discussion } from "@/domain/entities/Discussion";
 import { DiscussionAnswer } from "@/domain/entities/DiscussionAnswer";
-import { isEmailVerified, EmailNotVerifiedError } from "@/lib/auth-guards";
+import { isActiveAccount, isEmailVerified, EmailNotVerifiedError } from "@/lib/auth-guards";
 
 /**
  * Batch-enrich a list of discussions with `authorEmailVerified` (userRepo).
@@ -236,6 +236,7 @@ export class CreateDiscussionUseCase {
 	async execute(input: CreateDiscussionInput): Promise<Discussion> {
 		// Gate: only verified users may open discussions.
 		const user = await this.userRepo.findByUsername(input.username);
+		if (user && !isActiveAccount(user)) throw new Error("Unauthorized");
 		if (!isEmailVerified(user)) {
 			throw new EmailNotVerifiedError();
 		}
@@ -287,6 +288,7 @@ export class AddAnswerUseCase {
 	): Promise<Discussion> {
 		// Gate: only verified users may answer discussions.
 		const user = await this.userRepo.findByUsername(username);
+		if (user && !isActiveAccount(user)) throw new Error("Unauthorized");
 		if (!isEmailVerified(user)) {
 			throw new EmailNotVerifiedError();
 		}
