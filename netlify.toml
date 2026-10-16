@@ -24,6 +24,19 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# www -> apex is handled by Netlify's primary-domain setting (apex is the
+# primary domain), which 301s every www path to the same path on the apex.
+# For the legacy /index.html that meant two hops: www/index.html ->
+# apex/index.html -> / (the second hop lives in next.config.js redirects()).
+# This rule tries to collapse it into one hop. If Netlify applies the
+# automatic primary-domain redirect first, the rule never matches and the
+# two-hop chain (both 301s, ending at /) still holds.
+[[redirects]]
+  from   = "https://www.biblecomment.com.br/index.html"
+  to     = "https://biblecomment.com.br/"
+  status = 301
+  force  = true
+
 # TWA / PWA correctness:
 #  - Chrome's Digital Asset Links verification REQUIRES assetlinks.json
 #    served as application/json (and not redirected) or the TWA shows a

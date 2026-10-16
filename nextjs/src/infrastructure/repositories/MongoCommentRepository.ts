@@ -8,6 +8,7 @@ import {
 	ICommentDocument,
 } from "@/infrastructure/database/models/CommentModel";
 import { UserModel } from "@/infrastructure/database/models/UserModel";
+import { VerseModel } from "@/infrastructure/database/models/VerseModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
 import mongoose from "mongoose";
 
@@ -543,5 +544,85 @@ export class MongoCommentRepository implements ICommentRepository {
 		if (!doc) return null;
 		const [enriched] = await attachAuthorVerification([toEntity(doc)]);
 		return enriched ?? null;
+	}
+
+	/**
+	 * Sitemap <lastmod> for /verses/{abbrev}/{chapter}: ISO date of the newest
+	 * comment write per chapter, keyed `${abbrev}/${chapter}`; chapters
+	 * without comments are absent. Comments only link to a chapter through
+	 * verseId, so group per verse first and resolve each distinct verse once.
+	 * No hiddenAt filter on purpose: hiding/unhiding bumps updatedAt and
+	 * changes the per-verse counts the page renders. Hard deletes leave no
+	 * trace, so a deletion does not advance the date. Sitemap-only, so it
+	 * lives here rather than on ICommentRepository.
+	 */
+	// skipcq: JS-0105
+	async lastModifiedByChapter(): Promise<Record<string, string>> {
+		await connectToDatabase();
+		const rows = await CommentModel.aggregate<{
+			_id: { abbrev: string; chapter: number };
+			last: Date | null;
+		}>([
+			{
+				$group: {
+					_id: "$verseId",
+					last: { $max: { $ifNull: ["$updatedAt", "$createdAt"] } },
+				},
+			},
+			{
+				$lookup: {
+					from: VerseModel.collection.name,
+					localField: "_id",
+					foreignField: "_id",
+					pipeline: [{ $project: { _id: 0, abbrev: 1, chapter: 1 } }],
+					as: "verse",
+				},
+			},
+			{ $unwind: "$verse" },
+			{
+				$group: {
+					_id: { abbrev: "$verse.abbrev", chapter: "$verse.chapter" },
+					last: { $max: "$last" },
+				},
+			},
+		]);
+		const byChapter: Record<string, string> = {};
+		for (const row of rows) {
+			if (row.last instanceof Date)
+				byChapter[`${row._id.abbrev}/${row._id.chapter}`] =
+					row.last.toISOString();
+		}
+		return byChapter;
+	}
+
+	/**
+	 * ISO date of each author's newest comment write, keyed by username;
+	 * authors without comments are absent. Hidden comments count (hiding
+	 * bumps updatedAt). Feeds the community pages' sitemap <lastmod>, so it
+	 * lives here rather than on ICommentRepository.
+	 */
+	// skipcq: JS-0105
+	async lastModifiedByUsername(
+		usernames: string[],
+	): Promise<Record<string, string>> {
+		if (usernames.length === 0) return {};
+		await connectToDatabase();
+		const rows = await CommentModel.aggregate<{
+			_id: string;
+			last: Date | null;
+		}>([
+			{ $match: { username: { $in: usernames } } },
+			{
+				$group: {
+					_id: "$username",
+					last: { $max: { $ifNull: ["$updatedAt", "$createdAt"] } },
+				},
+			},
+		]);
+		const byUsername: Record<string, string> = {};
+		for (const row of rows) {
+			if (row.last instanceof Date) byUsername[row._id] = row.last.toISOString();
+		}
+		return byUsername;
 	}
 }

@@ -2,6 +2,23 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 const { withSentryConfig } = require("@sentry/nextjs");
+// Next's default list of bots that get blocking (non-streamed) metadata.
+// Internal path: if a Next upgrade moves it, config loading fails loudly
+// instead of silently dropping Googlebot from the list below.
+const {
+  HTML_LIMITED_BOT_UA_RE,
+} = require("next/dist/shared/lib/router/utils/html-bots");
+
+// Auth pages that must never be indexed. Their segment layouts also export
+// robots noindex metadata; the header covers every ?callbackUrl= variant
+// before any HTML is parsed.
+const NOINDEX_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -14,8 +31,29 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Googlebot is not in Next's default htmlLimitedBots list, so it gets
+  // streamed metadata: <title>/<meta robots> land in <body>, and on fast
+  // pages React inlines its boundary-completion script, whose "/&" string
+  // literal Googlebot crawled as https://biblecomment.com.br/& (a 404 in
+  // Search Console). Serving Google's crawlers blocking metadata removes
+  // that script and keeps the tags in <head>.
+  htmlLimitedBots: new RegExp(
+    `Googlebot|GoogleOther|${HTML_LIMITED_BOT_UA_RE.source}`,
+    "i",
+  ),
+  async redirects() {
+    return [
+      // Leftover URL from the legacy Create React App build. statusCode
+      // instead of `permanent: true`, which would send a 308.
+      { source: "/index.html", destination: "/", statusCode: 301 },
+    ];
+  },
   async headers() {
     return [
+      ...NOINDEX_PATHS.map((source) => ({
+        source,
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      })),
       {
         source: "/assets/:path*",
         headers: [

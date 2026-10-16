@@ -68,6 +68,34 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 		return docs.map(toEntity);
 	}
 
+	/**
+	 * Sitemap <lastmod> for /comentario/{slug}, whose dynamic content is the
+	 * book's most active discussions: ISO date of the newest discussion write
+	 * per book, keyed by abbrev; books without discussions are absent.
+	 * answersCount/likeCount move via $inc updates, which bump updatedAt.
+	 * Sitemap-only, so it lives here rather than on IDiscussionRepository.
+	 */
+	// skipcq: JS-0105
+	async lastModifiedByBook(): Promise<Record<string, string>> {
+		await connectToDatabase();
+		const rows = await DiscussionModel.aggregate<{
+			_id: string;
+			last: Date | null;
+		}>([
+			{
+				$group: {
+					_id: "$bookAbbrev",
+					last: { $max: { $ifNull: ["$updatedAt", "$createdAt"] } },
+				},
+			},
+		]);
+		const byBook: Record<string, string> = {};
+		for (const row of rows) {
+			if (row.last instanceof Date) byBook[row._id] = row.last.toISOString();
+		}
+		return byBook;
+	}
+
 	// skipcq: JS-0105
 	async findById(id: string): Promise<Discussion | null> {
 		await connectToDatabase();

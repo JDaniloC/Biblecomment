@@ -62,12 +62,14 @@ export function HomeHeader({ user }: Props) {
 						<>
 							<Link
 								href="/login"
+								rel="nofollow"
 								className="text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-brand dark:hover:text-brand transition px-2 sm:px-3 py-1.5 no-underline"
 							>
 								Entrar
 							</Link>
 							<Link
 								href="/register"
+								rel="nofollow"
 								className="text-sm font-semibold bg-brand text-white px-3 sm:px-4 py-1.5 rounded-md hover:opacity-90 transition no-underline"
 							>
 								Registrar

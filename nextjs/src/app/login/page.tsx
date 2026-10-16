@@ -283,6 +283,7 @@ function LoginContent() {
 						Não tem conta?{" "}
 						<Link
 							href="/register"
+							rel="nofollow"
 							className="font-medium text-blue-700 dark:text-blue-400 underline"
 						>
 							Cadastrar-se

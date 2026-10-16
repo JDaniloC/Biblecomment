@@ -233,6 +233,8 @@ export interface SeedCommentInput {
 	bookReference?: string;
 	text: string;
 	tags?: string[];
+	/** Backdate the comment (ISO string); sets both createdAt and updatedAt. */
+	createdAt?: string;
 }
 
 /**
@@ -256,7 +258,7 @@ export async function seedComment(
 			`seedComment: verse ${input.abbrev} ${input.chapter}:${input.verseNumber} not found — seed it via cy.seedDb first.`,
 		);
 	}
-	const now = new Date();
+	const now = input.createdAt ? new Date(input.createdAt) : new Date();
 	const doc = {
 		verseId: verse._id,
 		username: input.username,

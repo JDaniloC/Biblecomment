@@ -190,6 +190,28 @@ export class MongoCommunityMembershipRepository implements ICommunityMembershipR
 		return docs.map((d) => d.userId);
 	}
 
+	/**
+	 * `approvedUserIds` for many communities in one query, keyed by
+	 * communityId; communities without approved members are absent. Feeds
+	 * the sitemap, so it lives here rather than on the interface.
+	 */
+	async approvedUserIdsByCommunity(
+		communityIds: string[],
+	): Promise<Record<string, string[]>> {
+		if (communityIds.length === 0) return {};
+		await connectToDatabase();
+		const docs = await CommunityMembershipModel.find(
+			{
+				communityId: { $in: communityIds },
+				$or: [{ status: "approved" }, { status: { $exists: false } }],
+			},
+			{ userId: 1, communityId: 1, _id: 0 },
+		).lean();
+		const byCommunity: Record<string, string[]> = {};
+		for (const d of docs) (byCommunity[d.communityId] ??= []).push(d.userId);
+		return byCommunity;
+	}
+
 	async setRole(
 		userId: string,
 		communityId: string,

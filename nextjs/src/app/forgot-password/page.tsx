@@ -193,6 +193,7 @@ export default function ForgotPasswordPage() {
 						Lembrou da senha?{" "}
 						<Link
 							href="/login"
+							rel="nofollow"
 							className="font-medium text-blue-700 dark:text-brand underline"
 						>
 							Entrar

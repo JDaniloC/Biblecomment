@@ -416,12 +416,14 @@ function FeedAuthCta() {
       <div className="mt-4 flex items-center justify-center gap-3">
         <Link
           href="/register"
+          rel="nofollow"
           className="inline-flex items-center h-9 px-4 rounded-md bg-brand text-white text-sm font-semibold no-underline hover:opacity-90 transition"
         >
           Criar conta
         </Link>
         <Link
           href="/login"
+          rel="nofollow"
           className="text-sm font-medium text-brand hover:underline no-underline"
         >
           Entrar

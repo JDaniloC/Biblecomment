@@ -443,6 +443,7 @@ function RegisterContent() {
 									? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
 									: "/login"
 							}
+							rel="nofollow"
 							className="font-medium text-blue-700 dark:text-blue-400 underline"
 						>
 							Entrar

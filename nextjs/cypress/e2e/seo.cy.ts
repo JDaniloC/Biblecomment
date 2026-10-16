@@ -8,6 +8,22 @@
 import users from "../fixtures/users.json";
 import bookFixture from "../fixtures/book-gn.json";
 
+const GOOGLEBOT_UA =
+  "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+const NOINDEX_META = '<meta name="robots" content="noindex, nofollow"/>';
+
+/** Every <a> tag in raw HTML whose href points at /login or /register. */
+function authAnchors(html: string): string[] {
+  return html.match(/<a\b[^>]*href="\/(?:login|register)[^"]*"[^>]*>/g) ?? [];
+}
+
+/** The <url> block of `path` in the sitemap XML, or null when absent. */
+function sitemapEntry(xml: string, path: string): string | null {
+  const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = xml.match(new RegExp(`<url>\\n<loc>[^<]+${escaped}</loc>\\n[\\s\\S]*?</url>`));
+  return match ? match[0] : null;
+}
+
 describe("SEO", () => {
   beforeEach(() => {
     cy.resetDb();
@@ -31,6 +47,14 @@ describe("SEO", () => {
         expect(body, "must reference the sitemap").to.match(/Sitemap:\s*https?:\/\/[^\s]+\/sitemap\.xml/);
       });
     });
+
+    it("disallows /login and /register (covers every ?callbackUrl= variant)", () => {
+      cy.request("/robots.txt").then((res) => {
+        const body = res.body as string;
+        expect(body).to.match(/^Disallow: \/login$/m);
+        expect(body).to.match(/^Disallow: \/register$/m);
+      });
+    });
   });
 
   describe("/sitemap.xml", () => {
@@ -42,7 +66,6 @@ describe("SEO", () => {
 
         // Static pages.
         expect(body).to.match(/<loc>[^<]+\/<\/loc>/);
-        expect(body).to.match(/<loc>[^<]+\/login<\/loc>/);
         expect(body).to.match(/<loc>[^<]+\/help<\/loc>/);
 
         // Chapter URLs derived from seeded books. Genesis has 50
@@ -50,6 +73,191 @@ describe("SEO", () => {
         // should all be present.
         expect(body).to.match(/<loc>[^<]+\/verses\/gn\/1<\/loc>/);
         expect(body).to.match(/<loc>[^<]+\/verses\/gn\/50<\/loc>/);
+      });
+    });
+
+    it("never lists auth/utility routes or query-string URLs", () => {
+      cy.request("/sitemap.xml").then((res) => {
+        const body = res.body as string;
+        expect(body).not.to.match(/<loc>[^<]+\/(login|register|forgot-password|reset-password|verify-email|offline)[^<]*<\/loc>/);
+        expect(body).not.to.include("callbackUrl");
+        expect(body).not.to.match(/<loc>[^<]*\?[^<]*<\/loc>/);
+      });
+    });
+
+    it("omits <lastmod> when there is no real change date", () => {
+      cy.request("/sitemap.xml").then((res) => {
+        const body = res.body as string;
+        for (const path of ["/", "/help", "/comentario", "/comentario/genesis", "/verses/gn/1", "/verses/gn/50"]) {
+          const entry = sitemapEntry(body, path);
+          expect(entry, `${path} is listed`).to.not.equal(null);
+          expect(entry, `${path} has no lastmod`).not.to.include("<lastmod>");
+        }
+      });
+    });
+
+    it("dates a chapter by its newest comment and leaves the others alone", () => {
+      const commentedAt = "2026-05-10T08:00:00.000Z";
+      cy.task("db:seedComment", {
+        username: "alice",
+        abbrev: "gn",
+        chapter: 1,
+        verseNumber: 1,
+        text: "No princípio Deus criou os céus e a terra.",
+        createdAt: commentedAt,
+      });
+      cy.request("/sitemap.xml").then((res) => {
+        const body = res.body as string;
+        expect(sitemapEntry(body, "/verses/gn/1")).to.include(`<lastmod>${commentedAt}</lastmod>`);
+        expect(sitemapEntry(body, "/verses/gn/2")).not.to.include("<lastmod>");
+      });
+    });
+
+    it("dates a community by its approved members' newest comment", () => {
+      cy.resetDb();
+      cy.seedDb({
+        users: [users.alice, users.bob],
+        books: [bookFixture.book],
+        verses: bookFixture.verses,
+        communities: [{ slug: "reformados", name: "Reformados", createdBy: users.alice.username, memberCount: 1 }],
+        communityMemberships: [
+          { username: users.alice.username, communitySlug: "reformados", status: "approved", role: "moderator" },
+          { username: users.bob.username, communitySlug: "reformados", status: "pending" },
+        ],
+      });
+      // Future dates so they can only come from these comments, never from
+      // the community doc's seed-time updatedAt.
+      const memberCommentAt = "2099-01-01T00:00:00.000Z";
+      cy.task("db:seedComment", {
+        username: users.alice.username,
+        abbrev: "gn",
+        chapter: 1,
+        verseNumber: 1,
+        text: "Comentário de membro aprovado.",
+        createdAt: memberCommentAt,
+      });
+      cy.task("db:seedComment", {
+        username: users.bob.username,
+        abbrev: "gn",
+        chapter: 1,
+        verseNumber: 2,
+        text: "Comentário de quem ainda não foi aprovado.",
+        createdAt: "2099-06-01T00:00:00.000Z",
+      });
+      cy.request("/sitemap.xml").then((res) => {
+        const body = res.body as string;
+        expect(sitemapEntry(body, "/communities/reformados")).to.include(`<lastmod>${memberCommentAt}</lastmod>`);
+        expect(sitemapEntry(body, "/communities")).to.include("<lastmod>");
+      });
+    });
+
+    it("dates a commentary hub by its newest discussion", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.task<{ id: string }>("db:seedComment", {
+        username: "alice",
+        abbrev: "gn",
+        chapter: 1,
+        verseNumber: 1,
+        text: "No princípio Deus criou os céus e a terra.",
+        tags: [],
+      }).then((r) => {
+        cy.request({
+          method: "POST",
+          url: "/api/discussion/gn",
+          body: { commentId: r.id, title: "Sobre a criação", body: "Corpo" },
+        })
+          .its("status")
+          .should("eq", 201);
+      });
+      cy.request("/sitemap.xml").then((res) => {
+        const entry = sitemapEntry(res.body as string, "/comentario/genesis") ?? "";
+        const lastmod = entry.match(/<lastmod>([^<]+)<\/lastmod>/)?.[1];
+        expect(lastmod, "hub lastmod").to.be.a("string");
+        expect(Math.abs(Date.now() - new Date(lastmod as string).getTime())).to.be.lessThan(10 * 60 * 1000);
+      });
+    });
+  });
+
+  describe("Auth pages are noindex", () => {
+    for (const url of [
+      "/login",
+      "/login?callbackUrl=%2Fverses%2Fgn%2F1",
+      "/register",
+      "/forgot-password",
+    ]) {
+      it(`${url} sends noindex in the raw HTML and the X-Robots-Tag header`, () => {
+        cy.request(url).then((res) => {
+          const html = res.body as string;
+          expect(html).to.include(NOINDEX_META);
+          expect(html).not.to.match(/<meta name="robots" content="index, follow"/);
+          expect(res.headers["x-robots-tag"]).to.eq("noindex, nofollow");
+        });
+      });
+    }
+
+    it("serves Googlebot the robots meta inside <head>", () => {
+      cy.request({ url: "/login?callbackUrl=%2Fverses%2Fgn%2F1", headers: { "User-Agent": GOOGLEBOT_UA } }).then((res) => {
+        const html = res.body as string;
+        const metaAt = html.indexOf(NOINDEX_META);
+        expect(metaAt, "robots meta present").to.be.greaterThan(-1);
+        expect(metaAt, "robots meta before </head>").to.be.lessThan(html.indexOf("</head>"));
+      });
+    });
+  });
+
+  describe("Googlebot never sees React's inline streaming runtime", () => {
+    // That script carries a "/&" string literal Googlebot crawled as
+    // https://biblecomment.com.br/& (a 404). It's emitted when streamed
+    // metadata resolves after the shell, which htmlLimitedBots prevents.
+    for (const url of ["/login", "/help"]) {
+      it(`${url} has no "/&" literal for Googlebot`, () => {
+        cy.request({ url, headers: { "User-Agent": GOOGLEBOT_UA } }).then((res) => {
+          expect(res.body as string).not.to.include('"/&"');
+        });
+      });
+    }
+  });
+
+  describe("Login/register links", () => {
+    for (const url of ["/verses/gn/1", "/", "/home", "/communities"]) {
+      it(`${url} links to /login and /register only with rel=nofollow and no callbackUrl`, () => {
+        cy.request(url).then((res) => {
+          const anchors = authAnchors(res.body as string);
+          expect(anchors.length, "page renders at least one auth link").to.be.greaterThan(0);
+          for (const tag of anchors) {
+            expect(tag).to.match(/\brel="[^"]*\bnofollow\b[^"]*"/);
+            expect(tag).not.to.include("callbackUrl");
+          }
+        });
+      });
+    }
+
+    it("the header Entrar link still returns the visitor to the chapter", () => {
+      cy.visit("/verses/gn/1", {
+        // Keep the chapter tour from opening over the header.
+        onBeforeLoad(win) {
+          win.localStorage.setItem("tutorial:chapter-v1:completed", "1");
+        },
+      });
+      cy.get('[data-testid="auth-menu-login"]')
+        .should("have.attr", "href", "/login")
+        .and("have.attr", "rel", "nofollow")
+        // The callbackUrl is attached by the onClick handler, so wait for
+        // React to hydrate the anchor before clicking.
+        .should(($a) => {
+          expect(Object.keys($a[0]).some((k) => k.startsWith("__reactProps"))).to.eq(true);
+        })
+        .click();
+      cy.location("pathname").should("eq", "/login");
+      cy.location("search").should("eq", "?callbackUrl=%2Fverses%2Fgn%2F1");
+    });
+  });
+
+  describe("Redirects", () => {
+    it("/index.html 301s to /", () => {
+      cy.request({ url: "/index.html", followRedirect: false, failOnStatusCode: false }).then((res) => {
+        expect(res.status).to.eq(301);
+        expect(res.redirectedToUrl).to.eq(`${Cypress.config("baseUrl")}/`);
       });
     });
   });

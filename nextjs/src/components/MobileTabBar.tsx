@@ -63,7 +63,7 @@ export function MobileTabBar({ user }: { user: SessionUser | null }) {
             <span>Notificações</span>
           </button>
         ) : (
-          <Link href="/login" className={cls("notificacoes")} data-testid="tab-entrar">
+          <Link href="/login" rel="nofollow" className={cls("notificacoes")} data-testid="tab-entrar">
             {ICON.entrar}<span>Entrar</span>
           </Link>
         )}

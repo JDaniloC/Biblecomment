@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import { CommunityActiveSelector } from "@/components/CommunityActiveSelector";
@@ -16,7 +17,7 @@ interface SessionUser {
 interface Props {
 	/** When null, the component renders an "Entrar" CTA instead. */
 	user: SessionUser | null;
-	/** Callback URL appended to the login link when not signed in. */
+	/** Where to send the visitor back after logging in (applied on click). */
 	loginCallbackUrl?: string;
 }
 
@@ -158,6 +159,7 @@ const ICONS = {
 export function AuthMenu({ user, loginCallbackUrl }: Props) {
 	const [open, setOpen] = useState(false);
 	const confirm = useConfirm();
+	const router = useRouter();
 
 	const handleSignOut = async () => {
 		setOpen(false);
@@ -173,12 +175,32 @@ export function AuthMenu({ user, loginCallbackUrl }: Props) {
 	};
 
 	if (!user) {
-		const href = loginCallbackUrl
-			? `/login?callbackUrl=${encodeURIComponent(loginCallbackUrl)}`
-			: "/login";
+		// The rendered href is always the bare /login. Baking the callbackUrl
+		// into it gave every chapter its own /login?callbackUrl=... URL, and
+		// Googlebot collected them as duplicates. The callback is attached on
+		// a plain left click instead; modified clicks (new tab/window) and
+		// clicks before hydration follow the bare href, and login then lands
+		// on its default /home.
 		return (
 			<Link
-				href={href}
+				href="/login"
+				rel="nofollow"
+				data-testid="auth-menu-login"
+				onClick={(e) => {
+					if (
+						!loginCallbackUrl ||
+						e.button !== 0 ||
+						e.metaKey ||
+						e.ctrlKey ||
+						e.shiftKey ||
+						e.altKey
+					)
+						return;
+					e.preventDefault();
+					router.push(
+						`/login?callbackUrl=${encodeURIComponent(loginCallbackUrl)}`,
+					);
+				}}
 				className="flex-shrink-0 inline-flex items-center h-9 px-3 rounded-md bg-brand text-white text-sm font-semibold no-underline whitespace-nowrap hover:opacity-90 transition"
 			>
 				Entrar
