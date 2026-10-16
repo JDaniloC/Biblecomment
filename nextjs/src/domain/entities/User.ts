@@ -73,6 +73,14 @@ export interface User {
    * account can't sign in and existing sessions are rejected (lib/auth.ts).
    */
   deletion?: UserDeletion;
+  /**
+   * Revocation counter for sessions. Bumped atomically with every password
+   * change or reset and on disable; a session token minted at a different
+   * version is rejected (lib/auth.ts). Absent = 0 (accounts that predate it).
+   * A backup restore re-creates an account at a random version (backups
+   * don't carry it), so no token minted before the data loss matches it.
+   */
+  sessionVersion?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -7,6 +7,7 @@
  */
 
 import users from "../fixtures/users.json";
+import type { FoundUser } from "../tasks/db";
 
 describe("Password change", () => {
   beforeEach(() => {
@@ -116,6 +117,167 @@ describe("Password change", () => {
       cy.clearCookies();
       cy.loginAs(users.alice.email, newPass);
       cy.request("/api/users/me").its("status").should("eq", 200);
+    });
+  });
+
+  // A change bumps the account's session version: every other session
+  // ends, and the device that made the change is signed in again with the
+  // new password (a new cookie on the same response).
+  describe("sessions", () => {
+    const newPass = "rotated-pass-2026";
+
+    /** A replayed session that no longer authenticates anything. */
+    function expectRevoked(session: Cypress.Cookie[], label: string) {
+      cy.useSessionCookies(session);
+      cy.request("/api/auth/session").then((res) =>
+        expect(res.body, `${label}: /api/auth/session`).to.equal(null),
+      );
+      // The null session response clears the cookie, so replay it again.
+      cy.useSessionCookies(session);
+      cy.request({ method: "POST", url: "/api/me/reading-session", failOnStatusCode: false })
+        .its("status")
+        .should("eq", 401);
+    }
+
+    function changePassword(currentPassword: string) {
+      return cy.request({
+        method: "POST",
+        url: "/api/users/me/password",
+        body: { currentPassword, newPassword: newPass },
+        failOnStatusCode: false,
+      });
+    }
+
+    it("API change: the other session ends, this client keeps a fresh one", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.sessionCookies().then((other) => {
+        expect(other, "session A (another device)").to.not.be.empty;
+        cy.clearCookies();
+        cy.loginAs(users.alice.email, users.alice.password);
+
+        cy.sessionCookies().then((before) => {
+          changePassword(users.alice.password).then((res) => {
+            expect(res.status).to.eq(200);
+            expect(res.body).to.deep.eq({ success: true, sessionKept: true });
+          });
+          cy.task<FoundUser>("db:findUser", users.alice.email)
+            .its("sessionVersion")
+            .should("eq", 1);
+
+          cy.sessionCookies().then((after) => {
+            expect(after, "a new session cookie for this client").to.not.be.empty;
+            expect(after.map((c) => c.value).join()).to.not.eq(
+              before.map((c) => c.value).join(),
+            );
+
+            // This client's new session works, at the new version.
+            cy.useSessionCookies(after);
+            cy.request("/api/auth/session").then((s) => {
+              expect(s.body?.user?.email).to.eq(users.alice.email);
+              expect(s.body?.user?.sessionVersion).to.eq(1);
+            });
+            cy.request("POST", "/api/me/reading-session").its("status").should("eq", 200);
+
+            expectRevoked(other, "the other device");
+            expectRevoked(before, "this client's pre-change cookie");
+
+            cy.useSessionCookies(after);
+            cy.request("POST", "/api/me/reading-session").its("status").should("eq", 200);
+          });
+        });
+      });
+    });
+
+    it("a wrong current password revokes nothing", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.sessionCookies().then((other) => {
+        cy.clearCookies();
+        cy.loginAs(users.alice.email, users.alice.password);
+        changePassword("totally-wrong").its("status").should("eq", 403);
+
+        cy.task<FoundUser>("db:findUser", users.alice.email)
+          .its("sessionVersion")
+          .should("eq", 0);
+        cy.useSessionCookies(other);
+        cy.request("POST", "/api/me/reading-session").its("status").should("eq", 200);
+      });
+    });
+
+    it("UI change from the profile keeps this device signed in and ends the other session", () => {
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.sessionCookies().then((other) => {
+        cy.clearCookies();
+        cy.loginAs(users.alice.email, users.alice.password);
+
+        cy.visit("/profile?tab=config");
+        cy.get("#current-password").type(users.alice.password);
+        cy.get("#new-password").type(newPass);
+        cy.get("#confirm-new-password").type(newPass);
+        cy.contains("button", "Atualizar senha").click();
+        cy.contains("Senha atualizada. As outras sessões foram encerradas.").should(
+          "be.visible",
+        );
+        cy.task<FoundUser>("db:findUser", users.alice.email)
+          .its("sessionVersion")
+          .should("eq", 1);
+
+        // Still signed in on this device: /profile renders instead of
+        // redirecting to /login, and a session-gated write goes through.
+        cy.reload();
+        cy.location("pathname").should("eq", "/profile");
+        cy.request("POST", "/api/me/reading-session").its("status").should("eq", 200);
+
+        expectRevoked(other, "the other device");
+      });
+    });
+
+    it("cancels a pending e-mail change: its confirmation link stops working", () => {
+      const newEmail = "alice-new@cypress.test";
+      const rawToken = "pending-email-change-token";
+      cy.resetDb();
+      cy.seedDb({ users: [{ ...users.alice, pendingEmail: newEmail }] });
+      cy.task("db:insertEmailVerificationToken", {
+        email: users.alice.email,
+        rawToken,
+        tokenEmail: newEmail,
+        expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      });
+      cy.task<FoundUser>("db:findUser", users.alice.email)
+        .its("pendingEmail")
+        .should("eq", newEmail);
+
+      cy.loginAs(users.alice.email, users.alice.password);
+      changePassword(users.alice.password).its("status").should("eq", 200);
+
+      cy.task<FoundUser>("db:findUser", users.alice.email)
+        .its("pendingEmail")
+        .should("be.null");
+
+      // The token itself survives; clearing pendingEmail is what kills it.
+      cy.visit(`/verify-email?token=${rawToken}`);
+      cy.get('[data-testid="verify-email-confirm"]').click();
+      cy.get('[data-testid="verify-email-error"]').should("be.visible");
+      cy.task<FoundUser>("db:findUser", newEmail).its("exists").should("eq", false);
+      cy.task<FoundUser>("db:findUser", users.alice.email).its("exists").should("eq", true);
+    });
+
+    it("keeps a first-time verification link working", () => {
+      const rawToken = "first-time-verification-token";
+      cy.resetDb();
+      cy.seedDb({ users: [{ ...users.alice, emailVerified: false }] });
+      cy.task("db:insertEmailVerificationToken", {
+        email: users.alice.email,
+        rawToken,
+        tokenEmail: users.alice.email,
+        expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      });
+
+      cy.loginAs(users.alice.email, users.alice.password);
+      changePassword(users.alice.password).its("status").should("eq", 200);
+
+      cy.visit(`/verify-email?token=${rawToken}`);
+      cy.get('[data-testid="verify-email-confirm"]').click();
+      cy.get('[data-testid="verify-email-success"]').should("be.visible");
     });
   });
 });

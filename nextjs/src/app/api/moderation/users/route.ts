@@ -8,6 +8,7 @@ import {
 import { forgetSessionUser } from "@/lib/session-revalidation";
 import {
   getSessionUser,
+  getActiveSessionUser,
   forbidden,
   badRequest,
   notFound,
@@ -66,7 +67,7 @@ export async function GET(req: Request) {
 /** Disable / re-enable an account. Moderator-only. */
 export async function PATCH(req: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await getActiveSessionUser();
     if (!user?.moderator) return forbidden();
 
     const parsed = await parseBody(req, SetUserDisabledSchema);

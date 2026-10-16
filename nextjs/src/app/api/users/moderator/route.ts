@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { SetModeratorUseCase } from "@/application/use-cases/UserUseCases";
-import { getSessionUser, forbidden, notFound, serverError } from "@/lib/get-session";
+import { getActiveSessionUser, forbidden, notFound, serverError } from "@/lib/get-session";
 import { parseBody } from "@/lib/parse-body";
 import { SetModeratorSchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(req: Request) {
   try {
-    const actor = await getSessionUser();
+    const actor = await getActiveSessionUser();
     if (!actor?.moderator) return forbidden();
 
     const parsed = await parseBody(req, SetModeratorSchema);

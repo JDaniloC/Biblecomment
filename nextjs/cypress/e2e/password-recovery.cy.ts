@@ -190,6 +190,54 @@ describe("Password recovery", () => {
 
       cy.contains(/não coincidem/i).should("be.visible");
     });
+
+    it("a reset ends every session of the account, including this browser's", () => {
+      const raw = "reset-ends-sessions-token";
+      const newPassword = "after-reset-pass-2026";
+
+      // Signed in as alice in this very browser while the reset happens.
+      cy.loginAs(users.alice.email, users.alice.password);
+      cy.sessionCookies().then((before) => {
+        expect(before, "alice's session before the reset").to.not.be.empty;
+        cy.task("db:insertResetToken", {
+          email: users.alice.email,
+          rawToken: raw,
+          expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+        });
+
+        cy.visit(`/reset-password?token=${raw}`);
+        cy.get("#reset-password").type(newPassword);
+        cy.get("#reset-password-confirm").type(newPassword);
+        cy.contains("button", /redefinir/i).click();
+        cy.location("pathname").should("eq", "/login");
+        cy.get('[data-testid="reset-success"]')
+          .should("be.visible")
+          .and("contain", "encerramos todas as sessões desta conta");
+
+        cy.task<{ sessionVersion: number }>("db:findUser", users.alice.email)
+          .its("sessionVersion")
+          .should("eq", 1);
+
+        // Whatever this browser still holds no longer authenticates...
+        cy.request("/api/auth/session").then((res) =>
+          expect(res.body, "this browser's session").to.equal(null),
+        );
+        // ...and neither does any copy of the pre-reset session.
+        cy.useSessionCookies(before);
+        cy.request("/api/auth/session").then((res) =>
+          expect(res.body, "replayed pre-reset session").to.equal(null),
+        );
+        cy.useSessionCookies(before);
+        cy.request({ method: "POST", url: "/api/me/reading-session", failOnStatusCode: false })
+          .its("status")
+          .should("eq", 401);
+
+        // The new password signs in again.
+        cy.clearCookies();
+        cy.loginAs(users.alice.email, newPassword);
+        cy.request("POST", "/api/me/reading-session").its("status").should("eq", 200);
+      });
+    });
   });
 
   describe("/login link", () => {

@@ -3,7 +3,9 @@ import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { IPushSubscriptionRepository } from "@/domain/repositories/IPushSubscriptionRepository";
 import { IReadingReminderPreferenceRepository } from "@/domain/repositories/IReadingReminderPreferenceRepository";
 import { INotificationRepository } from "@/domain/repositories/INotificationRepository";
+import { IPasswordResetTokenRepository } from "@/domain/repositories/IPasswordResetTokenRepository";
 import { User } from "@/domain/entities/User";
+import { isActiveAccount } from "@/lib/auth-guards";
 import {
   sanitizeUsername,
   isValidUsername,
@@ -143,21 +145,101 @@ export class UpdateUserProfileUseCase {
   }
 }
 
-export class ChangePasswordUseCase {
-  constructor(private readonly userRepo: IUserRepository) {}
+/**
+ * Run cleanup steps that follow a write that already committed. Every step
+ * runs even if another fails, and a failure is returned instead of thrown:
+ * the caller must not report the committed write as failed, so it logs it.
+ * Returns undefined when every step succeeded.
+ */
+export async function settleCleanup(steps: Array<() => Promise<unknown>>): Promise<unknown> {
+  const results = await Promise.allSettled(steps.map((step) => Promise.resolve().then(step)));
+  const failures = results.flatMap((r) => (r.status === "rejected" ? [r.reason] : []));
+  if (failures.length === 0) return undefined;
+  return failures.length === 1
+    ? failures[0]
+    : new AggregateError(failures, "several cleanup steps failed");
+}
 
+/**
+ * Revoke a pending e-mail change once the password was rotated (change or
+ * reset). Its verification link is confirmed without a session, so a change
+ * requested from a compromised session would otherwise still move the
+ * account to the attacker's address after the owner locked them out, and
+ * the account with it (through password recovery). Clearing `pendingEmail`
+ * is enough: confirming a link requires the token's address to equal the
+ * account's current or pending e-mail, so the change link fails from then
+ * on. The verification tokens are left alone on purpose — a first-time
+ * verification link (issued for the current address) must keep working.
+ */
+export async function revokePendingEmailChange(
+  userRepo: Pick<IUserRepository, "clearPendingEmail">,
+  userId: string,
+): Promise<void> {
+  await userRepo.clearPendingEmail(userId);
+}
+
+/** What a password change revokes besides the sessions and the pending e-mail change. */
+export interface PasswordChangeTokenRepos {
+  /** Outstanding reset links die with the old password. */
+  passwordReset: Pick<IPasswordResetTokenRepository, "deleteByUserId">;
+}
+
+export interface ChangePasswordResult {
+  userId: string;
+  sessionVersion: number;
+  /**
+   * Set when revoking the reset links or the pending e-mail change failed
+   * after the new password was stored. The change itself succeeded, so the
+   * caller logs this instead of reporting an error.
+   */
+  cleanupError?: unknown;
+}
+
+export class ChangePasswordUseCase {
+  constructor(
+    private readonly userRepo: IUserRepository,
+    private readonly tokens: PasswordChangeTokenRepos,
+  ) {}
+
+  /**
+   * Rotate the password and bump the account's session version, which
+   * revokes every existing session (the caller re-signs the current one),
+   * then revoke the reset links and any pending e-mail change. Returns the
+   * new version.
+   */
   async execute(
     email: string,
     currentPassword: string,
     newPassword: string,
-  ): Promise<void> {
+  ): Promise<ChangePasswordResult> {
     const user = await this.userRepo.findByEmail(email);
-    if (!user) throw new Error("User not found");
+    if (!user || !user._id) throw new Error("User not found");
+    // A disabled or deleting account can't sign in, so it can't change
+    // its password either (the session may be up to a cache TTL stale).
+    if (!isActiveAccount(user)) throw new Error("Unauthorized");
 
     const valid = await bcrypt.compare(currentPassword, user.password);
     if (!valid) throw new Error("Invalid current password");
 
     const hashed = await bcrypt.hash(newPassword, 12);
-    await this.userRepo.updatePassword(email, hashed);
+    // Compare-and-set on the hash we just verified: if a reset (or another
+    // change) landed in between, the password typed as "current" no longer
+    // is, and the reset must win.
+    const userId = user._id;
+    const sessionVersion = await this.userRepo.updatePasswordById(userId, hashed, {
+      expectedHash: user.password,
+    });
+    if (sessionVersion === null) throw new Error("Invalid current password");
+
+    // After the write: from then on the revoked sessions can't request an
+    // e-mail change (that action re-checks the session version), so this
+    // catches every earlier request except one still in flight.
+    const cleanupError = await settleCleanup([
+      () => this.tokens.passwordReset.deleteByUserId(userId),
+      () => revokePendingEmailChange(this.userRepo, userId),
+    ]);
+    return cleanupError === undefined
+      ? { userId, sessionVersion }
+      : { userId, sessionVersion, cleanupError };
   }
 }

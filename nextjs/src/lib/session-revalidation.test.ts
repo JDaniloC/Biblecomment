@@ -86,7 +86,12 @@ describe("createSessionRevalidator", () => {
     const { revalidator, users } = setup();
     users.set(
       "u1",
-      fakeUser({ moderator: true, emailVerifiedAt: new Date(), pendingEmail: "new@example.com" }),
+      fakeUser({
+        moderator: true,
+        emailVerifiedAt: new Date(),
+        pendingEmail: "new@example.com",
+        sessionVersion: 2,
+      }),
     );
 
     await expect(revalidator.loadSessionUser("u1")).resolves.toEqual({
@@ -98,6 +103,7 @@ describe("createSessionRevalidator", () => {
         moderator: true,
         emailVerified: true,
         pendingEmail: "new@example.com",
+        sessionVersion: 2,
       },
       fetchedAt: T0,
     });
@@ -116,6 +122,7 @@ describe("createSessionRevalidator", () => {
         moderator: false,
         emailVerified: false,
         pendingEmail: null,
+        sessionVersion: 0,
       }),
       fetchedAt: T0,
     });
@@ -410,6 +417,115 @@ describe("createSessionRevalidator", () => {
     expect(findById).toHaveBeenCalledTimes(2);
   });
 
+  it("treats a cached entry below minSessionVersion as a miss", async () => {
+    const { revalidator, users, findById } = setup();
+    users.set("u1", fakeUser({ sessionVersion: 1 }));
+    await revalidator.loadSessionUser("u1");
+    users.set("u1", fakeUser({ sessionVersion: 2 }));
+
+    const state = await revalidator.loadSessionUser("u1", { minSessionVersion: 2 });
+
+    expect(findById).toHaveBeenCalledTimes(2);
+    expect(state).toMatchObject({ status: "active", user: { sessionVersion: 2 } });
+  });
+
+  it("serves a cached entry at or above minSessionVersion", async () => {
+    const { revalidator, users, findById } = setup();
+    users.set("u1", fakeUser({ sessionVersion: 2 }));
+    await revalidator.loadSessionUser("u1");
+
+    await expect(
+      revalidator.loadSessionUser("u1", { minSessionVersion: 2 }),
+    ).resolves.toMatchObject({ user: { sessionVersion: 2 } });
+    await expect(
+      revalidator.loadSessionUser("u1", { minSessionVersion: 1 }),
+    ).resolves.toMatchObject({ user: { sessionVersion: 2 } });
+    expect(findById).toHaveBeenCalledTimes(1);
+  });
+
+  it("serves a cached inactive entry whatever minSessionVersion says", async () => {
+    const { revalidator, findById } = setup();
+    await revalidator.loadSessionUser("ghost");
+
+    await expect(
+      revalidator.loadSessionUser("ghost", { minSessionVersion: 5 }),
+    ).resolves.toEqual(INACTIVE);
+    expect(findById).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads again, once, when a joined in-flight lookup resolves below minSessionVersion", async () => {
+    const { revalidator, users, findById } = setup();
+    const gate = deferred<User | null>();
+    findById.mockReturnValueOnce(gate.promise);
+    users.set("u1", fakeUser({ sessionVersion: 2 }));
+
+    // A read that started before the bump is still in flight...
+    const older = revalidator.loadSessionUser("u1");
+    // ...when the re-signed token (version 2) asks.
+    const newer = revalidator.loadSessionUser("u1", { minSessionVersion: 2 });
+    gate.resolve(fakeUser({ sessionVersion: 1 }));
+
+    await expect(older).resolves.toMatchObject({ user: { sessionVersion: 1 } });
+    await expect(newer).resolves.toMatchObject({ user: { sessionVersion: 2 } });
+    expect(findById).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns a new read below minSessionVersion unchanged (the caller rejects it)", async () => {
+    const { revalidator, users, findById } = setup();
+    users.set("u1", fakeUser({ sessionVersion: 1 }));
+
+    await expect(
+      revalidator.loadSessionUser("u1", { minSessionVersion: 3 }),
+    ).resolves.toMatchObject({ status: "active", user: { sessionVersion: 1 } });
+    await expect(
+      revalidator.loadSessionUser("u1", { fresh: true, minSessionVersion: 3 }),
+    ).resolves.toMatchObject({ status: "active", user: { sessionVersion: 1 } });
+    expect(findById).toHaveBeenCalledTimes(2);
+  });
+
+  it("bounds an old token's survival across instances by the TTL, and never logs out the re-signed one", async () => {
+    const { users, instance, advance } = setup();
+    const a = instance();
+    const b = instance();
+    users.set("u1", fakeUser({ sessionVersion: 0 }));
+
+    // Instance B caches the account before the password change.
+    await b.revalidator.loadSessionUser("u1");
+    advance(1_000);
+
+    // The change lands on A: version bumped, A's own cache dropped.
+    users.set("u1", fakeUser({ sessionVersion: 1 }));
+    a.revalidator.forgetSessionUser("u1");
+    await expect(
+      a.revalidator.loadSessionUser("u1", { minSessionVersion: 0 }),
+    ).resolves.toMatchObject({ user: { sessionVersion: 1 } });
+
+    // An old token (version 0) still matches B's pre-bump entry until the
+    // TTL runs out; that is the documented bound.
+    await expect(
+      b.revalidator.loadSessionUser("u1", { minSessionVersion: 0 }),
+    ).resolves.toMatchObject({ user: { sessionVersion: 0 } });
+    expect(b.findById).toHaveBeenCalledTimes(1);
+
+    // The re-signed token (version 1) makes B refetch instead of judging it
+    // against data from before the bump.
+    await expect(
+      b.revalidator.loadSessionUser("u1", { minSessionVersion: 1 }),
+    ).resolves.toMatchObject({ user: { sessionVersion: 1 } });
+    expect(b.findById).toHaveBeenCalledTimes(2);
+
+    // B's refreshed entry now rejects the old token (the caller compares).
+    await expect(
+      b.revalidator.loadSessionUser("u1", { minSessionVersion: 0 }),
+    ).resolves.toMatchObject({ user: { sessionVersion: 1 } });
+
+    // And once the TTL elapses everywhere, nothing pre-bump is served.
+    advance(60_000);
+    await expect(
+      b.revalidator.loadSessionUser("u1", { minSessionVersion: 0 }),
+    ).resolves.toMatchObject({ user: { sessionVersion: 1 } });
+  });
+
   it("joins an in-flight lookup younger than 5s", async () => {
     const { revalidator, findById, advance } = setup();
     const gate = deferred<User | null>();
@@ -466,6 +582,22 @@ describe("default instance", () => {
     repoFindById.mockResolvedValue(null);
     forgetSessionUser("default-1");
     await expect(loadSessionUser("default-1")).resolves.toEqual(INACTIVE);
+    expect(repoFindById).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares one cache between separately bundled copies of the module", async () => {
+    // The production build bundles this module once for server actions and
+    // once for routes/RSC; a forget from one copy must reach the other.
+    repoFindById.mockResolvedValue(fakeUser({ _id: "default-2" }));
+    await loadSessionUser("default-2");
+    expect(repoFindById).toHaveBeenCalledTimes(1);
+
+    vi.resetModules();
+    const otherCopy = await import("./session-revalidation");
+    repoFindById.mockResolvedValue(null);
+    otherCopy.forgetSessionUser("default-2");
+
+    await expect(loadSessionUser("default-2")).resolves.toEqual(INACTIVE);
     expect(repoFindById).toHaveBeenCalledTimes(2);
   });
 });

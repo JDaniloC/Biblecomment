@@ -21,6 +21,27 @@
  * can't roll a token back to the old username/email after another instance
  * refreshed it. This compares clocks across instances, so it is as precise as
  * their clock sync; skew only widens the window, it never makes it unbounded.
+ *
+ * Revocation: a password change or reset (and disabling) bumps the user's
+ * `sessionVersion`, and the jwt callback rejects a token minted at another
+ * version. The token passes its version as `minSessionVersion`, so data read
+ * before the bump (another instance's cache, or a lookup that slipped past
+ * `notBefore` through clock skew) can never log out the device that was just
+ * re-signed at the new version. The other direction keeps the TTL bound: an
+ * old token served from another instance's pre-bump entry survives there for
+ * at most 60s, the same as disable/delete.
+ *
+ * Within that window a revoked session can still read, and can still do
+ * everyday writes (comments, discussions, likes, follows, reading data,
+ * profile fields), which is accepted. These re-check with a fresh read
+ * (getActiveSessionUser in lib/get-session.ts) and are refused at once:
+ * - the data export and the comment import (/api/users/me/export, /import);
+ * - account changes: e-mail change request and cancel, password change
+ *   (action and /api/users/me/password), rename, self-deletion (action and
+ *   DELETE /api/users, which also serves moderator deletions);
+ * - push subscription (POST /api/push/subscribe) and the reading reminder
+ *   (PUT /api/me/reading-reminder);
+ * - the admin backups (/api/backup/*).
  */
 
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
@@ -36,6 +57,8 @@ export interface SessionUserClaims {
   moderator: boolean;
   emailVerified: boolean;
   pendingEmail: string | null;
+  /** User.sessionVersion (0 when absent); a token at another version is revoked. */
+  sessionVersion: number;
 }
 
 /**
@@ -63,6 +86,12 @@ export interface LoadSessionUserOptions {
    * never go back to an older read.
    */
   notBefore?: number;
+  /**
+   * The token's `sessionVersion`. A cached entry or joined in-flight lookup
+   * for an active account below it predates the bump that minted the token,
+   * so it is treated as a miss. A new read is returned as-is.
+   */
+  minSessionVersion?: number;
 }
 
 export interface SessionRevalidatorDeps {
@@ -100,9 +129,15 @@ function toState(user: User | null, fetchedAt: number): CachedState {
       moderator: user.moderator ?? false,
       emailVerified: !!user.emailVerifiedAt,
       pendingEmail: user.pendingEmail ?? null,
+      sessionVersion: user.sessionVersion ?? 0,
     },
     fetchedAt,
   };
+}
+
+/** Whether `state` was read before the token's version was minted. */
+function predatesVersion(state: SessionUserState, min: number): boolean {
+  return state.status === "active" && state.user.sessionVersion < min;
 }
 
 export function createSessionRevalidator(deps: SessionRevalidatorDeps): SessionRevalidator {
@@ -164,10 +199,17 @@ export function createSessionRevalidator(deps: SessionRevalidatorDeps): SessionR
     async loadSessionUser(userId, opts) {
       if (!opts?.fresh) {
         const notBefore = opts?.notBefore ?? -Infinity;
+        const minVersion = opts?.minSessionVersion ?? 0;
         const t = now();
         const hit = cache.get(userId);
         if (hit) {
-          if (hit.fetchedAt + ttlMs > t && hit.fetchedAt >= notBefore) return hit;
+          if (
+            hit.fetchedAt + ttlMs > t &&
+            hit.fetchedAt >= notBefore &&
+            !predatesVersion(hit, minVersion)
+          ) {
+            return hit;
+          }
           cache.delete(userId);
         }
         const pending = inflight.get(userId);
@@ -176,7 +218,9 @@ export function createSessionRevalidator(deps: SessionRevalidatorDeps): SessionR
           pending.startedAt >= notBefore &&
           t - pending.startedAt < maxInflightAgeMs
         ) {
-          return pending.promise;
+          const joined = await pending.promise;
+          // The shared read started before the bump: read again, once.
+          return predatesVersion(joined, minVersion) ? lookup(userId) : joined;
         }
       }
       return lookup(userId);
@@ -193,16 +237,27 @@ export function createSessionRevalidator(deps: SessionRevalidatorDeps): SessionR
   };
 }
 
+declare global {
+  // eslint-disable-next-line no-var
+  var sessionRevalidator: SessionRevalidator | undefined;
+}
+
 let userRepo: MongoUserRepository | null = null;
 
-const defaultRevalidator = createSessionRevalidator({
+// One cache per process, held on globalThis. The production build bundles
+// this module more than once (the server-action layer and the route/RSC
+// layer each get a copy), and a module-level instance would give each copy
+// its own cache — forgetSessionUser from an action would then never reach
+// the cache the NextAuth jwt callback reads. Same pattern as mongooseCache.
+const defaultRevalidator = (globalThis.sessionRevalidator ??= createSessionRevalidator({
   findById: (userId) => (userRepo ??= new MongoUserRepository()).findById(userId),
-});
+}));
 
 /**
  * Current session-relevant state of `userId`. `fresh` skips the cache (use it
  * right after sign-in or a write that changed the user); `notBefore` rejects
- * cached data older than the token's current claims.
+ * cached data older than the token's current claims, and `minSessionVersion`
+ * rejects cached data read before the token's session version existed.
  */
 export function loadSessionUser(
   userId: string,
@@ -213,7 +268,8 @@ export function loadSessionUser(
 
 /**
  * Drop the cached state so the next session read in this process hits the
- * DB. Call after deleting, disabling, re-enabling or renaming a user.
+ * DB. Call after deleting, disabling, re-enabling or renaming a user, and
+ * after changing or resetting their password.
  */
 export function forgetSessionUser(userId: string): void {
   defaultRevalidator.forgetSessionUser(userId);

@@ -496,7 +496,11 @@ function EmailVerificationCard({
 }
 
 /* ─────────────────── Change-password card ─────────────────── */
-function ChangePasswordCard() {
+// The change ends every other session of the account (and cancels a pending
+// e-mail change); the server signs this device in again with the new
+// password. `sessionKept: false` means that failed, so the user is sent to
+// /login instead of being left with a dead session.
+function ChangePasswordCard({ onChanged }: { onChanged?: () => void }) {
 	const { handleNotification } = useNotification();
 	const [current, setCurrent] = useState("");
 	const [next, setNext] = useState("");
@@ -522,15 +526,30 @@ function ChangePasswordCard() {
 		}
 		setSubmitting(true);
 		try {
-			await usersService.changePassword(current, next);
-			handleNotification("success", "Senha atualizada.");
+			const { sessionKept } = await usersService.changePassword(current, next);
 			setCurrent("");
 			setNext("");
 			setConfirm("");
+			if (!sessionKept) {
+				handleNotification(
+					"info",
+					"Senha atualizada. Entre novamente com a nova senha.",
+				);
+				await signOut({ callbackUrl: "/login" });
+				return;
+			}
+			handleNotification(
+				"success",
+				"Senha atualizada. As outras sessões foram encerradas.",
+			);
+			// A pending e-mail change was cancelled along with the sessions.
+			onChanged?.();
 		} catch (err: unknown) {
 			const status = (err as { response?: { status?: number } })?.response
 				?.status;
 			if (status === 403) handleNotification("error", "Senha atual incorreta.");
+			else if (status === 401)
+				handleNotification("error", "Sua sessão expirou. Entre novamente.");
 			else if (status === 400)
 				handleNotification(
 					"error",
@@ -547,15 +566,23 @@ function ChangePasswordCard() {
 			onSubmit={handleSubmit}
 			className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 pt-5 pb-6"
 		>
-			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-4">
+			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
 				Trocar senha
 			</div>
+			<p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-4 mt-0">
+				Ao trocar a senha, encerramos as sessões abertas nos outros
+				dispositivos e cancelamos uma troca de e-mail pendente.
+			</p>
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-col gap-1.5">
-					<label className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+					<label
+						htmlFor="current-password"
+						className="font-semibold text-[13px] text-slate-800 dark:text-slate-100"
+					>
 						Senha atual
 					</label>
 					<input
+						id="current-password"
 						type="password"
 						autoComplete="current-password"
 						value={current}
@@ -564,10 +591,14 @@ function ChangePasswordCard() {
 					/>
 				</div>
 				<div className="flex flex-col gap-1.5">
-					<label className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+					<label
+						htmlFor="new-password"
+						className="font-semibold text-[13px] text-slate-800 dark:text-slate-100"
+					>
 						Nova senha
 					</label>
 					<input
+						id="new-password"
 						type="password"
 						autoComplete="new-password"
 						value={next}
@@ -580,10 +611,14 @@ function ChangePasswordCard() {
 					</p>
 				</div>
 				<div className="flex flex-col gap-1.5">
-					<label className="font-semibold text-[13px] text-slate-800 dark:text-slate-100">
+					<label
+						htmlFor="confirm-new-password"
+						className="font-semibold text-[13px] text-slate-800 dark:text-slate-100"
+					>
 						Confirmar nova senha
 					</label>
 					<input
+						id="confirm-new-password"
 						type="password"
 						autoComplete="new-password"
 						value={confirm}
@@ -746,9 +781,15 @@ function IdentityCard({
 	);
 }
 
+// LGPD Art. 18 II/V: the export is open to every signed-in account
+// (portability can't depend on a verified e-mail); the comment import
+// creates content, so it requires one, like posting a comment does.
 function MyDataCard({
+	emailVerified,
 	onCommentsImported,
 }: {
+	/** Undefined while the profile loads: import stays off, without the hint. */
+	emailVerified: boolean | undefined;
 	onCommentsImported: () => void;
 }) {
 	const { handleNotification } = useNotification();
@@ -783,13 +824,32 @@ function MyDataCard({
 				`Importação concluída: ${result.imported} novos, ${result.skipped} já existiam, ${result.failed} ignorados.`,
 			);
 		} catch (err) {
-			const status = (err as { response?: { status?: number } })?.response
-				?.status;
-			if (status === 400) {
+			const response = (
+				err as { response?: { status?: number; data?: { error?: string } } }
+			)?.response;
+			const status = response?.status;
+			if (status === 400 || err instanceof SyntaxError) {
 				handleNotification(
 					"error",
 					"Arquivo inválido. Use um JSON exportado pelo próprio Bible Comment.",
 				);
+			} else if (status === 403) {
+				// An unverified e-mail comes back with its own pt-BR message; a
+				// disabled account gets the bare "Forbidden".
+				const apiError = response?.data?.error;
+				handleNotification(
+					"error",
+					apiError && apiError !== "Forbidden"
+						? apiError
+						: "Sua conta não pode importar comentários no momento.",
+				);
+			} else if (status === 429) {
+				handleNotification(
+					"error",
+					"Muitas importações em pouco tempo. Tente novamente mais tarde.",
+				);
+			} else if (status === 401) {
+				handleNotification("error", "Sua sessão expirou. Entre novamente.");
 			} else {
 				handleNotification("error", "Não foi possível importar o arquivo.");
 			}
@@ -803,10 +863,20 @@ function MyDataCard({
 			<div className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">
 				Meus dados
 			</div>
+			<p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-2 mt-0">
+				Baixe um arquivo JSON com todos os dados que guardamos sobre você:
+				perfil, comentários, discussões e respostas, curtidas e denúncias,
+				comunidades, quem você segue e quem segue você, histórico e lembretes
+				de leitura, notificações e dispositivos com notificações ativas.
+				Credenciais (como o hash da senha) ficam de fora.
+			</p>
+			<p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-2 mt-0">
+				O arquivo inclui dados sensíveis (como sua crença) e seu e-mail:
+				guarde-o com cuidado e não o compartilhe.
+			</p>
 			<p className="text-[13px] text-slate-500 dark:text-slate-400 leading-[19.5px] mb-4 mt-0">
-				Baixe um arquivo JSON com tudo que armazenamos sobre você (perfil,
-				comentários, discussões, respostas e notificações). Você pode também
-				restaurar comentários a partir de um backup anterior.
+				Você também pode restaurar comentários a partir de um arquivo exportado
+				anteriormente.
 			</p>
 			<div className="flex flex-wrap gap-2">
 				<a
@@ -818,8 +888,11 @@ function MyDataCard({
 				<button
 					type="button"
 					onClick={onPick}
-					disabled={importing}
-					className="h-[35.5px] px-5 bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition disabled:opacity-50"
+					disabled={importing || emailVerified !== true}
+					aria-describedby={
+						emailVerified === false ? "import-requires-verification" : undefined
+					}
+					className="h-[35.5px] px-5 bg-transparent text-brand border-[1.333px] border-brand rounded-[7px] text-[13px] font-semibold whitespace-nowrap cursor-pointer hover:bg-brand-wash transition disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{importing ? "Importando…" : "Importar comentários (JSON)"}
 				</button>
@@ -835,6 +908,16 @@ function MyDataCard({
 					className="hidden"
 				/>
 			</div>
+			{emailVerified === false && (
+				<p
+					id="import-requires-verification"
+					data-testid="import-requires-verification"
+					className="text-[12px] text-slate-500 dark:text-slate-400 mt-2 mb-0"
+				>
+					Verifique seu e-mail para importar comentários. A exportação continua
+					disponível.
+				</p>
+			)}
 		</div>
 	);
 }
@@ -1772,13 +1855,20 @@ export default function ProfileClient({
 							</div>
 
 							{/* ── Card: Trocar senha ── */}
-							<ChangePasswordCard />
+							{/* Reloads the profile only to clear a pending e-mail change the
+							    password change cancelled (a reload resets unsaved edits). */}
+							<ChangePasswordCard
+								onChanged={profile?.pendingEmail ? loadProfile : undefined}
+							/>
 
 							{/* ── Card: Tutoriais guiados ── */}
 							<TutorialsCard />
 
 							{/* ── Card: Meus dados (LGPD Art. 18 - portabilidade) ── */}
-							<MyDataCard onCommentsImported={loadComments} />
+							<MyDataCard
+								emailVerified={profile ? (profile.emailVerified ?? false) : undefined}
+								onCommentsImported={loadComments}
+							/>
 
 							{/* ── Card 3: Zona de Perigo ── */}
 							<div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/40 rounded-xl px-6 pt-5 pb-6">

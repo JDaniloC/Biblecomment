@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { getActiveSessionUser } from "@/lib/get-session";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoEmailVerificationTokenRepository } from "@/infrastructure/repositories/MongoEmailVerificationTokenRepository";
 import {
@@ -78,8 +79,10 @@ export async function requestEmailVerificationAction(): Promise<ActionResult<{ s
 
 export async function requestEmailChangeAction(newEmail: string): Promise<ActionResult<{ submitted: true }>> {
   try {
-    const session = await auth();
-    if (!session?.user?.id) return { ok: false, error: "Unauthorized" };
+    // Account-level write: a session revoked by a password change (whose
+    // cache entry another instance may still serve) is refused at once.
+    const user = await getActiveSessionUser();
+    if (!user?.id) return { ok: false, error: "Unauthorized" };
 
     const ip = await clientIp();
     const limit = checkRateLimit(`emailchange:${ip}`, REQUEST_RATE_LIMIT);
@@ -93,7 +96,7 @@ export async function requestEmailChangeAction(newEmail: string): Promise<Action
       new MongoEmailVerificationTokenRepository(),
       makeEmailer(true),
     );
-    await useCase.execute(session.user.id, newEmail ?? "", appUrl());
+    await useCase.execute(user.id, newEmail ?? "", appUrl());
     return { ok: true, data: { submitted: true } };
   } catch (err) {
     if (err instanceof Error) return { ok: false, error: err.message };
@@ -104,10 +107,10 @@ export async function requestEmailChangeAction(newEmail: string): Promise<Action
 
 export async function cancelEmailChangeAction(): Promise<ActionResult<{ cancelled: true }>> {
   try {
-    const session = await auth();
-    if (!session?.user?.id) return { ok: false, error: "Unauthorized" };
+    const user = await getActiveSessionUser();
+    if (!user?.id) return { ok: false, error: "Unauthorized" };
     const repo = new MongoUserRepository();
-    await repo.clearPendingEmail(session.user.id);
+    await repo.clearPendingEmail(user.id);
     return { ok: true, data: { cancelled: true } };
   } catch (err) {
     logger.error({ err, action: "cancelEmailChangeAction" }, "cancel email change failed");

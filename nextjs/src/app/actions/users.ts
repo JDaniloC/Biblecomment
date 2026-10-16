@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { auth, reestablishSession } from "@/lib/auth";
+import { getActiveSessionUser } from "@/lib/get-session";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
+import { MongoPasswordResetTokenRepository } from "@/infrastructure/repositories/MongoPasswordResetTokenRepository";
 import {
 	UpdateUserProfileUseCase,
 	SetModeratorUseCase,
@@ -73,12 +75,13 @@ export async function updateProfileAction(updates: {
 export async function updateUsernameAction(
 	newUsername: string,
 ): Promise<ActionResult<{ username: string }>> {
-	const session = await auth();
-	if (!session?.user) return authError();
+	// Account-level write: revalidated against the DB, not the session cache.
+	const user = await getActiveSessionUser();
+	if (!user) return authError();
 
 	try {
 		const updated = await makeUpdateUsernameUseCase().execute(
-			session.user.email,
+			user.email,
 			newUsername,
 		);
 		if (updated._id) forgetSessionUser(updated._id);
@@ -109,9 +112,10 @@ export async function updateUsernameAction(
 export async function deleteSelfAction(
 	email: string,
 ): Promise<ActionResult<{ deleted: true; pending?: true }>> {
-	const session = await auth();
-	if (!session?.user) return authError();
-	if (email !== session.user.email) return { ok: false, error: "Forbidden" };
+	// Account-level write: revalidated against the DB, not the session cache.
+	const user = await getActiveSessionUser();
+	if (!user) return authError();
+	if (email !== user.email) return { ok: false, error: "Forbidden" };
 
 	try {
 		await makeDeleteUserUseCase().execute(email, email, false);
@@ -143,14 +147,16 @@ export async function deleteSelfAction(
 export async function deleteUserAction(
 	email: string,
 ): Promise<ActionResult<{ deleted: true; pending?: true }>> {
-	const session = await auth();
-	if (!session?.user) return authError();
-	if (!session.user.moderator) return { ok: false, error: "Forbidden" };
+	// Fresh read: a revoked or demoted moderator's cached session must not
+	// keep moderating for the cache TTL.
+	const actor = await getActiveSessionUser();
+	if (!actor) return authError();
+	if (!actor.moderator) return { ok: false, error: "Forbidden" };
 
 	let pending = false;
 	try {
 		try {
-			await makeDeleteUserUseCase().execute(session.user.email, email, true);
+			await makeDeleteUserUseCase().execute(actor.email, email, true);
 		} catch (err) {
 			if (!(err instanceof DeletionIncompleteError)) throw err;
 			logger.warn(
@@ -161,7 +167,7 @@ export async function deleteUserAction(
 		}
 
 		logger.info(
-			{ actor: session.user.email, target: email, pending, action: "delete_user" },
+			{ actor: actor.email, target: email, pending, action: "delete_user" },
 			"user deleted by moderator",
 		);
 
@@ -195,9 +201,11 @@ export async function setUserDisabledAction(
 ): Promise<
 	ActionResult<{ email: string; username: string; disabled: boolean }>
 > {
-	const session = await auth();
-	if (!session?.user) return authError();
-	if (!session.user.moderator) return { ok: false, error: "Forbidden" };
+	// Fresh read: a revoked or demoted moderator's cached session must not
+	// keep moderating for the cache TTL.
+	const actor = await getActiveSessionUser();
+	if (!actor) return authError();
+	if (!actor.moderator) return { ok: false, error: "Forbidden" };
 
 	try {
 		const useCase = new SetUserDisabledUseCase(
@@ -207,13 +215,13 @@ export async function setUserDisabledAction(
 		const updated = await useCase.execute(
 			email,
 			disabled,
-			session.user.username,
+			actor.username,
 		);
 		if (updated._id) forgetSessionUser(updated._id);
 
 		logger.info(
 			{
-				actor: session.user.email,
+				actor: actor.email,
 				target: email,
 				disabled,
 				action: "set_user_disabled",
@@ -245,13 +253,20 @@ export async function setUserDisabledAction(
 /**
  * Rotate the current user's password. Mirrors POST /api/users/me/password —
  * server-side enforces min-6-char and current !== new.
+ *
+ * The change revokes every session of the account (sessionVersion bump);
+ * this browser is then signed in again with the new password, so only the
+ * other devices are signed out. `sessionKept: false` means that re-sign-in
+ * failed and the client must send the user to /login.
  */
 export async function changePasswordAction(
 	currentPassword: string,
 	newPassword: string,
-): Promise<ActionResult<{ success: true }>> {
-	const session = await auth();
-	if (!session?.user) return authError();
+): Promise<ActionResult<{ success: true; sessionKept: boolean }>> {
+	// Account-level write: a session revoked on another instance (whose
+	// cache may still serve it) is refused here at once.
+	const user = await getActiveSessionUser();
+	if (!user) return authError();
 
 	if (!newPassword || newPassword.length < 6) {
 		return { ok: false, error: "Senha inválida (mínimo 6 caracteres)." };
@@ -261,18 +276,46 @@ export async function changePasswordAction(
 	}
 
 	try {
-		const repo = new MongoUserRepository();
-		const useCase = new ChangePasswordUseCase(repo);
-		await useCase.execute(session.user.email, currentPassword, newPassword);
-		logger.info(
-			{ actor: session.user.email, action: "change_password" },
-			"password rotated",
+		const useCase = new ChangePasswordUseCase(new MongoUserRepository(), {
+			passwordReset: new MongoPasswordResetTokenRepository(),
+		});
+		const { userId, cleanupError } = await useCase.execute(
+			user.email,
+			currentPassword,
+			newPassword,
 		);
+		// Also drops a pre-bump lookup in flight on this instance, so it
+		// can't be cached over the new version.
+		forgetSessionUser(userId);
+		const sessionKept = await reestablishSession(user.email, newPassword);
+		logger.info(
+			{
+				actor: user.email,
+				userId,
+				sessionKept,
+				action: "change_password",
+			},
+			"password rotated; other sessions revoked",
+		);
+		if (cleanupError !== undefined) {
+			logger.error(
+				{ err: cleanupError, userId, action: "change_password" },
+				"password changed but its reset links or pending e-mail change could not be revoked",
+			);
+		}
+		if (!sessionKept) {
+			logger.warn(
+				{ userId, action: "change_password" },
+				"password changed but this device could not be signed in again",
+			);
+		}
 		revalidatePath("/profile", "page");
-		return { ok: true, data: { success: true } };
+		return { ok: true, data: { success: true, sessionKept } };
 	} catch (err) {
 		if (err instanceof Error) {
 			if (err.message === "Invalid current password")
+				return { ok: false, error: "Forbidden" };
+			if (err.message === "Unauthorized")
 				return { ok: false, error: "Forbidden" };
 			if (err.message === "User not found")
 				return { ok: false, error: "NotFound" };
@@ -322,9 +365,11 @@ export async function setModeratorAction(
 ): Promise<
 	ActionResult<{ email: string; username: string; moderator: boolean }>
 > {
-	const session = await auth();
-	if (!session?.user) return authError();
-	if (!session.user.moderator) return { ok: false, error: "Forbidden" };
+	// Fresh read: a revoked or demoted moderator's cached session must not
+	// keep moderating for the cache TTL.
+	const actor = await getActiveSessionUser();
+	if (!actor) return authError();
+	if (!actor.moderator) return { ok: false, error: "Forbidden" };
 
 	try {
 		const repo = new MongoUserRepository();
@@ -334,7 +379,7 @@ export async function setModeratorAction(
 
 		logger.info(
 			{
-				actor: session.user.email,
+				actor: actor.email,
 				target: email,
 				moderator,
 				action: "set_moderator",

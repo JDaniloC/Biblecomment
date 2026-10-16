@@ -12,6 +12,7 @@ declare module "next-auth" {
       tutorialsCompleted: string[];
       emailVerified?: boolean;
       pendingEmail?: string | null;
+      sessionVersion?: number;
     };
   }
 
@@ -21,6 +22,7 @@ declare module "next-auth" {
     tutorialsCompleted: string[];
     emailVerified?: boolean;
     pendingEmail?: string | null;
+    sessionVersion?: number;
   }
 }
 
@@ -32,5 +34,9 @@ declare module "next-auth/jwt" {
     tutorialsCompleted: string[];
     emailVerified?: boolean;
     pendingEmail?: string | null;
+    /** User.sessionVersion this token was minted at; absent on legacy tokens (= 0). */
+    sessionVersion?: number;
+    /** Epoch ms the DB read behind the current claims started (session-revalidation). */
+    claimsAt?: number;
   }
 }

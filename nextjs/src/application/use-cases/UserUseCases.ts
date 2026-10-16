@@ -20,6 +20,7 @@ import { IReadingReminderPreferenceRepository } from "@/domain/repositories/IRea
 import { IPushSubscriptionRepository } from "@/domain/repositories/IPushSubscriptionRepository";
 import { IEmailVerificationTokenRepository } from "@/domain/repositories/IEmailVerificationTokenRepository";
 import { IPasswordResetTokenRepository } from "@/domain/repositories/IPasswordResetTokenRepository";
+import { IAccountErasureRepository } from "@/domain/repositories/IAccountErasureRepository";
 import { User } from "@/domain/entities/User";
 import { isValidUsername } from "@/lib/sanitize-username";
 import { isActiveAccount } from "@/lib/auth-guards";
@@ -196,6 +197,7 @@ export interface DeleteUserRepos {
 	pushSubscription: IPushSubscriptionRepository;
 	emailVerificationToken: IEmailVerificationTokenRepository;
 	passwordResetToken: IPasswordResetTokenRepository;
+	erasures: IAccountErasureRepository;
 }
 
 export interface DeleteUserHooks {
@@ -237,7 +239,9 @@ export class DeletionIncompleteError extends Error {
  *     (likes, reading data) are swept by scripts/reconcile-user-data.js.
  *  2. Snapshot the communities and discussions whose counters depend on
  *     this user's rows and merge it into the stored snapshot (which keeps
- *     what earlier, failed attempts saw).
+ *     what earlier, failed attempts saw). Then record the erasure tombstone
+ *     (account id + requestedAt only), so restoring an older backup can't
+ *     re-create the account; a failed write is retried with the rest.
  *  3. Hand over (or delete) the communities the user created.
  *  4. Remove / anonymize every user-keyed record. Each step is idempotent.
  *  5. Recompute the snapshot's counters from the remaining rows. Unlike a
@@ -308,6 +312,10 @@ export class DeleteUserUseCase {
 		});
 		// Deleted concurrently by another attempt that got further.
 		if (!snapshot) return;
+
+		// Before anything is removed: the user document is the retry record,
+		// so a deletion can't complete without its tombstone.
+		await r.erasures.record(userId, snapshot.requestedAt);
 
 		await new HandOverOwnedCommunitiesUseCase(
 			r.community,

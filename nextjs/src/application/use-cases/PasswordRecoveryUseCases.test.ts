@@ -23,10 +23,11 @@ function fakeUser(overrides: Partial<User> = {}): User {
   };
 }
 
-function makeUserRepo(user: User | null = fakeUser()) {
+function makeUserRepo(user: User | null = fakeUser(), writeResult: number | null = 1) {
   return {
     findByEmail: vi.fn().mockResolvedValue(user),
-    updatePasswordById: vi.fn().mockResolvedValue(undefined),
+    updatePasswordById: vi.fn().mockResolvedValue(writeResult),
+    clearPendingEmail: vi.fn().mockResolvedValue(undefined),
   } as unknown as IUserRepository;
 }
 
@@ -161,14 +162,120 @@ describe("CompletePasswordResetUseCase", () => {
     });
 
     const useCase = new CompletePasswordResetUseCase(userRepo, tokenRepo);
-    await useCase.execute(raw, "new-secret-123");
+    const result = await useCase.execute(raw, "new-secret-123");
 
+    expect(result).toEqual({ userId: "u1" });
     expect(tokenRepo.findActiveByHash).toHaveBeenCalledWith(sha256(raw));
     expect(userRepo.updatePasswordById).toHaveBeenCalledOnce();
-    const [userId, hash] = (userRepo.updatePasswordById as ReturnType<typeof vi.fn>).mock.calls[0];
+    const call = (userRepo.updatePasswordById as ReturnType<typeof vi.fn>).mock.calls[0];
+    const [userId, hash] = call;
     expect(userId).toBe("u1");
     expect(await bcrypt.compare("new-secret-123", hash)).toBe(true);
+    // Unconditional write (no compare-and-set): a reset beats a racing change.
+    expect(call[2]).toBeUndefined();
     expect(tokenRepo.deleteById).toHaveBeenCalledWith("t1");
+  });
+
+  it("revokes a pending e-mail change once the password was reset", async () => {
+    const raw = generateRawToken();
+    const userRepo = makeUserRepo();
+    const { repo: tokenRepo } = makeTokenRepo({
+      findActiveByHash: vi.fn().mockResolvedValue({
+        _id: "t1",
+        userId: "u1",
+        tokenHash: sha256(raw),
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        createdAt: new Date(),
+      }),
+    });
+
+    const result = await new CompletePasswordResetUseCase(userRepo, tokenRepo).execute(
+      raw,
+      "new-secret-123",
+    );
+
+    expect(result).toEqual({ userId: "u1" });
+    // Clearing pendingEmail is what makes an outstanding change link fail.
+    expect(userRepo.clearPendingEmail).toHaveBeenCalledWith("u1");
+    const written = (userRepo.updatePasswordById as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
+    const cleared = (userRepo.clearPendingEmail as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
+    expect(cleared).toBeGreaterThan(written);
+  });
+
+  it("deletes no e-mail verification token, so a first-time verification link keeps working", async () => {
+    const raw = generateRawToken();
+    const userRepo = makeUserRepo();
+    const { repo: tokenRepo } = makeTokenRepo({
+      findActiveByHash: vi.fn().mockResolvedValue({
+        _id: "t1",
+        userId: "u1",
+        tokenHash: sha256(raw),
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        createdAt: new Date(),
+      }),
+    });
+    // The third argument is the clock. Shaped like a verification-token
+    // repo as well, it would catch that dependency coming back.
+    const clockLikeTokenRepo = {
+      now: () => Date.now(),
+      deleteByUserId: vi.fn().mockResolvedValue(undefined),
+      deleteById: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const result = await new CompletePasswordResetUseCase(
+      userRepo,
+      tokenRepo,
+      clockLikeTokenRepo,
+    ).execute(raw, "new-secret-123");
+
+    expect(result).toEqual({ userId: "u1" });
+    expect(userRepo.clearPendingEmail).toHaveBeenCalledWith("u1");
+    expect(clockLikeTokenRepo.deleteByUserId).not.toHaveBeenCalled();
+    expect(clockLikeTokenRepo.deleteById).not.toHaveBeenCalled();
+  });
+
+  it("still succeeds when revoking the pending e-mail change fails, reporting it as cleanupError", async () => {
+    const raw = generateRawToken();
+    const userRepo = makeUserRepo();
+    const failure = new Error("Atlas timeout");
+    (userRepo.clearPendingEmail as ReturnType<typeof vi.fn>).mockRejectedValueOnce(failure);
+    const { repo: tokenRepo } = makeTokenRepo({
+      findActiveByHash: vi.fn().mockResolvedValue({
+        _id: "t1",
+        userId: "u1",
+        tokenHash: sha256(raw),
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        createdAt: new Date(),
+      }),
+    });
+
+    const result = await new CompletePasswordResetUseCase(userRepo, tokenRepo).execute(
+      raw,
+      "new-secret-123",
+    );
+
+    expect(result).toEqual({ userId: "u1", cleanupError: failure });
+    expect(tokenRepo.deleteById).toHaveBeenCalledWith("t1");
+  });
+
+  it("burns the token and rejects when the account no longer exists", async () => {
+    const raw = generateRawToken();
+    const tokenDoc: PasswordResetToken = {
+      _id: "t-orphan",
+      userId: "u-gone",
+      tokenHash: sha256(raw),
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      createdAt: new Date(),
+    };
+    const userRepo = makeUserRepo(fakeUser(), null);
+    const { repo: tokenRepo } = makeTokenRepo({
+      findActiveByHash: vi.fn().mockResolvedValue(tokenDoc),
+    });
+
+    const useCase = new CompletePasswordResetUseCase(userRepo, tokenRepo);
+    await expect(useCase.execute(raw, "new-secret-123")).rejects.toThrow("Token inválido ou expirado.");
+    expect(tokenRepo.deleteById).toHaveBeenCalledWith("t-orphan");
+    expect(userRepo.clearPendingEmail).not.toHaveBeenCalled();
   });
 
   it("rejects passwords shorter than 6 characters without touching repos", async () => {

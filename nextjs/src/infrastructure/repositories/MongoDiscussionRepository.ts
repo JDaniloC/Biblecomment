@@ -8,6 +8,10 @@ import {
 	IDiscussionDocument,
 } from "@/infrastructure/database/models/DiscussionModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
+import {
+	insertManyIgnoringDuplicates,
+	isObjectIdHex,
+} from "@/infrastructure/database/insert-many";
 import { escapeRegExp } from "@/lib/escape-regexp";
 import mongoose from "mongoose";
 
@@ -157,17 +161,17 @@ export class MongoDiscussionRepository implements IDiscussionRepository {
 
 	// skipcq: JS-0105
 	async createMany(
-		discussions: Omit<
+		discussions: (Omit<
 			Discussion,
 			"_id" | "createdAt" | "updatedAt" | "answers" | "answersCount"
-		>[],
+		> & { _id?: string; createdAt?: Date })[],
 	): Promise<number> {
 		if (discussions.length === 0) return 0;
 		await connectToDatabase();
-		const inserted = await DiscussionModel.insertMany(discussions, {
-			ordered: false,
-		});
-		return inserted.length;
+		const docs = discussions.map(({ _id, ...d }) =>
+			isObjectIdHex(_id) ? { ...d, _id: new mongoose.Types.ObjectId(_id) } : d,
+		);
+		return insertManyIgnoringDuplicates(DiscussionModel, docs);
 	}
 
 	// skipcq: JS-0105

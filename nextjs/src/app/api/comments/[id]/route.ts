@@ -81,6 +81,8 @@ export async function POST(req: Request, { params }: { params: Promise<Params> }
       if (err.message === "Verse not found") return badRequest("Versículo não encontrado");
       if (err.message === "Community not found") return badRequest("Comunidade não encontrada");
       if (err.message === "Not a community member") return forbidden();
+      // Disabled or deleting account (CreateCommentUseCase's DB check).
+      if (err.message === "Unauthorized") return forbidden();
     }
     return serverError(err);
   }

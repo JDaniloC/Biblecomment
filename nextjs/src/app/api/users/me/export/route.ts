@@ -1,80 +1,48 @@
-import { NextResponse } from "next/server";
-import { getSessionUser, unauthorized, serverError } from "@/lib/get-session";
-import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
-import { MongoCommentRepository } from "@/infrastructure/repositories/MongoCommentRepository";
-import { MongoDiscussionRepository } from "@/infrastructure/repositories/MongoDiscussionRepository";
-import { MongoDiscussionAnswerRepository } from "@/infrastructure/repositories/MongoDiscussionAnswerRepository";
-import { connectToDatabase } from "@/infrastructure/database/connection";
-import { NotificationModel } from "@/infrastructure/database/models/NotificationModel";
+import {
+  getActiveSessionUser,
+  unauthorized,
+  tooManyRequests,
+  serverError,
+} from "@/lib/get-session";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
+import { makeExportUserDataUseCase } from "@/app/actions/_account";
+import { buildExportResponse, exportCounts } from "./buildResponse";
 
 export const dynamic = "force-dynamic";
 
-// LGPD Art. 18(V): right to data portability. Returns a JSON dump of every
-// record tied to the authenticated user — profile, comments, discussions
-// they started, answers they wrote (in any thread), and inbound notifications.
+// Each export runs ~20 queries on a small connection pool. Per instance
+// only (in-memory buckets), which softens abuse rather than bounding it.
+const EXPORT_RATE_LIMIT = { windowMs: 10 * 60_000, max: 5 };
+
+// LGPD Art. 18 (II, V): access and portability. Returns a JSON file with
+// every record kept about the signed-in account (ExportUserDataUseCase).
 export async function GET() {
   try {
-    const sessionUser = await getSessionUser();
+    // Re-checked against the DB: a session revoked by a password change, or
+    // an account being deleted or disabled, can't download the dump during
+    // the session cache window.
+    const sessionUser = await getActiveSessionUser();
     if (!sessionUser) return unauthorized();
 
-    const userRepo = new MongoUserRepository();
-    const commentRepo = new MongoCommentRepository();
-    const discussionRepo = new MongoDiscussionRepository();
-    const answerRepo = new MongoDiscussionAnswerRepository();
+    const limit = checkRateLimit(`data-export:${sessionUser.id}`, EXPORT_RATE_LIMIT);
+    if (!limit.allowed) {
+      return tooManyRequests(
+        "Muitas exportações seguidas. Tente novamente em alguns minutos.",
+        limit.resetAt,
+      );
+    }
 
-    const user = await userRepo.findByEmail(sessionUser.email);
-    if (!user) return unauthorized();
+    const dump = await makeExportUserDataUseCase().execute(sessionUser.id);
+    if (!dump) return unauthorized();
 
-    const username = user.username;
-    const userId = user._id ?? "";
-
-    const [comments, allDiscussions, myAnswers] = await Promise.all([
-      commentRepo.findByUsername(username),
-      discussionRepo.findAll(),
-      answerRepo.findByUser(userId),
-    ]);
-
-    const ownedDiscussions = allDiscussions.filter((d) => d.username === username);
-    // Reattach verseReference to each answer for the dump's readability.
-    const discussionsById = new Map(allDiscussions.map((d) => [d._id ?? "", d]));
-    const answersAuthored = myAnswers.map((a) => ({
-      discussionId: a.discussionId,
-      verseReference: discussionsById.get(a.discussionId)?.verseReference ?? null,
-      text: a.text,
-      createdAt: a.createdAt,
-    }));
-
-    await connectToDatabase();
-    const notifications = await NotificationModel.find({ recipient: username })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    const { password: _pw, ...safeProfile } = user;
-
-    const dump = {
-      generatedAt: new Date().toISOString(),
-      profile: safeProfile,
-      comments,
-      ownedDiscussions,
-      answersAuthored,
-      notifications: notifications.map((n) => ({
-        type: n.type,
-        actor: n.actor,
-        message: n.message,
-        url: n.url,
-        read: n.read,
-        createdAt: n.createdAt,
-      })),
-    };
-
-    return new NextResponse(JSON.stringify(dump, null, 2), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="biblecomment-meus-dados-${username}.json"`,
-        "Cache-Control": "no-store",
-      },
-    });
+    const { response, bytes } = buildExportResponse(dump);
+    // Ids, sizes and counts only: the content itself is personal data.
+    logger.info(
+      { action: "data_export", userId: sessionUser.id, bytes, counts: exportCounts(dump) },
+      "data export generated",
+    );
+    return response;
   } catch (err) {
     return serverError(err);
   }

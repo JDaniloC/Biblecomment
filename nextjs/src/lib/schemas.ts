@@ -94,9 +94,20 @@ export const UpdateVerseSchema = z
 		message: "text ou reference é obrigatório",
 	});
 
+// Comment limits, shared by creation, editing, self-service import and
+// backup restore so they can't drift apart.
+export const COMMENT_TEXT_MAX = 5000;
+export const COMMENT_TAGS_MAX = 20;
+export const COMMENT_TAG_MAX_LENGTH = 50;
+/** Rows accepted by one self-service comment import (POST /api/users/me/import). */
+export const IMPORT_COMMENTS_MAX = 5000;
+
 export const CreateCommentSchema = z.object({
-	text: z.string().min(1).max(5000),
-	tags: z.array(z.string().max(50)).max(20).default([]),
+	text: z.string().min(1).max(COMMENT_TEXT_MAX),
+	tags: z
+		.array(z.string().max(COMMENT_TAG_MAX_LENGTH))
+		.max(COMMENT_TAGS_MAX)
+		.default([]),
 	on_title: z.boolean().optional(),
 	onTitle: z.boolean().optional(),
 	/**
@@ -111,9 +122,39 @@ export const CreateCommentSchema = z.object({
 });
 
 export const UpdateCommentSchema = z.object({
-	text: z.string().min(1).max(5000).optional(),
-	tags: z.array(z.string().max(50)).max(20).optional(),
+	text: z.string().min(1).max(COMMENT_TEXT_MAX).optional(),
+	tags: z
+		.array(z.string().max(COMMENT_TAG_MAX_LENGTH))
+		.max(COMMENT_TAGS_MAX)
+		.optional(),
 	action: z.enum(["like", "report", "hide", "unhide"]).optional(),
+});
+
+/**
+ * One row of a self-service comment import. Validated row by row in
+ * ImportUserCommentsUseCase, so a bad row counts as `failed` instead of
+ * rejecting the file. Text and reference are trimmed before the max is
+ * checked, so the limit applies to what gets stored. Extra keys from the
+ * export file (_id, verseId, username, createdAt, ...) are stripped.
+ */
+export const ImportCommentItemSchema = z.object({
+	bookReference: z.string().trim().min(1).max(200),
+	text: z.string().trim().min(1).max(COMMENT_TEXT_MAX),
+	tags: z
+		.array(z.string().max(COMMENT_TAG_MAX_LENGTH))
+		.max(COMMENT_TAGS_MAX)
+		.default([]),
+	onTitle: z.boolean().optional(),
+});
+export type ImportCommentItem = z.infer<typeof ImportCommentItemSchema>;
+
+/**
+ * Self-service import payload: only the shape and the row count are checked
+ * here (each row goes through ImportCommentItemSchema on its own). The rest
+ * of an export file (profile, discussions, ...) is ignored.
+ */
+export const ImportCommentsPayloadSchema = z.object({
+	comments: z.array(z.unknown()).max(IMPORT_COMMENTS_MAX),
 });
 
 // A discussion is always anchored to a comment. The client sends only the
@@ -143,48 +184,129 @@ export const UpdateAnswerSchema = z.object({
 	text: z.string().min(1).max(5000),
 });
 
-const BackupUserItemSchema = z.object({
-	email: z.string().email(),
-	username: z.string().min(2).max(40),
-	state: z.string().max(100).optional(),
-	belief: z.string().max(100).optional(),
-});
+// ── Admin backup restore (POST /api/backup/*) ──────────────────────────
+// Each endpoint takes either the bare array its GET export returns or the
+// `{ <key>: [...] }` wrapper, and always hands the route `{ <key>: [...] }`.
 
-export const BackupUsersSchema = z.object({
-	users: z.array(BackupUserItemSchema).default([]),
+/**
+ * An optional field of a backup row. JSON `null` (legacy documents) counts
+ * as absent. That matters most for dates: coercing `null` would yield the
+ * 1970 epoch and, e.g., silently disable a restored account.
+ */
+function backupOptional<T extends z.ZodType>(schema: T) {
+	return schema.nullish().transform((v) => v ?? undefined);
+}
+
+const backupDate = () => backupOptional(z.coerce.date());
+/** Original document id, kept as a string; validated where it is used. */
+const backupId = () => backupOptional(z.string().max(64));
+
+/** Rows accepted by one POST /api/backup/users (each costs DB round trips). */
+export const BACKUP_USERS_MAX = 500;
+
+/**
+ * Shape only: email validity, username rules, tombstones and duplicates are
+ * checked row by row in the restore use case, so one bad row is skipped
+ * instead of failing the whole batch with a 400. A non-null `deletion`
+ * marks an account that was mid-deletion when exported.
+ */
+const BackupUserItemSchema = z.object({
+	_id: backupId(),
+	email: z.string().max(320),
+	username: z.string().max(100),
+	displayName: backupOptional(z.string().max(80)),
+	state: backupOptional(z.string().max(100)),
+	belief: backupOptional(z.string().max(100)),
+	showBelief: backupOptional(z.boolean()),
+	badges: backupOptional(z.array(z.string().max(100)).max(200)),
+	tutorialsCompleted: backupOptional(z.array(z.string().max(100)).max(200)),
+	emailVerifiedAt: backupDate(),
+	disabledAt: backupDate(),
+	disabledBy: backupOptional(z.string().max(100)),
+	deletion: backupOptional(z.unknown()),
+	createdAt: backupDate(),
 });
+export type BackupUserItem = z.infer<typeof BackupUserItemSchema>;
+/** Checked per row by the restore (after trim + lowercase), not by the batch. */
+export const BackupUserEmailSchema = z.string().email();
+
+const BackupUsersList = z.array(BackupUserItemSchema).max(BACKUP_USERS_MAX);
+export const BackupUsersSchema = z
+	.union([BackupUsersList, z.object({ users: BackupUsersList.default([]) })])
+	.transform((v) => (Array.isArray(v) ? { users: v } : v));
 
 const BackupCommentItemSchema = z.object({
+	_id: backupId(),
 	verseId: z.string().min(1),
 	username: z.string().min(1).max(40),
 	onTitle: z.boolean(),
 	bookReference: z.string().min(1).max(200),
-	text: z.string().min(1).max(5000),
-	tags: z.array(z.string().max(50)).default([]),
+	text: z.string().min(1).max(COMMENT_TEXT_MAX),
+	tags: z.array(z.string().max(COMMENT_TAG_MAX_LENGTH)).default([]),
+	communitySlug: backupOptional(z.string().max(40)),
+	hiddenAt: backupDate(),
+	hiddenBy: backupOptional(z.string().max(100)),
+	hiddenReason: backupOptional(z.enum(["moderator", "account-disabled"])),
+	verified: backupOptional(z.boolean()),
+	verifiedBy: backupOptional(z.string().max(100)),
+	verifiedAt: backupDate(),
+	createdAt: backupDate(),
 });
 
-export const BackupCommentsSchema = z.object({
-	comments: z.array(BackupCommentItemSchema).default([]),
-});
+const BackupCommentsList = z.array(BackupCommentItemSchema);
+export const BackupCommentsSchema = z
+	.union([
+		BackupCommentsList,
+		z.object({ comments: BackupCommentsList.default([]) }),
+	])
+	.transform((v) => (Array.isArray(v) ? { comments: v } : v));
 export type BackupCommentItem = z.infer<typeof BackupCommentItemSchema>;
 
 // Answers were extracted into a separate collection (Phase 9.3). The
 // import path no longer accepts inline answers — restoring those is a
 // follow-up if backups ever ship.
 const BackupDiscussionItemSchema = z.object({
+	_id: backupId(),
 	bookAbbrev: z.string().min(1).max(20),
 	commentId: z.string().optional(),
 	username: z.string().min(1).max(40),
 	verseReference: z.string().min(1).max(200),
 	verseText: z.string().max(5000).default(""),
 	commentText: z.string().max(5000).default(""),
+	title: backupOptional(z.string().max(140)),
+	quoteStart: backupOptional(z.number().int().min(0)),
+	quoteEnd: backupOptional(z.number().int().min(0)),
 	question: z.string().min(1).max(2000),
+	createdAt: backupDate(),
 });
 
-export const BackupDiscussionsSchema = z.object({
-	discussions: z.array(BackupDiscussionItemSchema).default([]),
-});
+const BackupDiscussionsList = z.array(BackupDiscussionItemSchema);
+export const BackupDiscussionsSchema = z
+	.union([
+		BackupDiscussionsList,
+		z.object({ discussions: BackupDiscussionsList.default([]) }),
+	])
+	.transform((v) => (Array.isArray(v) ? { discussions: v } : v));
 export type BackupDiscussionItem = z.infer<typeof BackupDiscussionItemSchema>;
+
+/** Tombstones accepted by one POST /api/backup/erasures (tiny rows). */
+export const BACKUP_ERASURES_MAX = 10_000;
+
+/** A deleted account's tombstone, as GET /api/backup/erasures exports it. */
+const BackupErasureItemSchema = z.object({
+	userId: z.string().regex(/^[0-9a-f]{24}$/i),
+	erasedAt: z.coerce.date(),
+});
+
+const BackupErasuresList = z
+	.array(BackupErasureItemSchema)
+	.max(BACKUP_ERASURES_MAX);
+export const BackupErasuresSchema = z
+	.union([
+		BackupErasuresList,
+		z.object({ erasures: BackupErasuresList.default([]) }),
+	])
+	.transform((v) => (Array.isArray(v) ? { erasures: v } : v));
 
 export const CreateCommunitySchema = z.object({
 	slug: z.string().regex(/^[a-z0-9-]{2,40}$/, {

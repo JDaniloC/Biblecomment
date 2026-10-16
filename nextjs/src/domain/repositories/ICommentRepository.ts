@@ -68,8 +68,18 @@ export interface ICommentRepository {
 	create(
 		comment: Omit<Comment, "_id" | "createdAt" | "updatedAt">,
 	): Promise<Comment>;
+	/**
+	 * Bulk insert (self-service import, backup restore); rows with an invalid
+	 * verseId are dropped. A row may carry its original `_id` and `createdAt`
+	 * (backup restore): one whose `_id` already exists is skipped rather than
+	 * failing the batch, so a restore can be re-run. Returns how many rows
+	 * were inserted.
+	 */
 	createMany(
-		comments: Omit<Comment, "_id" | "createdAt" | "updatedAt">[],
+		comments: (Omit<Comment, "_id" | "createdAt" | "updatedAt"> & {
+			_id?: string;
+			createdAt?: Date;
+		})[],
 	): Promise<number>;
 	update(id: string, data: Partial<Comment>): Promise<Comment | null>;
 	delete(id: string): Promise<void>;

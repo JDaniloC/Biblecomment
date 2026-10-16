@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 const DPO_EMAIL = "contato@biblecomment.com.br";
-const EFFECTIVE_DATE = "28 de abril de 2026";
+const EFFECTIVE_DATE = "16 de outubro de 2026";
 
 export default function PrivacyPage() {
   return (
@@ -56,13 +56,14 @@ export default function PrivacyPage() {
         </h2>
         <ul className="list-disc pl-6 text-stone-700 dark:text-stone-300 space-y-1">
           <li>
-            <strong>E-mail</strong> &mdash; usado exclusivamente para autenticar
-            o login. Nunca enviamos newsletters, marketing ou notificações
-            externas para este endereço.
+            <strong>E-mail</strong> &mdash; usado para autenticar o login e para
+            mensagens transacionais: confirmação do e-mail, confirmação de troca
+            de e-mail e redefinição de senha. Nunca enviamos newsletters ou
+            marketing para este endereço.
           </li>
           <li>
-            <strong>Nome de usuário</strong> público, exibido nos comentários e
-            discussões.
+            <strong>Nome de usuário e nome de exibição</strong> públicos,
+            exibidos nos comentários e discussões.
           </li>
           <li>
             <strong>Senha</strong>, armazenada como <em>hash</em> bcrypt
@@ -75,6 +76,12 @@ export default function PrivacyPage() {
           <li>
             <strong>Conteúdo gerado</strong> &mdash; comentários, discussões,
             respostas, curtidas e denúncias.
+          </li>
+          <li>
+            <strong>Atividade social e de leitura</strong> &mdash; quem você
+            segue e quem segue você, comunidades (as que você criou, as de que
+            participa e as que segue), capítulos lidos, dias de leitura e, se
+            ativado, o lembrete de leitura (horário e fuso).
           </li>
           <li>
             <strong>Logs operacionais</strong> &mdash; endereço IP, timestamp e
@@ -97,6 +104,14 @@ export default function PrivacyPage() {
         <ul className="list-disc pl-6 text-stone-700 dark:text-stone-300 space-y-1">
           <li>Permitir autenticação e identificação de quem publica conteúdo.</li>
           <li>Operar a plataforma de comentários e discussões.</li>
+          <li>
+            Enviar mensagens transacionais por e-mail (confirmação de e-mail e
+            redefinição de senha).
+          </li>
+          <li>
+            Enviar notificações push e lembretes de leitura, quando você os
+            ativa.
+          </li>
           <li>Prevenir abuso, spam e violações dos Termos de Uso.</li>
           <li>Atender a obrigações legais quando aplicável.</li>
         </ul>
@@ -118,14 +133,37 @@ export default function PrivacyPage() {
         </h2>
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
           Não vendemos, alugamos ou compartilhamos seus dados com terceiros
-          para fins comerciais. Quando a variável de ambiente{" "}
-          <code className="text-sm bg-stone-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-            SENTRY_DSN
-          </code>{" "}
-          está configurada, mensagens de erro do servidor podem ser enviadas
-          ao serviço Sentry para diagnóstico, sem incluir senhas ou tokens.
-          Caso esta integração esteja ativa, ela é mencionada aqui de forma
-          transparente.
+          para fins comerciais. Para operar o serviço, contamos com os
+          seguintes operadores, que tratam dados em nosso nome:
+        </p>
+        <ul className="list-disc pl-6 text-stone-700 dark:text-stone-300 space-y-1">
+          <li>
+            <strong>Netlify</strong> &mdash; hospedagem do site e do servidor,
+            incluindo os logs operacionais descritos na seção 2.
+          </li>
+          <li>
+            <strong>MongoDB Atlas</strong> &mdash; banco de dados onde ficam sua
+            conta, seu conteúdo e sua atividade.
+          </li>
+          <li>
+            <strong>Resend</strong> &mdash; envio dos e-mails transacionais
+            (endereço de destino e conteúdo da mensagem).
+          </li>
+          <li>
+            <strong>Cloudflare (R2)</strong> &mdash; armazenamento e entrega dos
+            áudios de narração (recebe o endereço IP e o navegador de quem
+            ouve).
+          </li>
+          <li>
+            <strong>Sentry</strong> &mdash; quando ativado, recebe dados de erros
+            e de desempenho do servidor e do navegador para diagnóstico. Os
+            endereços (URLs) vão sem a parte de consulta (o trecho após o
+            &ldquo;?&rdquo;), e senhas nunca são enviadas.
+          </li>
+        </ul>
+        <p className="text-stone-700 dark:text-stone-300 leading-relaxed mt-3">
+          Esses serviços podem processar dados fora do Brasil, com as
+          salvaguardas previstas no art. 33 da LGPD.
         </p>
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed mt-3">
           A entrega de notificações push, quando ativada, atravessa o serviço
@@ -145,16 +183,21 @@ export default function PrivacyPage() {
         </p>
         <ul className="list-disc pl-6 text-stone-700 dark:text-stone-300 space-y-1">
           <li>
-            <strong>Acesso e portabilidade</strong> &mdash; baixe um JSON
-            completo dos seus dados na aba{" "}
+            <strong>Acesso e portabilidade</strong> &mdash; baixe na aba{" "}
             <Link href="/profile" className="text-blue-700 dark:text-brand underline">
               Perfil
-            </Link>
-            .
+            </Link>{" "}
+            um arquivo JSON com todos os dados que guardamos sobre você, exceto
+            credenciais (o hash da senha, os tokens de verificação e de
+            redefinição e o endereço e as chaves das notificações push). O
+            próprio arquivo lista o que ficou de fora e por quê. Os comentários
+            do arquivo podem ser reimportados pelo perfil, desde que seu e-mail
+            esteja verificado.
           </li>
           <li>
-            <strong>Correção</strong> &mdash; edite e-mail (via suporte), nome,
-            crença e estado pelo perfil.
+            <strong>Correção</strong> &mdash; edite e-mail, nome, crença e
+            estado pelo perfil. A troca de e-mail vale depois de confirmada pelo
+            link enviado ao novo endereço.
           </li>
           <li>
             <strong>Eliminação</strong> &mdash; ao excluir sua conta o registro
@@ -166,7 +209,9 @@ export default function PrivacyPage() {
             de notificação dos seus dispositivos. Comunidades que você criou
             passam para o moderador (ou, na falta dele, o membro aprovado)
             mais antigo; sem outros membros aprovados, a comunidade é
-            excluída.
+            excluída. Para que uma conta excluída não seja recriada a partir de
+            cópias de segurança, guardamos apenas o identificador interno da
+            conta e a data da exclusão &mdash; sem e-mail, nome ou conteúdo.
           </li>
           <li>
             <strong>Revogação do consentimento</strong> &mdash; equivalente à
@@ -182,10 +227,15 @@ export default function PrivacyPage() {
           7. Cookies e armazenamento local
         </h2>
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
-          Utilizamos apenas cookies/sessões estritamente necessários para o
-          funcionamento da autenticação. Preferências de tema (claro/escuro) e
-          tamanho de fonte são salvas em <code>localStorage</code> do seu
-          navegador e nunca enviadas ao servidor.
+          Utilizamos apenas cookies estritamente necessários para o
+          funcionamento da autenticação. Tema (claro/escuro), tamanho da fonte,
+          voz da narração, vibração, filtro de comunidade, o tempo de leitura do
+          dia ainda não registrado, a marcação dos tutoriais vistos neste
+          aparelho e a Bíblia offline ficam só no armazenamento local do seu
+          navegador (<code>localStorage</code> e IndexedDB), nunca são enviados
+          ao servidor e, por isso, não aparecem na exportação dos seus dados.
+          Os tutoriais concluídos na sua conta e os dias de leitura registrados
+          ficam no servidor e estão na exportação.
         </p>
 
         <h2 className="mt-8 text-xl font-semibold text-stone-800 dark:text-stone-100">
@@ -193,7 +243,11 @@ export default function PrivacyPage() {
         </h2>
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
           Senhas armazenadas com bcrypt, comunicação em HTTPS, validação no
-          servidor de todas as entradas de usuários (Zod). Apesar dos
+          servidor de todas as entradas de usuários (Zod). Ao alterar a senha,
+          encerramos as sessões abertas nos demais dispositivos e invalidamos
+          links de redefinição ainda não usados; ao redefini-la pelo link
+          enviado por e-mail, encerramos todas as sessões da conta. Nos dois
+          casos, uma troca de e-mail pendente é cancelada. Apesar dos
           esforços, nenhum sistema é absolutamente imune &mdash; se identificar
           uma falha, contate{" "}
           <a href={`mailto:${DPO_EMAIL}`} className="text-blue-700 dark:text-brand underline">
@@ -206,9 +260,9 @@ export default function PrivacyPage() {
           9. Alterações desta política
         </h2>
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
-          Mudanças relevantes serão sinalizadas na página inicial e a data de
-          vigência acima será atualizada. Mudanças que reduzam direitos do
-          titular exigirão novo consentimento ativo.
+          Sempre que esta política mudar, a data de vigência acima será
+          atualizada. Mudanças que reduzam direitos do titular exigirão novo
+          consentimento ativo.
         </p>
 
         <h2 className="mt-8 text-xl font-semibold text-stone-800 dark:text-stone-100">

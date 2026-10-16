@@ -11,6 +11,7 @@
  * bundles; without the prefix the value is undefined at runtime.
  */
 import * as Sentry from "@sentry/nextjs";
+import { scrubEvent } from "@/lib/sentry-scrub";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -25,6 +26,9 @@ if (dsn) {
     // we don't pay for replay quota. Flip on later if needed.
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
+    // Reset and verify links carry one-time tokens in the query string.
+    beforeSend: scrubEvent,
+    beforeSendTransaction: scrubEvent,
   });
 }
 

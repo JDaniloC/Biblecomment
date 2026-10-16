@@ -168,7 +168,8 @@ function RegisterContent() {
 								</svg>
 							</span>
 							<span>
-								Sem spam, sem newsletters: o e-mail é apenas para login.
+								Sem spam, sem newsletters: usamos o e-mail para o login e para
+								mensagens da conta (confirmação e redefinição de senha).
 							</span>
 						</li>
 					</ul>

@@ -10,6 +10,7 @@ import { DeletionIncompleteError } from "@/application/use-cases/UserUseCases";
 import { logger } from "@/lib/logger";
 import {
 	getSessionUser,
+	getActiveSessionUser,
 	unauthorized,
 	forbidden,
 	serverError,
@@ -134,7 +135,9 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
 	try {
-		const user = await getSessionUser();
+		// Revalidated against the DB: a revoked session (or a demoted
+		// moderator) is refused even while another instance's cache serves it.
+		const user = await getActiveSessionUser();
 		if (!user) return unauthorized();
 
 		const parsed = await parseBody(req, DeleteUserSchema);

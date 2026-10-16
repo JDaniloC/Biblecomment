@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { IUserRepository } from "@/domain/repositories/IUserRepository";
 import { IPasswordResetTokenRepository } from "@/domain/repositories/IPasswordResetTokenRepository";
+import { revokePendingEmailChange, settleCleanup } from "./AuthUseCases";
 
 export interface Clock {
   now(): number;
@@ -62,6 +63,16 @@ export class RequestPasswordResetUseCase {
   }
 }
 
+export interface CompletePasswordResetResult {
+  userId: string;
+  /**
+   * Set when revoking a pending e-mail change failed after the new password
+   * was stored. The reset itself succeeded, so the caller logs this instead
+   * of reporting an error.
+   */
+  cleanupError?: unknown;
+}
+
 export class CompletePasswordResetUseCase {
   constructor(
     private readonly userRepo: IUserRepository,
@@ -69,7 +80,13 @@ export class CompletePasswordResetUseCase {
     private readonly clock: Clock = systemClock,
   ) {}
 
-  async execute(rawToken: string, newPassword: string): Promise<void> {
+  /**
+   * Rotate the password of the token's owner and burn the token. The write
+   * also bumps the account's session version, ending every session — the
+   * caller drops its cached session state for the returned id — and any
+   * pending e-mail change is revoked (see revokePendingEmailChange).
+   */
+  async execute(rawToken: string, newPassword: string): Promise<CompletePasswordResetResult> {
     if (!rawToken || typeof rawToken !== "string") {
       throw new Error("Token inválido ou expirado.");
     }
@@ -88,7 +105,16 @@ export class CompletePasswordResetUseCase {
     }
 
     const hashed = await bcrypt.hash(newPassword, 12);
-    await this.userRepo.updatePasswordById(tk.userId, hashed);
+    // Unconditional (no expectedHash): a reset always beats a racing change.
+    const version = await this.userRepo.updatePasswordById(tk.userId, hashed);
     await this.tokenRepo.deleteById(tk._id);
+    // The account is gone (deleted after the link was sent).
+    if (version === null) throw new Error("Token inválido ou expirado.");
+
+    const userId = tk.userId;
+    const cleanupError = await settleCleanup([
+      () => revokePendingEmailChange(this.userRepo, userId),
+    ]);
+    return cleanupError === undefined ? { userId } : { userId, cleanupError };
   }
 }

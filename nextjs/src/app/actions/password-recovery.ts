@@ -10,6 +10,7 @@ import {
 import { sendEmail } from "@/lib/email";
 import { renderPasswordResetEmail } from "@/lib/emails/password-reset";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { forgetSessionUser } from "@/lib/session-revalidation";
 import { logger } from "@/lib/logger";
 import type { ActionResult } from "./comments";
 
@@ -91,6 +92,8 @@ export async function requestPasswordResetAction(
 /**
  * Consume a reset token and rotate the user's password. Returns a typed
  * error when the token is invalid/expired or the new password is too short.
+ * Every session of the account ends, including one this browser may hold,
+ * and a pending e-mail change is cancelled.
  */
 export async function completePasswordResetAction(
   token: string,
@@ -101,8 +104,18 @@ export async function completePasswordResetAction(
       new MongoUserRepository(),
       new MongoPasswordResetTokenRepository(),
     );
-    await useCase.execute(token ?? "", newPassword ?? "");
-    logger.info({ action: "password_reset_complete" }, "password reset completed");
+    const { userId, cleanupError } = await useCase.execute(token ?? "", newPassword ?? "");
+    forgetSessionUser(userId);
+    logger.info(
+      { userId, action: "password_reset_complete" },
+      "password reset completed; all sessions revoked",
+    );
+    if (cleanupError !== undefined) {
+      logger.error(
+        { err: cleanupError, userId, action: "password_reset_complete" },
+        "password reset but the pending e-mail change could not be revoked",
+      );
+    }
     return { ok: true, data: { updated: true } };
   } catch (err) {
     if (err instanceof Error) {

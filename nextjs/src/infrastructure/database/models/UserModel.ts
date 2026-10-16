@@ -21,6 +21,7 @@ export interface IUserDocument extends Document {
     communityIds: string[];
     discussionIds: string[];
   };
+  sessionVersion?: number;
   /** Set by Mongoose `timestamps: true` on the schema. */
   createdAt?: Date;
   updatedAt?: Date;
@@ -58,6 +59,9 @@ const UserSchema = new Schema<IUserDocument>(
       ),
       required: false,
     },
+    // Session revocation counter (see User.sessionVersion). Declared so
+    // strict mode keeps the $inc in updatePasswordById / setDisabled.
+    sessionVersion:     { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

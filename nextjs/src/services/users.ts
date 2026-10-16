@@ -117,9 +117,15 @@ export const usersService = {
     return result.data;
   },
 
-  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  /**
+   * Other devices are always signed out. `sessionKept: false` means this one
+   * couldn't be signed in again either, so the caller should send the user
+   * to /login.
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ sessionKept: boolean }> {
     const result = await changePasswordAction(currentPassword, newPassword);
     if (!result.ok) actionError(result.error);
+    return { sessionKept: result.data.sessionKept };
   },
 
   async markTutorialCompleted(name: string): Promise<void> {

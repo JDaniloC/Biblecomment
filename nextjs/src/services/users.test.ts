@@ -101,9 +101,31 @@ describe("usersService", () => {
     expect(result.moderator).toBe(true);
   });
 
-  it("changePassword delegates to changePasswordAction", async () => {
-    mockedChangePassword.mockResolvedValueOnce({ ok: true, data: { success: true } });
-    await usersService.changePassword("old", "new");
+  it("changePassword delegates to changePasswordAction and reports sessionKept", async () => {
+    mockedChangePassword.mockResolvedValueOnce({
+      ok: true,
+      data: { success: true, sessionKept: true },
+    });
+    await expect(usersService.changePassword("old", "new")).resolves.toEqual({
+      sessionKept: true,
+    });
     expect(mockedChangePassword).toHaveBeenCalledWith("old", "new");
+  });
+
+  it("changePassword reports when this device could not be signed in again", async () => {
+    mockedChangePassword.mockResolvedValueOnce({
+      ok: true,
+      data: { success: true, sessionKept: false },
+    });
+    await expect(usersService.changePassword("old", "new")).resolves.toEqual({
+      sessionKept: false,
+    });
+  });
+
+  it("changePassword maps a wrong current password to a 403-shaped error", async () => {
+    mockedChangePassword.mockResolvedValueOnce({ ok: false, error: "Forbidden" });
+    await expect(usersService.changePassword("bad", "new")).rejects.toMatchObject({
+      response: { status: 403 },
+    });
   });
 });

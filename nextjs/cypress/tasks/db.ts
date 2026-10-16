@@ -71,6 +71,7 @@ const COLLECTIONS = [
 	"pushsubscriptions",
 	"readingsessions",
 	"readingreminderpreferences",
+	"accounterasures",
 ];
 
 export async function resetDatabase(): Promise<void> {
@@ -156,12 +157,17 @@ export interface SeedPayload {
 	communityFollows?: SeedCommunityFollow[];
 }
 
-export async function findUserByEmail(email: string): Promise<{
+export interface FoundUser {
 	exists: boolean;
 	passwordHashLength: number;
 	username: string | null;
 	tutorialsCompleted: string[];
-}> {
+	/** Bumped by a password change/reset and by a disable; absent = 0. */
+	sessionVersion: number;
+	pendingEmail: string | null;
+}
+
+export async function findUserByEmail(email: string): Promise<FoundUser> {
 	await ensureConnected();
 	const db = mongoose.connection.db;
 	if (!db) throw new Error("Mongoose connection has no db handle.");
@@ -174,6 +180,8 @@ export async function findUserByEmail(email: string): Promise<{
 			passwordHashLength: 0,
 			username: null,
 			tutorialsCompleted: [],
+			sessionVersion: 0,
+			pendingEmail: null,
 		};
 	}
 	return {
@@ -184,6 +192,9 @@ export async function findUserByEmail(email: string): Promise<{
 		tutorialsCompleted: Array.isArray(doc.tutorialsCompleted)
 			? (doc.tutorialsCompleted as string[])
 			: [],
+		sessionVersion:
+			typeof doc.sessionVersion === "number" ? doc.sessionVersion : 0,
+		pendingEmail: typeof doc.pendingEmail === "string" ? doc.pendingEmail : null,
 	};
 }
 
@@ -215,6 +226,48 @@ export async function insertResetToken(
 		expiresAt: new Date(input.expiresAt),
 		createdAt: new Date(),
 	});
+}
+
+export interface InsertEmailVerificationTokenInput {
+	/** Current e-mail of the account the token belongs to. */
+	email: string;
+	rawToken: string;
+	/**
+	 * Address the link confirms: the account's own e-mail (first-time
+	 * verification) or its pendingEmail (an e-mail change).
+	 */
+	tokenEmail: string;
+	expiresAt: string; // ISO date
+}
+
+/**
+ * Inserts an e-mail verification token, as RequestEmailChange would, without
+ * going through the per-IP rate-limited request action.
+ */
+export async function insertEmailVerificationToken(
+	input: InsertEmailVerificationTokenInput,
+): Promise<null> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	const user = await db
+		.collection("users")
+		.findOne({ email: input.email.toLowerCase().trim() });
+	if (!user) {
+		throw new Error(`insertEmailVerificationToken: user ${input.email} not found`);
+	}
+	const tokenHash = crypto
+		.createHash("sha256")
+		.update(input.rawToken)
+		.digest("hex");
+	await db.collection("emailverificationtokens").insertOne({
+		userId: user._id.toString(),
+		email: input.tokenEmail.toLowerCase().trim(),
+		tokenHash,
+		expiresAt: new Date(input.expiresAt),
+		createdAt: new Date(),
+	});
+	return null;
 }
 
 export async function getUserBadges(email: string): Promise<string[]> {
@@ -678,4 +731,57 @@ export async function seedFollow(input: {
 		updatedAt: now,
 	});
 	return null;
+}
+
+export interface SeedDiscussionLikeInput {
+	username: string;
+	targetType: "discussion" | "answer";
+	/** Discussion or answer id. */
+	targetId: string;
+}
+
+/**
+ * Insert a discussion/answer like row. Likes only exist as a server action
+ * (no API route), the same reason seedFollow is a task.
+ */
+export async function seedDiscussionLike(
+	input: SeedDiscussionLikeInput,
+): Promise<null> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	if (!mongoose.Types.ObjectId.isValid(input.targetId)) {
+		throw new Error(`seedDiscussionLike: invalid targetId ${input.targetId}`);
+	}
+	const user = await db
+		.collection("users")
+		.findOne({ username: input.username }, { projection: { _id: 1 } });
+	if (!user) throw new Error(`seedDiscussionLike: user ${input.username} not seeded`);
+	await db.collection("discussionlikes").insertOne({
+		userId: String(user._id),
+		targetType: input.targetType,
+		targetId: new mongoose.Types.ObjectId(input.targetId),
+		createdAt: new Date(),
+	});
+	return null;
+}
+
+/**
+ * Deletion tombstones (accounterasures): all of them, or only the one of
+ * `userId` (0 or 1).
+ */
+export async function countErasures(
+	input?: { userId?: string } | null,
+): Promise<number> {
+	await ensureConnected();
+	const db = mongoose.connection.db;
+	if (!db) throw new Error("Mongoose connection has no db handle.");
+	const userId = input?.userId;
+	if (userId === undefined) {
+		return db.collection("accounterasures").countDocuments({});
+	}
+	if (!/^[0-9a-f]{24}$/i.test(userId)) return 0;
+	return db
+		.collection("accounterasures")
+		.countDocuments({ _id: new mongoose.Types.ObjectId(userId) });
 }

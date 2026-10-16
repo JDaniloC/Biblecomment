@@ -188,6 +188,47 @@ describe("Security regressions: IDOR & RBAC", () => {
         ).to.not.exist;
       });
     });
+
+    it("skips reserved, placeholder and already-held names instead of renaming them", () => {
+      cy.loginAs(users.mod.email, users.mod.password);
+      cy.request({
+        method: "POST",
+        url: "/api/backup/users",
+        body: {
+          users: [
+            { email: "sys@cypress.test", username: "system" },
+            { email: "anon@cypress.test", username: "[usuário removido]" },
+            // "bob" is live: a case-only variant would be a second "bob".
+            { email: "bob2@cypress.test", username: "BOB" },
+            // Grandfathered (non-canonical) names are restored verbatim.
+            { email: "legacy@cypress.test", username: "JDaniloC" },
+          ],
+        },
+      }).then((res) => {
+        expect(res.status).to.be.oneOf([200, 201]);
+        expect(res.body.received).to.eq(4);
+        expect(res.body.created).to.eq(1);
+        expect(res.body.skipped).to.include({
+          reservedUsername: 1,
+          sentinelUsername: 1,
+          usernameTaken: 1,
+        });
+        expect(JSON.stringify(res.body), "the report never echoes e-mails").to.not.include(
+          "@cypress.test",
+        );
+      });
+
+      cy.request("GET", "/api/backup/users").then((res) => {
+        const names = (res.body as Array<{ username: string }>).map((u) => u.username);
+        expect(names).to.include("JDaniloC");
+        expect(names).to.not.include("system");
+        expect(names).to.not.include("[usuário removido]");
+        expect(names.filter((n) => n.toLowerCase() === "bob")).to.deep.eq(["bob"]);
+      });
+      cy.task<{ exists: boolean }>("db:findUser", "sys@cypress.test")
+        .its("exists")
+        .should("eq", false);
+    });
   });
 
   describe("CR-1 — username uniqueness enforced at DB level", () => {

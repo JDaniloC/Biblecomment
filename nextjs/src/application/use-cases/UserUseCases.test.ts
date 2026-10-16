@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
 	SetModeratorUseCase,
 	SetUserDisabledUseCase,
@@ -32,6 +32,7 @@ import type { IReadingReminderPreferenceRepository } from "@/domain/repositories
 import type { IPushSubscriptionRepository } from "@/domain/repositories/IPushSubscriptionRepository";
 import type { IEmailVerificationTokenRepository } from "@/domain/repositories/IEmailVerificationTokenRepository";
 import type { IPasswordResetTokenRepository } from "@/domain/repositories/IPasswordResetTokenRepository";
+import type { IAccountErasureRepository } from "@/domain/repositories/IAccountErasureRepository";
 import type { User } from "@/domain/entities/User";
 
 function fakeUser(overrides: Partial<User> = {}): User {
@@ -133,7 +134,7 @@ describe("SetUserDisabledUseCase", () => {
 			"mod-jane",
 		);
 
-		// `by` is null on re-enable â€” there is no "disabled by" to record.
+		// `by` is null on re-enable — there is no "disabled by" to record.
 		expect(setDisabled).toHaveBeenCalledWith("alice@example.com", false, null);
 		expect(unhideAllByUsernameCascade).toHaveBeenCalledWith("alice");
 		expect(hideAllByUsername).not.toHaveBeenCalled();
@@ -327,6 +328,9 @@ describe("DeleteUserUseCase", () => {
 			passwordResetToken: {
 				deleteByUserId: vi.fn(track("passwordResetToken.deleteByUserId", undefined)),
 			} as unknown as IPasswordResetTokenRepository,
+			erasures: {
+				record: vi.fn(track("erasures.record", undefined)),
+			} as unknown as IAccountErasureRepository,
 		};
 
 		// Record every community write too, so ordering assertions cover the
@@ -487,6 +491,61 @@ describe("DeleteUserUseCase", () => {
 		expect(h.order).toContain("communityMembership.seedCreator");
 		expect(h.order[h.order.length - 1]).toBe("deleteById");
 		expect(h.order.length).toBeGreaterThan(10);
+	});
+
+	it("records the erasure tombstone (id + requestedAt) once marked, before anything is removed", async () => {
+		const h = makeHarness([alice(), bob()]);
+		await seedCommunity(h, "owned", "u1", [
+			{ userId: "u1", role: "moderator" },
+			{ userId: "u2" },
+		]);
+		h.order.length = 0;
+
+		await h.useCase.execute("alice@example.com", "alice@example.com", false);
+
+		const snapshot = await h.user.beginDeletion.mock.results[1].value;
+		expect(h.repos.erasures.record).toHaveBeenCalledTimes(1);
+		expect(h.repos.erasures.record).toHaveBeenCalledWith("u1", snapshot?.requestedAt);
+		const at = h.order.indexOf("erasures.record");
+		// Only the marking (and the snapshot merge) precede it: no hand-over,
+		// removal or anonymization ran before the tombstone was stored.
+		expect(h.order.slice(0, at)).toEqual(["beginDeletion", "onMarked:u1", "beginDeletion"]);
+		expect(at).toBeLessThan(h.order.indexOf("community.setCreatedBy"));
+		expect(at).toBeLessThan(h.order.indexOf("deleteById"));
+	});
+
+	it("a retried deletion records the tombstone again under the original requestedAt", async () => {
+		const requestedAt = new Date("2026-10-01T10:00:00Z");
+		const h = makeHarness([
+			fakeUser({ deletion: { requestedAt, communityIds: [], discussionIds: [] } }),
+		]);
+
+		await h.useCase.execute("alice@example.com", "alice@example.com", false);
+
+		expect(h.repos.erasures.record).toHaveBeenCalledWith("u1", requestedAt);
+		expect(h.users.has("u1")).toBe(false);
+	});
+
+	it("keeps the account (DeletionIncompleteError) when the tombstone can't be written, and a retry finishes", async () => {
+		const h = makeHarness([alice()]);
+		vi.mocked(h.repos.erasures.record).mockRejectedValueOnce(new Error("Atlas timeout"));
+
+		const failure = await h.useCase
+			.execute("alice@example.com", "alice@example.com", false)
+			.catch((e: unknown) => e);
+
+		expect(failure).toBeInstanceOf(DeletionIncompleteError);
+		expect((failure as Error).cause).toEqual(new Error("Atlas timeout"));
+		expect(h.users.get("u1")?.deletion).toBeDefined();
+		expect(h.user.deleteById).not.toHaveBeenCalled();
+		expect(h.repos.commentLike.deleteAllByUser).not.toHaveBeenCalled();
+		expect(h.repos.comment.anonymizeByUsername).not.toHaveBeenCalled();
+
+		// The account-maintenance cron's retry writes it and completes.
+		await h.useCase.execute("alice@example.com", "alice@example.com", false);
+
+		expect(h.repos.erasures.record).toHaveBeenCalledTimes(2);
+		expect(h.users.has("u1")).toBe(false);
 	});
 
 	it("recomputes community counters: approved and follow rows drop, pending ones leave memberCount alone", async () => {
@@ -706,7 +765,7 @@ describe("MarkTutorialCompletedUseCase", () => {
 		);
 	});
 
-	it("is idempotent â€” repeated calls just delegate again (repo enforces $addToSet)", async () => {
+	it("is idempotent — repeated calls just delegate again (repo enforces $addToSet)", async () => {
 		const markTutorialCompleted = vi.fn(() => Promise.resolve());
 		const repo = { markTutorialCompleted } as unknown as IUserRepository;
 		const useCase = new MarkTutorialCompletedUseCase(repo);

@@ -43,8 +43,7 @@ function makeRepos(opts: {
     findAllPaginated: async () => [],
     findForModeration: async () => ({ items: [], nextCursor: null }),
     create: async () => ({} as never),
-    updatePassword: async () => {},
-    updatePasswordById: async () => {},
+    updatePasswordById: async () => null,
     update: async () => null,
     markTutorialCompleted: async () => {},
     addBadges: async (userId: string, ids: string[]) => {

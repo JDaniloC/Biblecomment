@@ -37,6 +37,9 @@ function toEntity(doc: IUserDocument): User {
           discussionIds: [...(doc.deletion.discussionIds ?? [])],
         }
       : undefined,
+    sessionVersion: doc.sessionVersion ?? 0,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
   };
 }
 
@@ -203,20 +206,49 @@ export class MongoUserRepository implements IUserRepository {
     return { items, nextCursor };
   }
 
-  async create(user: Omit<User, "_id">): Promise<User> {
+  async create(user: Omit<User, "_id"> & { _id?: string }): Promise<User> {
     await connectToDatabase();
-    const doc = await UserModel.create(user);
-    return toEntity(doc);
+    const { _id, ...fields } = user;
+    try {
+      const doc = await UserModel.create(
+        _id === undefined ? fields : { ...fields, _id: new mongoose.Types.ObjectId(_id) },
+      );
+      return toEntity(doc);
+    } catch (err) {
+      // A unique index (_id, email or username) lost a race with another write.
+      if ((err as { code?: number }).code === 11000) {
+        const field = Object.keys((err as { keyPattern?: object }).keyPattern ?? {})[0];
+        throw new Error(
+          field === "email"
+            ? "Email already registered"
+            : field === "_id"
+              ? "User id already taken"
+              : "Username already taken",
+        );
+      }
+      throw err;
+    }
   }
 
-  async updatePassword(email: string, password: string): Promise<void> {
+  async updatePasswordById(
+    userId: string,
+    password: string,
+    opts?: { expectedHash?: string },
+  ): Promise<number | null> {
     await connectToDatabase();
-    await UserModel.updateOne({ email: email.toLowerCase() }, { password });
-  }
-
-  async updatePasswordById(userId: string, password: string): Promise<void> {
-    await connectToDatabase();
-    await UserModel.updateOne({ _id: userId }, { password });
+    if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+    // One atomic write: the new hash and the session-version bump land
+    // together, so no session can be minted against the new password at
+    // the old version. `expectedHash` makes it a compare-and-set.
+    const doc = await UserModel.findOneAndUpdate(
+      {
+        _id: userId,
+        ...(opts?.expectedHash !== undefined ? { password: opts.expectedHash } : {}),
+      },
+      { $set: { password }, $inc: { sessionVersion: 1 } },
+      { returnDocument: "after", projection: { sessionVersion: 1 } },
+    ).lean();
+    return doc ? (doc.sessionVersion ?? 0) : null;
   }
 
   async update(email: string, data: Partial<Omit<User, "_id" | "email">>): Promise<User | null> {
@@ -260,8 +292,13 @@ export class MongoUserRepository implements IUserRepository {
     await connectToDatabase();
     // A plain `update` only $sets — re-enabling must $unset the fields so the
     // login block (which keys on `disabledAt` being present) actually lifts.
+    // Disabling also bumps sessionVersion, so a later re-enable doesn't
+    // revive cookies that never got rejected while the account was off.
     const update = disabled
-      ? { $set: { disabledAt: new Date(), disabledBy: by ?? "" } }
+      ? {
+          $set: { disabledAt: new Date(), disabledBy: by ?? "" },
+          $inc: { sessionVersion: 1 },
+        }
       : { $unset: { disabledAt: "", disabledBy: "" } };
     const doc = await UserModel.findOneAndUpdate(
       { email: email.toLowerCase() },

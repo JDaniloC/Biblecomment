@@ -10,6 +10,10 @@ import {
 import { UserModel } from "@/infrastructure/database/models/UserModel";
 import { VerseModel } from "@/infrastructure/database/models/VerseModel";
 import { connectToDatabase } from "@/infrastructure/database/connection";
+import {
+	insertManyIgnoringDuplicates,
+	isObjectIdHex,
+} from "@/infrastructure/database/insert-many";
 import mongoose from "mongoose";
 
 function toEntity(doc: ICommentDocument): Comment {
@@ -235,16 +239,23 @@ export class MongoCommentRepository implements ICommentRepository {
 	}
 
 	async createMany(
-		comments: Omit<Comment, "_id" | "createdAt" | "updatedAt">[],
+		comments: (Omit<Comment, "_id" | "createdAt" | "updatedAt"> & {
+			_id?: string;
+			createdAt?: Date;
+		})[],
 	): Promise<number> {
 		if (comments.length === 0) return 0;
 		await connectToDatabase();
 		const docs = comments
 			.filter((c) => mongoose.Types.ObjectId.isValid(c.verseId))
-			.map((c) => ({ ...c, verseId: new mongoose.Types.ObjectId(c.verseId) }));
-		if (docs.length === 0) return 0;
-		const inserted = await CommentModel.insertMany(docs, { ordered: false });
-		return inserted.length;
+			.map(({ _id, ...c }) => ({
+				...c,
+				// Keeping the original id makes a re-run skip the row (duplicate
+				// key) and keeps discussion.commentId links pointing at it.
+				...(isObjectIdHex(_id) ? { _id: new mongoose.Types.ObjectId(_id) } : {}),
+				verseId: new mongoose.Types.ObjectId(c.verseId),
+			}));
+		return insertManyIgnoringDuplicates(CommentModel, docs);
 	}
 
 	async update(id: string, data: Partial<Comment>): Promise<Comment | null> {

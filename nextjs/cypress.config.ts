@@ -20,8 +20,13 @@ import {
   countAnswersByUser,
   countAnswersForDiscussion,
   getUserBadges,
+  insertEmailVerificationToken,
+  seedDiscussionLike,
+  countErasures,
   type InsertResetTokenInput,
+  type InsertEmailVerificationTokenInput,
   type SeedCommentInput,
+  type SeedDiscussionLikeInput,
 } from "./cypress/tasks/db";
 import { assertLocalMongoUri } from "./cypress/tasks/safety";
 
@@ -119,6 +124,15 @@ export default defineConfig({
         },
         async "db:seedFollow"(input: { follower: string; following: string }) {
           return await seedFollow(input);
+        },
+        async "db:insertEmailVerificationToken"(input: InsertEmailVerificationTokenInput) {
+          return await insertEmailVerificationToken(input);
+        },
+        async "db:seedDiscussionLike"(input: SeedDiscussionLikeInput) {
+          return await seedDiscussionLike(input);
+        },
+        async "db:countErasures"(input?: { userId?: string } | null) {
+          return await countErasures(input);
         },
       });
     },

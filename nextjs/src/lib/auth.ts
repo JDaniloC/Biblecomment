@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
 import { loadSessionUser } from "@/lib/session-revalidation";
@@ -47,6 +48,10 @@ export const authConfig: NextAuthConfig = {
           tutorialsCompleted: user.tutorialsCompleted ?? [],
           emailVerified: !!user.emailVerifiedAt,
           pendingEmail: user.pendingEmail ?? null,
+          // From the same document whose hash was just verified: a login
+          // with the old password that races a change gets the old version
+          // and is rejected by the fresh read in the jwt callback.
+          sessionVersion: user.sessionVersion ?? 0,
         };
       },
     }),
@@ -64,6 +69,7 @@ export const authConfig: NextAuthConfig = {
           (user as { tutorialsCompleted?: string[] }).tutorialsCompleted ?? [];
         token.emailVerified = (user as { emailVerified: boolean }).emailVerified;
         token.pendingEmail = (user as { pendingEmail: string | null }).pendingEmail;
+        token.sessionVersion = user.sessionVersion ?? 0;
       }
       // Tokens minted before `id` was a claim can't be revalidated; make
       // them sign in again rather than trusting their claims.
@@ -85,13 +91,26 @@ export const authConfig: NextAuthConfig = {
       // back after a rename or email change. A failed lookup ("unknown")
       // keeps the token as-is rather than logging everyone out on a
       // transient DB error.
+      //
+      // `sessionVersion` revokes sessions: a password change or reset (and
+      // disabling) bumps it in the DB, and a token minted at any other
+      // version is dropped — on every trigger, "update" included, since a
+      // plain client POST to /api/auth/session reaches that branch too. The
+      // token's version is never raised to the DB's: that would revalidate
+      // every revoked token on its next read. Only a new sign-in (through
+      // authorize(), which checks the password) mints the new version.
+      // Tokens minted before the claim existed count as version 0.
       const claimsAt = typeof token.claimsAt === "number" ? token.claimsAt : undefined;
+      const tokenVersion = typeof token.sessionVersion === "number" ? token.sessionVersion : 0;
       const state = await loadSessionUser(token.id, {
         fresh: !!user || trigger === "update",
         notBefore: claimsAt,
+        minSessionVersion: tokenVersion,
       });
       if (state.status === "inactive") return null;
       if (state.status === "active") {
+        if (state.user.sessionVersion !== tokenVersion) return null;
+        token.sessionVersion = tokenVersion;
         token.email = state.user.email;
         token.username = state.user.username;
         token.name = state.user.name;
@@ -122,6 +141,7 @@ export const authConfig: NextAuthConfig = {
           (token.emailVerified as boolean | undefined) ?? false;
         (session.user as { pendingEmail: string | null }).pendingEmail =
           (token.pendingEmail as string | null | undefined) ?? null;
+        session.user.sessionVersion = token.sessionVersion ?? 0;
       }
       return session;
     },
@@ -132,3 +152,47 @@ export const authConfig: NextAuthConfig = {
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+
+/**
+ * The Auth.js session cookie: `authjs.session-token`, with the `__Secure-`
+ * prefix over HTTPS, split into `.0`, `.1`, ... chunks when it is large.
+ */
+const SESSION_COOKIE = /^(?:__Secure-)?authjs\.session-token(?:\.\d+)?$/;
+
+/** The session cookie's value in this request's cookie jar ("" when none). */
+async function sessionCookieValue(): Promise<string> {
+  const jar = await cookies();
+  return jar
+    .getAll()
+    .filter((c) => SESSION_COOKIE.test(c.name))
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    .map((c) => c.value)
+    .join("");
+}
+
+/**
+ * Sign the browser behind the current request in again, from a server action
+ * or route handler, right after its password changed. The change bumped the
+ * account's sessionVersion, revoking every session including this one; a
+ * fresh credentials sign-in with the new password mints a cookie at the new
+ * version (Auth.js runs in-process and writes it with `cookies().set`), so
+ * only the other devices are signed out.
+ *
+ * Returns true only when a new session cookie was actually set. A wrong
+ * password throws, but a sign-in whose jwt callback drops the session (the
+ * version moved again, or the account went inactive, between authorize()
+ * and that callback) doesn't: Auth.js clears the cookie instead. Both cases
+ * return false, and the caller tells the client to sign in again.
+ */
+export async function reestablishSession(email: string, password: string): Promise<boolean> {
+  try {
+    const before = await sessionCookieValue();
+    await signIn("credentials", { email, password, redirect: false });
+    const after = await sessionCookieValue();
+    // A newly encoded token never equals the old one (fresh IV), and a
+    // cleared cookie is empty.
+    return after !== "" && after !== before;
+  } catch {
+    return false;
+  }
+}

@@ -44,11 +44,17 @@ export interface IDiscussionRepository {
 		id: string,
 		patch: { title: string; question: string },
 	): Promise<Discussion | null>;
+	/**
+	 * Bulk insert (backup restore). A row may carry its original `_id` and
+	 * `createdAt`: one whose `_id` already exists is skipped rather than
+	 * failing the batch, so a restore can be re-run and `commentId` links to
+	 * restored comments stay valid. Returns how many rows were inserted.
+	 */
 	createMany(
-		discussions: Omit<
+		discussions: (Omit<
 			Discussion,
 			"_id" | "createdAt" | "updatedAt" | "answers" | "answersCount"
-		>[],
+		> & { _id?: string; createdAt?: Date })[],
 	): Promise<number>;
 	delete(id: string): Promise<void>;
 	findAll(): Promise<Discussion[]>;

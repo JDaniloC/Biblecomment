@@ -1,7 +1,8 @@
 /**
- * Server-only factories for the account use cases whose cascades touch
- * most collections. Shared by the server actions and the /api/users route
- * so the wiring lives in one place.
+ * Server-only factories for the account use cases that touch most
+ * collections (deletion and rename cascades, the data export). Shared by
+ * the server actions and the /api/users routes so the wiring lives in one
+ * place.
  */
 
 import { MongoUserRepository } from "@/infrastructure/repositories/MongoUserRepository";
@@ -22,12 +23,15 @@ import { MongoReadingReminderPreferenceRepository } from "@/infrastructure/repos
 import { MongoPushSubscriptionRepository } from "@/infrastructure/repositories/MongoPushSubscriptionRepository";
 import { MongoEmailVerificationTokenRepository } from "@/infrastructure/repositories/MongoEmailVerificationTokenRepository";
 import { MongoPasswordResetTokenRepository } from "@/infrastructure/repositories/MongoPasswordResetTokenRepository";
+import { MongoAccountErasureRepository } from "@/infrastructure/repositories/MongoAccountErasureRepository";
+import { MongoUserDataExportQueries } from "@/infrastructure/repositories/MongoUserDataExportQueries";
 import {
 	DeleteUserUseCase,
 	FinishPendingDeletionsUseCase,
 	FinishPendingRenamesUseCase,
 	UpdateUsernameUseCase,
 } from "@/application/use-cases/UserUseCases";
+import { ExportUserDataUseCase } from "@/application/use-cases/ExportUserDataUseCase";
 import { forgetSessionUser } from "@/lib/session-revalidation";
 
 export function makeDeleteUserUseCase(): DeleteUserUseCase {
@@ -51,11 +55,30 @@ export function makeDeleteUserUseCase(): DeleteUserUseCase {
 			pushSubscription: new MongoPushSubscriptionRepository(),
 			emailVerificationToken: new MongoEmailVerificationTokenRepository(),
 			passwordResetToken: new MongoPasswordResetTokenRepository(),
+			erasures: new MongoAccountErasureRepository(),
 		},
 		// Stop this instance from serving the account's cached session the
 		// moment it is marked; other instances follow within the cache TTL.
 		{ onMarked: forgetSessionUser },
 	);
+}
+
+// No token repositories: credentials stay out of the export by construction.
+export function makeExportUserDataUseCase(): ExportUserDataUseCase {
+	return new ExportUserDataUseCase({
+		user: new MongoUserRepository(),
+		comment: new MongoCommentRepository(),
+		discussion: new MongoDiscussionRepository(),
+		discussionAnswer: new MongoDiscussionAnswerRepository(),
+		community: new MongoCommunityRepository(),
+		communityMembership: new MongoCommunityMembershipRepository(),
+		communityFollow: new MongoCommunityFollowRepository(),
+		chapterRead: new MongoUserChapterReadRepository(),
+		readingSession: new MongoReadingSessionRepository(),
+		readingReminder: new MongoReadingReminderPreferenceRepository(),
+		pushSubscription: new MongoPushSubscriptionRepository(),
+		queries: new MongoUserDataExportQueries(),
+	});
 }
 
 export function makeFinishPendingDeletionsUseCase(): FinishPendingDeletionsUseCase {

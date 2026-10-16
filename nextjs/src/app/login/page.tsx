@@ -129,7 +129,8 @@ function LoginContent() {
 							data-testid="reset-success"
 							className="mb-4 rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200"
 						>
-							Senha redefinida com sucesso. Faça login com a nova senha.
+							Senha redefinida com sucesso. Faça login com a nova senha. Por
+							segurança, encerramos todas as sessões desta conta.
 						</div>
 					)}
 

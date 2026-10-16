@@ -43,18 +43,31 @@ export interface IUserRepository {
     items: AdminUserDTO[];
     nextCursor: AdminUserCursor | null;
   }>;
-  create(user: Omit<User, "_id">): Promise<User>;
-  updatePassword(email: string, password: string): Promise<void>;
   /**
-   * Update password by user id. Used by the password-recovery flow where
-   * the lookup happens via reset-token (not email) so we already have the id.
+   * Insert a new account. An explicit `_id` (a 24-hex ObjectId) and
+   * `createdAt` are kept (backup restore). Throws "Email already
+   * registered" / "Username already taken" / "User id already taken" when
+   * a unique index rejects it (a race the caller's availability check lost).
    */
-  updatePasswordById(userId: string, password: string): Promise<void>;
+  create(user: Omit<User, "_id"> & { _id?: string }): Promise<User>;
+  /**
+   * Store a new password hash and bump `sessionVersion` in the same atomic
+   * write, revoking every session minted before it. With `expectedHash` it
+   * is a compare-and-set: the write only lands while the stored hash is
+   * still that one. Returns the new `sessionVersion`, or null when the user
+   * doesn't exist or the compare-and-set lost.
+   */
+  updatePasswordById(
+    userId: string,
+    password: string,
+    opts?: { expectedHash?: string },
+  ): Promise<number | null>;
   update(email: string, data: Partial<Omit<User, "_id" | "email">>): Promise<User | null>;
   /**
    * Disable / re-enable an account. On disable, stamps `disabledAt` and
-   * `disabledBy`; on re-enable, clears both (a plain `update` only `$set`s, so
-   * it cannot clear fields). `by` is the moderator's username (snapshot).
+   * `disabledBy` and bumps `sessionVersion` (so re-enabling doesn't revive
+   * old sessions); on re-enable, clears both (a plain `update` only `$set`s,
+   * so it cannot clear fields). `by` is the moderator's username (snapshot).
    */
   setDisabled(email: string, disabled: boolean, by: string | null): Promise<User | null>;
   /** Stamp the verification timestamp on the user. */

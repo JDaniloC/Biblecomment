@@ -1,6 +1,9 @@
 /// <reference types="cypress" />
 
-import type { SeedPayload } from "../tasks/db";
+import type { FoundUser, SeedPayload } from "../tasks/db";
+
+/** Auth.js session cookie; a large token is split into `.0`, `.1`, ... chunks. */
+const SESSION_COOKIE = /authjs\.session-token|next-auth\.session-token/;
 
 declare global {
   namespace Cypress {
@@ -24,6 +27,18 @@ declare global {
        * Sets the session cookie so subsequent requests are authenticated.
        */
       loginAs(email: string, password: string): Chainable<void>;
+
+      /**
+       * The session cookie(s) currently in the jar, to replay later with
+       * useSessionCookies (e.g. to prove a session was revoked).
+       */
+      sessionCookies(): Chainable<Cypress.Cookie[]>;
+
+      /**
+       * Replace the jar's cookies with exactly these (a captured session),
+       * so the next request is made as that session.
+       */
+      useSessionCookies(cookies: Cypress.Cookie[]): Chainable<void>;
     }
   }
 }
@@ -40,11 +55,7 @@ Cypress.Commands.add("loginAs", (email: string, password: string) => {
   // Pre-flight: confirm the user is actually in the test DB with a bcrypt hash.
   // Without this, Auth.js's authorize() returns null and we get an opaque
   // CredentialsSignin error with no actionable info.
-  cy.task<{
-    exists: boolean;
-    passwordHashLength: number;
-    username: string | null;
-  }>("db:findUser", email).then((u) => {
+  cy.task<FoundUser>("db:findUser", email).then((u) => {
     expect(u.exists, `loginAs(${email}) — user not in test DB. Forgot cy.seedDb()?`).to.be.true;
     // bcrypt hashes are exactly 60 chars: $2[aby]$<cost>$<22-char salt><31-char hash>.
     expect(
@@ -94,6 +105,24 @@ Cypress.Commands.add("loginAs", (email: string, password: string) => {
         `loginAs(${email}) — expected a session cookie. ` +
           `Cookies: ${cookies.map((c) => c.name).join(", ") || "none"}`,
       ).to.exist;
+    });
+  });
+});
+
+Cypress.Commands.add("sessionCookies", () => {
+  return cy
+    .getCookies()
+    .then((cookies) => cookies.filter((c) => SESSION_COOKIE.test(c.name)));
+});
+
+Cypress.Commands.add("useSessionCookies", (cookies: Cypress.Cookie[]) => {
+  cy.clearCookies();
+  cookies.forEach((c) => {
+    cy.setCookie(c.name, c.value, {
+      path: c.path,
+      httpOnly: c.httpOnly,
+      secure: c.secure,
+      sameSite: c.sameSite,
     });
   });
 });
