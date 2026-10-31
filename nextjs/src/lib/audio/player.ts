@@ -1,5 +1,5 @@
 // Pure, DOM-free helpers for the in-app audio player. Tested in Vitest (node env).
-import { chapterAudioKey, chapterTimingsKey, manifestKey, hasChapter } from "./contract.js";
+import { chapterAudioKey, chapterTimingsKey, verseAudioKey, manifestKey, hasChapter } from "./contract.js";
 import type { VoiceManifest, VerseTimings } from "./types";
 
 export function mediaBaseUrl(): string | null {
@@ -15,6 +15,16 @@ export function chapterTimingsUrl(base: string, voiceId: string, abbrev: string,
   return `${base}/${chapterTimingsKey(voiceId, abbrev, chapter)}`;
 }
 
+export function verseAudioUrl(
+  base: string,
+  voiceId: string,
+  abbrev: string,
+  chapter: number,
+  verse: number,
+): string {
+  return `${base}/${verseAudioKey(voiceId, abbrev, chapter, verse)}`;
+}
+
 export function manifestUrl(base: string, voiceId: string): string {
   return `${base}/${manifestKey(voiceId)}`;
 }
@@ -25,6 +35,15 @@ export function isChapterAvailable(
   chapter: number,
 ): boolean {
   return !!manifest && hasChapter(manifest, abbrev, chapter);
+}
+
+/** One verse can play alone only for voices that ship per-verse MP3s. */
+export function isVerseAudioAvailable(
+  manifest: VoiceManifest | null,
+  abbrev: string,
+  chapter: number,
+): boolean {
+  return !!manifest?.verseAudio && hasChapter(manifest, abbrev, chapter);
 }
 
 /**

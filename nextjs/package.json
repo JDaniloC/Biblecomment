@@ -17,6 +17,7 @@
     "cy:test:dev": "node scripts/cy-test.js dev",
     "a11y": "node scripts/lighthouse-a11y.js",
     "gen:audio": "node --env-file-if-exists=.env scripts/generate-audio.js",
+    "upload:voice-book": "node --env-file-if-exists=.env scripts/upload-voice-book.js",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status"

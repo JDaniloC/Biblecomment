@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   chapterAudioKey,
   chapterTimingsKey,
+  verseAudioKey,
   manifestKey,
   emptyManifest,
   mergeManifestChapter,
@@ -19,6 +20,12 @@ describe("audio contract keys", () => {
     expect(manifestKey("pt-BR-AntonioNeural")).toBe(
       "audio/pt-BR-AntonioNeural/manifest.json",
     );
+  });
+
+  it("puts each verse's own MP3 in a folder named after its chapter", () => {
+    expect(verseAudioKey("danilo-clone", "gn", 5, 24)).toBe("audio/danilo-clone/gn/5/24.mp3");
+    // next to, never on top of, the chapter files
+    expect(verseAudioKey("danilo-clone", "gn", 5, 24)).not.toBe(chapterAudioKey("danilo-clone", "gn", 5));
   });
 });
 

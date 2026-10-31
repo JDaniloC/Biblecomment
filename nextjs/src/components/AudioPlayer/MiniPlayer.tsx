@@ -18,7 +18,8 @@ export function MiniPlayer() {
     return null;
   }
 
-  const label = `${state.abbrev.toUpperCase()} ${state.chapter}`;
+  const verseOnly = state.mode === "verse" && state.currentVerse != null;
+  const label = `${state.abbrev.toUpperCase()} ${state.chapter}${verseOnly ? `:${state.currentVerse}` : ""}`;
   const isPlaying = state.isPlaying && state.status !== "error";
 
   const bar = (
@@ -76,7 +77,9 @@ export function MiniPlayer() {
               ? "Carregando…"
               : state.status === "error"
                 ? "Erro ao tocar"
-                : "Bíblia narrada"}
+                : verseOnly
+                  ? "Versículo narrado"
+                  : "Bíblia narrada"}
           </span>
         </button>
 

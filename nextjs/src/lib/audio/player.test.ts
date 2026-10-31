@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   chapterAudioUrl,
   chapterTimingsUrl,
+  verseAudioUrl,
   manifestUrl,
   isChapterAvailable,
+  isVerseAudioAvailable,
   verseAtTime,
   nextChapterWithin,
   prevChapterWithin,
@@ -37,6 +39,7 @@ describe("url builders", () => {
     expect(chapterAudioUrl("https://cdn", "v", "gn", 1)).toBe("https://cdn/audio/v/gn/1.mp3");
     expect(chapterTimingsUrl("https://cdn", "v", "gn", 1)).toBe("https://cdn/audio/v/gn/1.json");
     expect(manifestUrl("https://cdn", "v")).toBe("https://cdn/audio/v/manifest.json");
+    expect(verseAudioUrl("https://cdn", "v", "gn", 5, 24)).toBe("https://cdn/audio/v/gn/5/24.mp3");
   });
 });
 
@@ -46,6 +49,17 @@ describe("isChapterAvailable", () => {
     expect(isChapterAvailable(manifest, "gn", 1)).toBe(true);
     expect(isChapterAvailable(manifest, "gn", 99)).toBe(false);
     expect(isChapterAvailable(manifest, "ex", 1)).toBe(false);
+  });
+});
+
+describe("isVerseAudioAvailable", () => {
+  it("needs the chapter and a voice that ships one MP3 per verse", () => {
+    // The Edge voice has chapter files only: no verseAudio flag, no single-verse play.
+    expect(isVerseAudioAvailable(manifest, "gn", 1)).toBe(false);
+    const perVerse = { ...manifest, verseAudio: true };
+    expect(isVerseAudioAvailable(perVerse, "gn", 1)).toBe(true);
+    expect(isVerseAudioAvailable(perVerse, "gn", 99)).toBe(false);
+    expect(isVerseAudioAvailable(null, "gn", 1)).toBe(false);
   });
 });
 

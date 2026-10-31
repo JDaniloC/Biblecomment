@@ -102,7 +102,8 @@ export default function ChapterClient({
 	const router = useRouter();
 	const { handleNotification } = useNotification();
 	const confirm = useConfirm();
-	const { state: audioState, seekToVerse, isChapterAvailable } = useAudioPlayer();
+	const { state: audioState, seekToVerse, isChapterAvailable, isVerseAudioAvailable, playVerse } =
+		useAudioPlayer();
 	const audioOnThisChapter = audioState.abbrev === book.abbrev && audioState.chapter === chapter;
 	// True whenever *some* bottom audio bar (idle prompt or engaged mini
 	// player) can be showing on mobile — used to keep that bar from covering
@@ -932,6 +933,20 @@ export default function ChapterClient({
 									</span>
 								</div>
 							</div>
+							{selectedVerse && !isTitleMode && isVerseAudioAvailable(book.abbrev, chapter) && (
+								<button
+									type="button"
+									data-testid="verse-listen-button"
+									aria-label={`Ouvir ${sidebarTitle}`}
+									onClick={() => playVerse(book.abbrev, chapter, selectedVerse.verseNumber)}
+									className="flex items-center gap-[5px] h-[30.667px] px-[11px] border-[1.333px] border-brand rounded-md bg-transparent text-brand text-xs font-semibold cursor-pointer whitespace-nowrap"
+								>
+									<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+										<polygon points="6 4 20 12 6 20 6 4" />
+									</svg>
+									Ouvir
+								</button>
+							)}
 							<button
 								type="button"
 								onClick={() => {

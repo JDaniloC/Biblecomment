@@ -18,6 +18,21 @@ describe("playerReducer", () => {
     expect(s.currentVerse).toBe(3); // fromVerse seeds the highlight before playback
   });
 
+  it("LOAD plays a whole chapter unless asked for a single verse", () => {
+    expect(playerReducer(s0, { type: "LOAD", abbrev: "gn", chapter: 1 }).mode).toBe("chapter");
+    const s = playerReducer(s0, { type: "LOAD", abbrev: "gn", chapter: 5, fromVerse: 24, mode: "verse" });
+    expect(s).toMatchObject({ mode: "verse", abbrev: "gn", chapter: 5, currentVerse: 24, status: "loading" });
+  });
+
+  it("TIME keeps the single verse highlighted in verse mode", () => {
+    // The file playing is the verse alone, so chapter timings say nothing about it.
+    const verse = playerReducer(s0, { type: "LOAD", abbrev: "gn", chapter: 5, fromVerse: 24, mode: "verse" });
+    expect(playerReducer(verse, { type: "TIME", ms: 3000, verse: 1 })).toMatchObject({
+      currentTimeMs: 3000,
+      currentVerse: 24,
+    });
+  });
+
   it("READY starts playing when play was intended", () => {
     const loading = playerReducer(s0, { type: "LOAD", abbrev: "gn", chapter: 1 });
     expect(playerReducer(loading, { type: "READY" }).status).toBe("playing");
@@ -57,5 +72,10 @@ describe("playerReducer", () => {
     const playing = { ...s0, rate: 1.25, abbrev: "gn", chapter: 1, status: "playing" as const, isPlaying: true, currentVerse: 4 };
     const s = playerReducer(playing, { type: "STOP" });
     expect(s).toMatchObject({ status: "idle", isPlaying: false, abbrev: null, chapter: null, currentVerse: null, rate: 1.25, voiceId: "v" });
+  });
+
+  it("STOP leaves verse mode", () => {
+    const verse = playerReducer(s0, { type: "LOAD", abbrev: "gn", chapter: 5, fromVerse: 24, mode: "verse" });
+    expect(playerReducer(verse, { type: "STOP" }).mode).toBe("chapter");
   });
 });

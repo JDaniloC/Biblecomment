@@ -18,6 +18,11 @@ function chapterTimingsKey(voiceId, abbrev, chapter) {
   return `audio/${voiceId}/${abbrev}/${chapter}.json`;
 }
 
+/** One verse on its own (the chapter MP3 is these, concatenated in order). */
+function verseAudioKey(voiceId, abbrev, chapter, verse) {
+  return `audio/${voiceId}/${abbrev}/${chapter}/${verse}.mp3`;
+}
+
 function manifestKey(voiceId) {
   return `audio/${voiceId}/manifest.json`;
 }
@@ -78,6 +83,7 @@ function buildChapterTimings(verses, meta) {
 module.exports = {
   chapterAudioKey,
   chapterTimingsKey,
+  verseAudioKey,
   manifestKey,
   emptyManifest,
   hasChapter,

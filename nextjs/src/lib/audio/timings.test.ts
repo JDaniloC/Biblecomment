@@ -28,6 +28,19 @@ describe("buildChapterTimings", () => {
     expect(t).toMatchObject({ voiceId: "v", abbrev: "gn", chapter: 1, version: "v1.x" });
   });
 
+  it("with gapMs 0, matches audio made by plain concatenation of the verse files", () => {
+    // The verse MP3s are concatenated with nothing in between, so the timings must not
+    // add any gap: verse n starts exactly where verse n-1's bytes end.
+    const bytes = [6000, 3000, 4500]; // 1000, 500, 750 ms at 48 kbps
+    const t = buildChapterTimings(
+      bytes.map((b, i) => ({ n: i + 1, durationMs: durationFromMp3Bytes(b, 48) })),
+      { ...meta, gapMs: 0 },
+    );
+    expect(t.verses["2"]).toEqual({ startMs: 1000, endMs: 1500 });
+    expect(t.verses["3"]).toEqual({ startMs: 1500, endMs: 2250 });
+    expect(t.durationMs).toBe(durationFromMp3Bytes(bytes.reduce((a, b) => a + b, 0), 48));
+  });
+
   it("handles a single verse with no gap applied", () => {
     const t = buildChapterTimings([{ n: 1, durationMs: 800 }], meta);
     expect(t.verses["1"]).toEqual({ startMs: 0, endMs: 800 });

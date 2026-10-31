@@ -143,6 +143,9 @@ describe("audio player", () => {
   });
 
   it("shows the listen button, plays, and highlights the now-reading verse", () => {
+    // The header shows its page tools (ListenButton included) only from lg (1024px)
+    // up; below that they move into the "⋮" menu. Cypress' default is 1000px wide.
+    cy.viewport(1280, 800);
     cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
 
     // Manifest is fetched once on mount by AudioPlayerProvider.
@@ -216,9 +219,48 @@ describe("audio player", () => {
     cy.get('[data-testid="verse-text"]').first().click();
     cy.get('[data-testid="comments-sidebar"]').should("be.visible");
     cy.get('[data-testid="chapter-listen-bar"]').should("not.exist");
+    // This voice has chapter files only (no verseAudio): no single-verse play offered.
+    cy.get('[data-testid="verse-listen-button"]').should("not.exist");
 
     // Closing the sidebar brings the idle bar back.
     cy.findByLabelText("Fechar comentários").click();
     cy.get('[data-testid="chapter-listen-bar"]').should("be.visible");
+  });
+
+  it("plays one verse alone from the verse panel and keeps it highlighted", () => {
+    // A voice that ships one MP3 per verse. Later intercepts win over beforeEach's.
+    cy.intercept("GET", `${BASE}/audio/${VOICE}/manifest.json`, { ...manifest, verseAudio: true }).as(
+      "manifestPerVerse",
+    );
+    cy.intercept("GET", `${BASE}/audio/${VOICE}/gn/1/*.mp3`, {
+      statusCode: 200,
+      headers: { "content-type": "audio/mpeg" },
+      body: "x",
+    }).as("verseMp3");
+
+    cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
+    cy.wait("@manifestPerVerse");
+
+    cy.get('[data-testid="verse-text"]').first().click();
+    cy.get('[data-testid="verse-listen-button"]').should("be.visible").click();
+
+    // The verse's own file plays, and the player says which verse.
+    cy.get("audio").should("have.attr", "src", `${BASE}/audio/${VOICE}/gn/1/1.mp3`);
+    cy.get('[data-testid="mini-player-title"]').should("contain.text", "GN 1:1");
+    cy.get('li[data-now-reading="true"]').should("have.attr", "id", "1");
+
+    // 1.3 s into the verse file falls in verse 2's window of the chapter timings;
+    // in verse mode the highlight must stay on the verse that is actually playing.
+    cy.wait("@timings");
+    cy.get("audio").then(($a) => {
+      ($a[0] as HTMLAudioElement).currentTime = 1.3;
+    });
+    cy.get('li[data-now-reading="true"]').should("have.attr", "id", "1");
+
+    // ⏭ moves to the next verse, played alone as well.
+    cy.get('[data-testid="mini-player-next"]').click();
+    cy.get("audio").should("have.attr", "src", `${BASE}/audio/${VOICE}/gn/1/2.mp3`);
+    cy.get('[data-testid="mini-player-title"]').should("contain.text", "GN 1:2");
+    cy.get('li[data-now-reading="true"]').should("have.attr", "id", "2");
   });
 });

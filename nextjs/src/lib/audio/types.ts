@@ -6,6 +6,8 @@ export interface VoiceManifest {
   label: string;
   lang: "pt-BR";
   version: string;
+  /** Each verse also has its own MP3 (verseAudioKey), so one verse can play alone. */
+  verseAudio?: boolean;
   /** chapters[abbrev][chapterNumberAsString] */
   chapters: Record<string, Record<string, { durationMs: number; sizeBytes: number }>>;
 }

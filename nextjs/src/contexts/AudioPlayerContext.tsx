@@ -15,7 +15,9 @@ import {
   manifestUrl,
   chapterAudioUrl,
   chapterTimingsUrl,
+  verseAudioUrl,
   isChapterAvailable,
+  isVerseAudioAvailable,
   verseAtTime,
   nextChapterWithin,
   prevChapterWithin,
@@ -34,7 +36,10 @@ interface AudioPlayerContextValue {
   manifest: VoiceManifest | null;
   available: boolean;
   isChapterAvailable: (abbrev: string, chapter: number) => boolean;
+  isVerseAudioAvailable: (abbrev: string, chapter: number) => boolean;
   playChapter: (abbrev: string, chapter: number, fromVerse?: number | null) => Promise<void>;
+  /** Plays one verse alone (its own MP3) and stops at its end. */
+  playVerse: (abbrev: string, chapter: number, verse: number) => void;
   toggle: () => void;
   seekToVerse: (verse: number) => void;
   seekBy: (deltaMs: number) => void;
@@ -124,6 +129,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const onEnded = () => {
       dispatch({ type: "ENDED" });
       const st = stateRef.current;
+      if (st.mode === "verse") return; // one verse was asked for: stop there
       if (st.abbrev && st.chapter != null) {
         const nxt = nextChapterWithin(manifest, st.abbrev, st.chapter);
         if (nxt != null) void playChapterRef.current(st.abbrev, nxt);
@@ -166,6 +172,28 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const playChapterRef = useRef(playChapter);
   playChapterRef.current = playChapter;
 
+  function playVerse(abbrev: string, chapter: number, verse: number) {
+    const audio = audioRef.current;
+    if (!audio || !base) return;
+    dispatch({ type: "LOAD", abbrev, chapter, fromVerse: verse, mode: "verse" });
+    // The chapter timings are only needed for ⏮/⏭ (which verses exist); keep them
+    // when stepping inside the same chapter.
+    const t = timingsRef.current;
+    if (!t || t.abbrev !== abbrev || t.chapter !== chapter) {
+      timingsRef.current = null;
+      fetch(chapterTimingsUrl(base, voiceId, abbrev, chapter))
+        .then((r) => (r.ok ? r.json() : null))
+        .then((loaded: VerseTimings | null) => {
+          timingsRef.current = loaded;
+        })
+        .catch(() => {
+          timingsRef.current = null;
+        });
+    }
+    audio.src = verseAudioUrl(base, voiceId, abbrev, chapter, verse);
+    audio.load(); // triggers loadedmetadata → onLoaded → play()
+  }
+
   function toggle() {
     const audio = audioRef.current;
     if (!audio || stateRef.current.abbrev == null) return;
@@ -184,6 +212,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }
 
   function seekToVerse(verse: number) {
+    const st = stateRef.current;
+    if (st.mode === "verse" && st.abbrev && st.chapter != null) {
+      playVerse(st.abbrev, st.chapter, verse); // verse mode: the other verse, alone too
+      return;
+    }
     const audio = audioRef.current;
     const t = timingsRef.current;
     if (!audio || !t || !t.verses[String(verse)]) return;
@@ -202,7 +235,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (cur == null) return;
     const nv = adjacentVerse(t, cur, 1);
     if (nv != null) seekToVerse(nv);
-    else next(); // past the last verse → next chapter (autoplay from start)
+    else if (st.mode !== "verse") next(); // past the last verse → next chapter (autoplay from start)
   }
 
   // Skip to the previous verse; at the first verse, roll into the previous chapter.
@@ -215,7 +248,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const pv = adjacentVerse(t, cur, -1);
     if (pv != null) {
       seekToVerse(pv);
-    } else if (st.abbrev && st.chapter != null) {
+    } else if (st.mode !== "verse" && st.abbrev && st.chapter != null) {
       const pc = prevChapterWithin(manifest, st.abbrev, st.chapter);
       if (pc != null) void playChapter(st.abbrev, pc);
     }
@@ -251,8 +284,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     const ms = navigator.mediaSession;
     if (state.abbrev && state.chapter != null) {
+      const verse = state.mode === "verse" && state.currentVerse != null ? `:${state.currentVerse}` : "";
       ms.metadata = new MediaMetadata({
-        title: `${state.abbrev.toUpperCase()} ${state.chapter}`,
+        title: `${state.abbrev.toUpperCase()} ${state.chapter}${verse}`,
         artist: "Bíblia narrada",
         album: "Bible Comment",
       });
@@ -282,14 +316,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.abbrev, state.chapter, state.isPlaying]);
+  }, [state.abbrev, state.chapter, state.isPlaying, state.mode, state.currentVerse]);
 
   const value: AudioPlayerContextValue = {
     state,
     manifest,
     available: Boolean(base && manifest),
     isChapterAvailable: (abbrev, chapter) => isChapterAvailable(manifest, abbrev, chapter),
+    isVerseAudioAvailable: (abbrev, chapter) => isVerseAudioAvailable(manifest, abbrev, chapter),
     playChapter,
+    playVerse,
     toggle,
     seekToVerse,
     seekBy,
