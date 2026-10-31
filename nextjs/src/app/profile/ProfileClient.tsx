@@ -24,6 +24,7 @@ import {
 import { PageTutorial } from "@/components/Tutorial/PageTutorial";
 import { BadgesTab } from "./_components/BadgesTab";
 import { ReadingReminderCard } from "./_components/ReadingReminderCard";
+import { ExperimentalModeCard } from "./_components/ExperimentalModeCard";
 import { Toggle } from "./_components/Toggle";
 import {
 	OFFLINE_BIBLE_PREF_KEY,
@@ -1812,6 +1813,9 @@ export default function ProfileClient({
 
 							{/* ── Card: Leitura offline (download da Bíblia) ── */}
 							<OfflineBibleCard />
+
+							{/* ── Card: Modo experimental (vozes clonadas) ── */}
+							<ExperimentalModeCard />
 
 							{/* ── Card 2: Privacidade ── */}
 							<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-6 py-5">

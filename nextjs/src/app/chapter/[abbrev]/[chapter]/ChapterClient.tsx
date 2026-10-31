@@ -886,6 +886,10 @@ export default function ChapterClient({
 							onSelectVerse={(verse) => {
 								if (audioOnThisChapter && audioState.isPlaying) {
 									seekToVerse(verse.verseNumber);
+									// With the comments open they follow the verse too. openVersePanel
+									// closes the panel on its own verse, so skip it in that case.
+									const alreadyShown = selectedVerse?._id === verse._id && !isTitleMode;
+									if (showSidebar && !alreadyShown) void openVersePanel(verse);
 									return;
 								}
 								openVersePanel(verse);

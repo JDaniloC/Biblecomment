@@ -17,7 +17,15 @@ export interface AudioPlayerState {
 }
 
 export type PlayerAction =
-  | { type: "LOAD"; abbrev: string; chapter: number; fromVerse?: number | null; mode?: PlayerMode }
+  | {
+      type: "LOAD";
+      abbrev: string;
+      chapter: number;
+      fromVerse?: number | null;
+      mode?: PlayerMode;
+      /** The voice that narrates this chapter (an experimental one may differ from the default). */
+      voiceId?: string;
+    }
   | { type: "READY" }
   | { type: "PLAY" }
   | { type: "PAUSE" }
@@ -41,11 +49,29 @@ export function initialPlayerState(voiceId: string): AudioPlayerState {
   };
 }
 
+/**
+ * What a chapter's "Ouvir" button does. While this chapter (or one of its verses)
+ * plays it pauses, and a paused chapter resumes where it stopped; anything else
+ * (idle, another chapter, an error, a paused single verse) starts the chapter.
+ */
+export function listenAction(
+  state: AudioPlayerState,
+  abbrev: string,
+  chapter: number,
+): "toggle" | "start" {
+  const engagedHere =
+    state.abbrev === abbrev && state.chapter === chapter && state.status !== "idle" && state.status !== "error";
+  if (!engagedHere) return "start";
+  if (state.isPlaying) return "toggle";
+  return state.mode === "chapter" ? "toggle" : "start";
+}
+
 export function playerReducer(state: AudioPlayerState, action: PlayerAction): AudioPlayerState {
   switch (action.type) {
     case "LOAD":
       return {
         ...state,
+        voiceId: action.voiceId ?? state.voiceId,
         abbrev: action.abbrev,
         chapter: action.chapter,
         status: "loading",

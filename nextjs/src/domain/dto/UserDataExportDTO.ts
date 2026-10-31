@@ -204,7 +204,7 @@ export interface UserDataExport {
  * What the file deliberately leaves out, and why (shown to the user in the
  * file itself). Keep the browser-only list in sync with privacy §7. It
  * mirrors the client's storage: theme (next-themes), `bc-text-scale`,
- * `bc:voice`, `bc:haptic`, `bc:community-filter:*`, `bc:reading-seconds:*`,
+ * `bc:voice`, `bc:experimental`, `bc:haptic`, `bc:community-filter:*`, `bc:reading-seconds:*`,
  * the per-device `tutorial:*` and onboarding flags, and the offline Bible
  * (`bc-offline-bible` plus IndexedDB). Completed tutorials and reading days
  * are also stored server-side, and those are exported.
@@ -247,6 +247,6 @@ export const USER_DATA_EXPORT_NOT_INCLUDED: readonly NotIncludedEntry[] = [
 	{
 		data: "Dados guardados só no navegador",
 		reason:
-			"Tema, tamanho da fonte, voz da narração, vibração, filtro de comunidade, o tempo de leitura do dia ainda não registrado, a marcação dos tutoriais vistos neste aparelho e a Bíblia offline ficam apenas no armazenamento local do seu navegador e não são enviados ao servidor. Os tutoriais concluídos na sua conta e os dias de leitura registrados estão neste arquivo.",
+			"Tema, tamanho da fonte, voz da narração, modo experimental, vibração, filtro de comunidade, o tempo de leitura do dia ainda não registrado, a marcação dos tutoriais vistos neste aparelho e a Bíblia offline ficam apenas no armazenamento local do seu navegador e não são enviados ao servidor. Os tutoriais concluídos na sua conta e os dias de leitura registrados estão neste arquivo.",
 	},
 ];

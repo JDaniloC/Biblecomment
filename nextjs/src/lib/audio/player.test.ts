@@ -11,6 +11,7 @@ import {
   prevChapterWithin,
   adjacentVerse,
   firstVerse,
+  voiceForChapter,
 } from "./player";
 import type { VoiceManifest, VerseTimings } from "./types";
 
@@ -114,5 +115,26 @@ describe("firstVerse", () => {
   it("returns the smallest verse number, or null when empty", () => {
     expect(firstVerse(timings)).toBe(1);
     expect(firstVerse({ ...timings, verses: {} })).toBe(null);
+  });
+});
+
+describe("voiceForChapter", () => {
+  const clone: VoiceManifest = {
+    ...manifest,
+    voiceId: "clone",
+    chapters: { ex: { "1": { durationMs: 1, sizeBytes: 1 } } },
+  };
+  const manifests = { v: manifest, clone };
+
+  it("picks the first voice in order that narrates the chapter", () => {
+    expect(voiceForChapter(["clone", "v"], manifests, "ex", 1)).toBe("clone");
+    expect(voiceForChapter(["clone", "v"], manifests, "gn", 1)).toBe("v"); // the clone has no Genesis
+    expect(voiceForChapter(["v", "clone"], { ...manifests, v: { ...manifest, chapters: { ex: { "1": { durationMs: 1, sizeBytes: 1 } } } } }, "ex", 1)).toBe("v");
+  });
+
+  it("returns null when no voice has the chapter or a manifest is missing or still loading", () => {
+    expect(voiceForChapter(["clone", "v"], manifests, "ex", 2)).toBe(null);
+    expect(voiceForChapter(["clone", "v"], { v: manifest, clone: null }, "ex", 1)).toBe(null);
+    expect(voiceForChapter(["clone", "v"], { v: manifest }, "gn", 1)).toBe("v");
   });
 });

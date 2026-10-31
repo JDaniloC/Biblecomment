@@ -229,7 +229,7 @@ export default function PrivacyPage() {
         <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
           Utilizamos apenas cookies estritamente necessários para o
           funcionamento da autenticação. Tema (claro/escuro), tamanho da fonte,
-          voz da narração, vibração, filtro de comunidade, o tempo de leitura do
+          voz da narração, modo experimental, vibração, filtro de comunidade, o tempo de leitura do
           dia ainda não registrado, a marcação dos tutoriais vistos neste
           aparelho e a Bíblia offline ficam só no armazenamento local do seu
           navegador (<code>localStorage</code> e IndexedDB), nunca são enviados

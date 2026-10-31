@@ -1,5 +1,37 @@
 import { describe, it, expect } from "vitest";
-import { initialPlayerState, playerReducer } from "./player-state";
+import { initialPlayerState, playerReducer, listenAction, type AudioPlayerState } from "./player-state";
+
+describe("listenAction (the chapter's Ouvir button)", () => {
+  const playing: AudioPlayerState = {
+    ...initialPlayerState("v"),
+    abbrev: "gn",
+    chapter: 1,
+    status: "playing",
+    isPlaying: true,
+  };
+  const paused: AudioPlayerState = { ...playing, status: "paused", isPlaying: false };
+
+  it("pauses this chapter while it plays, instead of restarting it", () => {
+    expect(listenAction(playing, "gn", 1)).toBe("toggle");
+  });
+
+  it("resumes this chapter where it was paused", () => {
+    expect(listenAction(paused, "gn", 1)).toBe("toggle");
+  });
+
+  it("starts the chapter when idle, on another chapter, or after an error", () => {
+    expect(listenAction(initialPlayerState("v"), "gn", 1)).toBe("start");
+    expect(listenAction(playing, "gn", 2)).toBe("start");
+    expect(listenAction(playing, "ex", 1)).toBe("start");
+    expect(listenAction({ ...paused, status: "error" }, "gn", 1)).toBe("start");
+  });
+
+  it("pauses a single verse, but from a paused verse it plays the whole chapter", () => {
+    const verse: AudioPlayerState = { ...playing, mode: "verse", currentVerse: 3 };
+    expect(listenAction(verse, "gn", 1)).toBe("toggle");
+    expect(listenAction({ ...verse, status: "paused", isPlaying: false }, "gn", 1)).toBe("start");
+  });
+});
 
 describe("playerReducer", () => {
   const s0 = initialPlayerState("v");
@@ -16,6 +48,11 @@ describe("playerReducer", () => {
     expect(s).toMatchObject({ abbrev: "gn", chapter: 1, status: "loading", isPlaying: true });
     expect(s.currentTimeMs).toBe(0);
     expect(s.currentVerse).toBe(3); // fromVerse seeds the highlight before playback
+  });
+
+  it("LOAD switches to the voice that narrates the chapter, and keeps it otherwise", () => {
+    expect(playerReducer(s0, { type: "LOAD", abbrev: "ex", chapter: 1, voiceId: "clone" }).voiceId).toBe("clone");
+    expect(playerReducer(s0, { type: "LOAD", abbrev: "gn", chapter: 1 }).voiceId).toBe("v");
   });
 
   it("LOAD plays a whole chapter unless asked for a single verse", () => {

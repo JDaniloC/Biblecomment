@@ -117,6 +117,31 @@ function stubAudioAndTours(win: Cypress.AUTWindow) {
   proto.load = function () {
     this.dispatchEvent(new win.Event("loadedmetadata"));
   };
+
+  // Setting `src` still makes Electron fetch and decode the fake 1-byte mp3, and its
+  // real `error` event would put the player in "Erro ao tocar" at a random moment.
+  // Drop every browser-made (trusted) media event in the capture phase, before it
+  // reaches the provider; the events this stub dispatches are untrusted and pass.
+  for (const type of ["loadedmetadata", "timeupdate", "ended", "error"]) {
+    win.addEventListener(
+      type,
+      (e) => {
+        if (e.isTrusted && e.target instanceof win.HTMLMediaElement) e.stopImmediatePropagation();
+      },
+      true,
+    );
+  }
+}
+
+// The timings land a tick after cy.wait("@timings") (fetch → json → ref), and each
+// currentTime write fires a single timeupdate: keep writing until the highlight lands.
+function playAt(seconds: number, verse: number) {
+  cy.get("audio").should(($a) => {
+    const audio = $a[0] as HTMLAudioElement;
+    audio.currentTime = seconds;
+    const highlighted = audio.ownerDocument.querySelector('li[data-now-reading="true"]');
+    expect(highlighted?.id).to.equal(String(verse));
+  });
 }
 
 describe("audio player", () => {
@@ -168,19 +193,11 @@ describe("audio player", () => {
     // provider's onTime → verseAtTime(timings, 500) === 1 → dispatch TIME{verse:1}
     // → audioState.currentVerse = 1 → nowReadingVerse prop = 1 →
     // ChapterReader sets data-now-reading="true" on verse 1's <li>.
-    cy.get("audio").then(($a) => {
-      ($a[0] as HTMLAudioElement).currentTime = 0.5; // 500 ms
-    });
-
-    cy.get('[data-now-reading="true"]').should("exist");
+    playAt(0.5, 1); // 500 ms
 
     // Advance to 1.3 s (verse 2 window: [1200, 1700)).
     // Confirms the highlight updates as playback progresses.
-    cy.get("audio").then(($a) => {
-      ($a[0] as HTMLAudioElement).currentTime = 1.3; // 1300 ms
-    });
-
-    cy.get('[data-now-reading="true"]').should("exist");
+    playAt(1.3, 2); // 1300 ms
 
     // MiniPlayer controls are present and actionable.
     cy.get('[data-testid="mini-player-toggle"]').should("be.visible");
@@ -227,6 +244,55 @@ describe("audio player", () => {
     cy.get('[data-testid="chapter-listen-bar"]').should("be.visible");
   });
 
+  it("the header Ouvir button pauses and resumes instead of restarting the chapter", () => {
+    cy.viewport(1280, 800); // header tools are visible from lg (1024px) up
+    cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
+    cy.wait("@manifest");
+
+    const paused = (expected: boolean) =>
+      cy.get("audio").should(($a) => {
+        expect(($a[0] as HTMLAudioElement).paused).to.equal(expected);
+      });
+
+    cy.get('[data-testid="listen-button"]').click();
+    cy.get('[data-testid="mini-player"]').should("be.visible");
+    paused(false);
+
+    // Second tap while playing: pause (it used to reload the chapter and play on).
+    cy.get('[data-testid="listen-button"]').click();
+    paused(true);
+    cy.get('[data-testid="mini-player-toggle"]').should("have.attr", "aria-label", "Tocar");
+
+    // Third tap: resume.
+    cy.get('[data-testid="listen-button"]').click();
+    paused(false);
+    cy.get('[data-testid="mini-player-toggle"]').should("have.attr", "aria-label", "Pausar");
+  });
+
+  it("while playing with the comments open, tapping a verse jumps to it and opens its comments", () => {
+    // Slow timings: a tap right after playback starts must wait for them, not be dropped.
+    cy.intercept("GET", `${BASE}/audio/${VOICE}/gn/1.json`, { body: timings, delay: 800 });
+    cy.viewport(1280, 800); // desktop: the verses stay clickable next to the sidebar
+    cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
+    cy.wait("@manifest");
+
+    cy.get('[data-testid="verse-text"]').eq(0).click();
+    cy.get('[data-testid="comments-sidebar"]').should("contain.text", "Gn 1:1");
+    cy.get('[data-testid="listen-button"]').click();
+    cy.get('[data-testid="mini-player"]').should("be.visible");
+
+    cy.get('[data-testid="verse-text"]').eq(1).click(); // before the timings arrive
+    // The audio jumps to verse 2 (timings: 1200 ms) and the sidebar follows it.
+    cy.get("audio").should(($a) => {
+      expect(($a[0] as HTMLAudioElement).currentTime).to.equal(1.2);
+    });
+    cy.get('[data-testid="comments-sidebar"]').should("contain.text", "Gn 1:2");
+
+    // Tapping the verse whose comments are already open keeps them open.
+    cy.get('[data-testid="verse-text"]').eq(1).click();
+    cy.get('[data-testid="comments-sidebar"]').should("contain.text", "Gn 1:2");
+  });
+
   it("plays one verse alone from the verse panel and keeps it highlighted", () => {
     // A voice that ships one MP3 per verse. Later intercepts win over beforeEach's.
     cy.intercept("GET", `${BASE}/audio/${VOICE}/manifest.json`, { ...manifest, verseAudio: true }).as(
@@ -237,6 +303,8 @@ describe("audio player", () => {
       headers: { "content-type": "audio/mpeg" },
       body: "x",
     }).as("verseMp3");
+    // Slow timings: ⏭ pressed before they arrive must wait for them, not be dropped.
+    cy.intercept("GET", `${BASE}/audio/${VOICE}/gn/1.json`, { body: timings, delay: 800 });
 
     cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
     cy.wait("@manifestPerVerse");
@@ -249,18 +317,75 @@ describe("audio player", () => {
     cy.get('[data-testid="mini-player-title"]').should("contain.text", "GN 1:1");
     cy.get('li[data-now-reading="true"]').should("have.attr", "id", "1");
 
-    // 1.3 s into the verse file falls in verse 2's window of the chapter timings;
-    // in verse mode the highlight must stay on the verse that is actually playing.
-    cy.wait("@timings");
-    cy.get("audio").then(($a) => {
-      ($a[0] as HTMLAudioElement).currentTime = 1.3;
-    });
-    cy.get('li[data-now-reading="true"]').should("have.attr", "id", "1");
-
-    // ⏭ moves to the next verse, played alone as well.
+    // ⏭ (before the timings arrive) moves to the next verse, played alone as well.
     cy.get('[data-testid="mini-player-next"]').click();
     cy.get("audio").should("have.attr", "src", `${BASE}/audio/${VOICE}/gn/1/2.mp3`);
     cy.get('[data-testid="mini-player-title"]').should("contain.text", "GN 1:2");
     cy.get('li[data-now-reading="true"]').should("have.attr", "id", "2");
+
+    // The timings are in now (⏭ needed them). 0.5 s falls in verse 1's window of the
+    // chapter timings, but the file playing is verse 2 alone: the highlight stays on 2.
+    cy.get("audio").then(($a) => {
+      ($a[0] as HTMLAudioElement).currentTime = 0.5;
+    });
+    cy.get('li[data-now-reading="true"]').should("have.attr", "id", "2");
+  });
+
+  describe("experimental mode (cloned voices)", () => {
+    const CLONE = "danilo-clone";
+
+    beforeEach(() => {
+      // danilo-clone narrates Genesis 1; jessica-clone has no Genesis.
+      cy.intercept("GET", `${BASE}/audio/${CLONE}/manifest.json`, {
+        ...manifest,
+        voiceId: CLONE,
+        label: "Danilo",
+        verseAudio: true,
+        chapters: { gn: { "1": manifest.chapters.gn["1"] } },
+      }).as("cloneManifest");
+      cy.intercept("GET", `${BASE}/audio/jessica-clone/manifest.json`, {
+        ...manifest,
+        voiceId: "jessica-clone",
+        chapters: { ex: { "1": manifest.chapters.gn["1"] } },
+      }).as("otherCloneManifest");
+      cy.intercept("GET", `${BASE}/audio/${CLONE}/gn/1.json`, { ...timings, voiceId: CLONE });
+      const mp3 = { statusCode: 200, headers: { "content-type": "audio/mpeg" }, body: "x" };
+      cy.intercept("GET", `${BASE}/audio/${CLONE}/gn/1.mp3`, mp3); // the chapter
+      cy.intercept("GET", `${BASE}/audio/${CLONE}/gn/1/*.mp3`, mp3); // one verse alone
+    });
+
+    it("plays the chapter in the cloned voice that has it, and says so", () => {
+      cy.viewport(1280, 800); // header tools (ListenButton) only from lg up
+      cy.visit("/verses/gn/1", {
+        onBeforeLoad: (win) => {
+          stubAudioAndTours(win);
+          win.localStorage.setItem("bc:experimental", "1");
+        },
+      });
+      cy.wait(["@manifest", "@cloneManifest", "@otherCloneManifest"]);
+
+      cy.get('[data-testid="listen-button"]').should("be.visible").click();
+      cy.get("audio").should("have.attr", "src", `${BASE}/audio/${CLONE}/gn/1.mp3`);
+      cy.get('[data-testid="mini-player-subtitle"]').should("have.text", "Voz experimental: Danilo");
+      playAt(1.3, 2); // the clone's own timings drive the highlight
+
+      // Only the clone ships per-verse files; with it narrating, a verse plays alone too.
+      cy.get('[data-testid="mini-player-close"]').click();
+      cy.get('[data-testid="verse-text"]').first().click();
+      cy.get('[data-testid="verse-listen-button"]').should("be.visible").click();
+      cy.get("audio").should("have.attr", "src", `${BASE}/audio/${CLONE}/gn/1/1.mp3`);
+    });
+
+    it("keeps the default voice, and never asks for the clones, while it is off", () => {
+      cy.viewport(1280, 800);
+      cy.visit("/verses/gn/1", { onBeforeLoad: stubAudioAndTours });
+      cy.wait("@manifest");
+
+      cy.get('[data-testid="listen-button"]').should("be.visible").click();
+      cy.get("audio").should("have.attr", "src", `${BASE}/audio/${VOICE}/gn/1.mp3`);
+      cy.get('[data-testid="mini-player-subtitle"]').should("have.text", "Bíblia narrada");
+      cy.get("@cloneManifest.all").should("have.length", 0);
+      cy.get("@otherCloneManifest.all").should("have.length", 0);
+    });
   });
 });

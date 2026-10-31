@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { experimentalVoiceName } from "@/lib/audio/voice-pref";
 
 const RATES = [0.75, 1, 1.25, 1.5, 2];
 
@@ -21,6 +22,8 @@ export function MiniPlayer() {
   const verseOnly = state.mode === "verse" && state.currentVerse != null;
   const label = `${state.abbrev.toUpperCase()} ${state.chapter}${verseOnly ? `:${state.currentVerse}` : ""}`;
   const isPlaying = state.isPlaying && state.status !== "error";
+  // A cloned voice says so, so nobody takes it for the regular narrator.
+  const clone = experimentalVoiceName(state.voiceId);
 
   const bar = (
     <div
@@ -72,14 +75,16 @@ export function MiniPlayer() {
           <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-100">
             {label}
           </span>
-          <span className="block truncate text-xs text-slate-500">
+          <span data-testid="mini-player-subtitle" className="block truncate text-xs text-slate-500">
             {state.status === "loading"
               ? "Carregando…"
               : state.status === "error"
                 ? "Erro ao tocar"
-                : verseOnly
-                  ? "Versículo narrado"
-                  : "Bíblia narrada"}
+                : clone
+                  ? `Voz experimental: ${clone}`
+                  : verseOnly
+                    ? "Versículo narrado"
+                    : "Bíblia narrada"}
           </span>
         </button>
 

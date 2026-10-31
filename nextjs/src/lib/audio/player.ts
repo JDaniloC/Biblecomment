@@ -37,6 +37,19 @@ export function isChapterAvailable(
   return !!manifest && hasChapter(manifest, abbrev, chapter);
 }
 
+/**
+ * The voice that narrates abbrev/chapter: the first of `order` whose manifest has it.
+ * A manifest not loaded yet (missing) or not found (null) counts as not having it.
+ */
+export function voiceForChapter(
+  order: readonly string[],
+  manifests: Readonly<Record<string, VoiceManifest | null>>,
+  abbrev: string,
+  chapter: number,
+): string | null {
+  return order.find((id) => isChapterAvailable(manifests[id] ?? null, abbrev, chapter)) ?? null;
+}
+
 /** One verse can play alone only for voices that ship per-verse MP3s. */
 export function isVerseAudioAvailable(
   manifest: VoiceManifest | null,
