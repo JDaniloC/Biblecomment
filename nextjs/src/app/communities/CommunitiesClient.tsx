@@ -131,6 +131,7 @@ export default function CommunitiesClient({
 				) : (
 					<ul
 						data-testid="communities-list"
+						data-tour="communities-list"
 						className="grid grid-cols-1 sm:grid-cols-2 gap-3"
 					>
 						{items.map((c) => (

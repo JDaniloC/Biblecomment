@@ -12,6 +12,8 @@ import { useConfirm } from "@/contexts/ConfirmContext";
 import { AppHeader } from "@/components/AppHeader";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { LikeButton } from "@/components/LikeButton";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
+import { DISCUSSION_DETAIL_TUTORIAL, DISCUSSION_DETAIL_TUTORIAL_NAME } from "@/lib/tutorial-config";
 import { DiscussionCard } from "@/components/DiscussionCard";
 import { formatRelativeDate } from "@/lib/relative-date";
 
@@ -398,7 +400,7 @@ export default function DiscussionDetailClient({
 			</div>
 
 			<main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
-				<article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-6">
+				<article data-tour="discussion-header" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-6">
 					{/* 1. Title + author + edit/delete controls. */}
 					{!editingDiscussion && (
 						<>
@@ -595,7 +597,7 @@ export default function DiscussionDetailClient({
 					Respostas ({(discussion.answers ?? []).length})
 				</h2>
 
-				<div className="space-y-3 mb-6">
+				<div data-tour="discussion-replies" className="space-y-3 mb-6">
 					{(discussion.answers ?? []).map((a, i) => {
 						const canEdit =
 							Boolean(a._id) &&

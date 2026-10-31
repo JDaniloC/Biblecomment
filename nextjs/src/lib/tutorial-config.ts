@@ -10,6 +10,79 @@ import type { DriveStep } from "driver.js";
  * that don't depend on a modal or a lazily-rendered list being present.
  */
 
+/* ───────────────────────── Landing Page ───────────────────────── */
+
+export const LANDING_TUTORIAL: DriveStep[] = [
+	{
+		popover: {
+			title: "Bem-vindo ao BibleComment 🕊️",
+			description:
+				"Sua plataforma comunitária de estudos e reflexões bíblicas. Vamos conhecer as principais áreas da página inicial!",
+		},
+	},
+	{
+		element: '[data-tour="landing-search"]',
+		popover: {
+			title: "Busca Rápida",
+			description:
+				"Pesquise versículos, passagens e comentários por palavras-chave ou referência direta (ex: Gn 1:1).",
+			side: "bottom",
+		},
+	},
+	{
+		element: '[data-tour="landing-daily-verse"]',
+		popover: {
+			title: "Versículo do Dia",
+			description:
+				"Uma passagem bíblica e reflexões em destaque selecionadas para cada dia do ano.",
+			side: "top",
+		},
+	},
+	{
+		element: '[data-tour="landing-about"]',
+		popover: {
+			title: "O Projeto e a Comunidade",
+			description:
+				"Inspirado no projeto 'Reavivados por Sua Palavra' (um capítulo por dia), incentivando o estudo na sua Bíblia pessoal e o compartilhamento de aprendizados.",
+			side: "top",
+		},
+	},
+	{
+		element: '[data-tour="landing-types"]',
+		popover: {
+			title: "Tipos de Comentário",
+			description:
+				"Cada anotação é classificada entre Devocional, Exegético, Pessoal ou Inspirado para enriquecer o entendimento teológico.",
+			side: "top",
+		},
+	},
+	{
+		element: '[data-tour="landing-actions"]',
+		popover: {
+			title: "Ações da Comunidade",
+			description:
+				"Favorite comentários especiais, abra debates fraternos sobre interpretações ou reporte conteúdos para manter o ambiente saudável.",
+			side: "top",
+		},
+	},
+	{
+		element: '[data-tour="landing-books"]',
+		popover: {
+			title: "Navegação por Livros",
+			description:
+				"Acesse os 66 livros da Bíblia e explore capítulos comentados pela comunidade.",
+			side: "top",
+		},
+	},
+	{
+		popover: {
+			title: "Bons estudos! ✨",
+			description:
+				"Crie sua conta gratuita para comentar, favoritar versículos e manter sua sequência de leitura.",
+		},
+	},
+];
+
 /* ───────────────────────── Chapter ───────────────────────── */
 
 // Tour de orientação do capítulo. Targets devem ser elementos persistentes
@@ -43,6 +116,15 @@ export const CHAPTER_TUTORIAL: DriveStep[] = [
 		},
 	},
 	{
+		element: '[data-tour="chapter-tools"]',
+		popover: {
+			title: "Ferramentas do leitor",
+			description:
+				"Ajuste o tamanho do texto (A- / A+) para uma leitura confortável e reproduza o áudio narrado do capítulo.",
+			side: "bottom",
+		},
+	},
+	{
 		element: '[data-tour="verse-first"]',
 		popover: {
 			title: "Os versículos",
@@ -50,6 +132,15 @@ export const CHAPTER_TUTORIAL: DriveStep[] = [
 				"Clique em qualquer versículo para abrir o painel lateral e ler ou adicionar comentários — devocional, exegético, pessoal ou inspirado.",
 			side: "right",
 			align: "start",
+		},
+	},
+	{
+		element: '[data-tour="mark-read-button"]',
+		popover: {
+			title: "Marcar como lido",
+			description:
+				"Marque o capítulo como lido para manter sua sequência diária e acompanhar seu progresso bíblico.",
+			side: "top",
 		},
 	},
 	{
@@ -65,7 +156,7 @@ export const CHAPTER_TUTORIAL: DriveStep[] = [
 		popover: {
 			title: "Pronto, bom estudo! 🙌",
 			description:
-				"Lembre: você pode refazer este tutorial em Perfil → Configurações → Tutoriais guiados.",
+				"Lembre: você pode refazer este tutorial a qualquer momento pelo botão de ajuda no canto inferior ou em Perfil → Configurações.",
 		},
 	},
 ];
@@ -111,7 +202,7 @@ export const HOME_TUTORIAL: DriveStep[] = [
 		popover: {
 			title: "Bom estudo! 📖",
 			description:
-				"Reveja este tour quando quiser em Perfil → Configurações → Tutoriais guiados.",
+				"Reveja este tour quando quiser pelo botão de ajuda ou em Perfil → Configurações → Tutoriais guiados.",
 		},
 	},
 ];
@@ -146,6 +237,15 @@ export const COMMUNITIES_TUTORIAL: DriveStep[] = [
 		},
 	},
 	{
+		element: '[data-tour="communities-list"]',
+		popover: {
+			title: "Lista de grupos",
+			description:
+				"Explore congregações, grupos teológicos e círculos de oração criados por outros membros.",
+			side: "top",
+		},
+	},
+	{
 		popover: {
 			title: "Leitura priorizada",
 			description:
@@ -165,6 +265,15 @@ export const DISCUSSIONS_TUTORIAL: DriveStep[] = [
 		},
 	},
 	{
+		element: '[data-tour="discussions-filters"]',
+		popover: {
+			title: "Filtrar conversas",
+			description:
+				"Filtre as discussões por livro bíblico ou busque por palavras-chave para encontrar temas específicos.",
+			side: "bottom",
+		},
+	},
+	{
 		element: '[data-tour="discussions-list"]',
 		popover: {
 			title: "Temas em aberto",
@@ -177,7 +286,7 @@ export const DISCUSSIONS_TUTORIAL: DriveStep[] = [
 		popover: {
 			title: "Comece uma discussão",
 			description:
-				"Para abrir um novo tema, vá a um versículo e use o painel de discussão daquele trecho.",
+				"Para abrir um novo tema, vá a um versículo no leitor e use a opção de iniciar uma discussão vinculada ao texto.",
 		},
 	},
 ];
@@ -235,6 +344,26 @@ export const PROFILE_TUTORIAL: DriveStep[] = [
 		onHighlightStarted: () => clickProfileTab("profile-tab-badges"),
 	},
 	{
+		element: '[data-tour="profile-tab-comments"]',
+		popover: {
+			title: "Meus Comentários",
+			description:
+				"Visualize e gerencie todos os comentários e reflexões bíblicas que você já compartilhou na plataforma.",
+			side: "right",
+		},
+		onHighlightStarted: () => clickProfileTab("profile-tab-comments"),
+	},
+	{
+		element: '[data-tour="profile-tab-favorites"]',
+		popover: {
+			title: "Versículos Favoritos",
+			description:
+				"Seus versículos salvos para fácil consulta e meditação a qualquer momento.",
+			side: "right",
+		},
+		onHighlightStarted: () => clickProfileTab("profile-tab-favorites"),
+	},
+	{
 		element: '[data-tour="profile-tab-config"]',
 		popover: {
 			title: "Configurações e privacidade",
@@ -248,7 +377,175 @@ export const PROFILE_TUTORIAL: DriveStep[] = [
 		popover: {
 			title: "Pronto! 🎉",
 			description:
-				"Você pode refazer este e os outros tutoriais aqui em Configurações → Tutoriais guiados.",
+				"Você pode refazer este e os outros tutoriais a qualquer momento pelo botão de ajuda no canto inferior ou aqui em Configurações.",
+		},
+	},
+];
+
+/* ───────────────────────── Search ───────────────────────── */
+
+export const SEARCH_TUTORIAL: DriveStep[] = [
+	{
+		popover: {
+			title: "Busca Bíblica 🔍",
+			description:
+				"Encontre versículos, anotações de estudo e membros da comunidade em segundos.",
+		},
+	},
+	{
+		element: '[data-tour="search-input"]',
+		popover: {
+			title: "Campo de pesquisa",
+			description:
+				"Digite palavras-chave, frases ou referências diretas (como 'João 3:16' ou 'Salmos 23').",
+			side: "bottom",
+		},
+	},
+	{
+		element: '[data-tour="search-results"]',
+		popover: {
+			title: "Resultados",
+			description:
+				"Veja passagens bíblicas e comentários relevantes correspondentes ao que você buscou.",
+			side: "top",
+		},
+	},
+];
+
+/* ───────────────────────── Community Detail ───────────────────────── */
+
+export const COMMUNITY_DETAIL_TUTORIAL: DriveStep[] = [
+	{
+		popover: {
+			title: "Página da Comunidade 🏛️",
+			description:
+				"Conheça esta comunidade, acompanhe seus membros e veja suas publicações e reflexões bíblicas.",
+		},
+	},
+	{
+		element: '[data-tour="community-header"]',
+		popover: {
+			title: "Identificação",
+			description:
+				"Nome, descrição, liderança e status de participação nesta comunidade.",
+			side: "bottom",
+		},
+	},
+	{
+		element: '[data-tour="community-tabs"]',
+		popover: {
+			title: "Seções da comunidade",
+			description:
+				"Navegue entre os comentários produzidos pelo grupo, lista de membros e seguidores.",
+			side: "bottom",
+		},
+	},
+];
+
+/* ───────────────────────── Discussion Detail ───────────────────────── */
+
+export const DISCUSSION_DETAIL_TUTORIAL: DriveStep[] = [
+	{
+		popover: {
+			title: "Discussão Bíblica 💬",
+			description:
+				"Aprofunde-se neste debate bíblico com a perspectiva de outros irmãos e leitores.",
+		},
+	},
+	{
+		element: '[data-tour="discussion-header"]',
+		popover: {
+			title: "Tema da discussão",
+			description:
+				"O autor, a pergunta levantada e a referência do versículo analisado.",
+			side: "bottom",
+		},
+	},
+	{
+		element: '[data-tour="discussion-replies"]',
+		popover: {
+			title: "Contribuições e respostas",
+			description:
+				"Leia as ideias de outros membros ou envie sua própria resposta.",
+			side: "top",
+		},
+	},
+];
+
+/* ───────────────────────── Help Center ───────────────────────── */
+
+export const HELP_TUTORIAL: DriveStep[] = [
+	{
+		popover: {
+			title: "Central de Ajuda & Sobre 💡",
+			description:
+				"Aqui você encontra orientações detalhadas, atalhos úteis, explicações teológicas e tutoriais guiados.",
+		},
+	},
+	{
+		element: '[data-tour="help-search"]',
+		popover: {
+			title: "Busca Rápida de Dúvidas",
+			description:
+				"Digite qualquer tema ou dúvida (ex: 'áudio', 'comunidades', 'atalhos') para filtrar as respostas.",
+			side: "bottom",
+		},
+	},
+	{
+		element: '[data-tour="help-interactive-tours"]',
+		popover: {
+			title: "Hub de Tutoriais Guiados",
+			description:
+				"Inicie o tutorial interativo passo a passo de qualquer tela do aplicativo com apenas um clique!",
+			side: "top",
+		},
+	},
+	{
+		element: '[data-tour="help-shortcuts"]',
+		popover: {
+			title: "Atalhos de Teclado",
+			description:
+				"Aprenda os atalhos rápidos para navegar entre capítulos com facilidade pelo teclado.",
+			side: "top",
+		},
+	},
+	{
+		element: '[data-tour="help-faq"]',
+		popover: {
+			title: "Perguntas Frequentes (FAQ)",
+			description:
+				"Dúvidas sobre funcionamento da plataforma, gratuidade, privacidade LGPD e muito mais.",
+			side: "top",
+		},
+	},
+];
+
+/* ───────────────────────── Public Profile ───────────────────────── */
+
+export const PUBLIC_PROFILE_TUTORIAL: DriveStep[] = [
+	{
+		popover: {
+			title: "Perfil do Membro 👤",
+			description:
+				"Veja as contribuições bíblicas, conquistas e reflexões compartilhadas por este usuário.",
+		},
+	},
+	{
+		element: '[data-tour="public-profile-card"]',
+		popover: {
+			title: "Cartão do Usuário",
+			description:
+				"Informações públicas, denominação ou crença declarada e botão para seguir este autor.",
+			side: "bottom",
+		},
+	},
+	{
+		element: '[data-tour="public-profile-tabs"]',
+		popover: {
+			title: "Comentários e Medalhas",
+			description:
+				"Explore o histórico de comentários bíblicos deste membro e as medalhas conquistadas em sua jornada.",
+			side: "bottom",
 		},
 	},
 ];
@@ -258,11 +555,17 @@ export const PROFILE_TUTORIAL: DriveStep[] = [
 // Identifiers persisted in localStorage (and synced to the user's
 // `tutorialsCompleted`). Bump the suffix (e.g. "chapter-v2") to re-show a
 // substantially changed tour to users who already finished the old one.
+export const LANDING_TUTORIAL_NAME = "landing-v1" as const;
 export const CHAPTER_TUTORIAL_NAME = "chapter-v1" as const;
 export const HOME_TUTORIAL_NAME = "home-v1" as const;
 export const COMMUNITIES_TUTORIAL_NAME = "communities-v1" as const;
 export const DISCUSSIONS_TUTORIAL_NAME = "discussions-v1" as const;
 export const PROFILE_TUTORIAL_NAME = "profile-v1" as const;
+export const SEARCH_TUTORIAL_NAME = "search-v1" as const;
+export const COMMUNITY_DETAIL_TUTORIAL_NAME = "community-detail-v1" as const;
+export const DISCUSSION_DETAIL_TUTORIAL_NAME = "discussion-detail-v1" as const;
+export const HELP_TUTORIAL_NAME = "help-v1" as const;
+export const PUBLIC_PROFILE_TUTORIAL_NAME = "public-profile-v1" as const;
 
 export interface TutorialDef {
 	/** Versioned localStorage / server flag id. */

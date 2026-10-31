@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { AppHeader } from "@/components/AppHeader";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
+import { SEARCH_TUTORIAL, SEARCH_TUTORIAL_NAME } from "@/lib/tutorial-config";
 
 interface SessionUser {
 	name: string;
@@ -124,7 +126,7 @@ export default function SearchClient({ user }: { user: SessionUser }) {
 					<span className="font-medium">Gênesis 1</span>).
 				</p>
 
-				<div className="relative mb-6">
+				<div data-tour="search-input" className="relative mb-6">
 					<Image
 						src="/assets/search.svg"
 						alt=""
@@ -170,7 +172,7 @@ export default function SearchClient({ user }: { user: SessionUser }) {
 						Buscando...
 					</div>
 				) : results.length > 0 ? (
-					<ul className="space-y-3">
+					<ul data-tour="search-results" className="space-y-3">
 						{results.map((row) => (
 							<li
 								key={`${row.kind}-${row.data._id}`}

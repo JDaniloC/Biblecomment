@@ -42,7 +42,7 @@ export default function OmniSearch({ variant = "floating" }: Props) {
           else if (results.comments.length > 0) handleSelectComment(results.comments[0]);
         }}
       >
-        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg px-3 h-10 shadow-[0px_4px_18px_0px_rgba(19,125,219,0.15)]">
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg px-3 h-10 border border-slate-200 dark:border-slate-700/80 shadow-[0px_2px_12px_0px_rgba(19,125,219,0.12)] hover:border-brand/40 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20 transition-all">
           {loading ? (
             <div className="w-[15px] h-[15px] border-2 border-brand border-t-transparent rounded-full flex-shrink-0 animate-spin" />
           ) : (

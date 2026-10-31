@@ -9,6 +9,8 @@ import { useNotification } from "@/contexts/NotificationContext";
 import { useConfirm } from "@/contexts/ConfirmContext";
 import type { Community } from "@/domain/entities/Community";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
+import { COMMUNITY_DETAIL_TUTORIAL, COMMUNITY_DETAIL_TUTORIAL_NAME } from "@/lib/tutorial-config";
 
 type CommunityTab =
 	| "comentarios"
@@ -549,7 +551,7 @@ export default function CommunityDetailClient({
 					← Comunidades
 				</Link>
 
-				<header className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-5">
+				<header data-tour="community-header" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-5">
 					<div className="flex flex-wrap items-start justify-between gap-3">
 						<div className="min-w-0">
 							<h1

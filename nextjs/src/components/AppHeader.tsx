@@ -53,7 +53,7 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
 						height={42}
 						className="w-9 h-9 md:w-[42px] md:h-[42px]"
 					/>
-					<div className="hidden sm:block">
+					<div className="hidden lg:block">
 						<div className="font-bold text-[15px] text-slate-800 dark:text-slate-100 leading-[22.5px] whitespace-nowrap">
 							BibleComment
 						</div>
@@ -175,11 +175,12 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
 					<MobileSearchTrigger />
 				</div>
 
-				{/* Desktop: trailing inline. Mobile: behind a "⋮" popover so
-            page tools (e.g. FontSizeControl/zoom) are reachable on phones. */}
+				{/* Desktop (lg+): trailing inline. Below lg (< 1024px): behind a "⋮"
+				    popover so page tools (e.g. FontSizeControl/zoom, ListenButton)
+				    don't crowd OmniSearch. */}
 				{trailing && (
 					<>
-						<div className="hidden md:contents">{trailing}</div>
+						<div data-tour="chapter-tools" className="hidden lg:contents">{trailing}</div>
 						<MobileToolsMenu>{trailing}</MobileToolsMenu>
 					</>
 				)}
@@ -191,28 +192,20 @@ export function AppHeader({ user, loginCallbackUrl, trailing }: Props) {
 				)}
 				<ThemeToggle />
 				<AuthMenu user={user} loginCallbackUrl={loginCallbackUrl} />
-
-				<Link
-					href="/help"
-					aria-label="Ajuda e tutorial"
-					className="hidden md:flex items-center justify-center w-7 h-7 rounded-full border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-brand hover:text-brand transition text-sm font-bold leading-none no-underline"
-				>
-					?
-				</Link>
 			</div>
 		</header>
 	);
 }
 
 /**
- * Mobile-only "⋮" overflow that surfaces the page's `trailing` controls
- * (e.g. FontSizeControl/zoom) which are inline on desktop but had no home
- * on phones. Mirrors the AuthMenu dropdown pattern (backdrop + popover).
+ * Overflow "⋮" that surfaces the page's `trailing` controls
+ * (e.g. FontSizeControl/zoom, ListenButton) when the screen is below 1024px (lg),
+ * keeping the search bar prominent and easy to click.
  */
 function MobileToolsMenu({ children }: { children: React.ReactNode }) {
 	const [open, setOpen] = useState(false);
 	return (
-		<div className="md:hidden relative flex-shrink-0">
+		<div className="lg:hidden relative flex-shrink-0">
 			<button
 				type="button"
 				onClick={() => setOpen((v) => !v)}
@@ -245,7 +238,7 @@ function MobileToolsMenu({ children }: { children: React.ReactNode }) {
 					/>
 					<div
 						data-testid="header-tools-panel"
-						className="absolute right-0 top-11 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0px_8px_30px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] p-2"
+						className="absolute right-0 top-11 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-[0px_8px_30px_0px_rgba(0,0,0,0.14),0px_2px_8px_0px_rgba(0,0,0,0.06)] p-2 flex items-center gap-2"
 					>
 						{children}
 					</div>

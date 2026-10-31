@@ -11,6 +11,7 @@ import { connectToDatabase } from "@/infrastructure/database/connection";
 import OmniSearch from "./_components/OmniSearch";
 import { ExitConfirmation } from "./_components/ExitConfirmation";
 import { MobileOnboardingTour } from "./_components/MobileOnboardingTour";
+import { LandingTutorial } from "./_components/LandingTutorial";
 import type { Book } from "@/domain/entities/Book";
 import type { Verse } from "@/domain/entities/Verse";
 import type { Comment } from "@/domain/entities/Comment";
@@ -134,6 +135,7 @@ export default async function RootPage() {
 		<div className="min-h-screen bg-stone-50 dark:bg-slate-950 flex flex-col">
 			<ExitConfirmation />
 			<MobileOnboardingTour />
+			<LandingTutorial />
 			<HomeHeader user={sessionUser} />
 
 			{!isLoggedIn && (
@@ -163,12 +165,14 @@ export default async function RootPage() {
 							comentário bíblico, exegese e estudos bíblicos compartilhados.
 						</p>
 					</div>
-					<OmniSearch />
+					<div data-tour="landing-search">
+						<OmniSearch />
+					</div>
 				</section>
 
 				{/* Versículo do Dia */}
 				{verse && (
-					<section className="px-4 pb-12">
+					<section data-tour="landing-daily-verse" className="px-4 pb-12">
 						<div className="max-w-5xl mx-auto">
 							<div className="flex items-center gap-2 mb-4">
 								<div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -230,7 +234,7 @@ export default async function RootPage() {
 				)}
 
 				{/* Sobre */}
-				<section id="sobre" className="px-4 pb-12 md:pb-16 scroll-mt-16">
+				<section id="sobre" data-tour="landing-about" className="px-4 pb-12 md:pb-16 scroll-mt-16">
 					<div className="max-w-5xl mx-auto">
 						<div className="flex items-center gap-2 mb-6">
 							<div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -281,7 +285,7 @@ export default async function RootPage() {
 				</section>
 
 				{/* Tipos de comentário */}
-				<section id="tipos" className="px-4 pb-12 md:pb-16 scroll-mt-16">
+				<section id="tipos" data-tour="landing-types" className="px-4 pb-12 md:pb-16 scroll-mt-16">
 					<div className="max-w-5xl mx-auto">
 						<div className="flex items-center gap-2 mb-6">
 							<div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -320,7 +324,7 @@ export default async function RootPage() {
 				</section>
 
 				{/* Como participar (ações) */}
-				<section id="acoes" className="px-4 pb-12 md:pb-16 scroll-mt-16">
+				<section id="acoes" data-tour="landing-actions" className="px-4 pb-12 md:pb-16 scroll-mt-16">
 					<div className="max-w-5xl mx-auto">
 						<div className="flex items-center gap-2 mb-6">
 							<div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -352,7 +356,7 @@ export default async function RootPage() {
 				</section>
 
 				{/* Books */}
-				<section id="livros" className="px-4 pb-16 scroll-mt-16">
+				<section id="livros" data-tour="landing-books" className="px-4 pb-16 scroll-mt-16">
 					<div className="max-w-5xl mx-auto">
 						<div className="flex items-center gap-2 mb-6">
 							<div className="h-px flex-1 bg-stone-200 dark:bg-slate-700" />
@@ -381,7 +385,7 @@ export default async function RootPage() {
 					</div>
 					<div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
 						<Link
-							href="/#sobre"
+							href="/help"
 							className="hover:text-stone-600 dark:hover:text-stone-300 transition"
 						>
 							Sobre

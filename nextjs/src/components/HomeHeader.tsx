@@ -48,13 +48,6 @@ export function HomeHeader({ user }: Props) {
 				</Link>
 
 				<div className="flex items-center gap-2 sm:gap-3 shrink-0">
-					<Link
-						href="/help"
-						aria-label="Ajuda e tutorial"
-						className="hidden sm:flex items-center justify-center w-7 h-7 rounded-full border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-brand hover:text-brand transition text-sm font-bold leading-none no-underline"
-					>
-						?
-					</Link>
 					<ThemeToggle />
 					{user ? (
 						<AuthMenu user={user} />

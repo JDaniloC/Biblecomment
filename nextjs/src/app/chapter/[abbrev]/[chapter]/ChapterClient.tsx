@@ -184,7 +184,15 @@ export default function ChapterClient({
 	});
 	const searchParams = useSearchParams();
 	const forceTour = searchParams?.get("tour") === "1";
-	const showTutorial = !!user && (forceTour || tutorial.isCompleted === false);
+	const [manualTour, setManualTour] = useState(false);
+
+	useEffect(() => {
+		const handleStartTour = () => setManualTour(true);
+		window.addEventListener("bc:start-tour", handleStartTour);
+		return () => window.removeEventListener("bc:start-tour", handleStartTour);
+	}, []);
+
+	const showTutorial = manualTour || (!!user && (forceTour || tutorial.isCompleted === false));
 
 	const prevChapter = chapter > 1 ? chapter - 1 : null;
 	const nextChapter = chapter < book.chapters ? chapter + 1 : null;
@@ -798,7 +806,7 @@ export default function ChapterClient({
 							</button>
 						</div>
 
-						<div className="flex items-center justify-center mb-6">
+						<div data-tour="mark-read-button" className="flex items-center justify-center mb-6">
 							<MarkAsReadButton
 								abbrev={book.abbrev}
 								chapter={chapter}
@@ -815,6 +823,7 @@ export default function ChapterClient({
 						{(titleCount > 0 || isTitleMode) && (
 							<button
 								type="button"
+								data-tour="chapter-overview-btn"
 								onClick={openTitlePanel}
 								className="flex items-center gap-3 w-full mb-6 px-4 py-2.5 rounded-r-md text-left transition hover:bg-black/5 bg-black/[0.02] border-l-4 border-solid"
 								style={{
@@ -1632,6 +1641,7 @@ export default function ChapterClient({
 				<Tutorial
 					steps={CHAPTER_TUTORIAL}
 					onFinished={() => {
+						setManualTour(false);
 						tutorial.markCompleted();
 						// Strip ?tour=1 so a refresh after dismiss doesn't reopen it.
 						if (forceTour && typeof window !== "undefined") {

@@ -41,6 +41,23 @@ export default function Tutorial({ steps, autoStart = true, onFinished }: Tutori
       onFinishedRef.current?.();
     };
 
+    // Filter out steps whose target selector is not present or visible in the DOM
+    const activeSteps = steps.filter((step) => {
+      if (!step.element) return true;
+      if (typeof step.element === "string") {
+        const el = document.querySelector(step.element);
+        if (!el) return false;
+        const rects = el.getClientRects();
+        return rects.length > 0;
+      }
+      return true;
+    });
+
+    if (activeSteps.length === 0) {
+      fireFinishedOnce();
+      return;
+    }
+
     const driverObj: Driver = driver({
       showProgress: true,
       smoothScroll: !reduceMotion,
@@ -51,7 +68,7 @@ export default function Tutorial({ steps, autoStart = true, onFinished }: Tutori
       nextBtnText: "Próximo →",
       prevBtnText: "← Anterior",
       doneBtnText: "Concluído",
-      steps,
+      steps: activeSteps,
       // User clicked the X — fire finished and let driver tear itself down.
       onDestroyStarted: () => {
         fireFinishedOnce();

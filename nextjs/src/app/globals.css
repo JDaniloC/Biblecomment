@@ -188,3 +188,12 @@ body.bc-hide-tabbar .bc-mobile-tabbar {
     padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
   }
 }
+
+
+/* When the comments sidebar is open on desktop, offset the help FAB
+   so it stays comfortably visible without overlapping the sidebar content. */
+@media (min-width: 768px) {
+  body.bc-hide-tabbar .bc-desktop-help-fab {
+    right: calc(420px + 1.25rem);
+  }
+}

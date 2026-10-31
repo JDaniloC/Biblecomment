@@ -10,6 +10,8 @@ import { getBadge } from "@/lib/badges/catalog";
 import { followService } from "@/services/follow";
 import { useNotification } from "@/contexts/NotificationContext";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PageTutorial } from "@/components/Tutorial/PageTutorial";
+import { PUBLIC_PROFILE_TUTORIAL, PUBLIC_PROFILE_TUTORIAL_NAME } from "@/lib/tutorial-config";
 
 interface ViewerSession {
 	name: string;
@@ -212,6 +214,7 @@ export default function PublicProfileClient({
 
 				<header
 					data-testid="public-profile-header"
+					data-tour="public-profile-card"
 					className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 flex items-center gap-4 mb-6"
 				>
 					<div
