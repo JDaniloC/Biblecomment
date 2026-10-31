@@ -120,7 +120,7 @@ export default async function RootPage() {
 		getPageData(),
 	]);
 
-	const isLoggedIn = !!session?.user;
+	const isLoggedIn = Boolean(session?.user);
 
 	const sessionUser = session?.user
 		? {

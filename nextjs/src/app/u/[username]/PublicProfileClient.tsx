@@ -55,16 +55,16 @@ interface Props {
 const PAGE_SIZE = 20;
 
 function memberSince(iso: string): string {
-	const d = new Date(iso);
-	if (isNaN(d.getTime())) return "";
-	return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+	const dateObj = new Date(iso);
+	if (isNaN(dateObj.getTime())) return "";
+	return dateObj.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 }
 
 function dateFormat(iso: string | null): string {
 	if (!iso) return "";
-	const d = new Date(iso);
-	if (isNaN(d.getTime())) return "";
-	return d.toLocaleDateString("pt-BR", {
+	const dateObj = new Date(iso);
+	if (isNaN(dateObj.getTime())) return "";
+	return dateObj.toLocaleDateString("pt-BR", {
 		day: "2-digit",
 		month: "short",
 		year: "numeric",
@@ -113,7 +113,7 @@ export default function PublicProfileClient({
 	const display = user.displayName ?? user.username;
 	const initials = getInitials(display);
 
-	const canFollow = !!viewer && viewer.username !== user.username;
+	const canFollow = Boolean(viewer) && viewer?.username !== user.username;
 
 	async function handleToggleFollow() {
 		if (!canFollow || followBusy) return;
@@ -411,6 +411,14 @@ export default function PublicProfileClient({
 						</div>
 					))}
 			</main>
+
+			<PageTutorial
+				name={PUBLIC_PROFILE_TUTORIAL_NAME}
+				steps={PUBLIC_PROFILE_TUTORIAL}
+				enabled
+				alreadyCompleted
+				autoStart={false}
+			/>
 		</div>
 	);
 }

@@ -111,7 +111,7 @@ export default function ChapterClient({
 		isChapterAvailable(book.abbrev, chapter) || audioState.status !== "idle";
 
 	// Accrue reading time toward the daily streak session (logged-in only).
-	useReadingTime(!!user);
+	useReadingTime(Boolean(user));
 
 	const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
 	const [isTitleMode, setIsTitleMode] = useState(false);
@@ -179,7 +179,7 @@ export default function ChapterClient({
 	// skipped entirely for anonymous readers — the actions it teaches all
 	// require an account anyway.
 	const tutorial = useTutorial(CHAPTER_TUTORIAL_NAME, {
-		syncServer: !!user,
+		syncServer: Boolean(user),
 		initialFromServer: tutorialAlreadyCompleted,
 	});
 	const searchParams = useSearchParams();
@@ -192,7 +192,7 @@ export default function ChapterClient({
 		return () => window.removeEventListener("bc:start-tour", handleStartTour);
 	}, []);
 
-	const showTutorial = manualTour || (!!user && (forceTour || tutorial.isCompleted === false));
+	const showTutorial = manualTour || (Boolean(user) && (forceTour || tutorial.isCompleted === false));
 
 	const prevChapter = chapter > 1 ? chapter - 1 : null;
 	const nextChapter = chapter < book.chapters ? chapter + 1 : null;
@@ -244,7 +244,9 @@ export default function ChapterClient({
 			if (e.key === "Escape") setOpenMenuId(null);
 		};
 		document.addEventListener("keydown", onKey);
-		return () => document.removeEventListener("keydown", onKey);
+		return () => {
+			document.removeEventListener("keydown", onKey);
+		};
 	}, [openMenuId]);
 
 	useEffect(() => {
@@ -287,13 +289,15 @@ export default function ChapterClient({
 						community.active,
 					);
 					if (!cancelled) {
-						const p = (res.prioritized ?? []) as unknown as CommentData[];
-						const o = (res.others ?? []) as unknown as CommentData[];
-						setComments([...p, ...o]);
-						setPrioritizedCount(p.length);
+						const prioritized = (res.prioritized ?? []) as unknown as CommentData[];
+						const others = (res.others ?? []) as unknown as CommentData[];
+						setComments([...prioritized, ...others]);
+						setPrioritizedCount(prioritized.length);
 						setOthersExpanded(false);
 					}
-				} catch {}
+				} catch {
+					/* ignore */
+				}
 			}
 		}
 		refresh();
@@ -340,10 +344,10 @@ export default function ChapterClient({
 					verse.verseNumber,
 					community.active,
 				);
-				const p = (res.prioritized ?? []) as unknown as CommentData[];
-				const o = (res.others ?? []) as unknown as CommentData[];
-				setComments([...p, ...o]);
-				setPrioritizedCount(p.length);
+				const prioritized = (res.prioritized ?? []) as unknown as CommentData[];
+				const others = (res.others ?? []) as unknown as CommentData[];
+				setComments([...prioritized, ...others]);
+				setPrioritizedCount(prioritized.length);
 				setOthersExpanded(false);
 			} catch {
 				handleNotification("error", "Erro ao carregar comentários.");
@@ -432,10 +436,11 @@ export default function ChapterClient({
 					setTitleCount((n) => n + 1);
 				} else {
 					setComments((prev) => [created, ...prev]);
-					if (selectedVerse?._id) {
+					const selectedVerseId = selectedVerse?._id;
+					if (selectedVerseId) {
 						setCountMap((prev) => ({
 							...prev,
-							[selectedVerse._id!]: (prev[selectedVerse._id!] ?? 0) + 1,
+							[selectedVerseId]: (prev[selectedVerseId] ?? 0) + 1,
 						}));
 					}
 				}
@@ -663,7 +668,9 @@ export default function ChapterClient({
 	useEffect(() => {
 		if (!showSidebar) return;
 		document.body.classList.add("bc-hide-tabbar");
-		return () => document.body.classList.remove("bc-hide-tabbar");
+		return () => {
+			document.body.classList.remove("bc-hide-tabbar");
+		};
 	}, [showSidebar]);
 
 	// Android / browser back must CLOSE the open comment panel, not navigate
@@ -704,8 +711,8 @@ export default function ChapterClient({
 	const onTouchStart = useCallback(
 		(e: React.TouchEvent) => {
 			if (showSidebar) return;
-			const t = e.touches[0];
-			touchStart.current = { x: t.clientX, y: t.clientY };
+			const touch = e.touches[0];
+			touchStart.current = { x: touch.clientX, y: touch.clientY };
 		},
 		[showSidebar],
 	);
@@ -714,9 +721,9 @@ export default function ChapterClient({
 			const start = touchStart.current;
 			touchStart.current = null;
 			if (!start) return;
-			const t = e.changedTouches[0];
-			const dx = t.clientX - start.x;
-			const dy = t.clientY - start.y;
+			const touch = e.changedTouches[0];
+			const dx = touch.clientX - start.x;
+			const dy = touch.clientY - start.y;
 			if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
 			if (dx < 0 && nextChapter)
 				router.push(`/verses/${book.abbrev}/${nextChapter}`);
@@ -811,7 +818,7 @@ export default function ChapterClient({
 								abbrev={book.abbrev}
 								chapter={chapter}
 								initialRead={alreadyRead}
-								enabled={!!user}
+								enabled={Boolean(user)}
 							/>
 						</div>
 
@@ -1075,9 +1082,9 @@ export default function ChapterClient({
 													data-testid="comment-composer-textarea"
 													value={composeText}
 													onChange={(e) => {
-														let v = e.target.value;
-														if (v.slice(-2) === "  ") v = v.slice(0, -1);
-														setComposeText(v);
+														let val = e.target.value;
+														if (val.slice(-2) === "  ") val = val.slice(0, -1);
+														setComposeText(val);
 													}}
 													placeholder="Escreva seu comentário aqui…"
 													rows={6}
@@ -1179,7 +1186,7 @@ export default function ChapterClient({
 									{activeComments.map((comment) => {
 										const meta = getTagMetaOrNeutral(comment.tags);
 										const isOwner =
-											!!user && comment.username === user.username;
+											Boolean(user) && comment.username === user?.username;
 
 										if (editingComment?._id === comment._id) {
 											return (
@@ -1437,7 +1444,7 @@ export default function ChapterClient({
 													    footer row no longer crowds (esp. for mods who also get the
 													    verify toggle). Only rendered when the viewer has at least one
 													    action — i.e. logged in (a non-owner always has Reportar). */}
-													{!!user && (
+													{Boolean(user) && (
 														<div className="ml-auto relative">
 															<button
 																type="button"

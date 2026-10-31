@@ -224,6 +224,14 @@ export default function SearchClient({ user }: { user: SessionUser }) {
 					</div>
 				)}
 			</main>
+
+			<PageTutorial
+				name={SEARCH_TUTORIAL_NAME}
+				steps={SEARCH_TUTORIAL}
+				enabled
+				alreadyCompleted
+				autoStart={false}
+			/>
 		</div>
 	);
 }
@@ -242,3 +250,4 @@ function ResultBadge({ kind }: { kind: "verse" | "comment" }) {
 		</span>
 	);
 }
+

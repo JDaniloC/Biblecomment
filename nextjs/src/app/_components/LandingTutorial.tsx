@@ -8,8 +8,8 @@ export function LandingTutorial() {
 		<PageTutorial
 			name={LANDING_TUTORIAL_NAME}
 			steps={LANDING_TUTORIAL}
-			enabled={true}
-			alreadyCompleted={true}
+			enabled
+			alreadyCompleted
 			autoStart={false}
 		/>
 	);

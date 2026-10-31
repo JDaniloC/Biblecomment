@@ -12,7 +12,7 @@ const DENY = ["/login", "/register", "/offline", "/forgot-password", "/reset-pas
 export function AppShellChrome() {
   const pathname = usePathname();
   const { data } = useSession();
-  if (DENY.some((p) => pathname === p || pathname.startsWith(p + "/"))) return null;
+  if (DENY.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
   const user = data?.user
     ? { username: (data.user as { username: string }).username }
     : null;

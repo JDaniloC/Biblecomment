@@ -715,6 +715,14 @@ export default function DiscussionDetailClient({
 					</button>
 				</div>
 			</main>
+
+			<PageTutorial
+				name={DISCUSSION_DETAIL_TUTORIAL_NAME}
+				steps={DISCUSSION_DETAIL_TUTORIAL}
+				enabled
+				alreadyCompleted
+				autoStart={false}
+			/>
 		</div>
 	);
 }

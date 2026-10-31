@@ -183,7 +183,7 @@ export default function CommunityDetailClient({
 					setRole(r.role);
 				}
 			})
-			.catch(() => {});
+			.catch(() => { /* ignore */ });
 		return () => {
 			cancelled = true;
 		};
@@ -203,7 +203,7 @@ export default function CommunityDetailClient({
 			.then((r) => {
 				if (!cancelled) setFollowing(r.following);
 			})
-			.catch(() => {});
+			.catch(() => { /* ignore */ });
 		return () => {
 			cancelled = true;
 		};
@@ -335,7 +335,7 @@ export default function CommunityDetailClient({
 			.then((reqs) => {
 				if (!cancelled) setPending(reqs);
 			})
-			.catch(() => {});
+			.catch(() => { /* ignore */ });
 		return () => {
 			cancelled = true;
 		};
@@ -350,8 +350,10 @@ export default function CommunityDetailClient({
 	const [commentQuery, setCommentQuery] = useState("");
 	const [activeQuery, setActiveQuery] = useState("");
 	useEffect(() => {
-		const t = setTimeout(() => setActiveQuery(commentQuery.trim()), 250);
-		return () => clearTimeout(t);
+		const timer = setTimeout(() => setActiveQuery(commentQuery.trim()), 250);
+		return () => {
+			clearTimeout(timer);
+		};
 	}, [commentQuery]);
 
 	// Re-query page 1 whenever the active query changes. We intentionally
@@ -373,7 +375,7 @@ export default function CommunityDetailClient({
 				setCommentsTotal(json.total);
 				setCommentsPage(1);
 			})
-			.catch(() => {});
+			.catch(() => { /* ignore */ });
 		return () => {
 			cancelled = true;
 		};
@@ -1054,6 +1056,14 @@ export default function CommunityDetailClient({
 					</section>
 				)}
 			</main>
+
+			<PageTutorial
+				name={COMMUNITY_DETAIL_TUTORIAL_NAME}
+				steps={COMMUNITY_DETAIL_TUTORIAL}
+				enabled
+				alreadyCompleted
+				autoStart={false}
+			/>
 		</div>
 	);
 }

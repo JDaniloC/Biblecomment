@@ -63,7 +63,9 @@ export default function CommunitiesClient({
 		const handle = setTimeout(() => {
 			search(trimmed);
 		}, 250);
-		return () => clearTimeout(handle);
+		return () => {
+			clearTimeout(handle);
+		};
 		// We only re-run when the query string changes; the rest is stable.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query]);
@@ -179,9 +181,10 @@ export default function CommunitiesClient({
 			<PageTutorial
 				name={COMMUNITIES_TUTORIAL_NAME}
 				steps={COMMUNITIES_TUTORIAL}
-				enabled={!!viewer}
+				enabled={Boolean(viewer)}
 				alreadyCompleted={tutorialAlreadyCompleted}
 			/>
 		</div>
 	);
 }
+

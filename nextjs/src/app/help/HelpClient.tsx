@@ -130,9 +130,9 @@ export function HelpClient() {
 
 	const filteredFaq = useMemo(() => {
 		if (!searchQuery.trim()) return FAQ_ITEMS;
-		const q = searchQuery.toLowerCase();
+		const queryTerm = searchQuery.toLowerCase();
 		return FAQ_ITEMS.filter(
-			(item) => item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q),
+			(item) => item.q.toLowerCase().includes(queryTerm) || item.a.toLowerCase().includes(queryTerm),
 		);
 	}, [searchQuery]);
 
@@ -526,8 +526,8 @@ export function HelpClient() {
 			<PageTutorial
 				name={HELP_TUTORIAL_NAME}
 				steps={HELP_TUTORIAL}
-				enabled={true}
-				alreadyCompleted={true}
+				enabled
+				alreadyCompleted
 				autoStart={false}
 			/>
 		</div>
