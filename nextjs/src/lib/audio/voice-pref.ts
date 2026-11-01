@@ -10,7 +10,6 @@ const EXPERIMENTAL_KEY = "bc:experimental";
  * and every other chapter keeps the default voice.
  */
 export const EXPERIMENTAL_VOICES: readonly { id: string; name: string }[] = [
-  { id: "danilo-clone", name: "Danilo" },
   { id: "jessica-clone", name: "Jéssica" },
 ];
 

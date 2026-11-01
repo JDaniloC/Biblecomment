@@ -2,7 +2,7 @@
 // to R2, in the layout generate-audio.js uses, plus each verse's own MP3.
 // Reads local files and the text API; writes only to R2 (nothing with --dry-run).
 //
-// Env: AUDIO_VOICE_ID (required, e.g. danilo-clone), AUDIO_VOICE_LABEL (e.g. Danilo),
+// Env: AUDIO_VOICE_ID (required, e.g. jessica-clone), AUDIO_VOICE_LABEL (e.g. Jéssica),
 //      AUDIO_GEN_BASE_URL, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET.
 // CLI flags: --book=gn  --dir=<out folder of ::book>  --dry-run  --force (re-upload chapters
 //            already in the manifest)
@@ -65,7 +65,7 @@ async function main() {
   const book = arg("book");
   const dir = arg("dir");
   const dryRun = flag("dry-run");
-  if (!VOICE_ID) throw new Error("Set AUDIO_VOICE_ID (e.g. danilo-clone)");
+  if (!VOICE_ID) throw new Error("Set AUDIO_VOICE_ID (e.g. jessica-clone)");
   if (VOICE_ID === "pt-BR-AntonioNeural") throw new Error("Refusing to write over the Edge voice");
   if (!book || !dir) throw new Error("Usage: --book=gn --dir=<out folder of voice_modal.py::book>");
 

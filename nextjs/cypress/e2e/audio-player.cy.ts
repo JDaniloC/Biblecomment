@@ -332,22 +332,16 @@ describe("audio player", () => {
   });
 
   describe("experimental mode (cloned voices)", () => {
-    const CLONE = "danilo-clone";
+    const CLONE = "jessica-clone";
 
     beforeEach(() => {
-      // danilo-clone narrates Genesis 1; jessica-clone has no Genesis.
       cy.intercept("GET", `${BASE}/audio/${CLONE}/manifest.json`, {
         ...manifest,
         voiceId: CLONE,
-        label: "Danilo",
+        label: "Jéssica",
         verseAudio: true,
         chapters: { gn: { "1": manifest.chapters.gn["1"] } },
       }).as("cloneManifest");
-      cy.intercept("GET", `${BASE}/audio/jessica-clone/manifest.json`, {
-        ...manifest,
-        voiceId: "jessica-clone",
-        chapters: { ex: { "1": manifest.chapters.gn["1"] } },
-      }).as("otherCloneManifest");
       cy.intercept("GET", `${BASE}/audio/${CLONE}/gn/1.json`, { ...timings, voiceId: CLONE });
       const mp3 = { statusCode: 200, headers: { "content-type": "audio/mpeg" }, body: "x" };
       cy.intercept("GET", `${BASE}/audio/${CLONE}/gn/1.mp3`, mp3); // the chapter
@@ -362,11 +356,11 @@ describe("audio player", () => {
           win.localStorage.setItem("bc:experimental", "1");
         },
       });
-      cy.wait(["@manifest", "@cloneManifest", "@otherCloneManifest"]);
+      cy.wait(["@manifest", "@cloneManifest"]);
 
       cy.get('[data-testid="listen-button"]').should("be.visible").click();
       cy.get("audio").should("have.attr", "src", `${BASE}/audio/${CLONE}/gn/1.mp3`);
-      cy.get('[data-testid="mini-player-subtitle"]').should("have.text", "Voz experimental: Danilo");
+      cy.get('[data-testid="mini-player-subtitle"]').should("have.text", "Voz experimental: Jéssica");
       playAt(1.3, 2); // the clone's own timings drive the highlight
 
       // Only the clone ships per-verse files; with it narrating, a verse plays alone too.
@@ -385,7 +379,6 @@ describe("audio player", () => {
       cy.get("audio").should("have.attr", "src", `${BASE}/audio/${VOICE}/gn/1.mp3`);
       cy.get('[data-testid="mini-player-subtitle"]').should("have.text", "Bíblia narrada");
       cy.get("@cloneManifest.all").should("have.length", 0);
-      cy.get("@otherCloneManifest.all").should("have.length", 0);
     });
   });
 });

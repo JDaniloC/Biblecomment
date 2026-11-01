@@ -86,7 +86,7 @@ describe("experimental mode", () => {
 
   it("names the experimental voices and nothing else", () => {
     expect(experimentalVoiceName("jessica-clone")).toBe("Jéssica");
-    expect(experimentalVoiceName("danilo-clone")).toBe("Danilo");
+    expect(experimentalVoiceName("danilo-clone")).toBe(null); // retired on 2026-10-31
     expect(experimentalVoiceName(DEFAULT_VOICE_ID)).toBe(null);
   });
 });
